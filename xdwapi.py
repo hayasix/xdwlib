@@ -116,6 +116,7 @@ class XDWError(Exception):
         error_code = (error_code + 0x100000000) and 0xffffffff
         Exception.__init__(self, "%s (%08X)" % (msg, error_code))
 
+
 # DocuWorks constants
 
 XDW_GI_VERSION                      =  1
@@ -453,6 +454,8 @@ XDW_SECURITY_PKI_ERROR_BAD_CERT_USAGE           = 14
 XDW_SECURITY_PKI_ERROR_CA_CERT_IS_REVOKED       = 15
 XDW_SECURITY_PKI_ERROR_TOO_MANY_CERT            = 16
 
+# Constants from xdwapian.h
+
 XDW_IGNORE_CASE                 = 0x02
 XDW_IGNORE_WIDTH                = 0x04
 XDW_IGNORE_HIRAKATA             = 0x08
@@ -464,6 +467,131 @@ XDW_TEXT_UNKNOWN                = 0
 XDW_TEXT_MULTIBYTE              = 1
 XDW_TEXT_UNICODE                = 2
 XDW_TEXT_UNICODE_IFNECESSARY    = 3
+
+XDW_ATN_Text                    = "%Text"
+XDW_ATN_FontName                = "%FontName"
+XDW_ATN_FontStyle               = "%FontStyle"
+XDW_ATN_FontSize                = "%FontSize"
+XDW_ATN_ForeColor               = "%ForeColor"
+XDW_ATN_FontPitchAndFamily      = "%FontPitchAndFamily"
+XDW_ATN_FontCharSet             = "%FontCharSet"
+XDW_ATN_BackColor               = "%BackColor"
+XDW_ATN_Caption                 = "%Caption"
+XDW_ATN_Url                     = "%Url"
+XDW_ATN_XdwPath                 = "%XdwPath"
+XDW_ATN_ShowIcon                = "%ShowIcon"
+XDW_ATN_LinkType                = "%LinkType"
+XDW_ATN_XdwPage                 = "%XdwPage"
+XDW_ATN_Tooltip                 = "%Tooltip"
+XDW_ATN_Tooltip_String          = "%TooltipString"
+XDW_ATN_XdwPath_Relative        = "%XdwPathRelative"
+XDW_ATN_XdwLink                 = "%XdwLink"
+XDW_ATN_LinkAtn_Title           = "%LinkAtnTitle"
+XDW_ATN_OtherFilePath           = "%OtherFilePath"
+XDW_ATN_OtherFilePath_Relative  = "%OtherFilePathRelative"
+XDW_ATN_MailAddress             = "%MailAddress"
+XDW_ATN_BorderStyle             = "%BorderStyle"
+XDW_ATN_BorderWidth             = "%BorderWidth"
+XDW_ATN_BorderColor             = "%BorderColor"
+XDW_ATN_BorderTransparent       = "%BorderTransparent"
+XDW_ATN_BorderType              = "%BorderType"
+XDW_ATN_FillStyle               = "%FillStyle"
+XDW_ATN_FillColor               = "%FillColor"
+XDW_ATN_FillTransparent         = "%FillTransparent"
+XDW_ATN_ArrowheadType           = "%ArrowheadType"
+XDW_ATN_ArrowheadStyle          = "%ArrowheadStyle"
+XDW_ATN_WordWrap                = "%WordWrap"
+XDW_ATN_TextDirection           = "%TextDirection"
+XDW_ATN_TextOrientation         = "%TextOrientation"
+XDW_ATN_LineSpace               = "%LineSpace"
+XDW_ATN_AutoResize              = "%AutoResize"
+XDW_ATN_Invisible               = "%Invisible"
+XDW_ATN_PageFrom                = "%PageFrom"
+XDW_ATN_XdwNameInXbd            = "%XdwNameInXbd"
+XDW_ATN_TopField                = "%TopField"
+XDW_ATN_BottomField             = "%BottomField"
+XDW_ATN_DateStyle               = "%DateStyle"
+XDW_ATN_YearField               = "%YearField"
+XDW_ATN_MonthField              = "%MonthField"
+XDW_ATN_DayField                = "%DayField"
+XDW_ATN_BasisYearStyle          = "%BasisYearStyle"
+XDW_ATN_BasisYear               = "%BasisYear"
+XDW_ATN_DateField_FirstChar     = "%DateFieldFirstChar"
+XDW_ATN_Alignment               = "%Alignment"
+XDW_ATN_LeftRightMargin         = "%LeftRightMargin"
+XDW_ATN_TopBottomMargin         = "%TopBottomMargin"
+XDW_ATN_VerPosition             = "%VerPosition"
+XDW_ATN_StartingNumber          = "%StartingNumber"
+XDW_ATN_Digit                   = "%Digit"
+XDW_ATN_PageRange               = "%PageRange"
+XDW_ATN_BeginningPage           = "%BeginningPage"
+XDW_ATN_EndingPage              = "%EndingPage"
+XDW_ATN_Zoom                    = "%Zoom"
+XDW_ATN_ImageFile               = "%ImageFile"
+XDW_ATN_Points                  = "%Points"
+XDW_ATN_DateFormat              = "%DateFormat"
+XDW_ATN_DateOrder               = "%DateOrder"
+XDW_ATN_TextSpacing             = "%Spacing"
+XDW_ATN_TextTopMargin           = "%TopMargin"
+XDW_ATN_TextLeftMargin          = "%LeftMargin"
+XDW_ATN_TextBottomMargin        = "%BottomMargin"
+XDW_ATN_TextRightMargin         = "%RightMargin"
+XDW_ATN_TextAutoResizeHeight    = "%AutoResizeHeight"
+XDW_ATN_GUID                    = "%CustomAnnGuid"
+XDW_ATN_CustomData              = "%CustomAnnCustomData"
+
+XDW_PROP_TITLE                  = "%Title"
+XDW_PROP_SUBJECT                = "%Subject"
+XDW_PROP_AUTHOR                 = "%Author"
+XDW_PROP_KEYWORDS               = "%Keywords"
+XDW_PROP_COMMENTS               = "%Comments"
+
+XDW_PROPW_TITLE                 = "%Title"
+XDW_PROPW_SUBJECT               = "%Subject"
+XDW_PROPW_AUTHOR                = "%Author"
+XDW_PROPW_KEYWORDS              = "%Keywords"
+XDW_PROPW_COMMENTS              = "%Comments"
+
+XDW_COLOR_NONE                  = 0x010101
+XDW_COLOR_BLACK                 = 0x000000
+XDW_COLOR_MAROON                = 0x000080
+XDW_COLOR_GREEN                 = 0x008000
+XDW_COLOR_OLIVE                 = 0x008080
+XDW_COLOR_NAVY                  = 0x800000
+XDW_COLOR_PURPLE                = 0x800080
+XDW_COLOR_TEAL                  = 0x808000
+XDW_COLOR_GRAY                  = 0x808080
+XDW_COLOR_SILVER                = 0xC0C0C0
+XDW_COLOR_RED                   = 0x0000FF
+XDW_COLOR_LIME                  = 0x00FF00
+XDW_COLOR_YELLOW                = 0x00FFFF
+XDW_COLOR_BLUE                  = 0xFF0000
+XDW_COLOR_FUCHIA                = 0xFF00FF
+XDW_COLOR_AQUA                  = 0xFFFF00
+XDW_COLOR_WHITE                 = 0xFFFFFF
+XDW_COLOR_FUSEN_RED             = 0xFFC2FF
+XDW_COLOR_FUSEN_BLUE            = 0xFFBF9D
+XDW_COLOR_FUSEN_YELLOW          = 0x64FFFF
+XDW_COLOR_FUSEN_LIME            = 0xC2FF9D
+XDW_COLOR_FUSEN_PALE_RED        = 0xE1D7FF
+XDW_COLOR_FUSEN_PALE_BLUE       = 0xFAE1C8
+XDW_COLOR_FUSEN_PALE_YELLOW     = 0xC3FAFF
+XDW_COLOR_FUSEN_PALE_LIME       = 0xD2FACD
+
+XDW_FS_ITALIC_FLAG              = 1
+XDW_FS_BOLD_FLAG                = 2
+XDW_FS_UNDERLINE_FLAG           = 4
+XDW_FS_STRIKEOUT_FLAG           = 8
+
+XDW_LT_LINK_TO_ME               = 0
+XDW_LT_LINK_TO_XDW              = 1
+XDW_LT_LINK_TO_URL              = 2
+XDW_LT_LINK_TO_OTHERFILE        = 3
+XDW_LT_LINK_TO_MAILADDR         = 4
+
+XDW_PF_XDW                      = 0
+XDW_PF_XBD                      = 1
+XDW_PF_XDW_IN_XBD               = 2
 
 
 # C types and structures used in xdwapi.dll
@@ -1183,10 +1311,10 @@ def XDW_SetUserAttribute(documentHandle, attributeName, attributeValue):
     size = attributeValue and len(attributeValue) or 0
     return DLL.XDW_SetUserAttribute(documentHandle, attributeName, attributeValue, size, NULL)
 
-def XDW_GetAnnotationInformation(documentHandle, page, annotationHandle, index):
-    """XDW_GetAnnotationInformation(documentHandle, page, annotationHandle, index) --> annotationInfo"""
+def XDW_GetAnnotationInformation(documentHandle, page, parent_annotationHandle, index):
+    """XDW_GetAnnotationInformation(documentHandle, page, parent_annotationHandle, index) --> annotationInfo"""
     annotationInfo = XDW_ANNOTATION_INFO()
-    TRY(DLL.XDW_GetAnnotationInformation, documentHandle, page, annotationHandle, index, byref(annotationInfo), NULL)
+    TRY(DLL.XDW_GetAnnotationInformation, documentHandle, page, ptr(parent_annotationHandle), index, byref(annotationInfo), NULL)
     return annotationInfo
 
 @STRING

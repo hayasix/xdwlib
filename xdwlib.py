@@ -26,88 +26,97 @@ except NameError:
     VALID_DOCUMENT_HANDLES = []
  
 
-XDW_DOCUMENT_TYPE = {
-    XDW_DT_DOCUMENT:        "DOCUMENT",
-    XDW_DT_BINDER:          "BINDER",
-    }
-XDW_DOCUMENT_TYPE_R = dict([(v, k) for (k, v) in XDW_DOCUMENT_TYPE.items()])
-def normalize_document_type(document_type):
-    if isinstance(document_type, basestring):
-        return XDW_DOCUMENT_TYPE_R.get(str(document_type).upper(), XDW_DT_DOCUMENT)
-    return document_type
+class XDWConstants(object):
+
+    """DocuWorks constant (internal ID) table with reverse lookup"""
+
+    def __init__(self, constants, default=None):
+        self.constants = constants
+        self.reverse = dict([(v, k) for (k, v) in constants.items()])
+        self.default = default
+
+    def __getitem__(self, key):
+        return self.constants[key]  # Invalid key should raise exception.
+
+    def inner(self, value):
+        return self.reverse.get(value, self.default)
+ 
+    def normalize(self, key_or_value):
+        if isinstance(key_or_value, basestring):
+            return self.reverse.get(str(key_or_value).upper(), self.default)
+        return key_or_value
 
 
-XDW_TEXT_TYPE = {
-    XDW_TEXT_UNKNOWN:       "UNKNOWN",
-    XDW_TEXT_MULTIBYTE:     "MULTIBYTE",
-    XDW_TEXT_UNICODE:       "UNICODE",
-    }
-XDW_TEXT_TYPE_R = dict([(v, k) for (k, v) in XDW_TEXT_TYPE.items()])
-def normalize_text_type(text_type):
-    if isinstance(text_type, basestring):
-        return XDW_TEXT_TYPE_R.get(str(text_type).upper, XDW_TEXT_UNICODE)
-    return text_type
-
-
-XDW_BINDER_COLOR = {  # 0xBBGGRR, neutral colors applied only for binders.
-    XDW_BINDER_COLOR_0:     0x663300,   # neutral navy (紺)
-    XDW_BINDER_COLOR_1:     0x336600,   # neutral green (緑)
-    XDW_BINDER_COLOR_2:     0xff6633,   # neutral bule (青)
-    XDW_BINDER_COLOR_3:     0x66ffff,   # neutral yellow (黄)
-    XDW_BINDER_COLOR_4:     0x3366ff,   # neutral orange (オレンジ)
-    XDW_BINDER_COLOR_5:     0x6633ff,   # neutral red (赤)
-    XDW_BINDER_COLOR_6:     0xff00ff,   # fuchsia (赤紫)
-    XDW_BINDER_COLOR_7:     0xffccff,   # neutral pink (ピンク)
-    XDW_BINDER_COLOR_8:     0xff99cc,   # neutral purple (紫)
-    XDW_BINDER_COLOR_9:     0x333366,   # neutral brown (茶)
-    XDW_BINDER_COLOR_10:    0x339999,   # neutral olive (オリーブ)
-    XDW_BINDER_COLOR_11:    0x00ff00,   # lime (緑)
-    XDW_BINDER_COLOR_12:    0xffff00,   # aqua (水色)
-    XDW_BINDER_COLOR_13:    0xccffff,   # neutral lightyellow (クリーム)
-    XDW_BINDER_COLOR_14:    0xbbbbbb,   # neutral silver (灰色)
-    XDW_BINDER_COLOR_15:    0xffffff,   # white (白)
-    }
-XDW_BINDER_COLOR_R = dict([(v, k) for (k, v) in XDW_BINDER_COLOR.items()])
-def normalize_binder_color(color):
-    if 0x100 <= color:
-        return XDW_BINDER_COLOR_R.get(color, XDW_BINDER_COLOR_5)
-    return color
+XDW_DOCUMENT_TYPE = XDWConstants({
+        XDW_DT_DOCUMENT:        "DOCUMENT",
+        XDW_DT_BINDER:          "BINDER",
+        }, default=XDW_DT_DOCUMENT)
+XDW_TEXT_TYPE = XDWConstants({
+        XDW_TEXT_UNKNOWN:       "UNKNOWN",
+        XDW_TEXT_MULTIBYTE:     "MULTIBYTE",
+        XDW_TEXT_UNICODE:       "UNICODE",
+        }, default=XDW_TEXT_UNKNOWN)
+XDW_PAGE_TYPE = XDWConstants({
+        XDW_PGT_FROMIMAGE:      "IMAGE",
+        XDW_PGT_FROMAPPL:       "APPLICATION",
+        XDW_PGT_NULL:           "UNKNOWN",
+        }, default=XDW_PGT_NULL)
+XDW_BINDER_SIZE = XDWConstants({
+        XDW_SIZE_FREE:          "FREE",
+        XDW_SIZE_A3_PORTRAIT:   "A3R",
+        XDW_SIZE_A3_LANDSCAPE:  "A3",
+        XDW_SIZE_A4_PORTRAIT:   "A4R",
+        XDW_SIZE_A4_LANDSCAPE:  "A4",
+        XDW_SIZE_A5_PORTRAIT:   "A5R",
+        XDW_SIZE_A5_LANDSCAPE:  "A5",
+        XDW_SIZE_B4_PORTRAIT:   "B4R",
+        XDW_SIZE_B4_LANDSCAPE:  "B4",
+        XDW_SIZE_B5_PORTRAIT:   "B5R",
+        XDW_SIZE_B5_LANDSCAPE:  "B5",
+        }, default=XDW_SIZE_FREE)
+XDW_BINDER_COLOR = XDWConstants({
+        # Here we describe colors in RRGGBB format, though DocuWorks
+        # inner color representation is BBGGRR.
+        XDW_BINDER_COLOR_0:     "003366",   # neutral navy (紺)
+        XDW_BINDER_COLOR_1:     "006633",   # neutral green (緑)
+        XDW_BINDER_COLOR_2:     "3366FF",   # neutral bule (青)
+        XDW_BINDER_COLOR_3:     "FFFF66",   # neutral yellow (黄)
+        XDW_BINDER_COLOR_4:     "FF6633",   # neutral orange (オレンジ)
+        XDW_BINDER_COLOR_5:     "FF3366",   # neutral red (赤)
+        XDW_BINDER_COLOR_6:     "FF00FF",   # fuchsia (赤紫)
+        XDW_BINDER_COLOR_7:     "FFCCFF",   # neutral pink (ピンク)
+        XDW_BINDER_COLOR_8:     "CC99FF",   # neutral purple (紫)
+        XDW_BINDER_COLOR_9:     "663333",   # neutral brown (茶)
+        XDW_BINDER_COLOR_10:    "999933",   # neutral olive (オリーブ)
+        XDW_BINDER_COLOR_11:    "00FF00",   # lime (緑)
+        XDW_BINDER_COLOR_12:    "00FFFF",   # aqua (水色)
+        XDW_BINDER_COLOR_13:    "FFFFCC",   # neutral lightyellow (クリーム)
+        XDW_BINDER_COLOR_14:    "BBBBBB",   # neutral silver (灰色)
+        XDW_BINDER_COLOR_15:    "FFFFFF",   # white (白)
+        }, default=XDW_BINDER_COLOR_5)
+XDW_ANNOTATION_TYPE = XDWConstants({
+        XDW_AID_FUSEN:          "FUSEN",
+        XDW_AID_TEXT:           "TEXT",
+        XDW_AID_STAMP:          "STAMP",
+        XDW_AID_STRAIGHTLINE:   "STRAIGHTLINE",
+        XDW_AID_RECTANGLE:      "RECTANGLE",
+        XDW_AID_ARC:            "ARC",
+        XDW_AID_POLYGON:        "POLYGON",
+        XDW_AID_MARKER:         "MARKER",
+        XDW_AID_LINK:           "LINK",
+        XDW_AID_PAGEFORM:       "PAGEFORM",
+        XDW_AID_OLE:            "OLE",
+        XDW_AID_BITMAP:         "BITMAP",
+        XDW_AID_RECEIVEDSTAMP:  "RECEIVEDSTAMP",
+        XDW_AID_CUSTOM:         "CUSTOM",
+        XDW_AID_TITLE:          "TITLE",
+        XDW_AID_GROUP:          "GROUP",
+        }, default=XDW_AID_TEXT)
  
 
-XDW_PAGE_TYPE = {
-    XDW_PGT_FROMIMAGE:      "IMAGE",
-    XDW_PGT_FROMAPPL:       "APPLICATION",
-    XDW_PGT_NULL:           "UNKNOWN",
-    }
-XDW_PAGE_TYPE_R = dict([(v, k) for (k, v) in XDW_PAGE_TYPE.items()])
-def normalize_page_type(page_type):
-    if isinstance(page_type, basestring):
-        return XDW_PAGE_TYPE_R.get(str(page_type).upper, XDW_PGT_NULL)
-    return page_type
-
-
-XDW_BINDER_SIZE = {
-    XDW_SIZE_FREE:          "FREE",
-    XDW_SIZE_A3_PORTRAIT:   "A3R",
-    XDW_SIZE_A3_LANDSCAPE:  "A3",
-    XDW_SIZE_A4_PORTRAIT:   "A4R",
-    XDW_SIZE_A4_LANDSCAPE:  "A4",
-    XDW_SIZE_A5_PORTRAIT:   "A5R",
-    XDW_SIZE_A5_LANDSCAPE:  "A5",
-    XDW_SIZE_B4_PORTRAIT:   "B4R",
-    XDW_SIZE_B4_LANDSCAPE:  "B4",
-    XDW_SIZE_B5_PORTRAIT:   "B5R",
-    XDW_SIZE_B5_LANDSCAPE:  "B5",
-    }
-XDW_BINDER_SIZE_R = dict([(v, k) for (k, v) in XDW_BINDER_SIZE.items()])
-def normalize_binder_size(size):
-    if isinstance(size, basestring):
-        return XDW_BINDER_SIZE_R.get(str(size).upper(), XDW_SIZE_A4_PORTRAIT)
-    return size
-
-
 def open(path, readonly=False, authenticate=True):
-    doctype = {".XDW": XDWDocument, ".XBD": XDWBinder}[splitext(basename(path))[1].upper]
+    """General opener"""
+    doctype = {".XDW": XDWDocument, ".XBD": XDWBinder}[splitext(basename(path))[1].upper()]
     return doctype(path, readonly=readonly, authenticate=authenticate)
 
 
@@ -122,6 +131,7 @@ def create_document_from_image(
         horizontal_position=XDW_CREATE_HCENTER,
         vertical_position=XDW_CREATE_VCENTER,
         ):
+    """A XDW generator"""
     create_option = XDW_CREATE_OPTION()
     create_option.nSize = normalize_binder_size(size)
     create_option.nFitImage = fit_image
@@ -135,10 +145,55 @@ def create_document_from_image(
 
 
 def create_binder(path, color=XDW_BINDER_COLOR_0, size=XDW_SIZE_FREE):
+    """The XBD generator"""
     XDW_CreateBinder(path, color, size)
 
 
+class XDWAnnotation(object):
+
+    """An annotation on DocuWorks document page"""
+
+    def __init__(self, page, index):
+        self.page = page
+        self.index = index
+        info = XDW_GetAnnotationInformation(page.xdw.document_handle, page.page+1, None, index+1)
+        self.annotation_handle = info.handle
+        self.horizontal_position = info.nHorPos
+        self.vertical_position = info.nVerPos
+        self.width = info.nWidth
+        self.height = info.nHeight
+        self.annotation_type = info.nAnnotationType
+        self.child_annotations = info.nChildAnnotations
+
+    def __str__(self):
+        return "XDWAnnotation(%s P%d #%d: type=%s)" % (
+                self.page.xdw.name,
+                self.page.page,
+                self.index,
+                XDW_ANNOTATION_TYPE[self.annotation_type],
+                )
+
+    def __getattr__(self, attr):
+        if attr == "text":
+            at = self.annotation_type
+            ah = self.annotation_handle
+            ga = XDW_GetAnnotationAttributeW
+            if at == XDW_AID_STAMP:
+                return "%s <DATE> %s" % (
+                        ga(ah, XDW_ATN_TopField, CODEPAGE)[0],
+                        ga(ah, XDW_ATN_BottomField, CODEPAGE)[0],
+                        )
+            if at == XDW_AID_TEXT:
+                return ga(ah, XDW_ATN_Text, CODEPAGE)[0]
+            if at == XDW_AID_LINK:
+                return ga(ah, XDW_ATN_Caption, CODEPAGE)[0]
+            return None
+        return getattr(self.page, attr)  # escalate
+
+
 class XDWPage(object):
+
+    """A page of DocuWorks document"""
     
     @staticmethod
     def normalize_resolution(n):
@@ -168,7 +223,7 @@ class XDWPage(object):
     def __getattr__(self, attr):
         if attr == "text":
             return XDW_GetPageTextToMemoryW(self.xdw.document_handle, self.page+1)
-        return getattr(self.xdw, attr)
+        return getattr(self.xdw, attr)  # escalate
 
     def __str__(self):
         return "XDWPage(page %d: %.2f*%.2fmm, %s, %d annotations)" % (
@@ -178,7 +233,14 @@ class XDWPage(object):
                 self.annotations,
                 )
 
+    def annotation(self, n):
+        """annotation(n) --> XDWAnnotation"""
+        return XDWAnnotation(self, n)
+        
+
 class XDWDocument(object):
+
+    """A DocuWorks document"""
 
     def register(self):
         VALID_DOCUMENT_HANDLES.append(self.document_handle)
@@ -241,20 +303,30 @@ class XDWDocument(object):
                 self.documents,
                 )
 
+    def __getattr__(self, attr):
+        if attr == "text":
+            return "\f".join([page.text for page in self])
+        return None
+
     def page(self, n):
+        """page(n) --> XDWPage"""
         return XDWPage(self, n)
 
     def __len__(self):
         return self.pages
 
     def is_document(self):
+        """is_document() --> True"""
         return True
     
     def is_binder(self):
+        """is_binder() --> False"""
         return False
 
 
 class XDWDocumentInBinder(object):
+
+    """A document part of DocuWorks binder"""
 
     def __init__(self, binder, position):
         self.binder = binder 
@@ -277,26 +349,37 @@ class XDWDocumentInBinder(object):
         return XDWPage(self.binder, n)
 
     def __str__(self):
-        return "XDWDocumentInBinder(%s, Chap.%d: %d pages, %d files attached)" % (
-                self.binder.name,
+        return "XDWDocumentInBinder(%s = %s[%d]: %d pages, %d files attached)" % (
+                self.name,
+                self.binder.name, self.position,
                 self.position + 1,
                 self.pages,
                 self.original_data,
                 )
 
-    def page(n):
+    def page(self, n):
+        """page(n) --> XDWPage"""
         return XDWPage(self.binder, self.start_page + n)
 
     def __len__(self):
         return self.pages
 
+    def __getattr__(self, attr):
+        if attr == "text":
+            return "\f".join([page.text for page in self])
+        return None
+
 
 class XDWBinder(XDWDocument):
 
+    """A DocuWorks Binder"""
+
     def is_document(self):
+        """is_document() --> False"""
         return False
     
     def is_binder(self):
+        """is_binder() --> True"""
         return True
 
     def __init__(self, path, readonly=False, authenticate=True):
@@ -313,6 +396,7 @@ class XDWBinder(XDWDocument):
                 )
     
     def document_pages(self):
+        """document_pages() --> list of page count of each document part of the binder"""
         pages = []
         for pos in range(self.documents):
             docinfo = XDW_GetDocumentInformationInBinder(self.document_handle, pos+1)
@@ -320,9 +404,11 @@ class XDWBinder(XDWDocument):
         return pages
 
     def document(self, position):
+        """document(position) --> XDWDocument"""
         return XDWDocumentInBinder(self, position)
 
     def page(self, n):
+        """page(n) --> XDWPage"""
         return XDWPage(self, n)
 
     def __iter__(self):
@@ -338,4 +424,9 @@ class XDWBinder(XDWDocument):
 
     def __len__(self):
         return self.documents
+
+    def __getattr__(self, attr):
+        if attr == "text":
+            return "\f".join([doc.text for doc in self])
+        return None
 
