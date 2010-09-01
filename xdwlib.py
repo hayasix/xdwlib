@@ -223,6 +223,8 @@ class XDWPage(object):
     def __getattr__(self, attr):
         if attr == "text":
             return XDW_GetPageTextToMemoryW(self.xdw.document_handle, self.page+1)
+        if attr == "annotation_text":
+            return "\r".join([ann.text for ann in self.annotations() if ann.text])
         return getattr(self.xdw, attr)  # escalate
 
     def __str__(self):
@@ -237,6 +239,27 @@ class XDWPage(object):
         """annotation(n) --> XDWAnnotation"""
         return XDWAnnotation(self, n)
         
+    def collect_annotations(self, rect=None, types=None, half_open=True):
+        if rect and not half_open:
+            self.right += 1
+            self.bottom += 1
+        if types and not isinstance(types, (list, tuple)):
+            types = [types]
+        types = [XDW_ANNOTATION_TYPE.normalize(t) for t in types]
+        annlist = []
+        for i in range(self.annotations):
+            ann = self.annotation(i)
+            if rect and not (
+                    rect.left <= ann.horizontal_position and
+                    ann.horizontal_position + ann.width - 1 < rect.right and
+                    rect.top <= ann.vertical_position and
+                    ann.vertical_position + ann.height - 1 < rect.bottom):
+                continue
+            if types and not ann.annotation_type in types:
+                continue
+            annlist.append(ann)
+        return annlist
+
 
 class XDWDocument(object):
 
