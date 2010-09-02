@@ -153,10 +153,17 @@ class XDWAnnotation(object):
 
     """An annotation on DocuWorks document page"""
 
-    def __init__(self, page, index):
+    def __init__(self, page, index, parent_annotation=None):
         self.page = page
+        self.parent_annotation = parent_annotation
         self.index = index
-        info = XDW_GetAnnotationInformation(page.xdw.document_handle, page.page+1, None, index+1)
+        pah = parent_annotation and parent_annotation.annotation_handle or None
+        # TODO:BEGIN
+        # Next line raises "WindowsError: exception: access violation reading 0xFFFFFFFF". Why???
+        #info = XDW_GetAnnotationInformation(page.xdw.document_handle, page.page+1, pah, index+1)
+        info = XDW_ANNOTATION_INFO()
+        TRY(DLL.XDW_GetAnnotationInformation, page.xdw.document_handle, page.page+1, pah, index+1, byref(info), NULL)
+        # TODO:END
         self.annotation_handle = info.handle
         self.horizontal_position = info.nHorPos
         self.vertical_position = info.nVerPos
@@ -166,10 +173,9 @@ class XDWAnnotation(object):
         self.child_annotations = info.nChildAnnotations
 
     def __str__(self):
-        return "XDWAnnotation(%s P%d #%d: type=%s)" % (
+        return "XDWAnnotation(%s P%d: type=%s)" % (
                 self.page.xdw.name,
                 self.page.page,
-                self.index,
                 XDW_ANNOTATION_TYPE[self.annotation_type],
                 )
 
@@ -179,16 +185,36 @@ class XDWAnnotation(object):
             ah = self.annotation_handle
             ga = XDW_GetAnnotationAttributeW
             if at == XDW_AID_STAMP:
-                return "%s <DATE> %s" % (
+                text = "%s <DATE> %s" % (
                         ga(ah, XDW_ATN_TopField, CODEPAGE)[0],
                         ga(ah, XDW_ATN_BottomField, CODEPAGE)[0],
                         )
-            if at == XDW_AID_TEXT:
-                return ga(ah, XDW_ATN_Text, CODEPAGE)[0]
-            if at == XDW_AID_LINK:
-                return ga(ah, XDW_ATN_Caption, CODEPAGE)[0]
-            return None
+            elif at == XDW_AID_TEXT:
+                text = ga(ah, XDW_ATN_Text, CODEPAGE)[0]
+            elif at == XDW_AID_LINK:
+                text = ga(ah, XDW_ATN_Caption, CODEPAGE)[0]
+            else:
+                text = None
+            text = [text]
+            if self.child_annotations:
+                text.extend([self.annotation(i).text \
+                    for i in range(self.child_annotations)])
+            return "\v".join([t for t in text if isinstance(t, basestring)])
+        elif attr == "annotations":
+            return self.child_annotations
         return getattr(self.page, attr)  # escalate
+
+    def annotation(self, index):
+        if self.child_annotations <= index:
+            if self.child_annotations < 1:
+                raise ValueError("No annotation available")
+            else:
+                raise ValueError(
+                        "Illegal annotation index %d not in 0..%d" % (
+                        index, self.child_annotations-1))
+        return XDWAnnotation(self.page, index, parent_annotation=self)
+
+    # TODO: implement collect_annotations() as well as XDWPage class.
 
 
 class XDWPage(object):
@@ -224,7 +250,7 @@ class XDWPage(object):
         if attr == "text":
             return XDW_GetPageTextToMemoryW(self.xdw.document_handle, self.page+1)
         if attr == "annotation_text":
-            return "\r".join([ann.text for ann in self.annotations() if ann.text])
+            return "\r".join([ann.text for ann in self.collect_annotations() if ann.text])
         return getattr(self.xdw, attr)  # escalate
 
     def __str__(self):
@@ -243,9 +269,10 @@ class XDWPage(object):
         if rect and not half_open:
             self.right += 1
             self.bottom += 1
-        if types and not isinstance(types, (list, tuple)):
-            types = [types]
-        types = [XDW_ANNOTATION_TYPE.normalize(t) for t in types]
+        if types:
+            if not isinstance(types, (list, tuple)):
+                types = [types]
+            types = [XDW_ANNOTATION_TYPE.normalize(t) for t in types]
         annlist = []
         for i in range(self.annotations):
             ann = self.annotation(i)

@@ -112,8 +112,8 @@ class XDWError(Exception):
         }
 
     def __init__(self, error_code):
+        error_code = (error_code + 0x100000000) & 0xffffffff
         msg = XDWError.messages.get(error_code, "XDW_E_UNDEFINED")
-        error_code = (error_code + 0x100000000) and 0xffffffff
         Exception.__init__(self, "%s (%08X)" % (msg, error_code))
 
 
@@ -1314,7 +1314,7 @@ def XDW_SetUserAttribute(documentHandle, attributeName, attributeValue):
 def XDW_GetAnnotationInformation(documentHandle, page, parent_annotationHandle, index):
     """XDW_GetAnnotationInformation(documentHandle, page, parent_annotationHandle, index) --> annotationInfo"""
     annotationInfo = XDW_ANNOTATION_INFO()
-    TRY(DLL.XDW_GetAnnotationInformation, documentHandle, page, ptr(parent_annotationHandle), index, byref(annotationInfo), NULL)
+    TRY(DLL.XDW_GetAnnotationInformation, documentHandle, page, parent_annotationHandle, index, byref(annotationInfo), NULL)
     return annotationInfo
 
 @STRING
