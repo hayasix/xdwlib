@@ -15,7 +15,7 @@ FOR A PARTICULAR PURPOSE.
 
 from ctypes import *
 
-DLL = windll.LoadLibrary(r"C:\WINDOWS\system32\xdwapi.dll")
+DLL = windll.LoadLibrary("xdwapi.dll")
 
 
 # decorators and utility functions
