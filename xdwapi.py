@@ -546,11 +546,11 @@ XDW_PROP_AUTHOR                 = "%Author"
 XDW_PROP_KEYWORDS               = "%Keywords"
 XDW_PROP_COMMENTS               = "%Comments"
 
-XDW_PROPW_TITLE                 = "%Title"
-XDW_PROPW_SUBJECT               = "%Subject"
-XDW_PROPW_AUTHOR                = "%Author"
-XDW_PROPW_KEYWORDS              = "%Keywords"
-XDW_PROPW_COMMENTS              = "%Comments"
+XDW_PROPW_TITLE                 = u"%Title"
+XDW_PROPW_SUBJECT               = u"%Subject"
+XDW_PROPW_AUTHOR                = u"%Author"
+XDW_PROPW_KEYWORDS              = u"%Keywords"
+XDW_PROPW_COMMENTS              = u"%Comments"
 
 XDW_COLOR_NONE                  = 0x010101
 XDW_COLOR_BLACK                 = 0x000000

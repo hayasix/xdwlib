@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #vim:fileencoding=cp932:fileformat=dos
 
-"""xdwlib.py -- DocuWorks Library
+"""xdwdata.py -- DocuWorks data definitions
 
 Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>  All rights reserved.
 
@@ -13,7 +13,7 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE. 
 """
 
-from os.path import basename, splitext
+from datetime import datetime
 
 from xdwapi import *
 
@@ -25,6 +25,14 @@ try:
 except NameError:
     VALID_DOCUMENT_HANDLES = []
  
+
+ANSI_CHARSET        = 0
+DEFAULT_CHARSET     = 1
+MAC_CHARSET         = 77
+OEM_CHARSET         = 255
+SHIFTJIS_CHARSET    = 128
+SYMBOL_CHARSET      = 2
+
 
 class XDWConstants(object):
 
@@ -112,7 +120,87 @@ XDW_ANNOTATION_TYPE = XDWConstants({
         XDW_AID_TITLE:          "TITLE",
         XDW_AID_GROUP:          "GROUP",
         }, default=XDW_AID_TEXT)
- 
+XDW_ANNOTATION_ATTRIBUTE = XDWConstants({
+        XDW_ATN_Text:                   "%Text",
+        XDW_ATN_FontName:               "%FontName",
+        XDW_ATN_FontStyle:              "%FontStyle",
+        XDW_ATN_FontSize:               "%FontSize",
+        XDW_ATN_ForeColor:              "%ForeColor",
+        XDW_ATN_FontPitchAndFamily:     "%FontPitchAndFamily",
+        XDW_ATN_FontCharSet:            "%FontCharSet",
+        XDW_ATN_BackColor:              "%BackColor",
+        XDW_ATN_Caption:                "%Caption",
+        XDW_ATN_Url:                    "%Url",
+        XDW_ATN_XdwPath:                "%XdwPath",
+        XDW_ATN_ShowIcon:               "%ShowIcon",
+        XDW_ATN_LinkType:               "%LinkType",
+        XDW_ATN_XdwPage:                "%XdwPage",
+        XDW_ATN_Tooltip:                "%Tooltip",
+        XDW_ATN_Tooltip_String:         "%TooltipString",
+        XDW_ATN_XdwPath_Relative:       "%XdwPathRelative",
+        XDW_ATN_XdwLink:                "%XdwLink",
+        XDW_ATN_LinkAtn_Title:          "%LinkAtnTitle",
+        XDW_ATN_OtherFilePath:          "%OtherFilePath",
+        XDW_ATN_OtherFilePath_Relative: "%OtherFilePathRelative",
+        XDW_ATN_MailAddress:            "%MailAddress",
+        XDW_ATN_BorderStyle:            "%BorderStyle",
+        XDW_ATN_BorderWidth:            "%BorderWidth",
+        XDW_ATN_BorderColor:            "%BorderColor",
+        XDW_ATN_BorderTransparent:      "%BorderTransparent",
+        XDW_ATN_BorderType:             "%BorderType",
+        XDW_ATN_FillStyle:              "%FillStyle",
+        XDW_ATN_FillColor:              "%FillColor",
+        XDW_ATN_FillTransparent:        "%FillTransparent",
+        XDW_ATN_ArrowheadType:          "%ArrowheadType",
+        XDW_ATN_ArrowheadStyle:         "%ArrowheadStyle",
+        XDW_ATN_WordWrap:               "%WordWrap",
+        XDW_ATN_TextDirection:          "%TextDirection",
+        XDW_ATN_TextOrientation:        "%TextOrientation",
+        XDW_ATN_LineSpace:              "%LineSpace",
+        XDW_ATN_AutoResize:             "%AutoResize",
+        XDW_ATN_Invisible:              "%Invisible",
+        XDW_ATN_PageFrom:               "%PageFrom",
+        XDW_ATN_XdwNameInXbd:           "%XdwNameInXbd",
+        XDW_ATN_TopField:               "%TopField",
+        XDW_ATN_BottomField:            "%BottomField",
+        XDW_ATN_DateStyle:              "%DateStyle",
+        XDW_ATN_YearField:              "%YearField",
+        XDW_ATN_MonthField:             "%MonthField",
+        XDW_ATN_DayField:               "%DayField",
+        XDW_ATN_BasisYearStyle:         "%BasisYearStyle",
+        XDW_ATN_BasisYear:              "%BasisYear",
+        XDW_ATN_DateField_FirstChar:    "%DateFieldFirstChar",
+        XDW_ATN_Alignment:              "%Alignment",
+        XDW_ATN_LeftRightMargin:        "%LeftRightMargin",
+        XDW_ATN_TopBottomMargin:        "%TopBottomMargin",
+        XDW_ATN_VerPosition:            "%VerPosition",
+        XDW_ATN_StartingNumber:         "%StartingNumber",
+        XDW_ATN_Digit:                  "%Digit",
+        XDW_ATN_PageRange:              "%PageRange",
+        XDW_ATN_BeginningPage:          "%BeginningPage",
+        XDW_ATN_EndingPage:             "%EndingPage",
+        XDW_ATN_Zoom:                   "%Zoom",
+        XDW_ATN_ImageFile:              "%ImageFile",
+        XDW_ATN_Points:                 "%Points",
+        XDW_ATN_DateFormat:             "%DateFormat",
+        XDW_ATN_DateOrder:              "%DateOrder",
+        XDW_ATN_TextSpacing:            "%Spacing",
+        XDW_ATN_TextTopMargin:          "%TopMargin",
+        XDW_ATN_TextLeftMargin:         "%LeftMargin",
+        XDW_ATN_TextBottomMargin:       "%BottomMargin",
+        XDW_ATN_TextRightMargin:        "%RightMargin",
+        XDW_ATN_TextAutoResizeHeight:   "%AutoResizeHeight",
+        XDW_ATN_GUID:                   "%CustomAnnGuid",
+        XDW_ATN_CustomData:             "%CustomAnnCustomData",
+        }, default=None)
+XDW_DOCUMENT_ATTRIBUTE = XDWConstants({
+        XDW_PROPW_TITLE:                u"%Title",
+        XDW_PROPW_SUBJECT:              u"%Subject",
+        XDW_PROPW_AUTHOR:               u"%Author",
+        XDW_PROPW_KEYWORDS:             u"%Keywords",
+        XDW_PROPW_COMMENTS:             u"%Comments",
+        }, default=None)
+
 
 def open(path, readonly=False, authenticate=True):
     """General opener"""
@@ -207,8 +295,8 @@ class XDWAnnotation(object):
                 XDW_ANNOTATION_TYPE[self.annotation_type],
                 )
 
-    def __getattr__(self, attr):
-        if attr == "text":
+    def __getattr__(self, name):
+        if name == "text":
             at = self.annotation_type
             ah = self.annotation_handle
             ga = XDW_GetAnnotationAttributeW
@@ -224,15 +312,29 @@ class XDWAnnotation(object):
             else:
                 text = None
             return text
-        elif attr == "fulltext":
+        if name == "fulltext":
             if self.annotations:
                 text = [self.text]
                 text.extend([self.annotation(i).fulltext for i in range(self.annotations)])
                 return "\v".join([t for t in text if isinstance(t, basestring)])
             else:
                 return self.text
+        attribute_name = (name[0] == "%") and name or ("%" + name)
+        if attribute_name in XDW_ANNOTATION_ATTRIBUTE:
+            return XDW_GetAnnotationAttributeW(self.annotation_handle, attribute_name, CODEPAGE)
         raise AttributeError("'%s' object has no attribute '%s'" % (
-                self.__class__.__name__, attr))
+                self.__class__.__name__, name))
+
+    def __setattr__(self, name, value):
+        if ("%" + name) in XDW_ANNOTATION_ATTRIBUTE:
+            attribute_type = isinstance(value, basestring) and XDW_ATYPE_STRING or XDW_ATYPE_INT
+            XDW_SetAnnotationAttributeW(
+                    self.page.xdw.document_handle, self.annotation_handle,
+                    ("%" + name), attribute_type, byref(value),
+                    XDW_TEXT_MULTIBYTE, CODEPAGE)
+            return
+        raise AttributeError("'%s' object has no attribute '%s'" % (
+                self.__class__.__name__, name))
 
     def annotation(self, index):
         if self.annotations <= index:
@@ -277,15 +379,15 @@ class XDWPage(object):
         self.image_width = page_info.nImageWidth  # px
         self.image_height = page_info.nImageHeight  # px
 
-    def __getattr__(self, attr):
-        if attr == "text":
+    def __getattr__(self, name):
+        if name == "text":
             return XDW_GetPageTextToMemoryW(self.xdw.document_handle, self.page+1)
-        if attr == "annotation_text":
+        if name == "annotation_text":
             return "\v".join([a.text for a in self.find_annotations() if a.text])
-        if attr == "annotation_fulltext":
+        if name == "annotation_fulltext":
             return "\v".join([a.fulltext for a in self.find_annotations() if a.fulltext])
         raise AttributeError("'%s' object has no attribute '%s'" % (
-                self.__class__.__name__, attr))
+                self.__class__.__name__, name))
 
     def __str__(self):
         return "XDWPage(page %d: %.2f*%.2fmm, %s, %d annotations)" % (
@@ -346,6 +448,8 @@ class XDWDocument(object):
         self.documents = document_info.nDocuments
         self.binder_color = document_info.nBinderColor
         self.binder_size = document_info.nBinderSize
+        # Document attributes.
+        self.attributes = XDW_GetDocumentAttributeNumber(self.document_handle)
 
     def close(self):
         XDW_CloseDocumentHandle(self.document_handle)
@@ -375,15 +479,38 @@ class XDWDocument(object):
                 self.documents,
                 )
 
-    def __getattr__(self, attr):
-        if attr == "text":
+    def __getattr__(self, name):
+        if name == "text":
             return "\f".join(page.text for page in self)
-        if attr == "annotation_fulltext":
+        if name == "annotation_fulltext":
             return "\f".join(page.annotation_fulltext for page in self)
-        if attr == "fulltext":
+        if name == "fulltext":
             return "\f".join(page.text + "\f" + page.annotation_fulltext for page in self)
+        attribute_name = (name[0] == "%") and name or ("%" + name)
+        if attribute_name in XDW_DOCUMENT_ATTRIBUTE:
+            return XDW_GetDocumentAttributeByNameW(self.document_handle, attribute_name, CODEPAGE)[1]
         raise AttributeError("'%s' object has no attribute '%s'" % (
-                self.__class__.__name__, attr))
+                self.__class__.__name__, name))
+
+    def __setattr__(self, name, value):
+        attribute_name = (name[0] == "%") and name or ("%" + name)
+        if isinstance(value, basestring):
+            attribute_type = XDW_ATYPE_STRING
+        elif isinstance(value, bool):
+            attribute_type = XDW_ATYPE_BOOL
+        elif isinstance(value, datetime.datetime):
+            attribute_type = XDW_ATYPE_DATE
+        else:
+            attribute_type = XDW_ATYPE_INT
+        # TODO: XDW_ATYPE_OTHER should also be valid.
+        if attribute_name in XDW_DOCUMENT_ATTRIBUTE:
+            XDW_SetDocumentAttributeW(
+                    self.document_handle,
+                    attribute_name, attribute_type, byref(value),
+                    XDW_TEXT_MULTIBYTE, CODEPAGE)
+            return
+        raise AttributeError("'%s' object has no attribute '%s'" % (
+                self.__class__.__name__, name))
 
     def page(self, n):
         """page(n) --> XDWPage"""
@@ -399,6 +526,9 @@ class XDWDocument(object):
     def is_binder(self):
         """is_binder() --> False"""
         return False
+
+    def save(self):
+        XDW_SaveDocument(self.document_handle)
 
 
 class XDWDocumentInBinder(object):
@@ -441,15 +571,15 @@ class XDWDocumentInBinder(object):
     def __len__(self):
         return self.pages
 
-    def __getattr__(self, attr):
-        if attr == "text":
+    def __getattr__(self, name):
+        if name == "text":
             return "\f".join(page.text for page in self)
-        if attr == "annotation_fulltext":
+        if name == "annotation_fulltext":
             return "\f".join(page.annotation_fulltext for page in self)
-        if attr == "fulltext":
+        if name == "fulltext":
             return "\f".join(page.text + "\f" + page.annotation_fulltext for page in self)
         raise AttributeError("'%s' object has no attribute '%s'" % (
-                self.__class__.__name__, attr))
+                self.__class__.__name__, name))
 
 
 class XDWBinder(XDWDocument):
@@ -507,9 +637,9 @@ class XDWBinder(XDWDocument):
     def __len__(self):
         return self.documents
 
-    def __getattr__(self, attr):
-        if attr == "text":
+    def __getattr__(self, name):
+        if name == "text":
             return "\f".join([doc.text for doc in self])
         raise AttributeError("'%s' object has no attribute '%s'" % (
-                self.__class__.__name__, attr))
+                self.__class__.__name__, name))
 
