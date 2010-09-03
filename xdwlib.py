@@ -149,6 +149,39 @@ def create_binder(path, color=XDW_BINDER_COLOR_0, size=XDW_SIZE_FREE):
     XDW_CreateBinder(path, color, size)
 
 
+def _annotation_in(annotation, rect):  # Assume rect is half-opened.
+    return (rect.left <= annotation.horizontal_position <= rect.right - annotation.width and
+            rect.top <= annotation.vertical_position <= rect.bottom - annotation.height)
+
+
+def _find_annotations(object, recursive=False, rect=None, types=None, half_open=True):
+    if rect and not half_open:
+        rect.right += 1
+        rect.bottom += 1
+    if types:
+        if not isinstance(types, (list, tuple)):
+            types = [types]
+        types = [XDW_ANNOTATION_TYPE.normalize(t) for t in types]
+    annotation_list = []
+    for i in range(object.annotations):
+        annotation = object.annotation(i)
+        sublist = []
+        if recursive and annotation.annotations:
+            sublist = _find_annotations(annotation,
+                    recursive=recursive, rect=rect, types=types, half_open=half_open)
+        if (not rect or annotation_in(annotation, rect)) and \
+                (not types or annotation.annotation_type in types):
+            if sublist:
+                sublist.insert(0, annotation)
+                annotation_list.append(sublist)
+            else:
+                annotation_list.append(annotation)
+        elif sublist:
+            sublist.insert(0, None)
+            annotation_list.append(sublist)
+    return annotation_list
+
+
 class XDWAnnotation(object):
 
     """An annotation on DocuWorks document page"""
@@ -158,19 +191,14 @@ class XDWAnnotation(object):
         self.parent_annotation = parent_annotation
         self.index = index
         pah = parent_annotation and parent_annotation.annotation_handle or None
-        # TODO:BEGIN
-        # Next line raises "WindowsError: exception: access violation reading 0xFFFFFFFF". Why???
-        #info = XDW_GetAnnotationInformation(page.xdw.document_handle, page.page+1, pah, index+1)
-        info = XDW_ANNOTATION_INFO()
-        TRY(DLL.XDW_GetAnnotationInformation, page.xdw.document_handle, page.page+1, pah, index+1, byref(info), NULL)
-        # TODO:END
+        info = XDW_GetAnnotationInformation(page.xdw.document_handle, page.page+1, pah, index+1)
         self.annotation_handle = info.handle
         self.horizontal_position = info.nHorPos
         self.vertical_position = info.nVerPos
         self.width = info.nWidth
         self.height = info.nHeight
         self.annotation_type = info.nAnnotationType
-        self.child_annotations = info.nChildAnnotations
+        self.annotations = info.nChildAnnotations
 
     def __str__(self):
         return "XDWAnnotation(%s P%d: type=%s)" % (
@@ -195,26 +223,29 @@ class XDWAnnotation(object):
                 text = ga(ah, XDW_ATN_Caption, CODEPAGE)[0]
             else:
                 text = None
-            text = [text]
-            if self.child_annotations:
-                text.extend([self.annotation(i).text \
-                    for i in range(self.child_annotations)])
-            return "\v".join([t for t in text if isinstance(t, basestring)])
-        elif attr == "annotations":
-            return self.child_annotations
-        return getattr(self.page, attr)  # escalate
+            return text
+        elif attr == "fulltext":
+            if self.annotations:
+                text = [self.text]
+                text.extend([self.annotation(i).fulltext for i in range(self.annotations)])
+                return "\v".join([t for t in text if isinstance(t, basestring)])
+            else:
+                return self.text
+        raise AttributeError("'%s' object has no attribute '%s'" % (
+                self.__class__.__name__, attr))
 
     def annotation(self, index):
-        if self.child_annotations <= index:
-            if self.child_annotations < 1:
-                raise ValueError("No annotation available")
+        if self.annotations <= index:
+            if self.annotations < 1:
+                raise AttributeError("annotation object has no children")
             else:
-                raise ValueError(
-                        "Illegal annotation index %d not in 0..%d" % (
-                        index, self.child_annotations-1))
+                raise IndexError(
+                        "annotation index %d out of range(0..%d)" % (
+                        index, self.annotations-1))
         return XDWAnnotation(self.page, index, parent_annotation=self)
 
-    # TODO: implement collect_annotations() as well as XDWPage class.
+    def find_annotations(*args, **kw):
+        return _find_annotations(*args, **kw)
 
 
 class XDWPage(object):
@@ -250,8 +281,11 @@ class XDWPage(object):
         if attr == "text":
             return XDW_GetPageTextToMemoryW(self.xdw.document_handle, self.page+1)
         if attr == "annotation_text":
-            return "\r".join([ann.text for ann in self.collect_annotations() if ann.text])
-        return getattr(self.xdw, attr)  # escalate
+            return "\v".join([a.text for a in self.find_annotations() if a.text])
+        if attr == "annotation_fulltext":
+            return "\v".join([a.fulltext for a in self.find_annotations() if a.fulltext])
+        raise AttributeError("'%s' object has no attribute '%s'" % (
+                self.__class__.__name__, attr))
 
     def __str__(self):
         return "XDWPage(page %d: %.2f*%.2fmm, %s, %d annotations)" % (
@@ -261,31 +295,19 @@ class XDWPage(object):
                 self.annotations,
                 )
 
-    def annotation(self, n):
+    def annotation(self, index):
         """annotation(n) --> XDWAnnotation"""
-        return XDWAnnotation(self, n)
+        if self.annotations <= index:
+            if self.annotations < 1:
+                raise AttributeError("page object has no annotations")
+            else:
+                raise IndexError(
+                        "annotation index %d out of range(0..%d)" % (
+                        index, self.annotations-1))
+        return XDWAnnotation(self, index)
         
-    def collect_annotations(self, rect=None, types=None, half_open=True):
-        if rect and not half_open:
-            self.right += 1
-            self.bottom += 1
-        if types:
-            if not isinstance(types, (list, tuple)):
-                types = [types]
-            types = [XDW_ANNOTATION_TYPE.normalize(t) for t in types]
-        annlist = []
-        for i in range(self.annotations):
-            ann = self.annotation(i)
-            if rect and not (
-                    rect.left <= ann.horizontal_position and
-                    ann.horizontal_position + ann.width - 1 < rect.right and
-                    rect.top <= ann.vertical_position and
-                    ann.vertical_position + ann.height - 1 < rect.bottom):
-                continue
-            if types and not ann.annotation_type in types:
-                continue
-            annlist.append(ann)
-        return annlist
+    def find_annotations(*args, **kw):
+        return _find_annotations(*args, **kw)
 
 
 class XDWDocument(object):
@@ -355,8 +377,13 @@ class XDWDocument(object):
 
     def __getattr__(self, attr):
         if attr == "text":
-            return "\f".join([page.text for page in self])
-        return None
+            return "\f".join(page.text for page in self)
+        if attr == "annotation_fulltext":
+            return "\f".join(page.annotation_fulltext for page in self)
+        if attr == "fulltext":
+            return "\f".join(page.text + "\f" + page.annotation_fulltext for page in self)
+        raise AttributeError("'%s' object has no attribute '%s'" % (
+                self.__class__.__name__, attr))
 
     def page(self, n):
         """page(n) --> XDWPage"""
@@ -416,8 +443,13 @@ class XDWDocumentInBinder(object):
 
     def __getattr__(self, attr):
         if attr == "text":
-            return "\f".join([page.text for page in self])
-        return None
+            return "\f".join(page.text for page in self)
+        if attr == "annotation_fulltext":
+            return "\f".join(page.annotation_fulltext for page in self)
+        if attr == "fulltext":
+            return "\f".join(page.text + "\f" + page.annotation_fulltext for page in self)
+        raise AttributeError("'%s' object has no attribute '%s'" % (
+                self.__class__.__name__, attr))
 
 
 class XDWBinder(XDWDocument):
@@ -478,5 +510,6 @@ class XDWBinder(XDWDocument):
     def __getattr__(self, attr):
         if attr == "text":
             return "\f".join([doc.text for doc in self])
-        return None
+        raise AttributeError("'%s' object has no attribute '%s'" % (
+                self.__class__.__name__, attr))
 
