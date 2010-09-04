@@ -10,7 +10,7 @@ Version 2.1 (ZPL). A copy of the ZPL should accompany this distribution.
 THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
 WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-FOR A PARTICULAR PURPOSE. 
+FOR A PARTICULAR PURPOSE.
 """
 
 from datetime import datetime
@@ -24,14 +24,14 @@ try:
     VALID_DOCUMENT_HANDLES
 except NameError:
     VALID_DOCUMENT_HANDLES = []
- 
 
-ANSI_CHARSET        = 0
-DEFAULT_CHARSET     = 1
-MAC_CHARSET         = 77
-OEM_CHARSET         = 255
-SHIFTJIS_CHARSET    = 128
-SYMBOL_CHARSET      = 2
+
+ANSI_CHARSET = 0
+DEFAULT_CHARSET = 1
+MAC_CHARSET = 77
+OEM_CHARSET = 255
+SHIFTJIS_CHARSET = 128
+SYMBOL_CHARSET = 2
 
 
 class XDWConstants(object):
@@ -48,7 +48,7 @@ class XDWConstants(object):
 
     def inner(self, value):
         return self.reverse.get(value, self.default)
- 
+
     def normalize(self, key_or_value):
         if isinstance(key_or_value, basestring):
             return self.reverse.get(str(key_or_value).upper(), self.default)
@@ -293,9 +293,9 @@ class XDWAnnotation(object):
             pah = None
         info = XDW_GetAnnotationInformation(
                 page.xdw.document_handle,
-                page.page+1,
+                page.page + 1,
                 pah,
-                index+1)
+                index + 1)
         self.annotation_handle = info.handle
         self.horizontal_position = info.nHorPos
         self.vertical_position = info.nVerPos
@@ -366,7 +366,7 @@ class XDWAnnotation(object):
             else:
                 raise IndexError(
                         "annotation index %d out of range(0..%d)" % (
-                        index, self.annotations-1))
+                        index, self.annotations - 1))
         return XDWAnnotation(self.page, index, parent_annotation=self)
 
     def find_annotations(*args, **kw):
@@ -376,7 +376,7 @@ class XDWAnnotation(object):
 class XDWPage(object):
 
     """A page of DocuWorks document"""
-    
+
     @staticmethod
     def normalize_resolution(n):
         if n <= 6:
@@ -387,7 +387,7 @@ class XDWPage(object):
         self.xdw = xdw
         self.page = page
         page_info = XDW_GetPageInformation(
-                xdw.document_handle, page+1, extend=True)
+                xdw.document_handle, page + 1, extend=True)
         self.width = page_info.nWidth  # 1/100 mm
         self.height = page_info.nHeight  # 1/100 mm
         # XDW_PGT_FROMIMAGE/FROMAPPL/NULL
@@ -411,7 +411,7 @@ class XDWPage(object):
     def __getattr__(self, name):
         if name == "text":
             return XDW_GetPageTextToMemoryW(self.xdw.document_handle,
-                    self.page+1)
+                    self.page + 1)
         if name == "annotation_text":
             return "\v".join([
                 a.text for a in self.find_annotations() if a.text])
@@ -437,9 +437,9 @@ class XDWPage(object):
             else:
                 raise IndexError(
                         "annotation index %d out of range(0..%d)" % (
-                        index, self.annotations-1))
+                        index, self.annotations - 1))
         return XDWAnnotation(self, index)
-        
+
     def find_annotations(*args, **kw):
         return _find_annotations(*args, **kw)
 
@@ -500,7 +500,7 @@ class XDWDocument(object):
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
- 
+
     def __iter__(self):
         self.current_page = 0
         return self
@@ -527,8 +527,7 @@ class XDWDocument(object):
         if name == "fulltext":
             return "\f".join(
                     page.text + "\f" + page.annotation_fulltext
-                    for page in self
-                    )
+                    for page in self)
         attribute_name = "%" + name
         if attribute_name in XDW_DOCUMENT_ATTRIBUTE:
             return XDW_GetDocumentAttributeByNameW(
@@ -566,7 +565,7 @@ class XDWDocument(object):
     def is_document(self):
         """is_document() --> True"""
         return True
-    
+
     def is_binder(self):
         """is_binder() --> False"""
         return False
@@ -580,13 +579,13 @@ class XDWDocumentInBinder(object):
     """A document part of DocuWorks binder"""
 
     def __init__(self, binder, position):
-        self.binder = binder 
+        self.binder = binder
         self.position = position
         self.start_page = sum(binder.document_pages[:position])
         self.name = XDW_GetDocumentNameInBinderW(
-                self.binder.document_handle, position+1, CODEPAGE)[0]
+                self.binder.document_handle, position + 1, CODEPAGE)[0]
         document_info = XDW_GetDocumentInformationInBinder(
-                self.binder.document_handle, position+1)
+                self.binder.document_handle, position + 1)
         self.pages = document_info.nPages
         self.original_data = document_info.nOriginalData
 
@@ -638,7 +637,7 @@ class XDWBinder(XDWDocument):
     def is_document(self):
         """is_document() --> False"""
         return False
-    
+
     def is_binder(self):
         """is_binder() --> True"""
         return True
@@ -656,16 +655,16 @@ class XDWBinder(XDWDocument):
                 self.pages,
                 self.original_data,
                 )
-    
+
     def document_pages(self):
         """document_pages() --> list
-        
+
         Get list of page count for each document in binder
         """
         pages = []
         for pos in range(self.documents):
             docinfo = XDW_GetDocumentInformationInBinder(
-                    self.document_handle, pos+1)
+                    self.document_handle, pos + 1)
             pages.append(docinfo.nPages)
         return pages
 
@@ -696,4 +695,3 @@ class XDWBinder(XDWDocument):
             return "\f".join([doc.text for doc in self])
         raise AttributeError("'%s' object has no attribute '%s'" % (
                 self.__class__.__name__, name))
-
