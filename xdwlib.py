@@ -204,7 +204,10 @@ XDW_DOCUMENT_ATTRIBUTE = XDWConstants({
 
 def open(path, readonly=False, authenticate=True):
     """General opener"""
-    doctype = {".XDW": XDWDocument, ".XBD": XDWBinder}[splitext(basename(path))[1].upper()]
+    doctype = {
+            ".XDW": XDWDocument,
+            ".XBD": XDWBinder,
+            }[splitext(basename(path))[1].upper()]
     return doctype(path, readonly=readonly, authenticate=authenticate)
 
 
@@ -238,11 +241,16 @@ def create_binder(path, color=XDW_BINDER_COLOR_0, size=XDW_SIZE_FREE):
 
 
 def _annotation_in(annotation, rect):  # Assume rect is half-opened.
-    return (rect.left <= annotation.horizontal_position <= rect.right - annotation.width and
-            rect.top <= annotation.vertical_position <= rect.bottom - annotation.height)
+    return (rect.left <= annotation.horizontal_position \
+                     <= rect.right - annotation.width \
+            and \
+            rect.top <= annotation.vertical_position \
+                     <= rect.bottom - annotation.height)
 
 
-def _find_annotations(object, recursive=False, rect=None, types=None, half_open=True):
+def _find_annotations(object,
+        recursive=False, rect=None, types=None,
+        half_open=True):
     if rect and not half_open:
         rect.right += 1
         rect.bottom += 1
@@ -256,7 +264,8 @@ def _find_annotations(object, recursive=False, rect=None, types=None, half_open=
         sublist = []
         if recursive and annotation.annotations:
             sublist = _find_annotations(annotation,
-                    recursive=recursive, rect=rect, types=types, half_open=half_open)
+                    recursive=recursive, rect=rect, types=types,
+                    half_open=half_open)
         if (not rect or annotation_in(annotation, rect)) and \
                 (not types or annotation.annotation_type in types):
             if sublist:
@@ -278,8 +287,15 @@ class XDWAnnotation(object):
         self.page = page
         self.parent_annotation = parent_annotation
         self.index = index
-        pah = parent_annotation and parent_annotation.annotation_handle or None
-        info = XDW_GetAnnotationInformation(page.xdw.document_handle, page.page+1, pah, index+1)
+        if parent_annotation:
+            pah = parent_annotation.annotation_handle
+        else:
+            pah = None
+        info = XDW_GetAnnotationInformation(
+                page.xdw.document_handle,
+                page.page+1,
+                pah,
+                index+1)
         self.annotation_handle = info.handle
         self.horizontal_position = info.nHorPos
         self.vertical_position = info.nVerPos
@@ -315,22 +331,29 @@ class XDWAnnotation(object):
         if name == "fulltext":
             if self.annotations:
                 text = [self.text]
-                text.extend([self.annotation(i).fulltext for i in range(self.annotations)])
-                return "\v".join([t for t in text if isinstance(t, basestring)])
+                text.extend([self.annotation(i).fulltext \
+                        for i in range(self.annotations)])
+                return "\v".join([
+                        t for t in text if isinstance(t, basestring)])
             else:
                 return self.text
-        attribute_name = (name[0] == "%") and name or ("%" + name)
+        attribute_name = "%" + name
         if attribute_name in XDW_ANNOTATION_ATTRIBUTE:
-            return XDW_GetAnnotationAttributeW(self.annotation_handle, attribute_name, CODEPAGE)
+            return XDW_GetAnnotationAttributeW(
+                    self.annotation_handle, attribute_name, CODEPAGE)
         raise AttributeError("'%s' object has no attribute '%s'" % (
                 self.__class__.__name__, name))
 
     def __setattr__(self, name, value):
-        if ("%" + name) in XDW_ANNOTATION_ATTRIBUTE:
-            attribute_type = isinstance(value, basestring) and XDW_ATYPE_STRING or XDW_ATYPE_INT
+        attribute_name = "%" + name
+        if attribute_name in XDW_ANNOTATION_ATTRIBUTE:
+            if isinstance(value, basestring):
+                attribute_type = XDW_ATYPE_STRING
+            else:
+                attribute_type = XDW_ATYPE_INT
             XDW_SetAnnotationAttributeW(
                     self.page.xdw.document_handle, self.annotation_handle,
-                    ("%" + name), attribute_type, byref(value),
+                    attribute_name, attribute_type, byref(value),
                     XDW_TEXT_MULTIBYTE, CODEPAGE)
             return
         raise AttributeError("'%s' object has no attribute '%s'" % (
@@ -363,29 +386,38 @@ class XDWPage(object):
     def __init__(self, xdw, page):
         self.xdw = xdw
         self.page = page
-        page_info = XDW_GetPageInformation(xdw.document_handle, page+1, extend=True)
+        page_info = XDW_GetPageInformation(
+                xdw.document_handle, page+1, extend=True)
         self.width = page_info.nWidth  # 1/100 mm
         self.height = page_info.nHeight  # 1/100 mm
-        self.page_type = page_info.nPageType  # XDW_PGT_FROMIMAGE/FROMAPPL/NULL
-        self.horizontal_resolution = XDWPage.normalize_resolution(page_info.nHorRes)  # dpi
-        self.vertical_resolution = XDWPage.normalize_resolution(page_info.nVerRes)  # dpi
+        # XDW_PGT_FROMIMAGE/FROMAPPL/NULL
+        self.page_type = page_info.nPageType
+        self.horizontal_resolution = XDWPage.normalize_resolution(
+                page_info.nHorRes)  # dpi
+        self.vertical_resolution = XDWPage.normalize_resolution(
+                page_info.nVerRes)  # dpi
         self.compress_type = page_info.nCompressType
         self.annotations = page_info.nAnnotations
         self.degree = page_info.nDegree
         self.original_width = page_info.nOrgWidth  # 1/100 mm
         self.original_height = page_info.nOrgHeight  # 1/100 mm
-        self.original_horizontal_resolution = XDWPage.normalize_resolution(page_info.nOrgHorRes)  # dpi
-        self.original_vertical_resolution = XDWPage.normalize_resolution(page_info.nOrgVerRes)  # dpi
+        self.original_horizontal_resolution = XDWPage.normalize_resolution(
+                page_info.nOrgHorRes)  # dpi
+        self.original_vertical_resolution = XDWPage.normalize_resolution(
+                page_info.nOrgVerRes)  # dpi
         self.image_width = page_info.nImageWidth  # px
         self.image_height = page_info.nImageHeight  # px
 
     def __getattr__(self, name):
         if name == "text":
-            return XDW_GetPageTextToMemoryW(self.xdw.document_handle, self.page+1)
+            return XDW_GetPageTextToMemoryW(self.xdw.document_handle,
+                    self.page+1)
         if name == "annotation_text":
-            return "\v".join([a.text for a in self.find_annotations() if a.text])
+            return "\v".join([
+                a.text for a in self.find_annotations() if a.text])
         if name == "annotation_fulltext":
-            return "\v".join([a.fulltext for a in self.find_annotations() if a.fulltext])
+            return "\v".join([
+                a.fulltext for a in self.find_annotations() if a.fulltext])
         raise AttributeError("'%s' object has no attribute '%s'" % (
                 self.__class__.__name__, name))
 
@@ -424,8 +456,14 @@ class XDWDocument(object):
 
     def __init__(self, path, readonly=False, authenticate=True):
         open_mode = XDW_OPEN_MODE_EX()
-        open_mode.nOption = XDW_OPEN_READONLY if readonly else XDW_OPEN_UPDATE
-        open_mode.nAuthMode = XDW_AUTH_NODIALOGUE if authenticate else XDW_AUTH_NONE
+        if readonly:
+            open_mode.nOption = XDW_OPEN_READONLY
+        else:
+            open_mode.nOption = XDW_OPEN_UPDATE
+        if authenticate:
+            open_mode.nAuthMode = XDW_AUTH_NODIALOGUE
+        else:
+            open_mode.nAuthMode = XDW_AUTH_NONE
         self.document_handle = XDW_OpenDocumentHandle(path, open_mode)
         self.register()
         self.name = splitext(basename(path))[0]
@@ -436,11 +474,12 @@ class XDWDocument(object):
         # Set document properties.
         document_info = XDW_GetDocumentInformation(self.document_handle)
         self.pages = document_info.nPages
-        self.version = document_info.nVersion - 3  # DocuWorks version number
+        self.version = document_info.nVersion - 3  # DocuWorks version
         self.original_data = document_info.nOriginalData
         self.document_type = document_info.nDocType
         self.editable = bool(document_info.nPermission & XDW_PERM_DOC_EDIT)
-        self.annotatable = bool(document_info.nPermission & XDW_PERM_ANNO_EDIT)
+        self.annotatable = bool(
+                document_info.nPermission & XDW_PERM_ANNO_EDIT)
         self.printable = bool(document_info.nPermission & XDW_PERM_PRINT)
         self.copyable = bool(document_info.nPermission & XDW_PERM_COPY)
         self.show_annotations = bool(document_info.nShowAnnotations)
@@ -449,7 +488,8 @@ class XDWDocument(object):
         self.binder_color = document_info.nBinderColor
         self.binder_size = document_info.nBinderSize
         # Document attributes.
-        self.attributes = XDW_GetDocumentAttributeNumber(self.document_handle)
+        self.attributes = XDW_GetDocumentAttributeNumber(
+                self.document_handle)
 
     def close(self):
         XDW_CloseDocumentHandle(self.document_handle)
@@ -485,15 +525,19 @@ class XDWDocument(object):
         if name == "annotation_fulltext":
             return "\f".join(page.annotation_fulltext for page in self)
         if name == "fulltext":
-            return "\f".join(page.text + "\f" + page.annotation_fulltext for page in self)
-        attribute_name = (name[0] == "%") and name or ("%" + name)
+            return "\f".join(
+                    page.text + "\f" + page.annotation_fulltext
+                    for page in self
+                    )
+        attribute_name = "%" + name
         if attribute_name in XDW_DOCUMENT_ATTRIBUTE:
-            return XDW_GetDocumentAttributeByNameW(self.document_handle, attribute_name, CODEPAGE)[1]
+            return XDW_GetDocumentAttributeByNameW(
+                    self.document_handle, attribute_name, CODEPAGE)[1]
         raise AttributeError("'%s' object has no attribute '%s'" % (
                 self.__class__.__name__, name))
 
     def __setattr__(self, name, value):
-        attribute_name = (name[0] == "%") and name or ("%" + name)
+        attribute_name = "%" + name
         if isinstance(value, basestring):
             attribute_type = XDW_ATYPE_STRING
         elif isinstance(value, bool):
@@ -539,8 +583,10 @@ class XDWDocumentInBinder(object):
         self.binder = binder 
         self.position = position
         self.start_page = sum(binder.document_pages[:position])
-        self.name = XDW_GetDocumentNameInBinderW(self.binder.document_handle, position+1, CODEPAGE)[0]
-        document_info = XDW_GetDocumentInformationInBinder(self.binder.document_handle, position+1)
+        self.name = XDW_GetDocumentNameInBinderW(
+                self.binder.document_handle, position+1, CODEPAGE)[0]
+        document_info = XDW_GetDocumentInformationInBinder(
+                self.binder.document_handle, position+1)
         self.pages = document_info.nPages
         self.original_data = document_info.nOriginalData
 
@@ -556,7 +602,8 @@ class XDWDocumentInBinder(object):
         return XDWPage(self.binder, n)
 
     def __str__(self):
-        return "XDWDocumentInBinder(%s = %s[%d]: %d pages, %d files attached)" % (
+        return "XDWDocumentInBinder(" \
+                "%s = %s[%d]: %d pages, %d attachments)" % (
                 self.name,
                 self.binder.name, self.position,
                 self.position + 1,
@@ -577,7 +624,9 @@ class XDWDocumentInBinder(object):
         if name == "annotation_fulltext":
             return "\f".join(page.annotation_fulltext for page in self)
         if name == "fulltext":
-            return "\f".join(page.text + "\f" + page.annotation_fulltext for page in self)
+            return "\f".join(
+                    page.text + "\f" + page.annotation_fulltext
+                    for page in self)
         raise AttributeError("'%s' object has no attribute '%s'" % (
                 self.__class__.__name__, name))
 
@@ -595,12 +644,13 @@ class XDWBinder(XDWDocument):
         return True
 
     def __init__(self, path, readonly=False, authenticate=True):
-        XDWDocument.__init__(self, path=path, readonly=readonly, authenticate=authenticate)
+        XDWDocument.__init__(self,
+                path=path, readonly=readonly, authenticate=authenticate)
         assert self.document_type == XDW_DT_BINDER
         self.document_pages = self.document_pages()
 
     def __str__(self):
-        return "XDWBinder(%s: %d documents, %d pages, %d files attached)" % (
+        return "XDWBinder(%s: %d documents, %d pages, %d attachments)" % (
                 self.name,
                 self.documents,
                 self.pages,
@@ -608,10 +658,14 @@ class XDWBinder(XDWDocument):
                 )
     
     def document_pages(self):
-        """document_pages() --> list of page count of each document part of the binder"""
+        """document_pages() --> list
+        
+        Get list of page count for each document in binder
+        """
         pages = []
         for pos in range(self.documents):
-            docinfo = XDW_GetDocumentInformationInBinder(self.document_handle, pos+1)
+            docinfo = XDW_GetDocumentInformationInBinder(
+                    self.document_handle, pos+1)
             pages.append(docinfo.nPages)
         return pages
 
