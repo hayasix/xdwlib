@@ -81,37 +81,63 @@ def UNICODE(api):
     return func
 
 
-# DocuWorks error
+# DocuWorks errors
+
+XDW_E_NOT_INSTALLED             = 0x80040001
+XDW_E_INFO_NOT_FOUND            = 0x80040002
+XDW_E_INSUFFICIENT_BUFFER       = 0x8007007A
+XDW_E_FILE_NOT_FOUND            = 0x80070002
+XDW_E_FILE_EXISTS               = 0x80070050
+XDW_E_ACCESSDENIED              = 0x80070005
+XDW_E_BAD_FORMAT                = 0x8007000B
+XDW_E_OUTOFMEMORY               = 0x8007000E
+XDW_E_WRITE_FAULT               = 0x8007001D
+XDW_E_SHARING_VIOLATION         = 0x80070020
+XDW_E_DISK_FULL                 = 0x80070027
+XDW_E_INVALIDARG                = 0x80070057
+XDW_E_INVALID_NAME              = 0x8007007B
+XDW_E_INVALID_ACCESS            = 0x80040003
+XDW_E_INVALID_OPERATION         = 0x80040004
+XDW_E_NEWFORMAT                 = 0x800E0004
+XDW_E_BAD_NETPATH               = 0x800E0005
+XDW_E_APPLICATION_FAILED        = 0x80001156
+XDW_E_SIGNATURE_MODULE          = 0x800E0010
+XDW_E_PROTECT_MODULE            = 0x800E0012
+XDW_E_UNEXPECTED                = 0x8000FFFF
+XDW_E_CANCELED                  = 0x80040005
+XDW_E_ANNOTATION_NOT_ACCEPTED   = 0x80040006
+
 
 class XDWError(Exception):
 
     messages = {
-        0x80040001: "XDW_E_NOT_INSTALLED",
-        0x80040002: "XDW_E_INFO_NOT_FOUND",
-        0x8007007A: "XDW_E_INSUFFICIENT_BUFFER",
-        0x80070002: "XDW_E_FILE_NOT_FOUND",
-        0x80070050: "XDW_E_FILE_EXISTS",
-        0x80070005: "XDW_E_ACCESSDENIED",
-        0x8007000B: "XDW_E_BAD_FORMAT",
-        0x8007000E: "XDW_E_OUTOFMEMORY",
-        0x8007001D: "XDW_E_WRITE_FAULT",
-        0x80070020: "XDW_E_SHARING_VIOLATION",
-        0x80070027: "XDW_E_DISK_FULL",
-        0x80070057: "XDW_E_INVALIDARG",
-        0x8007007B: "XDW_E_INVALID_NAME",
-        0x80040003: "XDW_E_INVALID_ACCESS",
-        0x80040004: "XDW_E_INVALID_OPERATION",
-        0x800E0004: "XDW_E_NEWFORMAT",
-        0x800E0005: "XDW_E_BAD_NETPATH",
-        0x80001156: "XDW_E_APPLICATION_FAILED",
-        0x800E0010: "XDW_E_SIGNATURE_MODULE",
-        0x800E0012: "XDW_E_PROTECT_MODULE",
-        0x8000FFFF: "XDW_E_UNEXPECTED",
-        0x80040005: "XDW_E_CANCELED",
-        0x80040006: "XDW_E_ANNOTATION_NOT_ACCEPTED",
+        XDW_E_NOT_INSTALLED:            "XDW_E_NOT_INSTALLED",
+        XDW_E_INFO_NOT_FOUND:           "XDW_E_INFO_NOT_FOUND",
+        XDW_E_INSUFFICIENT_BUFFER:      "XDW_E_INSUFFICIENT_BUFFER",
+        XDW_E_FILE_NOT_FOUND:           "XDW_E_FILE_NOT_FOUND",
+        XDW_E_FILE_EXISTS:              "XDW_E_FILE_EXISTS",
+        XDW_E_ACCESSDENIED:             "XDW_E_ACCESSDENIED",
+        XDW_E_BAD_FORMAT:               "XDW_E_BAD_FORMAT",
+        XDW_E_OUTOFMEMORY:              "XDW_E_OUTOFMEMORY",
+        XDW_E_WRITE_FAULT:              "XDW_E_WRITE_FAULT",
+        XDW_E_SHARING_VIOLATION:        "XDW_E_SHARING_VIOLATION",
+        XDW_E_DISK_FULL:                "XDW_E_DISK_FULL",
+        XDW_E_INVALIDARG:               "XDW_E_INVALIDARG",
+        XDW_E_INVALID_NAME:             "XDW_E_INVALID_NAME",
+        XDW_E_INVALID_ACCESS:           "XDW_E_INVALID_ACCESS",
+        XDW_E_INVALID_OPERATION:        "XDW_E_INVALID_OPERATION",
+        XDW_E_NEWFORMAT:                "XDW_E_NEWFORMAT",
+        XDW_E_BAD_NETPATH:              "XDW_E_BAD_NETPATH",
+        XDW_E_APPLICATION_FAILED:       "XDW_E_APPLICATION_FAILED",
+        XDW_E_SIGNATURE_MODULE:         "XDW_E_SIGNATURE_MODULE",
+        XDW_E_PROTECT_MODULE:           "XDW_E_PROTECT_MODULE",
+        XDW_E_UNEXPECTED:               "XDW_E_UNEXPECTED",
+        XDW_E_CANCELED:                 "XDW_E_CANCELED",
+        XDW_E_ANNOTATION_NOT_ACCEPTED:  "XDW_E_ANNOTATION_NOT_ACCEPTED",
         }
 
     def __init__(self, error_code):
+        self.error_code = error_code
         error_code = (error_code + 0x100000000) & 0xffffffff
         msg = XDWError.messages.get(error_code, "XDW_E_UNDEFINED")
         Exception.__init__(self, "%s (%08X)" % (msg, error_code))
@@ -1462,13 +1488,17 @@ def XDW_CreateXdwFromImageFileAndInsertDocument(documentHandle, page, inputPath,
 def XDW_GetDocumentAttributeNumber(documentHandle):
     pass
 
-def XDW_GetDocumentAttributeByName(documentHandle, attributeName):
+def XDW_GetDocumentAttributeByName(documentHandle, attributeName, default=None):
     """XDW_GetDocumentAttributeByName(documentHandle, attributeName) --> (attributeType, attributeValue)"""
     attributeType = c_int()
-    size = TRY(DLL.XDW_GetDocumentAttributeByName, documentHandle, attributeName, NULL, NULL, 0, NULL)
-    attributeValue = create_string_buffer(size)
-    TRY(DLL.XDW_GetDocumentAttributeByName, documentHandle, attributeName, byref(attributeType), byref(attributeValue), size, NULL)
-    return (attributeType.value, attributeValue.value)
+    size = DLL.XDW_GetDocumentAttributeByName(documentHandle, attributeName, byref(attributeType), NULL, 0, NULL)
+    if 0 < size:
+        attributeValue = create_string_buffer(size)
+        TRY(DLL.XDW_GetDocumentAttributeByName, documentHandle, attributeName, byref(attributeType), byref(attributeValue), size, NULL)
+        return (attributeType.value, attributeValue.value)
+    if size == XDW_E_INVALIDARG and default:  # Specified attribute is missing / has no value.
+        return (default, None, None)
+    raise XDWError(size)
 
 def XDW_GetDocumentAttributeByOrder(documentHandle, order):
     """XDW_GetDocumentAttributeByOrder(documentHandle, order) --> (attributeName, attributeType, attributeValue)"""
@@ -1559,12 +1589,16 @@ def XDW_SetOcrData(documentHandle, page):
 def XDW_GetDocumentAttributeNumberInBinder(documentHandle, position):
     pass
 
-def XDW_GetDocumentAttributeByNameInBinder(documentHandle, position, attributeName):
+def XDW_GetDocumentAttributeByNameInBinder(documentHandle, position, attributeName, default=None):
     attributeType = c_int()
-    size = TRY(DLL.XDW_GetDocumentAttributeByNameInBinder, documentHandle, position, attributeName, NULL, NULL, 0, NULL)
-    attributeValue = create_string_buffer(size)
-    TRY(DLL.XDW_GetDocumentAttributeByNameInBinder, documentHandle, attributeName, byref(attributeType), byref(attributeValue), size, NULL)
-    return (attributeType.value, attributeValue.value)
+    size = DLL.XDW_GetDocumentAttributeByNameInBinder(documentHandle, position, attributeName, byref(attributeType), NULL, 0, NULL)
+    if 0 < size:
+        attributeValue = create_string_buffer(size)
+        TRY(DLL.XDW_GetDocumentAttributeByNameInBinder, documentHandle, attributeName, byref(attributeType), byref(attributeValue), size, NULL)
+        return (attributeType.value, attributeValue.value)
+    if size == XDW_E_INVALIDARG and default:  # Specified attribute is missing / has no value.
+        return (default, None, None)
+    raise XDWError(size)
 
 def XDW_GetDocumentAttributeByOrderInBinder(documentHandle, position, order):
     """XDW_GetDocumentAttributeByOrderInBinder(documentHandle, position, order) --> (attributeName, attributeType, attributeValue)"""
@@ -1678,14 +1712,18 @@ def XDW_GetAnnotationAttributeW(annotationHandle, attributeName, codepage):
 def XDW_SetAnnotationAttributeW(documentHandle, annotationHandle, attributeName, attributeType, uAttributeValue, textType, codepage):
     pass
 
-def XDW_GetDocumentAttributeByNameW(documentHandle, uAttributeName, codepage):
+def XDW_GetDocumentAttributeByNameW(documentHandle, uAttributeName, codepage, default=None):
     """XDW_GetDocumentAttributeByNameW(documentHandle, uAttributeName, codepage) --> (attributeType, uAttributeValue, textType)"""
     textType = c_int()
     attributeType = c_int()
-    size = TRY(DLL.XDW_GetDocumentAttributeByNameW, documentHandle, uAttributeName, NULL, NULL, 0, NULL, codepage, NULL)
-    uAttributeValue = create_unicode_buffer(size)
-    TRY(DLL.XDW_GetDocumentAttributeByNameW, documentHandle, uAttributeName, byref(attributeType), byref(uAttributeValue), size, byref(textType), codepage, NULL)
-    return (attributeType.value, uAttributeValue.value, textType.value)
+    size = DLL.XDW_GetDocumentAttributeByNameW(documentHandle, uAttributeName, byref(attributeType), NULL, 0, byref(textType), codepage, NULL)
+    if 0 < size:
+        uAttributeValue = create_unicode_buffer(size)
+        TRY(DLL.XDW_GetDocumentAttributeByNameW, documentHandle, uAttributeName, byref(attributeType), byref(uAttributeValue), size, byref(textType), codepage, NULL)
+        return (attributeType.value, uAttributeValue.value, textType.value)
+    if size == XDW_E_INVALIDARG and default:  # Specified attribute is missing / has no value.
+        return (default, None, None)
+    raise XDWError(size)
 
 def XDW_GetDocumentAttributeByOrderW(documentHandle, order, codepage):
     """XDW_GetDocumentAttributeByOrderW(documentHandle, order, codepage) --> (uAttributeName, attributeType, uAttributeValue, textType)"""

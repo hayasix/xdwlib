@@ -13,7 +13,9 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE.
 """
 
-from datetime import datetime
+import sys
+from os.path import splitext, basename
+import datetime
 
 from xdwapi import *
 
@@ -42,6 +44,9 @@ class XDWConstants(object):
         self.constants = constants
         self.reverse = dict([(v, k) for (k, v) in constants.items()])
         self.default = default
+
+    def __contains__(self, key):
+        return key in self.constants
 
     def __getitem__(self, key):
         return self.constants[key]  # Invalid key should raise exception.
@@ -340,7 +345,7 @@ class XDWAnnotation(object):
         attribute_name = "%" + name
         if attribute_name in XDW_ANNOTATION_ATTRIBUTE:
             return XDW_GetAnnotationAttributeW(
-                    self.annotation_handle, attribute_name, CODEPAGE)
+                    self.annotation_handle, unicode(attribute_name), CODEPAGE)
         raise AttributeError("'%s' object has no attribute '%s'" % (
                 self.__class__.__name__, name))
 
@@ -353,11 +358,12 @@ class XDWAnnotation(object):
                 attribute_type = XDW_ATYPE_INT
             XDW_SetAnnotationAttributeW(
                     self.page.xdw.document_handle, self.annotation_handle,
-                    attribute_name, attribute_type, byref(value),
+                    unicode(attribute_name), attribute_type, byref(value),
                     XDW_TEXT_MULTIBYTE, CODEPAGE)
             return
-        raise AttributeError("'%s' object has no attribute '%s'" % (
-                self.__class__.__name__, name))
+        self.__dict__[name] = value
+        #raise AttributeError("'%s' object has no attribute '%s'" % (
+        #        self.__class__.__name__, name))
 
     def annotation(self, index):
         if self.annotations <= index:
@@ -488,8 +494,7 @@ class XDWDocument(object):
         self.binder_color = document_info.nBinderColor
         self.binder_size = document_info.nBinderSize
         # Document attributes.
-        self.attributes = XDW_GetDocumentAttributeNumber(
-                self.document_handle)
+        self.attributes = XDW_GetDocumentAttributeNumber(self.document_handle)
 
     def close(self):
         XDW_CloseDocumentHandle(self.document_handle)
@@ -528,7 +533,7 @@ class XDWDocument(object):
             return "\f".join(
                     page.text + "\f" + page.annotation_fulltext
                     for page in self)
-        attribute_name = "%" + name
+        attribute_name = u"%" + name
         if attribute_name in XDW_DOCUMENT_ATTRIBUTE:
             return XDW_GetDocumentAttributeByNameW(
                     self.document_handle, attribute_name, CODEPAGE)[1]
@@ -552,8 +557,9 @@ class XDWDocument(object):
                     attribute_name, attribute_type, byref(value),
                     XDW_TEXT_MULTIBYTE, CODEPAGE)
             return
-        raise AttributeError("'%s' object has no attribute '%s'" % (
-                self.__class__.__name__, name))
+        self.__dict__[name] = value
+        #raise AttributeError("'%s' object has no attribute '%s'" % (
+        #        self.__class__.__name__, name))
 
     def page(self, n):
         """page(n) --> XDWPage"""
@@ -695,3 +701,79 @@ class XDWBinder(XDWDocument):
             return "\f".join([doc.text for doc in self])
         raise AttributeError("'%s' object has no attribute '%s'" % (
                 self.__class__.__name__, name))
+
+
+if __name__ == "__main__":
+
+    from optparse import OptionParser
+
+    parser = OptionParser()
+    parser.add_option("--text",
+            action="store_const", dest="spec", const="text,annotation_fulltext",
+            help="document text, OCR text and text annotations")
+    parser.add_option("--property",
+            action="store_const", dest="spec",
+            const="Title,Subject,Author,Keywords,Comments",
+            help="properties (title, subject, author, keyword, comment)")
+    parser.add_option("-a",
+            action="store_const", dest="spec",
+            const="Title,Subject,Author,Keywords,Comments,text,annotation_fulltext",
+            help="all text and properties")
+    parser.add_option("--page-text",
+            action="store_const", dest="spec", const="text",
+            help="document text and OCR text")
+    parser.add_option("--annotation-text",
+            action="store_const", dest="spec", const="annotation_fulltext",
+            help="text annotations")
+    parser.add_option("--title",
+            action="store_const", dest="spec", const="Title",
+            help="document title")
+    parser.add_option("--subject",
+            action="store_const", dest="spec", const="Subject",
+            help="document subject (or subtitle)")
+    parser.add_option("--author",
+            action="store_const", dest="spec", const="Author",
+            help="document author")
+    parser.add_option("--keyword",
+            action="store_const", dest="spec", const="Keywords",
+            help="document keywords")
+    parser.add_option("--comment",
+            action="store_const", dest="spec", const="Comments",
+            help="document comments")
+    parser.add_option("-u", action="store_true", dest="unicode",
+            help="Unicode ie. UTF-16, not multibyte (MBCS)")
+    parser.add_option("-d", action="store_true", dest="ask",
+            help="ask if input is DocuWorks file or not; returns error code")
+    #parser.add_option("-h", action="store_true", dest="help",
+    #        help="display this")
+    parser.add_option("-v", action="store_true", dest="showversion",
+            help="output version information to stdout")
+    parser.add_option("-s", action="store_true", dest="silent",
+            help="silent mode; no output, including error messages")
+    parser.add_option("-p", action="store_true", dest="pipe",
+            help="output to pipe")
+    options, args = parser.parse_args()
+
+    try:
+        doc = open(args[0], readonly=True, authenticate=False)
+    except XDWError as e:
+        if options.ask:
+            if not options.silent:
+                print e
+            sys.exit(e.error_code)
+        else:
+            raise
+    if options.ask:
+        sys.exit(0)
+
+    out = []
+    for name in options.spec.split(","):
+        out.append(getattr(doc, name))
+    out = "\n".join(out)
+    if options.pipe:
+        print out
+    else:
+        of = open(arg[1], "w")
+        of.writelines(out)
+        of.close()
+
