@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #vim:fileencoding=cp932:fileformat=dos
 
-"""xdwdata.py -- DocuWorks data definitions
+"""xdwlib.py -- DocuWorks library for Python.
 
 Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>  All rights reserved.
 
@@ -28,186 +28,7 @@ except NameError:
     VALID_DOCUMENT_HANDLES = []
 
 
-ANSI_CHARSET = 0
-DEFAULT_CHARSET = 1
-MAC_CHARSET = 77
-OEM_CHARSET = 255
-SHIFTJIS_CHARSET = 128
-SYMBOL_CHARSET = 2
-
-
-class XDWConstants(object):
-
-    """DocuWorks constant (internal ID) table with reverse lookup"""
-
-    def __init__(self, constants, default=None):
-        self.constants = constants
-        self.reverse = dict([(v, k) for (k, v) in constants.items()])
-        self.default = default
-
-    def __contains__(self, key):
-        return key in self.constants
-
-    def __getitem__(self, key):
-        return self.constants[key]  # Invalid key should raise exception.
-
-    def inner(self, value):
-        return self.reverse.get(value, self.default)
-
-    def normalize(self, key_or_value):
-        if isinstance(key_or_value, basestring):
-            return self.reverse.get(str(key_or_value).upper(), self.default)
-        return key_or_value
-
-
-XDW_DOCUMENT_TYPE = XDWConstants({
-        XDW_DT_DOCUMENT:        "DOCUMENT",
-        XDW_DT_BINDER:          "BINDER",
-        }, default=XDW_DT_DOCUMENT)
-XDW_TEXT_TYPE = XDWConstants({
-        XDW_TEXT_UNKNOWN:       "UNKNOWN",
-        XDW_TEXT_MULTIBYTE:     "MULTIBYTE",
-        XDW_TEXT_UNICODE:       "UNICODE",
-        }, default=XDW_TEXT_UNKNOWN)
-XDW_PAGE_TYPE = XDWConstants({
-        XDW_PGT_FROMIMAGE:      "IMAGE",
-        XDW_PGT_FROMAPPL:       "APPLICATION",
-        XDW_PGT_NULL:           "UNKNOWN",
-        }, default=XDW_PGT_NULL)
-XDW_BINDER_SIZE = XDWConstants({
-        XDW_SIZE_FREE:          "FREE",
-        XDW_SIZE_A3_PORTRAIT:   "A3R",
-        XDW_SIZE_A3_LANDSCAPE:  "A3",
-        XDW_SIZE_A4_PORTRAIT:   "A4R",
-        XDW_SIZE_A4_LANDSCAPE:  "A4",
-        XDW_SIZE_A5_PORTRAIT:   "A5R",
-        XDW_SIZE_A5_LANDSCAPE:  "A5",
-        XDW_SIZE_B4_PORTRAIT:   "B4R",
-        XDW_SIZE_B4_LANDSCAPE:  "B4",
-        XDW_SIZE_B5_PORTRAIT:   "B5R",
-        XDW_SIZE_B5_LANDSCAPE:  "B5",
-        }, default=XDW_SIZE_FREE)
-XDW_BINDER_COLOR = XDWConstants({
-        # Here we describe colors in RRGGBB format, though DocuWorks
-        # inner color representation is BBGGRR.
-        XDW_BINDER_COLOR_0:     "003366",   # neutral navy (紺)
-        XDW_BINDER_COLOR_1:     "006633",   # neutral green (緑)
-        XDW_BINDER_COLOR_2:     "3366FF",   # neutral bule (青)
-        XDW_BINDER_COLOR_3:     "FFFF66",   # neutral yellow (黄)
-        XDW_BINDER_COLOR_4:     "FF6633",   # neutral orange (オレンジ)
-        XDW_BINDER_COLOR_5:     "FF3366",   # neutral red (赤)
-        XDW_BINDER_COLOR_6:     "FF00FF",   # fuchsia (赤紫)
-        XDW_BINDER_COLOR_7:     "FFCCFF",   # neutral pink (ピンク)
-        XDW_BINDER_COLOR_8:     "CC99FF",   # neutral purple (紫)
-        XDW_BINDER_COLOR_9:     "663333",   # neutral brown (茶)
-        XDW_BINDER_COLOR_10:    "999933",   # neutral olive (オリーブ)
-        XDW_BINDER_COLOR_11:    "00FF00",   # lime (緑)
-        XDW_BINDER_COLOR_12:    "00FFFF",   # aqua (水色)
-        XDW_BINDER_COLOR_13:    "FFFFCC",   # neutral lightyellow (クリーム)
-        XDW_BINDER_COLOR_14:    "BBBBBB",   # neutral silver (灰色)
-        XDW_BINDER_COLOR_15:    "FFFFFF",   # white (白)
-        }, default=XDW_BINDER_COLOR_5)
-XDW_ANNOTATION_TYPE = XDWConstants({
-        XDW_AID_FUSEN:          "FUSEN",
-        XDW_AID_TEXT:           "TEXT",
-        XDW_AID_STAMP:          "STAMP",
-        XDW_AID_STRAIGHTLINE:   "STRAIGHTLINE",
-        XDW_AID_RECTANGLE:      "RECTANGLE",
-        XDW_AID_ARC:            "ARC",
-        XDW_AID_POLYGON:        "POLYGON",
-        XDW_AID_MARKER:         "MARKER",
-        XDW_AID_LINK:           "LINK",
-        XDW_AID_PAGEFORM:       "PAGEFORM",
-        XDW_AID_OLE:            "OLE",
-        XDW_AID_BITMAP:         "BITMAP",
-        XDW_AID_RECEIVEDSTAMP:  "RECEIVEDSTAMP",
-        XDW_AID_CUSTOM:         "CUSTOM",
-        XDW_AID_TITLE:          "TITLE",
-        XDW_AID_GROUP:          "GROUP",
-        }, default=XDW_AID_TEXT)
-XDW_ANNOTATION_ATTRIBUTE = XDWConstants({
-        XDW_ATN_Text:                   "%Text",
-        XDW_ATN_FontName:               "%FontName",
-        XDW_ATN_FontStyle:              "%FontStyle",
-        XDW_ATN_FontSize:               "%FontSize",
-        XDW_ATN_ForeColor:              "%ForeColor",
-        XDW_ATN_FontPitchAndFamily:     "%FontPitchAndFamily",
-        XDW_ATN_FontCharSet:            "%FontCharSet",
-        XDW_ATN_BackColor:              "%BackColor",
-        XDW_ATN_Caption:                "%Caption",
-        XDW_ATN_Url:                    "%Url",
-        XDW_ATN_XdwPath:                "%XdwPath",
-        XDW_ATN_ShowIcon:               "%ShowIcon",
-        XDW_ATN_LinkType:               "%LinkType",
-        XDW_ATN_XdwPage:                "%XdwPage",
-        XDW_ATN_Tooltip:                "%Tooltip",
-        XDW_ATN_Tooltip_String:         "%TooltipString",
-        XDW_ATN_XdwPath_Relative:       "%XdwPathRelative",
-        XDW_ATN_XdwLink:                "%XdwLink",
-        XDW_ATN_LinkAtn_Title:          "%LinkAtnTitle",
-        XDW_ATN_OtherFilePath:          "%OtherFilePath",
-        XDW_ATN_OtherFilePath_Relative: "%OtherFilePathRelative",
-        XDW_ATN_MailAddress:            "%MailAddress",
-        XDW_ATN_BorderStyle:            "%BorderStyle",
-        XDW_ATN_BorderWidth:            "%BorderWidth",
-        XDW_ATN_BorderColor:            "%BorderColor",
-        XDW_ATN_BorderTransparent:      "%BorderTransparent",
-        XDW_ATN_BorderType:             "%BorderType",
-        XDW_ATN_FillStyle:              "%FillStyle",
-        XDW_ATN_FillColor:              "%FillColor",
-        XDW_ATN_FillTransparent:        "%FillTransparent",
-        XDW_ATN_ArrowheadType:          "%ArrowheadType",
-        XDW_ATN_ArrowheadStyle:         "%ArrowheadStyle",
-        XDW_ATN_WordWrap:               "%WordWrap",
-        XDW_ATN_TextDirection:          "%TextDirection",
-        XDW_ATN_TextOrientation:        "%TextOrientation",
-        XDW_ATN_LineSpace:              "%LineSpace",
-        XDW_ATN_AutoResize:             "%AutoResize",
-        XDW_ATN_Invisible:              "%Invisible",
-        XDW_ATN_PageFrom:               "%PageFrom",
-        XDW_ATN_XdwNameInXbd:           "%XdwNameInXbd",
-        XDW_ATN_TopField:               "%TopField",
-        XDW_ATN_BottomField:            "%BottomField",
-        XDW_ATN_DateStyle:              "%DateStyle",
-        XDW_ATN_YearField:              "%YearField",
-        XDW_ATN_MonthField:             "%MonthField",
-        XDW_ATN_DayField:               "%DayField",
-        XDW_ATN_BasisYearStyle:         "%BasisYearStyle",
-        XDW_ATN_BasisYear:              "%BasisYear",
-        XDW_ATN_DateField_FirstChar:    "%DateFieldFirstChar",
-        XDW_ATN_Alignment:              "%Alignment",
-        XDW_ATN_LeftRightMargin:        "%LeftRightMargin",
-        XDW_ATN_TopBottomMargin:        "%TopBottomMargin",
-        XDW_ATN_VerPosition:            "%VerPosition",
-        XDW_ATN_StartingNumber:         "%StartingNumber",
-        XDW_ATN_Digit:                  "%Digit",
-        XDW_ATN_PageRange:              "%PageRange",
-        XDW_ATN_BeginningPage:          "%BeginningPage",
-        XDW_ATN_EndingPage:             "%EndingPage",
-        XDW_ATN_Zoom:                   "%Zoom",
-        XDW_ATN_ImageFile:              "%ImageFile",
-        XDW_ATN_Points:                 "%Points",
-        XDW_ATN_DateFormat:             "%DateFormat",
-        XDW_ATN_DateOrder:              "%DateOrder",
-        XDW_ATN_TextSpacing:            "%Spacing",
-        XDW_ATN_TextTopMargin:          "%TopMargin",
-        XDW_ATN_TextLeftMargin:         "%LeftMargin",
-        XDW_ATN_TextBottomMargin:       "%BottomMargin",
-        XDW_ATN_TextRightMargin:        "%RightMargin",
-        XDW_ATN_TextAutoResizeHeight:   "%AutoResizeHeight",
-        XDW_ATN_GUID:                   "%CustomAnnGuid",
-        XDW_ATN_CustomData:             "%CustomAnnCustomData",
-        }, default=None)
-XDW_DOCUMENT_ATTRIBUTE = XDWConstants({
-        XDW_PROPW_TITLE:                u"%Title",
-        XDW_PROPW_SUBJECT:              u"%Subject",
-        XDW_PROPW_AUTHOR:               u"%Author",
-        XDW_PROPW_KEYWORDS:             u"%Keywords",
-        XDW_PROPW_COMMENTS:             u"%Comments",
-        }, default=None)
-
-
-def open(path, readonly=False, authenticate=True):
+def xdwopen(path, readonly=False, authenticate=True):
     """General opener"""
     doctype = {
             ".XDW": XDWDocument,
@@ -243,6 +64,9 @@ def create_document_from_image(
 def create_binder(path, color=XDW_BINDER_COLOR_0, size=XDW_SIZE_FREE):
     """The XBD generator"""
     XDW_CreateBinder(path, color, size)
+
+
+# Annotations
 
 
 def _annotation_in(annotation, rect):  # Assume rect is half-opened.
@@ -701,79 +525,3 @@ class XDWBinder(XDWDocument):
             return "\f".join([doc.text for doc in self])
         raise AttributeError("'%s' object has no attribute '%s'" % (
                 self.__class__.__name__, name))
-
-
-if __name__ == "__main__":
-
-    from optparse import OptionParser
-
-    parser = OptionParser()
-    parser.add_option("--text",
-            action="store_const", dest="spec", const="text,annotation_fulltext",
-            help="document text, OCR text and text annotations")
-    parser.add_option("--property",
-            action="store_const", dest="spec",
-            const="Title,Subject,Author,Keywords,Comments",
-            help="properties (title, subject, author, keyword, comment)")
-    parser.add_option("-a",
-            action="store_const", dest="spec",
-            const="Title,Subject,Author,Keywords,Comments,text,annotation_fulltext",
-            help="all text and properties")
-    parser.add_option("--page-text",
-            action="store_const", dest="spec", const="text",
-            help="document text and OCR text")
-    parser.add_option("--annotation-text",
-            action="store_const", dest="spec", const="annotation_fulltext",
-            help="text annotations")
-    parser.add_option("--title",
-            action="store_const", dest="spec", const="Title",
-            help="document title")
-    parser.add_option("--subject",
-            action="store_const", dest="spec", const="Subject",
-            help="document subject (or subtitle)")
-    parser.add_option("--author",
-            action="store_const", dest="spec", const="Author",
-            help="document author")
-    parser.add_option("--keyword",
-            action="store_const", dest="spec", const="Keywords",
-            help="document keywords")
-    parser.add_option("--comment",
-            action="store_const", dest="spec", const="Comments",
-            help="document comments")
-    parser.add_option("-u", action="store_true", dest="unicode",
-            help="Unicode ie. UTF-16, not multibyte (MBCS)")
-    parser.add_option("-d", action="store_true", dest="ask",
-            help="ask if input is DocuWorks file or not; returns error code")
-    #parser.add_option("-h", action="store_true", dest="help",
-    #        help="display this")
-    parser.add_option("-v", action="store_true", dest="showversion",
-            help="output version information to stdout")
-    parser.add_option("-s", action="store_true", dest="silent",
-            help="silent mode; no output, including error messages")
-    parser.add_option("-p", action="store_true", dest="pipe",
-            help="output to pipe")
-    options, args = parser.parse_args()
-
-    try:
-        doc = open(args[0], readonly=True, authenticate=False)
-    except XDWError as e:
-        if options.ask:
-            if not options.silent:
-                print e
-            sys.exit(e.error_code)
-        else:
-            raise
-    if options.ask:
-        sys.exit(0)
-
-    out = []
-    for name in options.spec.split(","):
-        out.append(getattr(doc, name))
-    out = "\n".join(out)
-    if options.pipe:
-        print out
-    else:
-        of = open(arg[1], "w")
-        of.writelines(out)
-        of.close()
-
