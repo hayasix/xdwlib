@@ -16,6 +16,11 @@ FOR A PARTICULAR PURPOSE.
 import sys
 
 from xdwlib import xdwopen, XDWError
+from xdwapi import XDW_E_INVALIDARG
+
+
+OPTION_ASK = False
+OPTION_SILENT = False
 
 
 def parse():
@@ -68,9 +73,18 @@ def parse():
     return parser.parse_args()
 
 
+def exit(xdwerror, verbose=False):
+    if verbose:
+        print xdwerror
+    sys.exit(xdwerror.error_code)
+    
+
 if __name__ == "__main__":
 
     options, args = parse()
+
+    if len(args) < 1:
+        exit(XDWError(XDW_E_INVALIDARG), not options.silent)
 
     if len(args) < 2:
         options.pipe = True
@@ -79,9 +93,7 @@ if __name__ == "__main__":
         doc = xdwopen(args[0], readonly=True, authenticate=False)
     except XDWError as e:
         if options.ask:
-            if not options.silent:
-                print e
-            sys.exit(e.error_code)
+            exit(e, not options.silent)
         else:
             raise
     if options.ask:
@@ -93,7 +105,7 @@ if __name__ == "__main__":
     out = []
     for name in options.spec.split(","):
         out.append(getattr(doc, name))
-    out = "\n".join(out)
+    out = "".join(out)
     if options.pipe:
         print out
     else:
