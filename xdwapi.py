@@ -20,29 +20,35 @@ from ctypes import *
 ######################################################################
 ### ERROR DEFINITIONS ################################################
 
-XDW_E_NOT_INSTALLED                 = 0x80040001
-XDW_E_INFO_NOT_FOUND                = 0x80040002
-XDW_E_INSUFFICIENT_BUFFER           = 0x8007007A
-XDW_E_FILE_NOT_FOUND                = 0x80070002
-XDW_E_FILE_EXISTS                   = 0x80070050
-XDW_E_ACCESSDENIED                  = 0x80070005
-XDW_E_BAD_FORMAT                    = 0x8007000B
-XDW_E_OUTOFMEMORY                   = 0x8007000E
-XDW_E_WRITE_FAULT                   = 0x8007001D
-XDW_E_SHARING_VIOLATION             = 0x80070020
-XDW_E_DISK_FULL                     = 0x80070027
-XDW_E_INVALIDARG                    = 0x80070057
-XDW_E_INVALID_NAME                  = 0x8007007B
-XDW_E_INVALID_ACCESS                = 0x80040003
-XDW_E_INVALID_OPERATION             = 0x80040004
-XDW_E_NEWFORMAT                     = 0x800E0004
-XDW_E_BAD_NETPATH                   = 0x800E0005
-XDW_E_APPLICATION_FAILED            = 0x80001156
-XDW_E_SIGNATURE_MODULE              = 0x800E0010
-XDW_E_PROTECT_MODULE                = 0x800E0012
-XDW_E_UNEXPECTED                    = 0x8000FFFF
-XDW_E_CANCELED                      = 0x80040005
-XDW_E_ANNOTATION_NOT_ACCEPTED       = 0x80040006
+def _uint32(n):
+    return (n + 0x100000000) & 0xffffffff
+
+def _int32(n):
+    return n - 0x100000000 if 0x80000000 <= n else n
+
+XDW_E_NOT_INSTALLED                 = _int32(0x80040001)
+XDW_E_INFO_NOT_FOUND                = _int32(0x80040002)
+XDW_E_INSUFFICIENT_BUFFER           = _int32(0x8007007A)
+XDW_E_FILE_NOT_FOUND                = _int32(0x80070002)
+XDW_E_FILE_EXISTS                   = _int32(0x80070050)
+XDW_E_ACCESSDENIED                  = _int32(0x80070005)
+XDW_E_BAD_FORMAT                    = _int32(0x8007000B)
+XDW_E_OUTOFMEMORY                   = _int32(0x8007000E)
+XDW_E_WRITE_FAULT                   = _int32(0x8007001D)
+XDW_E_SHARING_VIOLATION             = _int32(0x80070020)
+XDW_E_DISK_FULL                     = _int32(0x80070027)
+XDW_E_INVALIDARG                    = _int32(0x80070057)
+XDW_E_INVALID_NAME                  = _int32(0x8007007B)
+XDW_E_INVALID_ACCESS                = _int32(0x80040003)
+XDW_E_INVALID_OPERATION             = _int32(0x80040004)
+XDW_E_NEWFORMAT                     = _int32(0x800E0004)
+XDW_E_BAD_NETPATH                   = _int32(0x800E0005)
+XDW_E_APPLICATION_FAILED            = _int32(0x80001156)
+XDW_E_SIGNATURE_MODULE              = _int32(0x800E0010)
+XDW_E_PROTECT_MODULE                = _int32(0x800E0012)
+XDW_E_UNEXPECTED                    = _int32(0x8000FFFF)
+XDW_E_CANCELED                      = _int32(0x80040005)
+XDW_E_ANNOTATION_NOT_ACCEPTED       = _int32(0x80040006)
 
 XDW_ERROR_MESSAGES = {
         XDW_E_NOT_INSTALLED         : "XDW_E_NOT_INSTALLED",
@@ -75,9 +81,8 @@ class XDWError(Exception):
 
     def __init__(self, error_code):
         self.error_code = error_code
-        error_code = (error_code + 0x100000000) & 0xffffffff
         msg = XDW_ERROR_MESSAGES.get(error_code, "XDW_E_UNDEFINED")
-        Exception.__init__(self, "%s (%08X)" % (msg, error_code))
+        Exception.__init__(self, "%s (%08X)" % (msg, _uint32(error_code)))
 
 ######################################################################
 ### CONSTANTS ########################################################
@@ -92,27 +97,20 @@ SHIFTJIS_CHARSET = 128
 SYMBOL_CHARSET = 2
 
 
-class XDWConst(object):
-
-    """DocuWorks constant (internal ID) table with reverse lookup"""
+class XDWConst(dict):
 
     def __init__(self, constants, default=None):
+        dict.__init__(self, constants)
         self.constants = constants
         self.reverse = dict([(v, k) for (k, v) in constants.items()])
         self.default = default
 
-    def __contains__(self, key):
-        return key in self.constants
-
-    def __getitem__(self, key):
-        return self.constants[key]  # Invalid key should raise exception.
-
     def inner(self, value):
-        return self.reverse.get(value, self.default)
+        return self.reverse.get(str(value).upper(), self.default)
 
     def normalize(self, key_or_value):
         if isinstance(key_or_value, basestring):
-            return self.reverse.get(str(key_or_value).upper(), self.default)
+            return self.inner(key_or_value)
         return key_or_value
 
 
@@ -133,6 +131,24 @@ XDW_GI_DWVIEWERPATH                 = 12
 XDW_GI_DWVLTPATH                    = 13
 XDW_GI_DWDESK_FILENAME_DELIMITER    = 1001
 XDW_GI_DWDESK_FILENAME_DIGITS       = 1002
+
+XDW_ENVIRON = XDWConst({
+        XDW_GI_VERSION                  : "VERSION",
+        XDW_GI_INSTALLPATH              : "INSTALLPATH",
+        XDW_GI_BINPATH                  : "BINPATH",
+        XDW_GI_PLUGINPATH               : "PLUGINPATH",
+        XDW_GI_FOLDERROOTPATH           : "FOLDERROOTPATH",
+        XDW_GI_USERFOLDERPATH           : "USERFOLDERPATH",
+        XDW_GI_SYSTEMFOLDERPATH         : "SYSTEMFOLDERPATH",
+        XDW_GI_RECEIVEFOLDERPATH        : "RECEIVEFOLDERPATH",
+        XDW_GI_SENDFOLDERPATH           : "SENDFOLDERPATH",
+        XDW_GI_DWINPUTPATH              : "DWINPUTPATH",
+        XDW_GI_DWDESKPATH               : "DWDESKPATH",
+        XDW_GI_DWVIEWERPATH             : "DWVIEWERPATH",
+        XDW_GI_DWVLTPATH                : "DWVLTPATH",
+        XDW_GI_DWDESK_FILENAME_DELIMITER: "DWDESK_FILENAME_DELIMITER",
+        XDW_GI_DWDESK_FILENAME_DIGITS   : "DWDESK_FILENAME_DIGITS",
+        })
 
 XDW_MAXPATH                         = 255
 XDW_MAXINPUTIMAGEPATH               = 127
@@ -437,18 +453,42 @@ XDW_REDUCENOISE_NORMAL                          = 1
 XDW_REDUCENOISE_WEAK                            = 2
 XDW_REDUCENOISE_STRONG                          = 3
 
+XDW_OCR_NOISEREDUCTION = XDWConst({
+        XDW_REDUCENOISE_NONE                    : "NONE",
+        XDW_REDUCENOISE_NORMAL                  : "NORMAL",
+        XDW_REDUCENOISE_WEAK                    : "WEAK",
+        XDW_REDUCENOISE_STRONG                  : "STRONG",
+        }, default=XDW_REDUCENOISE_NONE)
+
 XDW_PRIORITY_NONE                               = 0
 XDW_PRIORITY_SPEED                              = 1
 XDW_PRIORITY_RECOGNITION                        = 2
+
+XDW_OCR_PREPROCESSING = XDWConst({
+        XDW_PRIORITY_NONE                       : "NONE",
+        XDW_PRIORITY_SPEED                      : "SPEED",
+        XDW_PRIORITY_RECOGNITION                : "ACCURACY",
+        })
 
 XDW_OCR_ENGINE_V4                               = 1  # old name - should be here for = compatibility
 XDW_OCR_ENGINE_DEFAULT                          = 1
 XDW_OCR_ENGINE_WRP                              = 2
 XDW_OCR_ENGINE_FRE                              = 3
 
+XDW_OCR_ENGINE = XDWConst({
+        XDW_OCR_ENGINE_DEFAULT                  : "DEFAULT",
+        XDW_OCR_ENGINE_WRP                      : "WINREADER PRO",
+        })
+
 XDW_OCR_LANGUAGE_AUTO                           = -1
 XDW_OCR_LANGUAGE_JAPANESE                       = 0
 XDW_OCR_LANGUAGE_ENGLISH                        = 1
+
+XDW_OCR_LANGUAGE = XDWConst({
+        XDW_OCR_LANGUAGE_AUTO                   : "AUTO",
+        XDW_OCR_LANGUAGE_JAPANESE               : "JAPANESE",
+        XDW_OCR_LANGUAGE_ENGLISH                : "ENGLISH",
+        })
 
 XDW_OCR_MULTIPLELANGUAGES_ENGLISH               = 0x02
 XDW_OCR_MULTIPLELANGUAGES_FRENCH                = 0x04
@@ -460,11 +500,25 @@ XDW_OCR_FORM_AUTO                               = 0
 XDW_OCR_FORM_TABLE                              = 1
 XDW_OCR_FORM_WRITING                            = 2
 
+XDW_OCR_FORM = XDWConst({
+        XDW_OCR_FORM_AUTO                       : "AUTO",
+        XDW_OCR_FORM_TABLE                      : "TABLE",
+        XDW_OCR_FORM_WRITING                    : "WRITING",
+        })
+
 XDW_OCR_COLUMN_AUTO                             = 0
 XDW_OCR_COLUMN_HORIZONTAL_SINGLE                = 1
 XDW_OCR_COLUMN_HORIZONTAL_MULTI                 = 2
 XDW_OCR_COLUMN_VERTICAL_SINGLE                  = 3
 XDW_OCR_COLUMN_VERTICAL_MULTI                   = 4
+
+XDW_OCR_COLUMN = XDWConst({
+        XDW_OCR_COLUMN_AUTO                     : "AUTO",
+        XDW_OCR_COLUMN_HORIZONTAL_SINGLE        : "HORIZONTAL SINGLE",
+        XDW_OCR_COLUMN_HORIZONTAL_MULTI         : "HORIZONTAL MULTI",
+        XDW_OCR_COLUMN_VERTICAL_SINGLE          : "VERTICAL SINGLE",
+        XDW_OCR_COLUMN_VERTICAL_MULTI           : "VERTICAL MULTI",
+        })
 
 XDW_OCR_DOCTYPE_AUTO                            = 0
 XDW_OCR_DOCTYPE_HORIZONTAL_SINGLE               = 1
@@ -474,9 +528,21 @@ XDW_OCR_ENGINE_LEVEL_SPEED                      = 1
 XDW_OCR_ENGINE_LEVEL_STANDARD                   = 2
 XDW_OCR_ENGINE_LEVEL_ACCURACY                   = 3
 
+XDW_OCR_STRATEGY = XDWConst({
+        XDW_OCR_ENGINE_LEVEL_SPEED              : "SPEED",
+        XDW_OCR_ENGINE_LEVEL_STANDARD           : "STANDARD",
+        XDW_OCR_ENGINE_LEVEL_ACCURACY           : "ACCURACY",
+        })
+
 XDW_OCR_MIXEDRATE_JAPANESE                      = 1
 XDW_OCR_MIXEDRATE_BALANCED                      = 2
 XDW_OCR_MIXEDRATE_ENGLISH                       = 3
+
+XDW_OCR_MAIN_LANGUAGE = XDWConst({
+        XDW_OCR_MIXEDRATE_JAPANESE              : "JAPANESE",
+        XDW_OCR_MIXEDRATE_BALANCED              : "BALANCED",
+        XDW_OCR_MIXEDRATE_ENGLISH               : "ENGLISH",
+        })
 
 # page type
 

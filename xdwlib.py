@@ -20,9 +20,8 @@ import datetime
 from xdwapi import *
 
 __all__ = (
-    "XDWDocument", "XDWDocumentInBinder", "XDWBinder",
-    "XDWError",
-    "xdwopen", "create", "create_binder",
+    "XDWDocument", "XDWDocumentInBinder", "XDWBinder", "XDWError",
+    "environ", "xdwopen", "create", "create_binder",
     )
 
 CODEPAGE = 932
@@ -31,6 +30,28 @@ try:
     VALID_DOCUMENT_HANDLES
 except NameError:
     VALID_DOCUMENT_HANDLES = []
+
+
+def environ(name=None):
+    """DocuWorks environment information"""
+    if name:
+        value = XDW_GetInformation(XDW_ENVIRON.normalize(name))
+        if name == XDW_ENVIRON[XDW_GI_DWDESK_FILENAME_DIGITS]:
+            value = ord(value)
+        return value
+    values = dict()
+    for k, v in XDW_ENVIRON.items():
+        try:
+            value = XDW_GetInformation(k)
+            if k == XDW_GI_DWDESK_FILENAME_DIGITS:
+                value = ord(value)
+            values[v] = value
+        except XDWError as e:
+            if e.error_code == XDW_E_INFO_NOT_FOUND:
+                continue
+            else:
+                raise
+    return values
 
 
 def xdwopen(path, readonly=False, authenticate=True):
@@ -276,6 +297,55 @@ class XDWPage(object):
     def find_annotations(*args, **kw):
         return find_annotations(*args, **kw)
 
+    def rotate(self, degree=0, auto=False):
+        if auto:
+            XDW_RotatePageAuto(self.xdw.document_handle, self.page)
+            self.xdw.finalize = True
+        else:
+            XDW_RotatePage(self.xdw.document_handle, self.page, degree)
+        
+    def ocr(self,
+            engine=XDW_OCR_ENGINE_DEFAULT,
+            strategy=XDW_OCR_ENGINE_LEVEL_SPEED,
+            preprocessing=XDW_PRIORITY_SPEED,
+            noise_reduction=XDW_REDUCENOISE_NONE,
+            deskew=True,
+            form=XDW_OCR_FORM_AUTO,
+            column=XDW_OCR_COLUMN_AUTO,
+            rects=None,
+            language=XDW_OCR_LANGUAGE_AUTO,
+            main_language=XDW_OCR_MIXEDRATE_BALANCED,
+            use_ascii=True,
+            insert_space=False,
+            verbose=False,
+            ):
+        option = XDW_OCR_OPTION_V7()
+        engine = XDW_OCR_ENGINE.normalize(engine)
+        option.nEngineLevel = XDW_OCR_STRATEGY.normalize(strategy)
+        option.nPriority = XDW_OCR_PREPROCESSING.normalize(preprocessing)
+        option.nNoiseReduction = XDW_OCR_NOISEREDUCTION.normalize(noise_reduction)
+        option.nAutoDeskew = bool(deskew)
+        option.nForm = XDW_OCR_FORM.normalize(form)
+        option.nColumn = XDW_OCR_COLUMN.normalize(column)
+        option.nLanguage = XDW_OCR_LANGUAGE.normalize(language)
+        option.nLanguageMixedRate = XDW_OCR_MAIN_LANGUAGE.normalize(main_language)
+        option.nHalfSizeChar = bool(use_ascii)
+        option.nInsertSpaceCharacter = bool(insert_space)
+        option.nDisplayProcess = bool(verbose)
+        if rects:
+            option.nAreaNum = len(rects)
+            rectlist = XDW_RECT() * len(rects)
+            for r, rect in zip(rectlist, rects):
+                r.left = rect[0][0]
+                r.top = rect[0][1]
+                r.right = rect[1][0]
+                r.bottom = rect[1][1]
+            option.pAreaRects = byref(rectlist)
+        else:
+            option.pAreaRects = NULL
+        XDW_ApplyOcr(self.xdw.document_handle, self.page, engine, byref(option))
+        self.finalize = True
+
 
 class XDWDocument(object):
 
@@ -322,6 +392,8 @@ class XDWDocument(object):
         self.binder_size = document_info.nBinderSize
         # Document attributes.
         self.attributes = XDW_GetDocumentAttributeNumber(self.document_handle)
+        # Remember if this must be finalized.
+        self.finalize = False
 
     def __str__(self):
         return "XDWDocument(%s: %d pages, %d files attached)" % (
@@ -386,6 +458,8 @@ class XDWDocument(object):
         self.close()
 
     def close(self):
+        if self.finalize:
+            XDW_Finalize(sefl.document_handle)
         XDW_CloseDocumentHandle(self.document_handle)
         self.free()
 
