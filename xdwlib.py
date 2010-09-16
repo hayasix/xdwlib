@@ -412,11 +412,15 @@ class XDWDocument(object):
                     page.text + "\f" + page.annotation_fulltext
                     for page in self)
         attribute_name = u"%" + name
-        if attribute_name in XDW_DOCUMENT_ATTRIBUTE:
+        try:
             return XDW_GetDocumentAttributeByNameW(
                     self.document_handle, attribute_name, CODEPAGE)[1]
-        raise AttributeError("'%s' object has no attribute '%s'" % (
-                self.__class__.__name__, name))
+        except XDWError as e:
+            if e.error_code == XDW_E_INVALIDARG:
+                raise AttributeError("'%s' object has no attribute '%s'" % (
+                        self.__class__.__name__, name))
+            else:
+                raise
 
     def __setattr__(self, name, value):
         attribute_name = "%" + name

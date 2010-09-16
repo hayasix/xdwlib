@@ -104,7 +104,10 @@ if __name__ == "__main__":
 
     out = []
     for name in options.spec.split(","):
-        out.append(getattr(doc, name))
+        try:
+            out.append(getattr(doc, name))
+        except AttributeError:
+            pass
     out = "".join(out)
     if options.pipe:
         print out
