@@ -303,7 +303,11 @@ class XDWPage(object):
             self.xdw.finalize = True
         else:
             XDW_RotatePage(self.xdw.document_handle, self.page, degree)
-        
+    
+    def reduce_noise(self, level=XDW_REDUCENOISE_NORMAL):
+        level = XDW_OCR_NOISEREDUCTION.normalize(level)
+        XDW_ReducePageNoise(self.document_handle, self.page, level)
+
     def ocr(self,
             engine=XDW_OCR_ENGINE_DEFAULT,
             strategy=XDW_OCR_ENGINE_LEVEL_SPEED,
@@ -482,6 +486,9 @@ class XDWDocument(object):
         """page(n) --> XDWPage"""
         return XDWPage(self, n)
 
+    def delete_page(self, n):
+        XDW_DeletePage(self.document_handle, n)
+
 
 class XDWDocumentInBinder(object):
 
@@ -537,6 +544,9 @@ class XDWDocumentInBinder(object):
     def page(self, n):
         """page(n) --> XDWPage"""
         return XDWPage(self.binder, self.start_page + n)
+
+    def delete_page(self, n):
+        XDW_DeletePage(self.binder.document_handle, self.start_page + n)
 
 
 class XDWBinder(XDWDocument):
