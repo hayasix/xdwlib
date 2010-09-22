@@ -497,7 +497,7 @@ class XDWDocumentInBinder(object):
     def __init__(self, binder, position):
         self.binder = binder
         self.position = position
-        self.start_page = sum(binder.document_pages[:position])
+        self.page_offset = sum(binder.document_pages[:position])
         self.name = XDW_GetDocumentNameInBinderW(
                 self.binder.document_handle, position + 1, CODEPAGE)[0]
         document_info = XDW_GetDocumentInformationInBinder(
@@ -537,16 +537,16 @@ class XDWDocumentInBinder(object):
     def next(self):
         if self.pages <= self.current_page:
             raise StopIteration
-        n = self.start_page + self.current_page
+        n = self.page_offset + self.current_page
         self.current_page += 1
         return XDWPage(self.binder, n)
 
     def page(self, n):
         """page(n) --> XDWPage"""
-        return XDWPage(self.binder, self.start_page + n)
+        return XDWPage(self.binder, self.page_offset + n)
 
     def delete_page(self, n):
-        XDW_DeletePage(self.binder.document_handle, self.start_page + n)
+        XDW_DeletePage(self.binder.document_handle, self.page_offset + n)
 
 
 class XDWBinder(XDWDocument):
@@ -598,10 +598,6 @@ class XDWBinder(XDWDocument):
     def document(self, position):
         """document(position) --> XDWDocument"""
         return XDWDocumentInBinder(self, position)
-
-    def page(self, n):
-        """page(n) --> XDWPage"""
-        return XDWPage(self, n)
 
     def document_pages(self):
         """document_pages() --> list
