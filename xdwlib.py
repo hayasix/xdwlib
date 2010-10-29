@@ -29,6 +29,11 @@ CP = 932
 PSEP = "\f"
 ASEP = "\v"
 
+# Observer pattern event
+EV_PAGE_REMOVED = 1
+EV_PAGE_INSERTED = 2
+
+
 try:
     VALID_DOCUMENT_HANDLES
 except NameError:
@@ -137,6 +142,40 @@ def find_annotations(object,
     return annotation_list
 
 
+class XDWSubject(object):
+
+    def __init__(self):
+        self.observers = dict()
+
+    def attach(self, observer):
+        if observer.page not in self.observers:
+            self.observers[observer.page] = observer
+
+    def detach(self, observer):
+        if observer.page in self.observers:
+            del self.observers[observer.page]
+
+    def notify(self, event=None):
+        for page in self.observers:
+            self.observers[page].update(event)
+
+
+class XDWObserver(object):
+
+    def __init__(self, subject):
+        subject.attach(self)
+
+    def update(self, event):
+        raise NotImplementedError  # Override it.
+
+
+class XDWNotification(object):
+
+    def __init__(self, type, *param):
+        self.type = type
+        self.param = param
+
+
 class XDWAnnotation(object):
 
     """An annotation on DocuWorks document page"""
@@ -225,7 +264,7 @@ class XDWAnnotation(object):
         return s
 
 
-class XDWPage(object):
+class XDWPage(XDWObserver):
 
     """A page of DocuWorks document"""
 
@@ -238,6 +277,7 @@ class XDWPage(object):
     def __init__(self, xdw, page):
         self.xdw = xdw
         self.page = page
+        XDWObserver.__init__(self, xdw)
         page_info = XDW_GetPageInformation(
                 xdw.document_handle, page + 1, extend=True)
         self.width = page_info.nWidth  # 1/100 mm
@@ -259,6 +299,20 @@ class XDWPage(object):
                 page_info.nOrgVerRes)  # dpi
         self.image_width = page_info.nImageWidth  # px
         self.image_height = page_info.nImageHeight  # px
+        # Register self for updates, eg. page deletion.
+        xdw.attach(self)
+
+    def update(self, event):
+        if not isinstance(event, Notification):
+            raise TypeError("not an instance of Notification class")
+        if event.type == EV_PAGE_REMOVED:
+            if event.param[0] < self.page:
+                self.page -= 1
+        if event.type == EV_PAGE_INSERTED:
+            if self.page <= event.param[0]:
+                self.page += 1
+        else:
+            raise ValueError("illegal event type")
 
     def __str__(self):
         return "XDWPage(page %d: %.2f*%.2fmm, %s, %d annotations)" % (
@@ -292,14 +346,14 @@ class XDWPage(object):
 
     def rotate(self, degree=0, auto=False):
         if auto:
-            XDW_RotatePageAuto(self.xdw.document_handle, self.page)
+            XDW_RotatePageAuto(self.xdw.document_handle, self.page + 1)
             self.xdw.finalize = True
         else:
-            XDW_RotatePage(self.xdw.document_handle, self.page, degree)
+            XDW_RotatePage(self.xdw.document_handle, self.page + 1, degree)
     
     def reduce_noise(self, level=XDW_REDUCENOISE_NORMAL):
         level = XDW_OCR_NOISEREDUCTION.normalize(level)
-        XDW_ReducePageNoise(self.document_handle, self.page, level)
+        XDW_ReducePageNoise(self.document_handle, self.page + 1, level)
 
     def ocr(self,
             engine=XDW_OCR_ENGINE_DEFAULT,
@@ -340,11 +394,11 @@ class XDWPage(object):
             option.pAreaRects = byref(rectlist)
         else:
             option.pAreaRects = NULL
-        XDW_ApplyOcr(self.xdw.document_handle, self.page, engine, byref(option))
+        XDW_ApplyOcr(self.xdw.document_handle, self.page + 1, engine, byref(option))
         self.finalize = True
 
 
-class XDWDocument(object):
+class XDWDocument(XDWSubject):
 
     """A DocuWorks document"""
 
@@ -355,6 +409,7 @@ class XDWDocument(object):
         VALID_DOCUMENT_HANDLES.remove(self.document_handle)
 
     def __init__(self, path, readonly=False, authenticate=True):
+        XDWSubject.__init__(self)
         open_mode = XDW_OPEN_MODE_EX()
         if readonly:
             open_mode.nOption = XDW_OPEN_READONLY
@@ -442,7 +497,7 @@ class XDWDocument(object):
             raise StopIteration
         page = self.current_page
         self.current_page += 1
-        return XDWPage(self, page)
+        return self.page(page)
 
     def __enter__(self):
         return self
@@ -469,10 +524,15 @@ class XDWDocument(object):
 
     def page(self, n):
         """page(n) --> XDWPage"""
-        return XDWPage(self, n)
+        if n not in self.observers:
+            self.observers[n] = XDWPage(self, n)
+        return self.observers[n]
 
     def delete_page(self, n):
-        XDW_DeletePage(self.document_handle, n)
+        XDW_DeletePage(self.document_handle, n + 1)
+        if n in self.observers:
+            del self.observers[n]
+        self.notify(Notification(EV_PAGE_REMOVED, n))
 
     def text(self):
         return PSEP.join(page.text() for page in self)
@@ -485,11 +545,12 @@ class XDWDocument(object):
                 page.text() + ASEP + page.annotation_text() for page in self)
 
 
-class XDWDocumentInBinder(object):
+class XDWDocumentInBinder(XDWSubject):
 
     """A document part of DocuWorks binder"""
 
     def __init__(self, binder, position):
+        XDWSubject.__init__(self)
         self.binder = binder
         self.position = position
         self.page_offset = sum(binder.document_pages[:position])
@@ -522,14 +583,19 @@ class XDWDocumentInBinder(object):
             raise StopIteration
         n = self.page_offset + self.current_page
         self.current_page += 1
-        return XDWPage(self.binder, n)
+        return self.binder.page(n)
 
     def page(self, n):
         """page(n) --> XDWPage"""
-        return XDWPage(self.binder, self.page_offset + n)
+        if n not in self.observers:
+            self.observers[n] = XDWPage(self.binder, self.page_offset + n)
+        return self.observers[n]
 
     def delete_page(self, n):
         XDW_DeletePage(self.binder.document_handle, self.page_offset + n)
+        if n in self.observers:
+            del self.observers[n]
+        self.notify(Notification(EV_PAGE_REMOVED, self.page_offset + n))
 
     def text(self):
         return PSEP.join(page.text() for page in self)
@@ -570,9 +636,9 @@ class XDWBinder(XDWDocument):
     def next(self):
         if self.documents <= self.current_position:
             raise StopIteration
-        pos = self.current_position
+        position = self.current_position
         self.current_position += 1
-        return  XDWDocumentInBinder(self, pos)
+        return XDWDocumentInBinder(self, position + 1)  # TODO: comply with XDWSubject
 
     def is_document(self):
         """is_document() --> False"""
@@ -584,7 +650,7 @@ class XDWBinder(XDWDocument):
 
     def document(self, position):
         """document(position) --> XDWDocument"""
-        return XDWDocumentInBinder(self, position)
+        return XDWDocumentInBinder(self, position + 1)
 
     def document_pages(self):
         """document_pages() --> list
@@ -592,9 +658,9 @@ class XDWBinder(XDWDocument):
         Get list of page count for each document in binder
         """
         pages = []
-        for pos in range(self.documents):
+        for position in range(self.documents):
             docinfo = XDW_GetDocumentInformationInBinder(
-                    self.document_handle, pos + 1)
+                    self.document_handle, position + 1)
             pages.append(docinfo.nPages)
         return pages
 
