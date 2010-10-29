@@ -533,6 +533,10 @@ class XDWDocument(XDWSubject):
         if n in self.observers:
             del self.observers[n]
         self.notify(Notification(EV_PAGE_REMOVED, n))
+        # Rewrite observer keys.
+        for page in [p for p in sorted(self.observers.keys()) if n < p]:
+            self.observers[page - 1] = self.observers[page]
+            del self.observers[page]
 
     def text(self):
         return PSEP.join(page.text() for page in self)
