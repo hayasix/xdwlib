@@ -549,15 +549,16 @@ class XDWDocument(XDWSubject):
                 page.text() + ASEP + page.annotation_text() for page in self)
 
 
-class XDWDocumentInBinder(XDWSubject):
+class XDWDocumentInBinder(XDWSubject, XDWObserver):
 
     """A document part of DocuWorks binder"""
 
     def __init__(self, binder, position):
-        XDWSubject.__init__(self)
         self.binder = binder
         self.position = position
-        self.page_offset = sum(binder.document_pages[:position])
+        self.page = sum(binder.document_pages[:position])  # offset
+        XDWSubject.__init__(self)
+        XDWObserver.__init__(self, binder)
         self.name = XDW_GetDocumentNameInBinderW(
                 self.binder.document_handle, position + 1, CP)[0]
         document_info = XDW_GetDocumentInformationInBinder(
@@ -585,21 +586,21 @@ class XDWDocumentInBinder(XDWSubject):
     def next(self):
         if self.pages <= self.current_page:
             raise StopIteration
-        n = self.page_offset + self.current_page
+        n = self.page + self.current_page
         self.current_page += 1
         return self.binder.page(n)
 
     def page(self, n):
         """page(n) --> XDWPage"""
         if n not in self.observers:
-            self.observers[n] = XDWPage(self.binder, self.page_offset + n)
+            self.observers[n] = XDWPage(self.binder, self.page + n)
         return self.observers[n]
 
     def delete_page(self, n):
-        XDW_DeletePage(self.binder.document_handle, self.page_offset + n)
+        XDW_DeletePage(self.binder.document_handle, self.page + n)
         if n in self.observers:
             del self.observers[n]
-        self.notify(Notification(EV_PAGE_REMOVED, self.page_offset + n))
+        self.notify(Notification(EV_PAGE_REMOVED, self.page + n))
 
     def text(self):
         return PSEP.join(page.text() for page in self)
@@ -652,9 +653,12 @@ class XDWBinder(XDWDocument):
         """is_binder() --> True"""
         return True
 
-    def document(self, position):
-        """document(position) --> XDWDocument"""
-        return XDWDocumentInBinder(self, position + 1)
+    def document(self, pos):
+        """document(pos) --> XDWDocument"""
+        if pos not in self.observers:
+            # FIXME: pos is self.observers[pos] is inappropriate...
+            self.observers[pos] = XDWDocumentInBinder(self, pos + 1)
+        return self.observers[position]
 
     def document_pages(self):
         """document_pages() --> list
