@@ -237,8 +237,8 @@ class XDWAnnotation(XDWSubject, XDWObserver):
         self.__dict__[name] = value
 
     def update(self, event):
-        if not isinstance(event, Notification):
-            raise TypeError("not an instance of Notification class")
+        if not isinstance(event, XDWNotification):
+            raise TypeError("not an instance of XDWNotification class")
         if event.type == EV_ANNO_REMOVED:
             if event.param[0] < self.pos:
                 self.pos -= 1
@@ -259,10 +259,11 @@ class XDWAnnotation(XDWSubject, XDWObserver):
 
     def delete_annotation(self, idx):
         anno = self.annotation(idx)
-        XDW_RemoveAnnotation(self.document_handle, anno.annotation_handle)
+        XDW_RemoveAnnotation(self.page.xdw.document_handle, anno.annotation_handle)
+        self.annotations -= 1
         if idx in self.observers:
             del self.observers[idx]
-        self.notify(Notification(EV_ANNO_REMOVED, idx))
+        self.notify(XDWNotification(EV_ANNO_REMOVED, idx))
         # Rewrite observer keys.
         for pp in [p for p in sorted(self.observers.keys()) if idx < p]:
             self.observers[pp - 1] = self.observers[pp]
@@ -337,8 +338,8 @@ class XDWPage(XDWSubject, XDWObserver):
                 )
 
     def update(self, event):
-        if not isinstance(event, Notification):
-            raise TypeError("not an instance of Notification class")
+        if not isinstance(event, XDWNotification):
+            raise TypeError("not an instance of XDWNotification class")
         if event.type == EV_PAGE_REMOVED:
             if event.param[0] < self.pos:
                 self.pos -= 1
@@ -360,9 +361,10 @@ class XDWPage(XDWSubject, XDWObserver):
     def delete_annotation(self, idx):
         anno = self.annotation(idx)
         XDW_RemoveAnnotation(self.document_handle, anno.annotation_handle)
+        self.annotations -= 1
         if idx in self.observers:
             del self.observers[idx]
-        self.notify(Notification(EV_ANNO_REMOVED, idx))
+        self.notify(XDWNotification(EV_ANNO_REMOVED, idx))
         # Rewrite observer keys.
         for pp in [p for p in sorted(self.observers.keys()) if idx < p]:
             self.observers[pp - 1] = self.observers[pp]
@@ -562,9 +564,10 @@ class XDWDocument(XDWSubject):
 
     def delete_page(self, page):
         XDW_DeletePage(self.document_handle, page + 1)
+        self.pages -= 1
         if page in self.observers:
             del self.observers[n]
-        self.notify(Notification(EV_PAGE_REMOVED, page))
+        self.notify(XDWNotification(EV_PAGE_REMOVED, page))
         # Rewrite observer keys.
         for pp in [p for p in sorted(self.observers.keys()) if page < p]:
             self.observers[pp - 1] = self.observers[pp]
@@ -630,9 +633,10 @@ class XDWDocumentInBinder(XDWSubject, XDWObserver):
 
     def delete_page(self, page):
         XDW_DeletePage(self.binder.document_handle, self.page_offset + page)
+        self.pages -= 1
         if page in self.observers:
             del self.observers[page]
-        self.notify(Notification(EV_PAGE_REMOVED, self.page_offset + page))
+        self.notify(XDWNotification(EV_PAGE_REMOVED, self.page_offset + page))
 
     def text(self):
         return PSEP.join(page.text() for page in self)
@@ -721,9 +725,10 @@ class XDWBinder(XDWDocument):
 
     def delete_document(self, pos):
         XDW_DeleteDocumentInBinder(self.document_handle, pos + 1)
+        self.documents -= 1
         if pos in self.observers:
             del self.observers[pos]
-        self.notify(Notification(EV_DOCU_REMOVED, pos))
+        self.notify(XDWNotification(EV_DOCU_REMOVED, pos))
         # Rewrite observer keys.
         for pp in [p for p in sorted(self.observers.keys()) if pos < p]:
             self.observers[pp - 1] = self.observers[pp]
