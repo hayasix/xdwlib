@@ -38,6 +38,7 @@ EV_ANNO_REMOVED = 31
 EV_ANNO_INSERTED = 32
 
 
+# The last resort to close documents in interactive session.
 try:
     VALID_DOCUMENT_HANDLES
 except NameError:
@@ -182,7 +183,7 @@ class XDWNotification(object):
 
 class XDWAnnotation(XDWSubject, XDWObserver):
 
-    """An annotation on DocuWorks document page"""
+    """Annotation on DocuWorks document page"""
 
     def __init__(self, page, idx, parent_annotation=None):
         self.pos = idx
@@ -243,7 +244,7 @@ class XDWAnnotation(XDWSubject, XDWObserver):
             if event.param[0] < self.pos:
                 self.pos -= 1
         if event.type == EV_ANNO_INSERTED:
-            if self.pos <= event.param[0]:
+            if event.param[0] < self.pos:
                 self.pos += 1
         else:
             raise ValueError("illegal event type")
@@ -292,7 +293,7 @@ class XDWAnnotation(XDWSubject, XDWObserver):
 
 class XDWPage(XDWSubject, XDWObserver):
 
-    """A page of DocuWorks document"""
+    """Page of DocuWorks document"""
 
     @staticmethod
     def normalize_resolution(n):
@@ -340,11 +341,9 @@ class XDWPage(XDWSubject, XDWObserver):
     def update(self, event):
         if not isinstance(event, XDWNotification):
             raise TypeError("not an instance of XDWNotification class")
-        if event.type == EV_PAGE_REMOVED:
-            if event.param[0] < self.pos:
+        if event.type == EV_PAGE_REMOVED and event.param[0] < self.pos:
                 self.pos -= 1
-        if event.type == EV_PAGE_INSERTED:
-            if self.pos <= event.param[0]:
+        if event.type == EV_PAGE_INSERTED and event.param[0] < self.pos:
                 self.pos += 1
         else:
             raise ValueError("illegal event type")
@@ -434,7 +433,7 @@ class XDWPage(XDWSubject, XDWObserver):
 
 class XDWDocument(XDWSubject):
 
-    """A DocuWorks document"""
+    """DocuWorks document"""
 
     def register(self):
         VALID_DOCUMENT_HANDLES.append(self.document_handle)
@@ -539,6 +538,9 @@ class XDWDocument(XDWSubject):
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
 
+    def save(self):
+        XDW_SaveDocument(self.document_handle)
+
     def close(self):
         if self.finalize:
             XDW_Finalize(sefl.document_handle)
@@ -552,9 +554,6 @@ class XDWDocument(XDWSubject):
     def is_binder(self):
         """is_binder() --> False"""
         return False
-
-    def save(self):
-        XDW_SaveDocument(self.document_handle)
 
     def page(self, page):
         """page(page) --> XDWPage"""
@@ -586,7 +585,7 @@ class XDWDocument(XDWSubject):
 
 class XDWDocumentInBinder(XDWSubject, XDWObserver):
 
-    """A document part of DocuWorks binder"""
+    """Document part of DocuWorks binder"""
 
     def __init__(self, binder, position):
         self.pos = position
@@ -625,6 +624,14 @@ class XDWDocumentInBinder(XDWSubject, XDWObserver):
         self.current_page += 1
         return self.binder.page(page)
 
+    def is_document(self):
+        """is_document() --> False"""
+        return False
+
+    def is_binder(self):
+        """is_binder() --> False"""
+        return False
+
     def page(self, page):
         """page(n) --> XDWPage"""
         if page not in self.observers:
@@ -637,6 +644,17 @@ class XDWDocumentInBinder(XDWSubject, XDWObserver):
         if page in self.observers:
             del self.observers[page]
         self.notify(XDWNotification(EV_PAGE_REMOVED, self.page_offset + page))
+        self.binder.notify(XDWNotification(EV_PAGE_REMOVED, self.page_offset + page))
+
+    def update(self, page):
+        if not isinstance(event, XDWNotification):
+            raise TypeError("not an instance of XDWNotification class")
+        if event.type == EV_PAGE_REMOVED and event.param[0] < self.page_offset:
+                self.page_offset -= 1
+        if event.type == EV_PAGE_INSERTED and event.param[0] < self.page_offset:
+                self.page_offset += 1
+        else:
+            raise ValueError("illegal event type")
 
     def text(self):
         return PSEP.join(page.text() for page in self)
