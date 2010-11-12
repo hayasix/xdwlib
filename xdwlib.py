@@ -251,6 +251,7 @@ class XDWAnnotation(XDWSubject, XDWObserver):
         """find_annotations(object, recursive=False, rect=None, types=None, half_open=True)
 
         Find annotations on page, which meets criteria given.
+
         Arguments:
             recursive   also return descendant (child) annotations.
             rect        return annotations in given rectangular area,
@@ -384,7 +385,14 @@ class XDWPage(XDWSubject, XDWObserver):
         return ASEP.join([t for t in s if isinstance(t, basestring)])
 
     def rotate(self, degree=0, auto=False):
-        """Rotate a page."""
+        """rotate(degree=0, auto=False)
+
+        Rotate a page.
+
+        Arguments:
+            degree  90, 180 or 270
+            auto    True/False
+        """
         if auto:
             XDW_RotatePageAuto(self.xdw.handle, self.pos + 1)
             self.xdw.finalize = True
@@ -392,7 +400,15 @@ class XDWPage(XDWSubject, XDWObserver):
             XDW_RotatePage(self.xdw.handle, self.pos + 1, degree)
 
     def reduce_noise(self, level=XDW_REDUCENOISE_NORMAL):
-        """Process a page by noise reduction engine."""
+        """reduce_noise(self, level=XDW_REDUCENOISE_NORMAL)
+
+        Process a page by noise reduction engine.
+
+        Arguments:
+            level   XDW_REDUCENOISE_NORMAL
+                    XDW_REDUCENOISE_WEAK
+                    XDW_REDUCENOISE_STRONG
+        """
         level = XDW_OCR_NOISEREDUCTION.normalize(level)
         XDW_ReducePageNoise(self.handle, self.pos + 1, level)
 
