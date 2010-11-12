@@ -248,6 +248,17 @@ class XDWAnnotation(XDWSubject, XDWObserver):
         return self.observers[idx]
 
     def find_annotations(self, *args, **kw):
+        """find_annotations(object, recursive=False, rect=None, types=None, half_open=True)
+
+        Find annotations on page, which meets criteria given.
+        Arguments:
+            recursive   also return descendant (child) annotations.
+            rect        return annotations in given rectangular area,
+                        (rect.left, rect.top) - (rect.right, rect.bottom).
+                        Note that right/bottom value are innermost of outside
+                        unless half_open==False.
+            types       return annotations of types given.
+        """
         return find_annotations(self, *args, **kw)
 
     def delete_annotation(self, idx):

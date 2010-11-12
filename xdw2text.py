@@ -77,7 +77,7 @@ def exit(xdwerror, verbose=False):
     if verbose:
         print xdwerror
     sys.exit(xdwerror.error_code)
-    
+
 
 if __name__ == "__main__":
 
