@@ -45,6 +45,11 @@ except NameError:
     VALID_DOCUMENT_HANDLES = []
 
 
+def _join(sep, seq):
+    """sep.join(seq), omitting None, null or so."""
+    return sep.join([s for s in filter(bool, seq)]) or None
+
+
 def environ(name=None):
     """DocuWorks environment information"""
     if name:
@@ -292,7 +297,7 @@ class XDWAnnotation(XDWSubject, XDWObserver):
             s = [s]
             s.extend([self.annotation(i).text(recursive=True) \
                     for i in range(self.annotations)])
-            s = ASEP.join(t for t in s if isinstance(t, basestring))
+            s = _join(ASEP, s)
         return s
 
 
@@ -381,8 +386,9 @@ class XDWPage(XDWSubject, XDWObserver):
         return XDW_GetPageTextToMemoryW(self.xdw.handle, self.pos + 1)
 
     def annotation_text(self, recursive=True):
-        s = [a.text(recursive=recursive) for a in self.find_annotations()]
-        return ASEP.join([t for t in s if isinstance(t, basestring)])
+        return _join(ASEP, [
+                a.text(recursive=recursive) for a in self.find_annotations()
+                ])
 
     def rotate(self, degree=0, auto=False):
         """rotate(degree=0, auto=False)
@@ -599,14 +605,16 @@ class XDWDocument(XDWSubject):
             del self.observers[pp]
 
     def text(self):
-        return PSEP.join(page.text() for page in self)
+        return _join(PSEP, [page.text() for page in self])
 
     def annotation_text(self):
-        return PSEP.join(page.annotation_text() for page in self)
+        return _join(PSEP, [page.annotation_text() for page in self])
 
     def fulltext(self):
-        return PSEP.join(
-                page.text() + ASEP + page.annotation_text() for page in self)
+        return _join(PSEP, [
+                _join(ASEP, [page.text(), page.annotation_text()])
+                for page in self
+                ])
 
 
 class XDWDocumentInBinder(XDWSubject, XDWObserver):
@@ -688,14 +696,16 @@ class XDWDocumentInBinder(XDWSubject, XDWObserver):
             raise ValueError("illegal event type")
 
     def text(self):
-        return PSEP.join(page.text() for page in self)
+        return _join(PSEP, [page.text() for page in self])
 
     def annotation_text(self):
-        return PSEP.join(page.annotation_text() for page in self)
+        return _join(PSEP, [page.annotation_text() for page in self])
 
     def fulltext(self):
-        return PSEP.join(
-                page.text() + ASEP + page.annotation_text() for page in self)
+        return _join(PSEP, [
+                _join(ASEP, [page.text(), page.annotation_text()])
+                for page in self
+                ])
 
 
 class XDWBinder(XDWDocument):
@@ -788,11 +798,13 @@ class XDWBinder(XDWDocument):
             del self.observers[pp]
 
     def text(self):
-        return PSEP.join(doc.text() for doc in self)
+        return _join(PSEP, [doc.text() for doc in self])
 
     def annotation_text(self):
-        return PSEP.join(doc.annotation_text() for doc in self)
+        return _join(PSEP, [doc.annotation_text() for doc in self])
 
     def fulltext(self):
-        return PSEP.join(
-                doc.text() + ASEP + doc.annotation_text() for doc in self)
+        return _join(PSEP, [
+                _join(ASEP, [doc.text(), doc.annotation_text()])
+                for doc in self
+                ])
