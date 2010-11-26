@@ -761,78 +761,79 @@ XDW_PF_XDW                          = 0
 XDW_PF_XBD                          = 1
 XDW_PF_XDW_IN_XBD                   = 2
 
-XDW_ANNOTATION_ATTRIBUTE = (
-        XDW_ATN_Text,
-        XDW_ATN_FontName,
-        XDW_ATN_FontStyle,
-        XDW_ATN_FontSize,
-        XDW_ATN_ForeColor,
-        XDW_ATN_FontPitchAndFamily,
-        XDW_ATN_FontCharSet,
-        XDW_ATN_BackColor,
-        XDW_ATN_Caption,
-        XDW_ATN_Url,
-        XDW_ATN_XdwPath,
-        XDW_ATN_ShowIcon,
-        XDW_ATN_LinkType,
-        XDW_ATN_XdwPage,
-        XDW_ATN_Tooltip,
-        XDW_ATN_Tooltip_String,
-        XDW_ATN_XdwPath_Relative,
-        XDW_ATN_XdwLink,
-        XDW_ATN_LinkAtn_Title,
-        XDW_ATN_OtherFilePath,
-        XDW_ATN_OtherFilePath_Relative,
-        XDW_ATN_MailAddress,
-        XDW_ATN_BorderStyle,
-        XDW_ATN_BorderWidth,
-        XDW_ATN_BorderColor,
-        XDW_ATN_BorderTransparent,
-        XDW_ATN_BorderType,
-        XDW_ATN_FillStyle,
-        XDW_ATN_FillColor,
-        XDW_ATN_FillTransparent,
-        XDW_ATN_ArrowheadType,
-        XDW_ATN_ArrowheadStyle,
-        XDW_ATN_WordWrap,
-        XDW_ATN_TextDirection,
-        XDW_ATN_TextOrientation,
-        XDW_ATN_LineSpace,
-        XDW_ATN_AutoResize,
-        XDW_ATN_Invisible,
-        XDW_ATN_PageFrom,
-        XDW_ATN_XdwNameInXbd,
-        XDW_ATN_TopField,
-        XDW_ATN_BottomField,
-        XDW_ATN_DateStyle,
-        XDW_ATN_YearField,
-        XDW_ATN_MonthField,
-        XDW_ATN_DayField,
-        XDW_ATN_BasisYearStyle,
-        XDW_ATN_BasisYear,
-        XDW_ATN_DateField_FirstChar,
-        XDW_ATN_Alignment,
-        XDW_ATN_LeftRightMargin,
-        XDW_ATN_TopBottomMargin,
-        XDW_ATN_VerPosition,
-        XDW_ATN_StartingNumber,
-        XDW_ATN_Digit,
-        XDW_ATN_PageRange,
-        XDW_ATN_BeginningPage,
-        XDW_ATN_EndingPage,
-        XDW_ATN_Zoom,
-        XDW_ATN_ImageFile,
-        XDW_ATN_Points,
-        XDW_ATN_DateFormat,
-        XDW_ATN_DateOrder,
-        XDW_ATN_TextSpacing,
-        XDW_ATN_TextTopMargin,
-        XDW_ATN_TextLeftMargin,
-        XDW_ATN_TextBottomMargin,
-        XDW_ATN_TextRightMargin,
-        XDW_ATN_TextAutoResizeHeight,
-        XDW_ATN_GUID,
-        XDW_ATN_CustomData,
+XDW_ANNOTATION_ATTRIBUTE = dict(
+        # attribute_name = is_string
+        XDW_ATN_Text                = 1,
+        XDW_ATN_FontName            = 1,
+        XDW_ATN_FontStyle           = 0,
+        XDW_ATN_FontSize            = 0,
+        XDW_ATN_ForeColor           = 0,
+        XDW_ATN_FontPitchAndFamily  = 0,
+        XDW_ATN_FontCharSet         = 0,
+        XDW_ATN_BackColor           = 0,
+        XDW_ATN_Caption             = 1,
+        XDW_ATN_Url                 = 1,
+        XDW_ATN_XdwPath             = 1,
+        XDW_ATN_ShowIcon            = 0,
+        XDW_ATN_LinkType            = 0,
+        XDW_ATN_XdwPage             = 0,
+        XDW_ATN_Tooltip             = 0,
+        XDW_ATN_Tooltip_String      = 1,
+        XDW_ATN_XdwPath_Relative    = 0,
+        XDW_ATN_XdwLink             = 0,
+        XDW_ATN_LinkAtn_Title       = 1,
+        XDW_ATN_OtherFilePath       = 1,
+        XDW_ATN_OtherFilePath_Relative  = 0,
+        XDW_ATN_MailAddress         = 1,
+        XDW_ATN_BorderStyle         = 0,
+        XDW_ATN_BorderWidth         = 0,
+        XDW_ATN_BorderColor         = 0,
+        XDW_ATN_BorderTransparent   = 0,
+        XDW_ATN_BorderType          = 0,
+        XDW_ATN_FillStyle           = 0,
+        XDW_ATN_FillColor           = 0,
+        XDW_ATN_FillTransparent     = 0,
+        XDW_ATN_ArrowheadType       = 0,
+        XDW_ATN_ArrowheadStyle      = 0,
+        XDW_ATN_WordWrap            = 0,
+        XDW_ATN_TextDirection       = 0,
+        XDW_ATN_TextOrientation     = 0,
+        XDW_ATN_LineSpace           = 0,
+        XDW_ATN_AutoResize          = 0,
+        XDW_ATN_Invisible           = 0,
+        XDW_ATN_PageFrom            = 0,
+        XDW_ATN_XdwNameInXbd        = 1,
+        XDW_ATN_TopField            = 1,
+        XDW_ATN_BottomField         = 1,
+        XDW_ATN_DateStyle           = 0,
+        XDW_ATN_YearField           = 1,
+        XDW_ATN_MonthField          = 1,
+        XDW_ATN_DayField            = 1,
+        XDW_ATN_BasisYearStyle      = 0,
+        XDW_ATN_BasisYear           = 0,
+        XDW_ATN_DateField_FirstChar = 1,
+        XDW_ATN_Alignment           = 0,
+        XDW_ATN_LeftRightMargin     = 0,
+        XDW_ATN_TopBottomMargin     = 0,
+        XDW_ATN_VerPosition         = 0,
+        XDW_ATN_StartingNumber      = 0,
+        XDW_ATN_Digit               = 0,
+        XDW_ATN_PageRange           = 0,
+        XDW_ATN_BeginningPage       = 0,
+        XDW_ATN_EndingPage          = 0,
+        XDW_ATN_Zoom                = 0,
+        XDW_ATN_ImageFile           = 0,
+        XDW_ATN_Points              = 0,
+        XDW_ATN_DateFormat          = 1,
+        XDW_ATN_DateOrder           = 0,
+        XDW_ATN_TextSpacing         = 0,
+        XDW_ATN_TextTopMargin       = 0,
+        XDW_ATN_TextLeftMargin      = 0,
+        XDW_ATN_TextBottomMargin    = 0,
+        XDW_ATN_TextRightMargin     = 0,
+        XDW_ATN_TextAutoResizeHeight    = 0,
+        XDW_ATN_GUID                = 0,
+        XDW_ATN_CustomData          = 0,
         )
 
 ######################################################################
@@ -1003,7 +1004,7 @@ class XDW_ORGDATA_INFO(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
         ("nDataSize", c_int),
-	    ("nDate", c_long),
+     ("nDate", c_long),
         ("szName", c_char * XDW_SIZEOF_ORGDATANAME),
         ]
 
@@ -1011,7 +1012,7 @@ class XDW_ORGDATA_INFOW(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
         ("nDataSize", c_int),
-	    ("nDate", c_long),
+     ("nDate", c_long),
         ("szName", XDW_WCHAR * XDW_SIZEOF_ORGDATANAME),
         ]
 
@@ -1020,8 +1021,8 @@ XDW_SIZEOF_LINKROOTFOLDER = 256
 class XDW_LINKROOTFOLDER_INFO(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
-	    ("szPath", c_char * XDW_SIZEOF_LINKROOTFOLDER),
-	    ("szLinkRootFolderName", c_char * XDW_SIZEOF_LINKROOTFOLDER),
+     ("szPath", c_char * XDW_SIZEOF_LINKROOTFOLDER),
+     ("szLinkRootFolderName", c_char * XDW_SIZEOF_LINKROOTFOLDER),
         ]
 
 class XDW_CREATE_STATUS(SizedStructure):
@@ -1366,14 +1367,14 @@ XDW_SIZEOF_PKISIGNEDTIME    = 32
 class XDW_SIGNATURE_PKI_INFO_V5(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
-	    ("lpszModule", c_char * XDW_SIZEOF_PKIMODULENAME),
-	    ("lpszSubjectDN", c_char * XDW_SIZEOF_PKISUBJECTDN),
-	    ("lpszSubject", c_char * XDW_SIZEOF_PKISUBJECT),
-	    ("lpszIssuerDN", c_char * XDW_SIZEOF_PKIISSUERDN),
-	    ("lpszIssuer", c_char * XDW_SIZEOF_PKIISSUER),
-	    ("lpszNotBefore", c_char * XDW_SIZEOF_PKINOTBEFORE),
-	    ("lpszNotAfter", c_char * XDW_SIZEOF_PKINOTAFTER),
-	    ("lpszSerial", c_char * XDW_SIZEOF_PKISERIAL),
+     ("lpszModule", c_char * XDW_SIZEOF_PKIMODULENAME),
+     ("lpszSubjectDN", c_char * XDW_SIZEOF_PKISUBJECTDN),
+     ("lpszSubject", c_char * XDW_SIZEOF_PKISUBJECT),
+     ("lpszIssuerDN", c_char * XDW_SIZEOF_PKIISSUERDN),
+     ("lpszIssuer", c_char * XDW_SIZEOF_PKIISSUER),
+     ("lpszNotBefore", c_char * XDW_SIZEOF_PKINOTBEFORE),
+     ("lpszNotAfter", c_char * XDW_SIZEOF_PKINOTAFTER),
+     ("lpszSerial", c_char * XDW_SIZEOF_PKISERIAL),
         ("pSignerCert", c_void_p),
         ("nSignerCertSize", c_int),
         ("lpszRemarks", c_char * XDW_SIZEOF_PKIREMARKS),
@@ -1389,12 +1390,12 @@ class XDW_OCR_TEXTINFO(SizedStructure):
         ("nWidth", c_int),
         ("nHeight", c_int),
         ("charset", c_long),
-	    ("lpszText", c_char_p),
+     ("lpszText", c_char_p),
         ("nLineRect", c_int),
-	    ("pLineRect", POINTER(XDW_RECT)),
+     ("pLineRect", POINTER(XDW_RECT)),
         ]
 
-class XDW_OCRIMAGE_OPTION(SizedStructure): 
+class XDW_OCRIMAGE_OPTION(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
         ("nDpi", c_int),
@@ -1402,7 +1403,7 @@ class XDW_OCRIMAGE_OPTION(SizedStructure):
         ("nPriority", c_int),
         ]
 
-class XDW_FIND_TEXT_OPTION(SizedStructure): 
+class XDW_FIND_TEXT_OPTION(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
         ("nIgnoreMode", c_int),
@@ -1985,12 +1986,17 @@ def XDW_GetFullTextW(documentHandle, uOutputPath):
     pass
 
 def XDW_GetAnnotationAttributeW(annotationHandle, attributeName, codepage):
-    """XDW_GetAnnotationAttributeW(annotationHandle, attributeName, codepage) --> (uAttributeValue, textType)"""
-    textType = c_int()
-    size = TRY(DLL.XDW_GetAnnotationAttributeW, annotationHandle, attributeName, NULL, 0, NULL, codepage, NULL)
-    uAttributeValue = create_unicode_buffer(size)
-    TRY(DLL.XDW_GetAnnotationAttributeW, annotationHandle, attributeName, byref(uAttributeValue), size, byref(textType), codepage, NULL)
-    return (uAttributeValue.value, textType.value)
+    """XDW_GetAnnotationAttributeW(annotationHandle, attributeName, codepage) --> (unicodeValue, textType) or intValue"""
+    if XDW_ANNOTATION_ATTRIBUTE[attributeName]:  # is_string
+        textType = c_int()
+        size = TRY(DLL.XDW_GetAnnotationAttributeW, annotationHandle, attributeName, NULL, 0, NULL, codepage, NULL)
+        uAttributeValue = create_unicode_buffer(size)
+        TRY(DLL.XDW_GetAnnotationAttributeW, annotationHandle, attributeName, byref(uAttributeValue), size, byref(textType), codepage, NULL)
+        return (uAttributeValue.value, textType.value)
+    else:  # is_int
+        attributeValue = c_int()
+        TRY(DLL.XDW_GetAnnotationAttributeW, annotationHandle, attributeName, byref(attributeValue), sizeof(attributeValue), NULL, NULL, NULL)
+        return attributeValue
 
 @APPEND(0, NULL)
 def XDW_SetAnnotationAttributeW(documentHandle, annotationHandle, attributeName, attributeType, uAttributeValue, textType, codepage):
@@ -2000,11 +2006,39 @@ def XDW_GetDocumentAttributeByNameW(documentHandle, uAttributeName, codepage, de
     """XDW_GetDocumentAttributeByNameW(documentHandle, uAttributeName, codepage) --> (attributeType, uAttributeValue, textType)"""
     textType = c_int()
     attributeType = c_int()
-    size = DLL.XDW_GetDocumentAttributeByNameW(documentHandle, uAttributeName, byref(attributeType), NULL, 0, byref(textType), codepage, NULL)
+    size = DLL.XDW_GetDocumentAttributeByNameW(documentHandle,
+            uAttributeName, byref(attributeType), NULL, 0, byref(textType), codepage, NULL)
     if 0 < size:
-        uAttributeValue = create_unicode_buffer(size)
-        TRY(DLL.XDW_GetDocumentAttributeByNameW, documentHandle, uAttributeName, byref(attributeType), byref(uAttributeValue), size, byref(textType), codepage, NULL)
-        return (attributeType.value, uAttributeValue.value, textType.value)
+        if attributeType == XDW_ATYPE_INT:
+            attributeValue = c_int()
+            TRY(DLL.XDW_GetDocumentAttributeByNameW, documentHandle,
+                    uAttributeName, byref(attributeType), byref(attributeValue),
+                    sizeof(attributeValue), NULL, 0, NULL)
+            return attributeValue.value
+        elif attributeType == XDW_ATYPE_STRING:
+            uAttributeValue = create_unicode_buffer(size)
+            TRY(DLL.XDW_GetDocumentAttributeByNameW, documentHandle,
+                    uAttributeName, byref(attributeType), byref(uAttributeValue), size,
+                    byref(textType), codepage, NULL)
+            return (uAttributeValue.value, textType.value)
+        elif attributeType == XDW_ATYPE_DATE:
+            attributeValue = c_long()
+            TRY(DLL.XDW_GetDocumentAttributeByNameW, documentHandle,
+                    uAttributeName, byref(attributeType), byref(attributeValue),
+                    sizeof(attributeValue), NULL, 0, NULL)
+            return attributeValue.value
+        elif attributeType == XDW_ATYPE_BOOL:
+            attributeValue = c_int()
+            TRY(DLL.XDW_GetDocumentAttributeByNameW, documentHandle,
+                    uAttributeName, byref(attributeType), byref(attributeValue),
+                    sizeof(attributeValue), NULL, 0, NULL)
+            return attributeValue.value
+        else:  # XDW_ATYPE_OTHER
+            uAttributeValue = create_unicode_buffer(size)
+            TRY(DLL.XDW_GetDocumentAttributeByNameW, documentHandle,
+                    uAttributeName, byref(attributeType), byref(uAttributeValue), size,
+                    byref(textType), codepage, NULL)
+            return (uAttributeValue.value, textType.value)
     if size == XDW_E_INVALIDARG and default:  # Specified attribute is missing / has no value.
         return (default, None, None)
     raise XDWError(size)

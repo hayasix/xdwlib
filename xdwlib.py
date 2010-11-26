@@ -206,6 +206,7 @@ class XDWAnnotation(XDWSubject, XDWObserver):
         self.height = info.nHeight
         self.annotation_type = info.nAnnotationType
         self.annotations = info.nChildAnnotations
+        self.is_unicode = False
 
     def __str__(self):
         return "XDWAnnotation(%s P%d: type=%s)" % (
@@ -215,26 +216,33 @@ class XDWAnnotation(XDWSubject, XDWObserver):
                 )
 
     def __getattr__(self, name):
-        attribute_name = "%" + name
-        if attribute_name in XDW_ANNOTATION_ATTRIBUTE:
-            return XDW_GetAnnotationAttributeW(
-                    self.handle, unicode(attribute_name), CP)
-        raise AttributeError("'%s' object has no attribute '%s'" % (
-                self.__class__.__name__, name))
+        attrname = "%" + name
+        val = XDW_GetAnnotationAttributeW(self.handle, attrname, CP)
+        if isinstance(val, tuple):
+            self.is_unicode = (val[1] == XDW_TEXT_UNICODE)
+            val = val[0]
+        return val
 
     def __setattr__(self, name, value):
-        attribute_name = "%" + name
-        if attribute_name in XDW_ANNOTATION_ATTRIBUTE:
+        attrname = "%" + name
+        if attrname in XDW_ANNOTATION_ATTRIBUTE:
             if isinstance(value, basestring):
-                attribute_type = XDW_ATYPE_STRING
+                if self.is_unicode:
+                    if isinstance(value, str):
+                        value = unicode(value, CP)
+                    texttype = XDW_TEXT_UNICODE
+                else:  # multibyte
+                    if isinstance(value, unicode):
+                        value = value.encode(CP)
+                    texttype = XDW_TEXT_MULTIBYTE
+                XDW_SetAnnotationAttributeW(self.page.xdw.handle, self.handle,
+                        attrname, XDW_ATYPE_STRING, byref(value), texttype, CP)
             else:
-                attribute_type = XDW_ATYPE_INT
-            XDW_SetAnnotationAttributeW(
-                    self.page.xdw.handle, self.handle,
-                    unicode(attribute_name), attribute_type, byref(value),
-                    XDW_TEXT_MULTIBYTE, CP)
+                XDW_SetAnnotationAttributeW(self.page.xdw.handle, self.handle,
+                        attrname, XDW_ATYPE_INT, byref(value), 0, 0)
             return
-        self.__dict__[name] = value
+        # Other attributes, not saved in xdw files.
+        self.__dict__[name] = value  # volatile
 
     def update(self, event):
         if not isinstance(event, XDWNotification):
