@@ -15,6 +15,7 @@ FOR A PARTICULAR PURPOSE.
 
 import sys
 from os.path import splitext, basename
+import time
 import datetime
 
 from xdwapi import *
@@ -28,6 +29,41 @@ __all__ = (
 CP = 932
 PSEP = "\f"
 ASEP = "\v"
+
+
+# Timezone support
+
+
+class JST(datetime.tzinfo):
+    """JST"""
+    def utcoffset(self, dt=None):
+        return datetime.timedelta(hours=9)
+    def dst(self, dt=None):
+        return datetime.timedelta(0)
+    def tzname(self, dt=None):
+        return "JST"
+
+
+class UTC(datetime.tzinfo):
+    """UTC"""
+    def utcoffset(self, dt):
+        return datetime.timedelta(0)
+    def dst(self, dt):
+        return datetime.timedelta(0)
+    def tzname(self, dt):
+        return "UTC"
+
+
+TZ_JST = JST()
+TZ_UTC = UTC()
+DEFAULT_TZ = TZ_JST
+
+
+def unixtime(dt, utc=False):
+    if utc:
+        return time.mktime(dt.utctimetuple())
+    return time.mktime(dt.timetuple())
+
 
 # Observer pattern event
 EV_DOCU_REMOVED = 11
@@ -217,11 +253,10 @@ class XDWAnnotation(XDWSubject, XDWObserver):
 
     def __getattr__(self, name):
         attrname = "%" + name
-        val = XDW_GetAnnotationAttributeW(self.handle, attrname, CP)
-        if isinstance(val, tuple):
-            self.is_unicode = (val[1] == XDW_TEXT_UNICODE)
-            val = val[0]
-        return val
+        t, v, tt = XDW_GetAnnotationAttributeW(self.handle, attrname, codepage=CP)
+        if t == XDW_ATYPE_STRING:
+            self.is_unicode = (tt == XDW_TEXT_UNICODE)
+        return v
 
     def __setattr__(self, name, value):
         attrname = "%" + name
@@ -236,7 +271,7 @@ class XDWAnnotation(XDWSubject, XDWObserver):
                         value = value.encode(CP)
                     texttype = XDW_TEXT_MULTIBYTE
                 XDW_SetAnnotationAttributeW(self.page.xdw.handle, self.handle,
-                        attrname, XDW_ATYPE_STRING, byref(value), texttype, CP)
+                        attrname, XDW_ATYPE_STRING, byref(value), texttype, codepage=CP)
             else:
                 XDW_SetAnnotationAttributeW(self.page.xdw.handle, self.handle,
                         attrname, XDW_ATYPE_INT, byref(value), 0, 0)
@@ -291,13 +326,13 @@ class XDWAnnotation(XDWSubject, XDWObserver):
     def text(self, recursive=True):
         ga = XDW_GetAnnotationAttributeW
         if self.annotation_type == XDW_AID_TEXT:
-            s = ga(self.handle, XDW_ATN_Text, CP)[0]
+            s = ga(self.handle, XDW_ATN_Text, codepage=CP)[0]
         elif self.annotation_type == XDW_AID_LINK:
-            s = ga(self.handle, XDW_ATN_Caption, CP)[0]
+            s = ga(self.handle, XDW_ATN_Caption, codepage=CP)[0]
         elif self.annotation_type == XDW_AID_STAMP:
             s = "%s <DATE> %s" % (
-                    ga(self.handle, XDW_ATN_TopField, CP)[0],
-                    ga(self.handle, XDW_ATN_BottomField, CP)[0],
+                    ga(self.handle, XDW_ATN_TopField, codepage=CP)[0],
+                    ga(self.handle, XDW_ATN_BottomField, codepage=CP)[0],
                     )
         else:
             s = None
@@ -397,6 +432,9 @@ class XDWPage(XDWSubject, XDWObserver):
         return _join(ASEP, [
                 a.text(recursive=recursive) for a in self.find_annotations()
                 ])
+
+    def fulltext(self):
+        return  _join(ASEP, [self.text(), self.annotation_text()])
 
     def rotate(self, degree=0, auto=False):
         """rotate(degree=0, auto=False)
@@ -526,7 +564,7 @@ class XDWDocument(XDWSubject):
         attribute_name = u"%" + name
         try:
             return XDW_GetDocumentAttributeByNameW(
-                    self.handle, attribute_name, CP)[1]
+                    self.handle, attribute_name, codepage=CP)[1]
         except XDWError as e:
             if e.error_code == XDW_E_INVALIDARG:
                 raise AttributeError("'%s' object has no attribute '%s'" % (
@@ -542,13 +580,16 @@ class XDWDocument(XDWSubject):
             attribute_type = XDW_ATYPE_BOOL
         elif isinstance(value, datetime.datetime):
             attribute_type = XDW_ATYPE_DATE
+            if not value.tzinfo:
+                value = value.replace(tzinfo=DEFAULT_TZ)  # TODO: Care locale.
+            value = unixtime(value)
         else:
             attribute_type = XDW_ATYPE_INT
         # TODO: XDW_ATYPE_OTHER should also be valid.
         if attribute_name in XDW_DOCUMENT_ATTRIBUTE:
             XDW_SetDocumentAttributeW(
                     self.handle, attribute_name, attribute_type, byref(value),
-                    XDW_TEXT_MULTIBYTE, CP)
+                    XDW_TEXT_MULTIBYTE, codepage=CP)
             return
         self.__dict__[name] = value
 
@@ -636,7 +677,7 @@ class XDWDocumentInBinder(XDWSubject, XDWObserver):
         self.binder = binder
         self.page_offset = sum(binder.document_pages[:position])
         self.name = XDW_GetDocumentNameInBinderW(
-                self.binder.handle, position + 1, CP)[0]
+                self.binder.handle, position + 1, codepage=CP)[0]
         document_info = XDW_GetDocumentInformationInBinder(
                 self.binder.handle, position + 1)
         self.pages = document_info.nPages
