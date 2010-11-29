@@ -33,7 +33,6 @@ ASEP = "\v"
 
 # Timezone support
 
-
 class JST(datetime.tzinfo):
     """JST"""
     def utcoffset(self, dt=None):
@@ -42,7 +41,6 @@ class JST(datetime.tzinfo):
         return datetime.timedelta(0)
     def tzname(self, dt=None):
         return "JST"
-
 
 class UTC(datetime.tzinfo):
     """UTC"""
@@ -53,11 +51,9 @@ class UTC(datetime.tzinfo):
     def tzname(self, dt):
         return "UTC"
 
-
 TZ_JST = JST()
 TZ_UTC = UTC()
 DEFAULT_TZ = TZ_JST
-
 
 def unixtime(dt, utc=False):
     if utc:
@@ -115,9 +111,9 @@ def xdwopen(path, readonly=False, authenticate=True):
             ".XBD": XDWBinder,
             }
     ext = splitext(basename(path))[1].upper()
-    if ext in types:
-        return types[ext](path, readonly=readonly, authenticate=authenticate)
-    raise XDWError(XDW_E_INVALIDARG)
+    if ext not in types:
+        raise XDWError(XDW_E_INVALIDARG)
+    return types[ext](path, readonly=readonly, authenticate=authenticate)
 
 
 def create(
@@ -253,7 +249,8 @@ class XDWAnnotation(XDWSubject, XDWObserver):
 
     def __getattr__(self, name):
         attrname = "%" + name
-        t, v, tt = XDW_GetAnnotationAttributeW(self.handle, attrname, codepage=CP)
+        t, v, tt = XDW_GetAnnotationAttributeW(
+                self.handle, attrname, codepage=CP)
         if t == XDW_ATYPE_STRING:
             self.is_unicode = (tt == XDW_TEXT_UNICODE)
         return v
@@ -270,10 +267,13 @@ class XDWAnnotation(XDWSubject, XDWObserver):
                     if isinstance(value, unicode):
                         value = value.encode(CP)
                     texttype = XDW_TEXT_MULTIBYTE
-                XDW_SetAnnotationAttributeW(self.page.xdw.handle, self.handle,
-                        attrname, XDW_ATYPE_STRING, byref(value), texttype, codepage=CP)
+                XDW_SetAnnotationAttributeW(
+                        self.page.xdw.handle, self.handle,
+                        attrname, XDW_ATYPE_STRING, byref(value),
+                        texttype, codepage=CP)
             else:
-                XDW_SetAnnotationAttributeW(self.page.xdw.handle, self.handle,
+                XDW_SetAnnotationAttributeW(
+                        self.page.xdw.handle, self.handle,
                         attrname, XDW_ATYPE_INT, byref(value), 0, 0)
             return
         # Other attributes, not saved in xdw files.
@@ -298,16 +298,16 @@ class XDWAnnotation(XDWSubject, XDWObserver):
     def find_annotations(self, *args, **kw):
         """find_annotations(object, recursive=False, rect=None, types=None, half_open=True)
 
-        Find annotations on page, which meets criteria given.
+Find annotations on page, which meets criteria given.
 
-        Arguments:
-            recursive   also return descendant (child) annotations.
-            rect        return annotations in given rectangular area,
-                        (rect.left, rect.top) - (rect.right, rect.bottom).
-                        Note that right/bottom value are innermost of outside
-                        unless half_open==False.
-            types       return annotations of types given.
-        """
+Arguments:
+    recursive   also return descendant (child) annotations.
+    rect        return annotations in given rectangular area,
+                (rect.left, rect.top) - (rect.right, rect.bottom).
+                Note that right/bottom value are innermost of outside
+                unless half_open==False.
+    types       return annotations of types given.
+"""
         return find_annotations(self, *args, **kw)
 
     def delete_annotation(self, idx):
@@ -359,7 +359,8 @@ class XDWPage(XDWSubject, XDWObserver):
         XDWSubject.__init__(self)
         XDWObserver.__init__(self, xdw)
         self.xdw = xdw
-        page_info = XDW_GetPageInformation(xdw.handle, page + 1, extend=True)
+        page_info = XDW_GetPageInformation(
+                xdw.handle, page + 1, extend=True)
         self.width = page_info.nWidth  # 1/100 mm
         self.height = page_info.nHeight  # 1/100 mm
         # XDW_PGT_FROMIMAGE/FROMAPPL/NULL
@@ -439,12 +440,12 @@ class XDWPage(XDWSubject, XDWObserver):
     def rotate(self, degree=0, auto=False):
         """rotate(degree=0, auto=False)
 
-        Rotate a page.
+Rotate a page.
 
-        Arguments:
-            degree  90, 180 or 270
-            auto    True/False
-        """
+Arguments:
+    degree  90, 180 or 270
+    auto    True/False
+"""
         if auto:
             XDW_RotatePageAuto(self.xdw.handle, self.pos + 1)
             self.xdw.finalize = True
@@ -454,13 +455,13 @@ class XDWPage(XDWSubject, XDWObserver):
     def reduce_noise(self, level=XDW_REDUCENOISE_NORMAL):
         """reduce_noise(self, level=XDW_REDUCENOISE_NORMAL)
 
-        Process a page by noise reduction engine.
+Process a page by noise reduction engine.
 
-        Arguments:
-            level   XDW_REDUCENOISE_NORMAL
-                    XDW_REDUCENOISE_WEAK
-                    XDW_REDUCENOISE_STRONG
-        """
+Arguments:
+    level   XDW_REDUCENOISE_NORMAL
+            XDW_REDUCENOISE_WEAK
+            XDW_REDUCENOISE_STRONG
+"""
         level = XDW_OCR_NOISEREDUCTION.normalize(level)
         XDW_ReducePageNoise(self.handle, self.pos + 1, level)
 
