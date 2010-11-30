@@ -512,6 +512,37 @@ class XDWPage(XDWSubject, XDWObserver):
         XDW_ApplyOcr(self.xdw.handle, self.pos + 1, engine, byref(opt))
         self.finalize = True
 
+    def add_annotation(self, hpos, vpos, ann_type, **kw):
+        """Add an annotation.
+
+        add_annotation(hpos, vpos, ann_type, **kw)
+        """
+        ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
+        init_dat_class = XDW_AID_INITIAL_DATA.get(ann_type, None)
+        if init_dat_class:
+            init_dat = init_dat_class()
+            init_dat.common.nAnnotationType = ann_type
+        else:
+            init_dat = NULL
+        for k, v in kw.items():
+            if k.startswith("n"):
+                v = int(v)
+            elif k.startswith("sz"):
+                v = str(v)
+            elif k.startswith("lpsz"):
+                v = byref(v)
+            elif k.startswith("p"):
+                v = byref(v)
+            setattr(init_dat, k, v)
+        ann = XDW_AddAnnotation(self.xdw.handle, ann_type, self.pos,
+                hpos, vpos, init_dat)
+        idx = self.annotations
+        self.annotations += 1
+        self.notify(XDWNotification(EV_ANNO_INSERTED, idx))
+        # Rewrite observer keys.
+        self.observers[idx] = ann
+        return ann
+
 
 class XDWDocument(XDWSubject):
 
