@@ -34,26 +34,37 @@ ASEP = "\v"
 # Timezone support
 
 class JST(datetime.tzinfo):
+
     """JST"""
+
     def utcoffset(self, dt=None):
         return datetime.timedelta(hours=9)
+
     def dst(self, dt=None):
         return datetime.timedelta(0)
+
     def tzname(self, dt=None):
         return "JST"
 
+
 class UTC(datetime.tzinfo):
+
     """UTC"""
+
     def utcoffset(self, dt):
         return datetime.timedelta(0)
+
     def dst(self, dt):
         return datetime.timedelta(0)
+
     def tzname(self, dt):
         return "UTC"
+
 
 TZ_JST = JST()
 TZ_UTC = UTC()
 DEFAULT_TZ = TZ_JST
+
 
 def unixtime(dt, utc=False):
     if utc:
@@ -296,18 +307,16 @@ class XDWAnnotation(XDWSubject, XDWObserver):
         return self.observers[idx]
 
     def find_annotations(self, *args, **kw):
-        """find_annotations(object, recursive=False, rect=None, types=None, half_open=True)
+        """Find annotations on page, which meets criteria given.
 
-Find annotations on page, which meets criteria given.
-
-Arguments:
-    recursive   also return descendant (child) annotations.
-    rect        return annotations in given rectangular area,
-                (rect.left, rect.top) - (rect.right, rect.bottom).
-                Note that right/bottom value are innermost of outside
-                unless half_open==False.
-    types       return annotations of types given.
-"""
+        find_annotations(object, recursive=False, rect=None, types=None, half_open=True)
+            recursive   also return descendant (child) annotations.
+            rect        return annotations in given rectangular area,
+                        (rect.left, rect.top) - (rect.right, rect.bottom).
+                        Note that right/bottom value are innermost of outside
+                        unless half_open==False.
+            types       return annotations of types given.
+        """
         return find_annotations(self, *args, **kw)
 
     def delete_annotation(self, idx):
@@ -411,9 +420,9 @@ class XDWPage(XDWSubject, XDWObserver):
         return find_annotations(self, *args, **kw)
 
     def delete_annotation(self, idx):
-        """delete_annotation(INDEX)
+        """Delete an annotation given by idx.
 
-        Delete an annotation given by INDEX.
+        delete_annotation(idx)
         """
         anno = self.annotation(idx)
         XDW_RemoveAnnotation(self.handle, anno.handle)
@@ -431,21 +440,18 @@ class XDWPage(XDWSubject, XDWObserver):
 
     def annotation_text(self, recursive=True):
         return _join(ASEP, [
-                a.text(recursive=recursive) for a in self.find_annotations()
-                ])
+                a.text(recursive=recursive) for a in self.find_annotations()])
 
     def fulltext(self):
         return  _join(ASEP, [self.text(), self.annotation_text()])
 
     def rotate(self, degree=0, auto=False):
-        """rotate(degree=0, auto=False)
+        """Rotate a page.
 
-Rotate a page.
-
-Arguments:
-    degree  90, 180 or 270
-    auto    True/False
-"""
+        rotate(degree=0, auto=False)
+            degree  90, 180 or 270
+            auto    True/False
+        """
         if auto:
             XDW_RotatePageAuto(self.xdw.handle, self.pos + 1)
             self.xdw.finalize = True
@@ -453,15 +459,13 @@ Arguments:
             XDW_RotatePage(self.xdw.handle, self.pos + 1, degree)
 
     def reduce_noise(self, level=XDW_REDUCENOISE_NORMAL):
-        """reduce_noise(self, level=XDW_REDUCENOISE_NORMAL)
+        """Process a page by noise reduction engine.
 
-Process a page by noise reduction engine.
-
-Arguments:
-    level   XDW_REDUCENOISE_NORMAL
-            XDW_REDUCENOISE_WEAK
-            XDW_REDUCENOISE_STRONG
-"""
+        reduce_noise(self, level=XDW_REDUCENOISE_NORMAL)
+            level   XDW_REDUCENOISE_NORMAL
+                    XDW_REDUCENOISE_WEAK
+                    XDW_REDUCENOISE_STRONG
+        """
         level = XDW_OCR_NOISEREDUCTION.normalize(level)
         XDW_ReducePageNoise(self.handle, self.pos + 1, level)
 
@@ -640,9 +644,9 @@ class XDWDocument(XDWSubject):
         return self.observers[page]
 
     def delete_page(self, page):
-        """delete_page(PAGENUM)
+        """Delete a page given by page number.
 
-        Delete a page given by PAGENUM.
+        delete_page(page)
         """
         XDW_DeletePage(self.handle, page + 1)
         self.pages -= 1
@@ -663,8 +667,7 @@ class XDWDocument(XDWSubject):
     def fulltext(self):
         return _join(PSEP, [
                 _join(ASEP, [page.text(), page.annotation_text()])
-                for page in self
-                ])
+                for page in self])
 
 
 class XDWDocumentInBinder(XDWSubject, XDWObserver):
@@ -723,9 +726,9 @@ class XDWDocumentInBinder(XDWSubject, XDWObserver):
         self.observers[page] = XDWPage(self.binder, self.page_offset + page)
 
     def delete_page(self, page):
-        """delete_page(PAGENUM)
+        """Delete a page give by page number.
 
-        Delete a page give by PAGENUM.
+        delete_page(page)
         """
         XDW_DeletePage(self.binder.handle, self.page_offset + page)
         self.pages -= 1
@@ -754,8 +757,7 @@ class XDWDocumentInBinder(XDWSubject, XDWObserver):
     def fulltext(self):
         return _join(PSEP, [
                 _join(ASEP, [page.text(), page.annotation_text()])
-                for page in self
-                ])
+                for page in self])
 
 
 class XDWBinder(XDWDocument):
@@ -821,10 +823,7 @@ class XDWBinder(XDWDocument):
         return self.document_and_page(self, page)[1]
 
     def document_pages(self):
-        """document_pages() --> list
-
-        Get list of page count for each document in binder
-        """
+        """Get list of page count for each document in binder. """
         pages = []
         for position in range(self.documents):
             docinfo = XDW_GetDocumentInformationInBinder(
@@ -833,9 +832,9 @@ class XDWBinder(XDWDocument):
         return pages
 
     def delete_document(self, pos):
-        """delete_document(POS)
+        """Delete a document in binder given by position.
 
-        Delete a document in binder given by POS.
+        delete_document(pos)
         """
         XDW_DeleteDocumentInBinder(self.handle, pos + 1)
         self.documents -= 1
@@ -856,5 +855,4 @@ class XDWBinder(XDWDocument):
     def fulltext(self):
         return _join(PSEP, [
                 _join(ASEP, [doc.text(), doc.annotation_text()])
-                for doc in self
-                ])
+                for doc in self])

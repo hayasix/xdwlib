@@ -20,11 +20,14 @@ from ctypes import *
 ######################################################################
 ### ERROR DEFINITIONS ################################################
 
+
 def _uint32(n):
     return (n + 0x100000000) & 0xffffffff
 
+
 def _int32(n):
     return n - 0x100000000 if 0x80000000 <= n else n
+
 
 XDW_E_NOT_INSTALLED                 = _int32(0x80040001)
 XDW_E_INFO_NOT_FOUND                = _int32(0x80040002)
@@ -83,6 +86,7 @@ class XDWError(Exception):
         self.error_code = error_code
         msg = XDW_ERROR_MESSAGES.get(error_code, "XDW_E_UNDEFINED")
         Exception.__init__(self, "%s (%08X)" % (msg, _uint32(error_code)))
+
 
 ######################################################################
 ### CONSTANTS ########################################################
@@ -413,21 +417,21 @@ XDW_BINDER_COLOR = XDWConst({
         # Here we describe colors in RRGGBB format, though DocuWorks
         # inner color representation is BBGGRR.
         XDW_BINDER_COLOR_0          : "003366",   # neutral navy (kon)
-        XDW_BINDER_COLOR_1          : "006633",   # neutral green (midori)
-        XDW_BINDER_COLOR_2          : "3366FF",   # neutral bule (ao)
-        XDW_BINDER_COLOR_3          : "FFFF66",   # neutral yellow (kiiro)
-        XDW_BINDER_COLOR_4          : "FF6633",   # neutral orange (orenji)
-        XDW_BINDER_COLOR_5          : "FF3366",   # neutral red (aka)
+        XDW_BINDER_COLOR_1          : "006633",   # neutral green
+        XDW_BINDER_COLOR_2          : "3366FF",   # neutral bule
+        XDW_BINDER_COLOR_3          : "FFFF66",   # neutral yellow
+        XDW_BINDER_COLOR_4          : "FF6633",   # neutral orange
+        XDW_BINDER_COLOR_5          : "FF3366",   # neutral red
         XDW_BINDER_COLOR_6          : "FF00FF",   # fuchsia (akamurasaki)
-        XDW_BINDER_COLOR_7          : "FFCCFF",   # neutral pink (pinku)
-        XDW_BINDER_COLOR_8          : "CC99FF",   # neutral purple (murasaki)
-        XDW_BINDER_COLOR_9          : "663333",   # neutral brown (cha)
-        XDW_BINDER_COLOR_10         : "999933",   # neutral olive (oriibu)
+        XDW_BINDER_COLOR_7          : "FFCCFF",   # neutral pink
+        XDW_BINDER_COLOR_8          : "CC99FF",   # neutral purple
+        XDW_BINDER_COLOR_9          : "663333",   # neutral brown
+        XDW_BINDER_COLOR_10         : "999933",   # neutral olive
         XDW_BINDER_COLOR_11         : "00FF00",   # lime (kimidori)
         XDW_BINDER_COLOR_12         : "00FFFF",   # aqua (mizuiro)
-        XDW_BINDER_COLOR_13         : "FFFFCC",   # neutral lightyellow (kuriimu)
-        XDW_BINDER_COLOR_14         : "BBBBBB",   # neutral silver (haiiro)
-        XDW_BINDER_COLOR_15         : "FFFFFF",   # white (shiro)
+        XDW_BINDER_COLOR_13         : "FFFFCC",   # neutral lightyellow (cream)
+        XDW_BINDER_COLOR_14         : "BBBBBB",   # neutral silver
+        XDW_BINDER_COLOR_15         : "FFFFFF",   # white
         }, default=XDW_BINDER_COLOR_5)
 
 ### Page related
@@ -470,7 +474,7 @@ XDW_OCR_PREPROCESSING = XDWConst({
         XDW_PRIORITY_RECOGNITION                : "ACCURACY",
         })
 
-XDW_OCR_ENGINE_V4                               = 1  # old name - should be here for = compatibility
+XDW_OCR_ENGINE_V4                               = 1  # for = compatibility
 XDW_OCR_ENGINE_DEFAULT                          = 1
 XDW_OCR_ENGINE_WRP                              = 2
 XDW_OCR_ENGINE_FRE                              = 3
@@ -844,23 +848,29 @@ XDW_ANNOTATION_ATTRIBUTE = {
 XDW_HGLOBAL = c_void_p
 XDW_WCHAR = c_wchar
 
+
 class SizedStructure(Structure):
     """ctypes.Structure with setting self.nSize automatically."""
     def __init__(self):
         Structure.__init__(self)
         self.nSize = sizeof(self)
 
+
 class XDW_DOCUMENT_HANDLE(Structure):
-    _fields_ = [("dummy", c_int),]
+    _fields_ = [("dummy", c_int), ]
+
 
 class XDW_CREATE_HANDLE(Structure):
-    _fields_ = [("dummy", c_int),]
+    _fields_ = [("dummy", c_int), ]
+
 
 class XDW_ANNOTATION_HANDLE(Structure):
-    _fields_ = [("dummy", c_int),]
+    _fields_ = [("dummy", c_int), ]
+
 
 class XDW_FOUND_HANDLE(Structure):
-    _fields_ = [("dummy", c_int),]
+    _fields_ = [("dummy", c_int), ]
+
 
 class XDW_RECT(Structure):
     _fields_ = [
@@ -870,17 +880,20 @@ class XDW_RECT(Structure):
         ("bottom", c_long),
         ]
 
+
 class XDW_GPTI_OCRTEXT_UNIT(Structure):
     _fields_ = [
         ("lpszText", c_char_p),
         ("rect", XDW_RECT),
         ]
 
+
 class XDW_GPTI_OCRTEXT(Structure):
     _fields_ = [
         ("nUnitNum", c_int),
         ("pUnits", POINTER(XDW_GPTI_OCRTEXT_UNIT)),
         ]
+
 
 class XDW_GPTI_INFO(SizedStructure):
     _fields_ = [
@@ -892,6 +905,7 @@ class XDW_GPTI_INFO(SizedStructure):
         ("nDataSize", c_int),
         ("pData", XDW_HGLOBAL),
         ]
+
 
 class XDW_DOCUMENT_INFO(SizedStructure):
     _fields_ = [
@@ -907,6 +921,7 @@ class XDW_DOCUMENT_INFO(SizedStructure):
         ("nBinderSize", c_int),
         ]
 
+
 class XDW_PAGE_INFO(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
@@ -918,6 +933,7 @@ class XDW_PAGE_INFO(SizedStructure):
         ("nCompressType", c_int),
         ("nAnnotations", c_int),
         ]
+
 
 class XDW_PAGE_INFO_EX(SizedStructure):
     _fields_ = [
@@ -938,6 +954,7 @@ class XDW_PAGE_INFO_EX(SizedStructure):
         ("nImageHeight", c_int),
         ]
 
+
 class XDW_IMAGE_OPTION(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
@@ -945,11 +962,13 @@ class XDW_IMAGE_OPTION(SizedStructure):
         ("nColor", c_int),
         ]
 
+
 class XDW_OPEN_MODE(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
         ("nOption", c_int),
         ]
+
 
 class XDW_OPEN_MODE_EX(SizedStructure):
     _fields_ = [
@@ -957,6 +976,7 @@ class XDW_OPEN_MODE_EX(SizedStructure):
         ("nOption", c_int),
         ("nAuthMode", c_int),
         ]
+
 
 class XDW_CREATE_OPTION(SizedStructure):
     _fields_ = [
@@ -970,6 +990,7 @@ class XDW_CREATE_OPTION(SizedStructure):
         ("nVerPos", c_int),
         ]
 
+
 class XDW_CREATE_OPTION_EX(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
@@ -982,6 +1003,7 @@ class XDW_CREATE_OPTION_EX(SizedStructure):
         ("nVerPos", c_int),
         ("nZoomDetail", c_int),
         ]
+
 
 class XDW_CREATE_OPTION_EX2(SizedStructure):
     _fields_ = [
@@ -1000,6 +1022,7 @@ class XDW_CREATE_OPTION_EX2(SizedStructure):
 
 XDW_SIZEOF_ORGDATANAME = 256
 
+
 class XDW_ORGDATA_INFO(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
@@ -1007,6 +1030,7 @@ class XDW_ORGDATA_INFO(SizedStructure):
         ("nDate", c_long),
         ("szName", c_char * XDW_SIZEOF_ORGDATANAME),
         ]
+
 
 class XDW_ORGDATA_INFOW(SizedStructure):
     _fields_ = [
@@ -1016,7 +1040,9 @@ class XDW_ORGDATA_INFOW(SizedStructure):
         ("szName", XDW_WCHAR * XDW_SIZEOF_ORGDATANAME),
         ]
 
+
 XDW_SIZEOF_LINKROOTFOLDER = 256
+
 
 class XDW_LINKROOTFOLDER_INFO(SizedStructure):
     _fields_ = [
@@ -1025,6 +1051,7 @@ class XDW_LINKROOTFOLDER_INFO(SizedStructure):
      ("szLinkRootFolderName", c_char * XDW_SIZEOF_LINKROOTFOLDER),
         ]
 
+
 class XDW_CREATE_STATUS(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
@@ -1032,6 +1059,7 @@ class XDW_CREATE_STATUS(SizedStructure):
         ("nTotalPage", c_int),
         ("nPage", c_int),
         ]
+
 
 class XDW_ANNOTATION_INFO(SizedStructure):
     _fields_ = [
@@ -1045,6 +1073,7 @@ class XDW_ANNOTATION_INFO(SizedStructure):
         ("nChildAnnotations", c_int),
         ]
 
+
 class XDW_AA_INITIAL_DATA(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
@@ -1053,12 +1082,14 @@ class XDW_AA_INITIAL_DATA(SizedStructure):
         ("nReserved2", c_int),
         ]
 
+
 class XDW_AA_FUSEN_INITIAL_DATA(Structure):
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("nWidth", c_int),
         ("nHeight", c_int),
         ]
+
 
 class XDW_AA_STRAIGHTLINE_INITIAL_DATA(Structure):
     _fields_ = [
@@ -1067,12 +1098,14 @@ class XDW_AA_STRAIGHTLINE_INITIAL_DATA(Structure):
         ("nVerVec", c_int),
         ]
 
+
 class XDW_AA_RECT_INITIAL_DATA(Structure):
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("nWidth", c_int),
         ("nHeight", c_int),
         ]
+
 
 class XDW_AA_ARC_INITIAL_DATA(Structure):
     _fields_ = [
@@ -1081,11 +1114,13 @@ class XDW_AA_ARC_INITIAL_DATA(Structure):
         ("nHeight", c_int),
         ]
 
+
 class XDW_AA_BITMAP_INITIAL_DATA(Structure):
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("szImagePath", c_char * 256),
         ]
+
 
 class XDW_AA_STAMP_INITIAL_DATA(Structure):
     _fields_ = [
@@ -1093,13 +1128,17 @@ class XDW_AA_STAMP_INITIAL_DATA(Structure):
         ("nWidth", c_int),
         ]
 
+
 class XDW_AA_RECEIVEDSTAMP_INITIAL_DATA(Structure):
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("nWidth", c_int),
         ]
 
+
 XDW_SIZEOF_GUID = 36
+
+
 class XDW_AA_CUSTOM_INITIAL_DATA(Structure):
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
@@ -1110,6 +1149,7 @@ class XDW_AA_CUSTOM_INITIAL_DATA(Structure):
         ("pCustomData", c_char_p),
         ]
 
+
 class XDW_IMAGE_OPTION_EX(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
@@ -1119,6 +1159,7 @@ class XDW_IMAGE_OPTION_EX(SizedStructure):
         ("pDetailOption", c_void_p),
         ]
 
+
 class XDW_IMAGE_OPTION_TIFF(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
@@ -1126,11 +1167,13 @@ class XDW_IMAGE_OPTION_TIFF(SizedStructure):
         ("nEndOfMultiPages", c_int),
         ]
 
+
 class XDW_IMAGE_OPTION_JPEG(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
         ("nCompress", c_int),
         ]
+
 
 class XDW_IMAGE_OPTION_PDF(SizedStructure):
     _fields_ = [
@@ -1140,12 +1183,14 @@ class XDW_IMAGE_OPTION_PDF(SizedStructure):
         ("nEndOfMultiPages", c_int),
         ]
 
+
 class XDW_BINDER_INITIAL_DATA(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
         ("nBinderColor", c_int),
         ("nBinderSize", c_int),
         ]
+
 
 class XDW_OCR_OPTION_V4(SizedStructure):
     _fields_ = [
@@ -1159,6 +1204,7 @@ class XDW_OCR_OPTION_V4(SizedStructure):
         ("nDisplayProcess", c_int),
         ("nAutoDeskew", c_int),
         ]
+
 
 class XDW_OCR_OPTION_V5(SizedStructure):
     _fields_ = [
@@ -1174,6 +1220,7 @@ class XDW_OCR_OPTION_V5(SizedStructure):
         ("nAreaNum", c_uint),
         ("pAreaRects", POINTER(POINTER(XDW_RECT))),
         ]
+
 
 class XDW_OCR_OPTION_V5_EX(SizedStructure):
     _fields_ = [
@@ -1191,6 +1238,7 @@ class XDW_OCR_OPTION_V5_EX(SizedStructure):
         ("nPriority", c_int),
         ]
 
+
 class XDW_OCR_OPTION_WRP(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
@@ -1202,6 +1250,7 @@ class XDW_OCR_OPTION_WRP(SizedStructure):
         ("nAutoDeskew", c_int),
         ("nPriority", c_int),
         ]
+
 
 class XDW_OCR_OPTION_FRE(SizedStructure):
     _fields_ = [
@@ -1215,6 +1264,7 @@ class XDW_OCR_OPTION_FRE(SizedStructure):
         ("pAreaRects", POINTER(POINTER(XDW_RECT))),
         ("nPriority", c_int),
         ]
+
 
 class XDW_OCR_OPTION_V7(SizedStructure):
     _fields_ = [
@@ -1235,6 +1285,7 @@ class XDW_OCR_OPTION_V7(SizedStructure):
         ("nHalfSizeChar", c_int),
         ]
 
+
 class XDW_OCR_OPTION_FRE_V7(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
@@ -1249,6 +1300,7 @@ class XDW_OCR_OPTION_FRE_V7(SizedStructure):
         ("nEngineLevel", c_int),
         ]
 
+
 class XDW_PAGE_COLOR_INFO(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
@@ -1256,7 +1308,9 @@ class XDW_PAGE_COLOR_INFO(SizedStructure):
         ("nImageDepth", c_int),
         ]
 
+
 XDW_SIZEOF_PSWD = 256
+
 
 class XDW_SECURITY_OPTION_PSWD(SizedStructure):
     _fields_ = [
@@ -1267,11 +1321,13 @@ class XDW_SECURITY_OPTION_PSWD(SizedStructure):
         ("lpszComment", c_char_p),
         ]
 
+
 class XDW_DER_CERTIFICATE(Structure):
     _fields_ = [
         ("pCert", c_void_p),
         ("nCertSize", c_int),
         ]
+
 
 class XDW_SECURITY_OPTION_PKI(SizedStructure):
     _fields_ = [
@@ -1284,11 +1340,13 @@ class XDW_SECURITY_OPTION_PKI(SizedStructure):
         ("nFirstErrorCert", c_int),
         ]
 
+
 class XDW_PROTECT_OPTION(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
         ("nAuthMode", c_int),
         ]
+
 
 class XDW_RELEASE_PROTECTION_OPTION(SizedStructure):
     _fields_ = [
@@ -1296,12 +1354,14 @@ class XDW_RELEASE_PROTECTION_OPTION(SizedStructure):
         ("nAuthMode", c_int),
         ]
 
+
 class XDW_PROTECTION_INFO(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
         ("nProtectType", c_int),
         ("nPermission", c_int),
         ]
+
 
 class XDW_SIGNATURE_OPTION_V5(SizedStructure):
     _fields_ = [
@@ -1311,6 +1371,7 @@ class XDW_SIGNATURE_OPTION_V5(SizedStructure):
         ("nVerPos", c_int),
         ("nSignatureType", c_int),
         ]
+
 
 class XDW_SIGNATURE_INFO_V5(SizedStructure):
     _fields_ = [
@@ -1324,12 +1385,14 @@ class XDW_SIGNATURE_INFO_V5(SizedStructure):
         ("nSignedTime", c_long),
         ]
 
+
 class XDW_SIGNATURE_MODULE_STATUS(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
         ("nSignatureType", c_int),
         ("nErrorStatus", c_int),
         ]
+
 
 class XDW_SIGNATURE_MODULE_OPTION_PKI(SizedStructure):
     _fields_ = [
@@ -1338,9 +1401,11 @@ class XDW_SIGNATURE_MODULE_OPTION_PKI(SizedStructure):
         ("nSignerCertSize", c_int),
         ]
 
+
 XDW_SIZEOF_STAMPNAME = 256
 XDW_SIZEOF_STAMPOWNERNAME = 64
 XDW_SIZEOF_STAMPREMARKS = 1024
+
 
 class XDW_SIGNATURE_STAMP_INFO_V5(SizedStructure):
     _fields_ = [
@@ -1353,6 +1418,7 @@ class XDW_SIGNATURE_STAMP_INFO_V5(SizedStructure):
         ("nStampVerificationStatus", c_int),
         ]
 
+
 XDW_SIZEOF_PKIMODULENAME    = 16
 XDW_SIZEOF_PKISUBJECTDN     = 512
 XDW_SIZEOF_PKISUBJECT       = 256
@@ -1363,6 +1429,7 @@ XDW_SIZEOF_PKINOTAFTER      = 32
 XDW_SIZEOF_PKISERIAL        = 64
 XDW_SIZEOF_PKIREMARKS       = 64
 XDW_SIZEOF_PKISIGNEDTIME    = 32
+
 
 class XDW_SIGNATURE_PKI_INFO_V5(SizedStructure):
     _fields_ = [
@@ -1384,6 +1451,7 @@ class XDW_SIGNATURE_PKI_INFO_V5(SizedStructure):
         ("nCertVerificationStatus", c_int),
         ]
 
+
 class XDW_OCR_TEXTINFO(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
@@ -1395,6 +1463,7 @@ class XDW_OCR_TEXTINFO(SizedStructure):
         ("pLineRect", POINTER(XDW_RECT)),
         ]
 
+
 class XDW_OCRIMAGE_OPTION(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
@@ -1402,6 +1471,7 @@ class XDW_OCRIMAGE_OPTION(SizedStructure):
         ("nNoiseReduction", c_int),
         ("nPriority", c_int),
         ]
+
 
 class XDW_FIND_TEXT_OPTION(SizedStructure):
     _fields_ = [
@@ -1411,8 +1481,10 @@ class XDW_FIND_TEXT_OPTION(SizedStructure):
         ("nReserved2", c_int),
         ]
 
+
 XDW_FOUND_RECT_STATUS_HIT = 0
 XDW_FOUND_RECT_STATUS_PAGE = 1
+
 
 class XDW_POINT(Structure):
     _fields_ = [
@@ -1420,12 +1492,14 @@ class XDW_POINT(Structure):
         ("y", c_int),
         ]
 
+
 class XDW_AA_MARKER_INITIAL_DATA(Structure):
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("nCounts", c_int),
         ("pPoints", POINTER(XDW_POINT)),
         ]
+
 
 class XDW_AA_POLYGON_INITIAL_DATA(Structure):
     _fields_ = [
@@ -1443,8 +1517,10 @@ DLL = windll.LoadLibrary("xdwapi.dll")
 
 NULL = None  # or POINTER(c_int)()
 
+
 def ptr(obj):
     return byref(obj) if obj else NULL
+
 
 def RAISE(api):
     def apifunc(*args):
@@ -1454,9 +1530,11 @@ def RAISE(api):
         return result
     return apifunc
 
+
 @RAISE
 def TRY(api, *args):
     return api(*args)
+
 
 def APPEND(*ext):
     """Decorator to call XDWAPI with trailing arguments *ext.
@@ -1470,6 +1548,7 @@ def APPEND(*ext):
             return TRY(getattr(DLL, api.__name__), *args)
         return func
     return deco
+
 
 def STRING(api):
     """Decorator to get a string value via XDWAPI.
@@ -1486,6 +1565,7 @@ def STRING(api):
         return buf.value
     return func
 
+
 def UNICODE(api):
     """Decorator to get a unicode (wchar) string value via XDWAPI.
 
@@ -1500,6 +1580,7 @@ def UNICODE(api):
         TRY(getattr(DLL, api.__name__), *args)
         return buf.value
     return func
+
 
 def ATTR(by_order=False, widechar=False):
     """Decorator to get document attribute via XDWAPI.
@@ -1532,7 +1613,7 @@ def ATTR(by_order=False, widechar=False):
             else:
                 raise XDWError(XDW_E_UNEXPECTED)
             p = -5 if widechar else -3
-            args[p:p+2] = [byref(attr_val), size]
+            args[p:p + 2] = [byref(attr_val), size]
             TRY(getattr(DLL, api.__name__), *args)
             result = []
             if by_order:
@@ -1545,6 +1626,7 @@ def ATTR(by_order=False, widechar=False):
         return func
     return deco
 
+
 ### DocuWorks API's provided by xdwapi.dll
 
 @STRING
@@ -1552,10 +1634,12 @@ def XDW_GetInformation(idx):
     """XDW_GetInformation(idx)"""
     pass
 
+
 @APPEND(NULL)
 def XDW_AddSystemFolder(idx):
     """XDW_AddSystemFolder(idx)"""
     pass
+
 
 @RAISE
 def XDW_MergeXdwFiles(input_paths, files, output_path):
@@ -1565,6 +1649,7 @@ def XDW_MergeXdwFiles(input_paths, files, output_path):
         input_paths[i] = byref(input_paths[i])
     return DLL.XDW_MergeXdwFiles(input_paths, files, output_path, NULL)
 
+
 def XDW_OpenDocumentHandle(path, open_mode):
     """XDW_OpenDocumentHandle(path, open_mode) --> doc_handle"""
     doc_handle = XDW_DOCUMENT_HANDLE()
@@ -1573,10 +1658,12 @@ def XDW_OpenDocumentHandle(path, open_mode):
     TRY(DLL.XDW_OpenDocumentHandle, path, byref(doc_handle), byref(open_mode))
     return doc_handle
 
+
 @APPEND(NULL)
 def XDW_CloseDocumentHandle(doc_handle):
     """XDW_CloseDocumentHandle(doc_handle)"""
     pass
+
 
 def XDW_GetDocumentInformation(doc_handle):
     """XDW_GetDocumentInformation(handle) --> document_info"""
@@ -1584,21 +1671,25 @@ def XDW_GetDocumentInformation(doc_handle):
     TRY(DLL.XDW_GetDocumentInformation, doc_handle, byref(document_info))
     return document_info
 
+
 def XDW_GetPageInformation(doc_handle, page, extend=False):
     """XDW_GetPageInformation(handle, page, extend=False) --> page_info"""
     page_info = XDW_PAGE_INFO_EX() if extend else XDW_PAGE_INFO()
     TRY(DLL.XDW_GetPageInformation, doc_handle, page, byref(page_info))
     return page_info
 
+
 @APPEND(NULL)
 def XDW_GetPageImage(doc_handle, page, output_path):
     """XDW_GetPageImage(doc_handle, page, output_path)"""
     pass
 
+
 @APPEND(NULL)
 def XDW_GetPageText(doc_handle, page, output_path):
     """XDW_GetPageText(doc_handle, page, output_path)"""
     pass
+
 
 @RAISE
 def XDW_ConvertPageToImageFile(doc_handle, page, output_path, img_option):
@@ -1606,30 +1697,36 @@ def XDW_ConvertPageToImageFile(doc_handle, page, output_path, img_option):
     return DLL.XDW_ConvertPageToImageFile(
             doc_handle, page, output_path, byref(img_option))
 
+
 @APPEND(NULL)
 def XDW_GetPage(doc_handle, page, output_path):
     """XDW_GetPage(doc_handle, page, output_path)"""
     pass
+
 
 @APPEND(NULL)
 def XDW_DeletePage(doc_handle, page):
     """XDW_DeletePage(doc_handle, page)"""
     pass
 
+
 @APPEND(NULL)
 def XDW_RotatePage(doc_handle, page, degree):
     """XDW_RotatePage(doc_handle, page, degree)"""
     pass
+
 
 @APPEND(NULL)
 def XDW_SaveDocument(doc_handle):
     """XDW_SaveDocument(doc_handle)"""
     pass
 
+
 @RAISE
 def XDW_CreateXdwFromImageFile(input_path, output_path, cre_option):
     """XDW_CreateXdwFromImageFile(input_path, output_path, cre_option)"""
     return DLL.XDW_CreateXdwFromImageFile(input_path, output_path, byref(cre_option))
+
 
 def XDW_GetOriginalDataInformation(doc_handle, org_dat):
     """XDW_GetOriginalDataInformation(doc_handle, org_dat) --> orgdata_info"""
@@ -1638,20 +1735,24 @@ def XDW_GetOriginalDataInformation(doc_handle, org_dat):
     return orgdata_info
     # NB. orgdata_info.nDate is UTC Unix time.
 
+
 @APPEND(NULL)
 def XDW_GetOriginalData(doc_handle, org_dat, output_path):
     """XDW_GetOriginalData(doc_handle, org_dat, output_path)"""
     pass
+
 
 @APPEND(NULL)
 def XDW_InsertOriginalData(doc_handle, org_dat, input_path):
     """XDW_InsertOriginalData(doc_handle, org_dat, input_path)"""
     pass
 
+
 @APPEND(NULL)
 def XDW_DeleteOriginalData(doc_handle, org_dat):
     """XDW_DeleteOriginalData(doc_handle, org_dat)"""
     pass
+
 
 def XDW_BeginCreationFromAppFile(input_path, output_path, with_org):
     """XDW_BeginCreationFromAppFile(input_path, output_path, with_org) --> cre_handle"""
@@ -1659,10 +1760,12 @@ def XDW_BeginCreationFromAppFile(input_path, output_path, with_org):
     TRY(DLL.XDW_BeginCreationFromAppFile, input_path, output_path, with_org, byref(cre_handle), NULL)
     return cre_handle
 
+
 @APPEND(NULL)
 def XDW_EndCreationFromAppFile(cre_handle):
     """XDW_EndCreationFromAppFile(cre_handle)"""
     pass
+
 
 def XDW_GetStatusCreationFromAppFile(cre_handle):
     """XDW_GetStatusCreationFromAppFile(cre_handle) --> create_status"""
@@ -1670,15 +1773,18 @@ def XDW_GetStatusCreationFromAppFile(cre_handle):
     TRY(DLL.XDW_GetStatusCreationFromAppFile, cre_handle, byref(create_status))
     return createStatus
 
+
 @APPEND(NULL)
 def XDW_CancelCreationFromAppFile(cre_handle):
     """XDW_CancelCreationFromAppFile(cre_handle)"""
     pass
 
+
 @STRING
 def XDW_GetUserAttribute(doc_handle, attr_name):
     """XDW_GetUserAttribute(doc_handle, attr_name)"""
     pass
+
 
 @RAISE
 def XDW_SetUserAttribute(doc_handle, attr_name, attr_val):
@@ -1686,16 +1792,19 @@ def XDW_SetUserAttribute(doc_handle, attr_name, attr_val):
     size = attr_val and len(attr_val) or 0
     return DLL.XDW_SetUserAttribute(doc_handle, attr_name, attr_val, size, NULL)
 
+
 def XDW_GetAnnotationInformation(doc_handle, page, parent_ann_handle, idx):
     """XDW_GetAnnotationInformation(doc_handle, page, parent_ann_handle, idx) --> annotation_info"""
     annotation_info = XDW_ANNOTATION_INFO()
     TRY(DLL.XDW_GetAnnotationInformation, doc_handle, page, parent_ann_handle, idx, byref(annotation_info), NULL)
     return annotation_info
 
+
 @STRING
 def XDW_GetAnnotationAttribute(ann_handle, attr_name):
     """XDW_GetAnnotationAttribute(ann_handle, attr_name)"""
     pass
+
 
 def XDW_AddAnnotation(doc_handle, ann_type, page, hpos, vpos, init_dat):
     """XDW_AddAnnotation(doc_handle, ann_type, page, hpos, vpos, init_dat) --> new_ann_handle"""
@@ -1703,35 +1812,42 @@ def XDW_AddAnnotation(doc_handle, ann_type, page, hpos, vpos, init_dat):
     TRY(DLL.XDW_AddAnnotation, doc_handle, ann_type, page, hpos, vpos, ptr(init_dat), byref(new_ann_handle), NULL)
     return new_ann_handle
 
+
 @APPEND(NULL)
 def XDW_RemoveAnnotation(doc_handle, ann_handle):
     """XDW_RemoveAnnotation(doc_handle, ann_handle)"""
     pass
+
 
 @APPEND(0, NULL)
 def XDW_SetAnnotationAttribute(doc_handle, ann_handle, attr_name, attr_type, attr_val):
     """XDW_SetAnnotationAttribute(doc_handle, ann_handle, attr_name, attr_type, attr_val)"""
     pass
 
+
 @APPEND(NULL)
 def XDW_SetAnnotationSize(doc_handle, ann_handle, width, height):
     """XDW_SetAnnotationSize(doc_handle, ann_handle, width, height)"""
     pass
+
 
 @APPEND(NULL)
 def XDW_SetAnnotationPosition(doc_handle, ann_handle, hpos, vpos):
     """XDW_SetAnnotationPosition(doc_handle, ann_handle, hpos, vpos)"""
     pass
 
+
 @APPEND(NULL)
 def XDW_CreateSfxDocument(input_path, output_path):
     """XDW_CreateSfxDocument(input_path, output_path)"""
     pass
 
+
 @APPEND(NULL)
 def XDW_ExtractFromSfxDocument(input_path, output_path):
     """XDW_ExtractFromSfxDocument(input_path, output_path)"""
     pass
+
 
 def XDW_ConvertPageToImageHandle(doc_handle, page, img_option):
     """XDW_ConvertPageToImageHandle(doc_handle, page, img_option) --> dib"""
@@ -1739,26 +1855,31 @@ def XDW_ConvertPageToImageHandle(doc_handle, page, img_option):
     TRY(DLL.XDW_ConvertPageToImageHandle, doc_handle, page, byref(dib), byref(img_option))
     return dib
 
+
 def XDW_GetThumbnailImageHandle(doc_handle, page):
     """XDW_GetThumbnailImageHandle(doc_handle, page) --> dib"""
     dib = XDW_HGLOBAL()
     TRY(DLL.XDW_GetThumbnailImageHandle, doc_handle, page, byref(dib), NULL)
     return dib
 
+
 @STRING
 def XDW_GetPageTextToMemory(doc_handle, page):
     """XDW_GetPageTextToMemory(doc_handle, page)"""
     pass
+
 
 @APPEND(NULL)
 def XDW_GetFullText(doc_handle, output_path):
     """XDW_GetFullText(doc_handle, output_path)"""
     pass
 
+
 @STRING
 def XDW_GetPageUserAttribute(doc_handle, page, attr_name):
     """XDW_GetPageUserAttribute(doc_handle, page, attr_name)"""
     pass
+
 
 @RAISE
 def XDW_SetPageUserAttribute(doc_handle, page, attr_name, attr_val):
@@ -1766,65 +1887,78 @@ def XDW_SetPageUserAttribute(doc_handle, page, attr_name, attr_val):
     size = attr_val and len(attr_val) or 0
     return DLL.XDW_SetPageUserAttribute(doc_handle, page, attr_name, attr_val, size, NULL)
 
+
 @APPEND(NULL)
 def XDW_ReducePageNoise(doc_handle, page, level):
     """XDW_ReducePageNoise(doc_handle, page, level)"""
     pass
+
 
 @APPEND(NULL)
 def XDW_ShowOrHideAnnotations(doc_handle, show_annotations):
     """XDW_ShowOrHideAnnotations(doc_handle, show_annotations)"""
     pass
 
+
 @APPEND(NULL)
 def XDW_GetCompressedPageImage(doc_handle, page, output_path):
     """XDW_GetCompressedPageImage(doc_handle, page, output_path)"""
     pass
+
 
 @APPEND(NULL)
 def XDW_InsertDocument(doc_handle, page, input_path):
     """XDW_InsertDocument(doc_handle, page, input_path)"""
     pass
 
+
 @RAISE
 def XDW_ApplyOcr(doc_handle, page, ocr_engine, option):
     """XDW_ApplyOcr(doc_handle, page, ocr_engine, option)"""
     return DLL.XDW_ApplyOcr(doc_handle, page, ocr_engine, ptr(option), NULL)
+
 
 @APPEND(NULL)
 def XDW_RotatePageAuto(doc_handle, page):
     """XDW_RotatePageAuto(doc_handle, page)"""
     pass
 
+
 @RAISE
 def XDW_CreateBinder(output_path, binder_init_dat):
     """XDW_CreateBinder(output_path, binder_init_dat)"""
     return DLL.XDW_CreateBinder(output_path, ptr(binder_init_dat), NULL)
+
 
 @APPEND(NULL)
 def XDW_InsertDocumentToBinder(doc_handle, pos, input_path):
     """XDW_InsertDocumentToBinder(doc_handle, pos, input_path)"""
     pass
 
+
 @APPEND(NULL)
 def XDW_GetDocumentFromBinder(doc_handle, pos, output_path):
     """XDW_GetDocumentFromBinder(doc_handle, pos, output_path)"""
     pass
+
 
 @APPEND(NULL)
 def XDW_DeleteDocumentInBinder(doc_handle, pos):
     """XDW_DeleteDocumentInBinder(doc_handle, pos)"""
     pass
 
+
 @STRING
 def XDW_GetDocumentNameInBinder(doc_handle, pos):
     """XDW_GetDocumentNameInBinder(doc_handle, pos)"""
     pass
 
+
 @APPEND(NULL)
 def XDW_SetDocumentNameInBinder(doc_handle, pos, document_name):
     """XDW_SetDocumentNameInBinder(doc_handle, pos, document_name)"""
     pass
+
 
 def XDW_GetDocumentInformationInBinder(doc_handle, pos):
     """XDW_GetDocumentInformationInBinder(doc_handle, pos) --> document_info"""
@@ -1832,10 +1966,12 @@ def XDW_GetDocumentInformationInBinder(doc_handle, pos):
     TRY(DLL.XDW_GetDocumentInformationInBinder, doc_handle, pos, byref(document_info), NULL)
     return document_info
 
+
 @APPEND(NULL)
 def XDW_Finalize():
     """XDW_Finalize()"""
     pass
+
 
 @RAISE
 def XDW_GetPageColorInformation(doc_handle, page):
@@ -1844,65 +1980,78 @@ def XDW_GetPageColorInformation(doc_handle, page):
     TRY(DLL.XDW_GetPageColorInformation, doc_handle, page, byref(page_color_info), NULL)
     return page_color_info
 
+
 @APPEND(NULL)
 def XDW_OptimizeDocument(input_path, output_path):
     """XDW_OptimizeDocument(input_path, output_path)"""
     pass
+
 
 @RAISE
 def XDW_ProtectDocument(input_path, output_path, protect_type, module_option, protect_option):
     """XDW_ProtectDocument(input_path, output_path, protect_type, module_option, protect_option)"""
     return DLL.XDW_ProtectDocument(input_path, output_path, protect_type, byref(module_option), byref(protect_option))
 
+
 @RAISE
 def XDW_CreateXdwFromImageFileAndInsertDocument(doc_handle, page, input_path, create_option):
     """XDW_CreateXdwFromImageFileAndInsertDocument(doc_handle, page, input_path, create_option)"""
     return DLL.XDW_CreateXdwFromImageFileAndInsertDocument(doc_handle, page, input_path, byref(create_option), NULL)
+
 
 @APPEND(NULL)
 def XDW_GetDocumentAttributeNumber(doc_handle):
     """XDW_GetDocumentAttributeNumber(doc_handle)"""
     pass
 
+
 @ATTR
 def XDW_GetDocumentAttributeByName(doc_handle, attr_name):
     """XDW_GetDocumentAttributeByName(doc_handle, attr_name) --> (attr_type, attr_val)"""
     pass
+
 
 @ATTR(by_order=True)
 def XDW_GetDocumentAttributeByOrder(doc_handle, order):
     """XDW_GetDocumentAttributeByOrder(doc_handle, order) --> (attr_name, attr_type, attr_val)"""
     pass
 
+
 @APPEND(NULL)
 def XDW_SetDocumentAttribute(doc_handle, attr_name, attr_type, attr_val):
     """XDW_SetDocumentAttribute(doc_handle, attr_name, attr_type, attr_val)"""
     pass
+
 
 @APPEND(NULL)
 def XDW_SucceedAttribute(doc_handle, file_path, document, succession):
     """XDW_SucceedAttribute(doc_handle, file_path, document, succession)"""
     pass
 
+
 @STRING
 def XDW_GetPageFormAttribute(doc_handle, page_form, attr_name):
     """XDW_GetPageFormAttribute(doc_handle, page_form, attr_name)"""
     pass
+
 
 @APPEND(0, NULL)
 def XDW_SetPageFormAttribute(doc_handle, page_form, attr_name, attr_type, attr_val):
     """XDW_SetPageFormAttribute(doc_handle, page_form, attr_name, attr_type, attr_val)"""
     pass
 
+
 @APPEND(NULL)
 def XDW_UpdatePageForm(doc_handle, other_page_form):
     """XDW_UpdatePageForm(doc_handle, other_page_form)"""
     pass
 
+
 @APPEND(NULL)
 def XDW_RemovePageForm(doc_handle, other_page_form):
     """XDW_RemovePageForm(doc_handle, other_page_form)"""
     pass
+
 
 def XDW_GetLinkRootFolderInformation(order):
     """XDW_GetLinkRootFolderInformation(order) --> linkrootfolder_info"""
@@ -1910,23 +2059,29 @@ def XDW_GetLinkRootFolderInformation(order):
     TRY(DLL.XDW_GetLinkRootFolderInformation, order, byref(linkrootfolder_info), NULL)
     return linkrootfolder_info
 
+
 @APPEND()
 def XDW_GetLinkRootFolderNumber():
     """XDW_GetLinkRootFolderNumber()"""
     pass
 
+
 # Undocumented API in DocuWorksTM Development Tool Kit 7.1
 # int XDWAPI XDW_GetPageTextInformation(XDW_DOCUMENT_HANDLE handle, int nPage, void* pInfo, void* reserved);
+
+
 def XDW_GetPageTextInformation(doc_handle, page):
     """XDW_GetPageTextInformation(doc_handle, page) --> gptiInfo"""
     gpti_info = XDW_GPTI_INFO()  # right?
     TRY(DLL.XDW_GetPageTextInformation, doc_handle, page, byref(gpti_info), NULL)
     return gpti_info
 
+
 @APPEND(NULL)
 def XDW_GetDocumentSignatureNumber(doc_handle):
     """XDW_GetDocumentSignatureNumber(doc_handle)"""
     pass
+
 
 def XDW_AddAnnotationOnParentAnnotation(doc_handle, ann_handle, ann_type, hpos, vpos, aa_init_dat):
     """XDW_AddAnnotationOnParentAnnotation(doc_handle, ann_handle, ann_type, hpos, vpos, aa_init_dat) --> new_ann_handle"""
@@ -1934,10 +2089,12 @@ def XDW_AddAnnotationOnParentAnnotation(doc_handle, ann_handle, ann_type, hpos, 
     TRY(DLL.XDW_AddAnnotationOnParentAnnotation, doc_handle, ann_handle, ann_type, hpos, vpos, ptr(aa_init_dat), byref(new_ann_handle), NULL)
     return new_ann_handle
 
+
 @RAISE
 def XDW_SignDocument(input_path, output_path, option, module_option, module_status):
     """XDW_SignDocument(input_path, output_path, option, module_option, module_status)"""
     return DLL.XDW_SignDocument(input_path, output_path, byref(option), byref(module_option), NULL, byref(module_status))
+
 
 def XDW_GetSignatureInformation(doc_handle, signature, module_info, module_status):
     """XDW_GetSignatureInformation(doc_handle, signature, module_info, module_status) --> signature_info_v5"""
@@ -1946,15 +2103,18 @@ def XDW_GetSignatureInformation(doc_handle, signature, module_info, module_statu
     # NB. signature_info_v5.nSignedTime is UTC Unix time.
     return signature_info_v5
 
+
 @RAISE
 def XDW_UpdateSignatureStatus(doc_handle, signature, module_option, module_status):
     """XDW_UpdateSignatureStatus(doc_handle, signature, module_option, module_status)"""
     return XDW_UpdateSignatureStatus(doc_handle, signature, ptr(module_option), NULL, ptr(module_status))
 
+
 @RAISE
 def XDW_GetOcrImage(doc_handle, page, output_path, img_option):
     """XDW_GetOcrImage(doc_handle, page, output_path, img_option)"""
     return DLL.XDW_GetOcrImage(doc_handle, page, output_path, byref(img_option), NULL)
+
 
 def XDW_SetOcrData(doc_handle, page):
     """XDW_SetOcrData(doc_handle, page) --> ocr_text_info"""
@@ -1962,15 +2122,18 @@ def XDW_SetOcrData(doc_handle, page):
     TRY(DLL.XDW_SetOcrData, doc_handle, page, byref(ocr_text_info), NULL)
     return ocr_text_info
 
+
 @APPEND(NULL)
 def XDW_GetDocumentAttributeNumberInBinder(doc_handle, pos):
     """XDW_GetDocumentAttributeNumberInBinder(doc_handle, pos)"""
     pass
 
+
 @ATTR
 def XDW_GetDocumentAttributeByNameInBinder(doc_handle, pos, attr_name):
     """XDW_GetDocumentAttributeByNameInBinder(doc_handle, pos, attr_name) --> (attr_type, attr_val)"""
     pass
+
 
 @ATTR(by_order=True)
 def XDW_GetDocumentAttributeByOrderInBinder(doc_handle, pos, order):
@@ -1982,10 +2145,12 @@ int XDWAPI XDW_GetTMInfo(doc_handle, void* pTMInfo, int nTMInfoSize, void* reser
 int XDWAPI XDW_SetTMInfo(doc_handle, const void* pTMInfo, int nTMInfoSize, void* reserved);
 """
 
+
 @APPEND(NULL)
 def XDW_CreateXdwFromImagePdfFile(input_path, output_path):
     """XDW_CreateXdwFromImagePdfFile(input_path, output_path)"""
     pass
+
 
 def XDW_FindTextInPage(doc_handle, page, text, find_text_option):
     """XDW_FindTextInPage(doc_handle, page, text, find_text_option) --> found_handle"""
@@ -1993,15 +2158,18 @@ def XDW_FindTextInPage(doc_handle, page, text, find_text_option):
     TRY(DLL.XDW_FindTextInPage, doc_handle, page, text, ptr(find_text_option), byref(found_handle), NULL)
     return found_handle
 
+
 def XDW_FindNext(found_handle):
     """XDW_FindNext(found_handle) --> found_handle"""
     TRY(DLL.XDW_FindNext, byref(found_handle), NULL)
     return found_handle
 
+
 @RAISE
 def XDW_GetNumberOfRectsInFoundObject(found_handle):
     """XDW_GetNumberOfRectsInFoundObject(found_handle)"""
     return DLL.XDW_GetNumberOfRectsInFoundObject(found_handle, NULL)
+
 
 def XDW_GetRectInFoundObject(found_handle, pos):
     """XDW_GetRectInFoundObject(found_handle, pos) --> (rect, status)"""
@@ -2010,15 +2178,18 @@ def XDW_GetRectInFoundObject(found_handle, pos):
     TRY(DLL.XDW_GetRectInFoundObject, found_handle, pos, byref(rect), byref(status), NULL)
     return (rect, status.value)
 
+
 @RAISE
 def XDW_CloseFoundHandle(found_handle):
     """XDW_CloseFoundHandle(found_handle)"""
     return DLL.XDW_CloseFoundHandle(found_handle)
 
+
 @STRING
 def XDW_GetAnnotationUserAttribute(ann_handle, attr_name):
     """XDW_GetAnnotationUserAttribute(ann_handle, attr_name)"""
     pass
+
 
 @RAISE
 def XDW_SetAnnotationUserAttribute(doc_handle, ann_handle, attr_name, attr_val):
@@ -2026,15 +2197,18 @@ def XDW_SetAnnotationUserAttribute(doc_handle, ann_handle, attr_name, attr_val):
     size = len(attr_val) if attr_val else 0
     return DLL.XDW_SetAnnotationUserAttribute(doc_handle, ann_handle, attr_name, attr_val, size, NULL)
 
+
 @APPEND(NULL)
 def XDW_StarchAnnotation(doc_handle, ann_handle, starch):
     """XDW_StarchAnnotation(doc_handle, ann_handle, starch)"""
     pass
 
+
 @RAISE
 def XDW_ReleaseProtectionOfDocument(input_path, output_path, release_protection_option):
     """XDW_ReleaseProtectionOfDocument(input_path, output_path, release_protection_option)"""
     return DLL.XDW_ReleaseProtectionOfDocument(input_path, output_path, byref(release_protection_option))
+
 
 def XDW_GetProtectionInformation(input_path):
     """XDW_GetProtectionInformation(input_path) --> protection_info"""
@@ -2042,35 +2216,42 @@ def XDW_GetProtectionInformation(input_path):
     TRY(DLL.XDW_GetProtectionInformation, input_path, byref(protection_info), NULL)
     return protection_info
 
+
 @ATTR
 def XDW_GetAnnotationCustomAttributeByName(ann_handle, attr_name):
     """XDW_GetAnnotationCustomAttributeByName(ann_handle, attr_name) --> (attr_type, attr_val)"""
     pass
+
 
 @ATTR(by_order=True)
 def XDW_GetAnnotationCustomAttributeByOrder(ann_handle, order):
     """XDW_GetAnnotationCustomAttributeByOrder(ann_handle, order) --> (attr_name, attr_type, attr_val)"""
     pass
 
+
 @APPEND(NULL)
 def XDW_GetAnnotationCustomAttributeNumber(ann_handle):
     """XDW_GetAnnotationCustomAttributeNumber(ann_handle)"""
     pass
+
 
 @APPEND(NULL)
 def XDW_SetAnnotationCustomAttribute(doc_handle, ann_handle, attr_name, attr_type, attr_val):
     """XDW_SetAnnotationCustomAttribute(doc_handle, ann_handle, attr_name, attr_type, attr_val)"""
     pass
 
+
 @UNICODE
 def XDW_GetPageTextToMemoryW(doc_handle, page):
     """XDW_GetPageTextToMemoryW(doc_handle, page)"""
     pass
 
+
 @APPEND(NULL)
 def XDW_GetFullTextW(doc_handle, output_path):
     """XDW_GetFullTextW(doc_handle, output_path)"""
     pass
+
 
 def XDW_GetAnnotationAttributeW(ann_handle, attr_name, codepage=932):
     """XDW_GetAnnotationAttributeW(ann_handle, attr_name, codepage=932) --> (attr_type, attr_val, text_type)"""
@@ -2087,35 +2268,42 @@ def XDW_GetAnnotationAttributeW(ann_handle, attr_name, codepage=932):
     else:
         return (XDW_ATYPE_INT, attr_val.value, XDW_TEXT_UNKNOWN)
 
+
 @APPEND(0, NULL)
 def XDW_SetAnnotationAttributeW(doc_handle, ann_handle, attr_name, attr_type, attr_val, text_type, codepage=932):
     """XDW_SetAnnotationAttributeW(doc_handle, ann_handle, attr_name, attr_type, attr_val, text_type, codepage=932)"""
     pass
+
 
 @ATTR(widechar=True)
 def XDW_GetDocumentAttributeByNameW(doc_handle, attr_name, codepage=932):
     """XDW_GetDocumentAttributeByNameW(doc_handle, attr_name, codepage=932) --> (attr_type, attr_val, text_type)"""
     pass
 
+
 @ATTR(by_order=True, widechar=True)
 def XDW_GetDocumentAttributeByOrderW(doc_handle, order, codepage=932):
     """XDW_GetDocumentAttributeByOrderW(doc_handle, order, codepage=932) --> (attr_name, attr_type, attr_val, text_type)"""
     pass
+
 
 @ATTR(widechar=True)
 def XDW_GetDocumentAttributeByNameInBinderW(doc_handle, pos, attr_name, codepage=932):
     """XDW_GetDocumentAttributeByNameInBinderW(doc_handle, pos, attr_name, codepage=932) --> (attr_type, attr_val, text_type)"""
     pass
 
+
 @ATTR(by_order=True, widechar=True)
 def XDW_GetDocumentAttributeByOrderInBinderW(doc_handle, pos, order, codepage=932):
     """XDW_GetDocumentAttributeByOrderInBinderW(doc_handle, pos, order, codepage=932) --> (attr_name, attr_type, attr_val, text_type)"""
     pass
 
+
 @APPEND(NULL)
 def XDW_SetDocumentAttributeW(doc_handle, attr_name, attr_type, attr_val, text_type, codepage=932):
     """XDW_SetDocumentAttributeW(doc_handle, attr_name, attr_type, attr_val, text_type, codepage=932)"""
     pass
+
 
 def XDW_GetDocumentNameInBinderW(doc_handle, pos, codepage=932):
     """XDW_GetDocumentNameInBinderW(doc_handle, pos, codepage=932) --> (doc_name, text_type)"""
@@ -2125,10 +2313,12 @@ def XDW_GetDocumentNameInBinderW(doc_handle, pos, codepage=932):
     TRY(DLL.XDW_GetDocumentNameInBinderW, doc_handle, pos, byref(doc_name), size, byref(text_type), codepage, NULL)
     return (doc_name.value, text_type.value)
 
+
 @APPEND(NULL)
 def XDW_SetDocumentNameInBinderW(doc_handle, pos, doc_name, text_type, codepage=932):
     """XDW_SetDocumentNameInBinderW(doc_handle, pos, doc_name, text_type, codepage=932)"""
     pass
+
 
 def XDW_GetOriginalDataInformationW(doc_handle, org_data, codepage=932):
     """XDW_GetOriginalDataInformationW(doc_handle, org_data, codepage=932) --> (orgdata_infow, text_type)"""
