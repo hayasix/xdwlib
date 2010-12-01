@@ -1651,14 +1651,14 @@ def ATTR(by_order=False, widechar=False):
 ### DocuWorks API's provided by xdwapi.dll
 
 @STRING
-def XDW_GetInformation(idx):
-    """XDW_GetInformation(idx)"""
+def XDW_GetInformation(index):
+    """XDW_GetInformation(index)"""
     pass
 
 
 @APPEND(NULL)
-def XDW_AddSystemFolder(idx):
-    """XDW_AddSystemFolder(idx)"""
+def XDW_AddSystemFolder(index):
+    """XDW_AddSystemFolder(index)"""
     pass
 
 
@@ -1814,10 +1814,10 @@ def XDW_SetUserAttribute(doc_handle, attr_name, attr_val):
     return DLL.XDW_SetUserAttribute(doc_handle, attr_name, attr_val, size, NULL)
 
 
-def XDW_GetAnnotationInformation(doc_handle, page, parent_ann_handle, idx):
-    """XDW_GetAnnotationInformation(doc_handle, page, parent_ann_handle, idx) --> annotation_info"""
+def XDW_GetAnnotationInformation(doc_handle, page, parent_ann_handle, index):
+    """XDW_GetAnnotationInformation(doc_handle, page, parent_ann_handle, index) --> annotation_info"""
     annotation_info = XDW_ANNOTATION_INFO()
-    TRY(DLL.XDW_GetAnnotationInformation, doc_handle, page, parent_ann_handle, idx, byref(annotation_info), NULL)
+    TRY(DLL.XDW_GetAnnotationInformation, doc_handle, page, parent_ann_handle, index, byref(annotation_info), NULL)
     return annotation_info
 
 

@@ -165,25 +165,35 @@ def annotation_in(annotation, rect):  # Assume rect is half-open.
 
 
 def find_annotations(object,
-        recursive=False, rect=None, types=None,
-        half_open=True):
-    if rect and not half_open:
-        rect.right += 1
-        rect.bottom += 1
+        handles=None,
+        types=None,
+        rect=None, half_open=True,
+        recursive=False):
+    if not handles:
+        handles = []
+    elif not (isinstance(handles, tuple) or isinstance(handles, list)):
+        handles = list(handles)
     if types:
         if not isinstance(types, (list, tuple)):
             types = [types]
         types = [XDW_ANNOTATION_TYPE.normalize(t) for t in types]
+    if rect and not half_open:
+        rect.right += 1
+        rect.bottom += 1
     annotation_list = []
     for i in range(object.annotations):
         annotation = object.annotation(i)
         sublist = []
         if recursive and annotation.annotations:
             sublist = find_annotations(annotation,
-                    recursive=recursive, rect=rect, types=types,
-                    half_open=half_open)
+                    handles=handles,
+                    types=types,
+                    rect=rect, half_open=half_open,
+                    recursive=recursive,
+                    )
         if (not rect or annotation_in(annotation, rect)) and \
-                (not types or annotation.annotation_type in types):
+                (not types or annotation.annotation_type in types) or \
+                annotation.handle in handles:
             if sublist:
                 sublist.insert(0, annotation)
                 annotation_list.append(sublist)
@@ -233,15 +243,59 @@ class XDWAnnotation(XDWSubject, XDWObserver):
 
     """Annotation on DocuWorks document page"""
 
-    def __init__(self, page, idx, parent=None):
-        self.pos = idx
+    @classmethod
+    def initial_data(ann_type, **kw):
+        ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
+        cls = XDW_AID_INITIAL_DATA.get(ann_type, None)
+        if cls:
+            init_dat = cls()
+            init_dat.common.nAnnotationType = ann_type
+        else:
+            init_dat = NULL
+        for k, v in kw.items():
+            if k.startswith("n"):
+                v = int(v)
+            elif k.startswith("sz"):
+                v = str(v)
+            elif k.startswith("lpsz"):
+                v = byref(v)
+            elif k.startswith("p"):
+                v = byref(v)
+            setattr(init_dat, k, v)
+        return init_dat
+
+    @classmethod
+    def new(page, ann_type, hpos, vpos, parent=None, **kw):
+        """Create a new annotation on given page/annotation.
+
+        new(page, ann_type, hpos, vpos, parent=None, **kw)
+            parent  XDWAnnotation object
+        """
+        init_dat = XDWAnnotation.initial_data(ann_type, *kw)
+        if parent:
+            ann_handle = XDW_AddAnnotationOnParentAnnotation(
+                    page.xdw.handle, parent.handle,
+                    ann_type, hpos, vpos, init_dat)
+        else:
+            ann_handle = XDW_AddAnnotation(
+                    page.xdw.handle,
+                    ann_type, page.pos + 1, hpos, vpos, init_dat)
+        obj = parent if parent else page
+        obj.annotations += 1
+        ann = find_annotations(page, handle=ann_handle)[0]
+        obj.notify(XDWNotification(EV_ANNO_INSERTED, ann.pos))
+        obj.attach(ann)
+        return ann
+
+    def __init__(self, page, index, parent=None):
+        self.pos = index
         XDWSubject.__init__(self)
         XDWObserver.__init__(self, page)
         self.page = page
         self.parent = parent
-        pah = parent and parent.handle or None
+        pah = parent and parent.handle or NULL
         info = XDW_GetAnnotationInformation(
-                page.xdw.handle, page.pos + 1, pah, idx + 1)
+                page.xdw.handle, page.pos + 1, pah, index + 1)
         self.handle = info.handle
         self.horizontal_position = info.nHorPos
         self.vertical_position = info.nVerPos
@@ -259,16 +313,16 @@ class XDWAnnotation(XDWSubject, XDWObserver):
                 )
 
     def __getattr__(self, name):
-        attrname = "%" + name
+        attr_name = "%" + name
         t, v, tt = XDW_GetAnnotationAttributeW(
-                self.handle, attrname, codepage=CP)
+                self.handle, attr_name, codepage=CP)
         if t == XDW_ATYPE_STRING:
             self.is_unicode = (tt == XDW_TEXT_UNICODE)
         return v
 
     def __setattr__(self, name, value):
-        attrname = "%" + name
-        if attrname in XDW_ANNOTATION_ATTRIBUTE:
+        attr_name = "%" + name
+        if attr_name in XDW_ANNOTATION_ATTRIBUTE:
             if isinstance(value, basestring):
                 if self.is_unicode:
                     if isinstance(value, str):
@@ -280,57 +334,66 @@ class XDWAnnotation(XDWSubject, XDWObserver):
                     texttype = XDW_TEXT_MULTIBYTE
                 XDW_SetAnnotationAttributeW(
                         self.page.xdw.handle, self.handle,
-                        attrname, XDW_ATYPE_STRING, byref(value),
+                        attr_name, XDW_ATYPE_STRING, byref(value),
                         texttype, codepage=CP)
             else:
                 XDW_SetAnnotationAttributeW(
                         self.page.xdw.handle, self.handle,
-                        attrname, XDW_ATYPE_INT, byref(value), 0, 0)
+                        attr_name, XDW_ATYPE_INT, byref(value), 0, 0)
             return
         # Other attributes, not saved in xdw files.
         self.__dict__[name] = value  # volatile
+
+    def notify(self, event=None):
+        XDWSubject.notify(self, event=event)
+        if event.type == EV_ANNO_REMOVED:
+            self.annotations -= 1
+        elif event.type == EV_ANNO_INSERTED:
+            self.annotations += 1
+        else:
+            raise ValueError("Illegal event type")
 
     def update(self, event):
         if not isinstance(event, XDWNotification):
             raise TypeError("not an instance of XDWNotification class")
         if event.type == EV_ANNO_REMOVED and event.para[0] < self.pos:
                 self.pos -= 1
-        if event.type == EV_ANNO_INSERTED and event.para[0] < self.pos:
+        elif event.type == EV_ANNO_INSERTED and event.para[0] < self.pos:
                 self.pos += 1
         else:
-            raise ValueError("illegal event type")
+            raise ValueError("Illegal event type")
 
-    def annotation(self, idx):
-        """annotation(idx) --> XDWAnnotation"""
-        if idx not in self.observers:
-            self.observers[idx] = XDWAnnotation(self.page, idx, parent=self)
-        return self.observers[idx]
+    def annotation(self, index):
+        """annotation(index) --> XDWAnnotation"""
+        if index not in self.observers:
+            self.observers[index] = XDWAnnotation(self.page, index, parent=self)
+        return self.observers[index]
 
     def find_annotations(self, *args, **kw):
         """Find annotations on page, which meets criteria given.
 
-        find_annotations(object, recursive=False, rect=None, types=None, half_open=True)
-            recursive   also return descendant (child) annotations.
+        find_annotations(object, handles=None, types=None, rect=None, half_open=True, recursive=False)
+            handles     return annotations that has given annotation handles.
+            types       return annotations of types given.  None means all.
             rect        return annotations in given rectangular area,
                         (rect.left, rect.top) - (rect.right, rect.bottom).
                         Note that right/bottom value are innermost of outside
-                        unless half_open==False.
-            types       return annotations of types given.
+                        unless half_open==False.  None means all.
+            recursive   also return descendant (child) annotations.
         """
         return find_annotations(self, *args, **kw)
 
-    def delete_annotation(self, idx):
-        """Delete a child annotation given by idx."""
-        anno = self.annotation(idx)
-        XDW_RemoveAnnotation(self.page.xdw.handle, anno.handle)
+    def delete_annotation(self, index):
+        """Delete a child annotation given by index."""
+        ann = self.annotation(index)
+        XDW_RemoveAnnotation(self.page.xdw.handle, ann.handle)
         self.annotations -= 1
-        if idx in self.observers:
-            del self.observers[idx]
-        self.notify(XDWNotification(EV_ANNO_REMOVED, idx))
+        self.detach(ann)
+        self.notify(XDWNotification(EV_ANNO_REMOVED, index))
         # Rewrite observer keys.
-        for pp in [p for p in sorted(self.observers.keys()) if idx < p]:
-            self.observers[pp - 1] = self.observers[pp]
-            del self.observers[pp]
+        for p in sorted(filter(lambda p: index < p, self.observers.keys())):
+            self.observers[p - 1] = self.observers[p]
+            del self.observers[p]
 
     def text(self, recursive=True):
         ga = XDW_GetAnnotationAttributeW
@@ -400,6 +463,15 @@ class XDWPage(XDWSubject, XDWObserver):
                 self.annotations,
                 )
 
+    def notify(self, event):
+        XDWSubject.notify(self, event=event)
+        if event.type == EV_ANNO_REMOVED:
+            self.annotations -= 1
+        elif event.type == EV_ANNO_INSERTED:
+            self.annotations += 1
+        else:
+            raise ValueError("Illegal event type")
+
     def update(self, event):
         if not isinstance(event, XDWNotification):
             raise TypeError("not an instance of XDWNotification class")
@@ -410,30 +482,29 @@ class XDWPage(XDWSubject, XDWObserver):
         else:
             raise ValueError("illegal event type")
 
-    def annotation(self, idx):
+    def annotation(self, index):
         """annotation(n) --> XDWAnnotation"""
-        if idx not in self.observers:
-            self.observers[idx] = XDWAnnotation(self, idx)
-        return self.observers[idx]
+        if index not in self.observers:
+            self.observers[index] = XDWAnnotation(self, index)
+        return self.observers[index]
 
     def find_annotations(self, *args, **kw):
         return find_annotations(self, *args, **kw)
 
-    def delete_annotation(self, idx):
-        """Delete an annotation given by idx.
+    def delete_annotation(self, index):
+        """Delete an annotation given by index.
 
-        delete_annotation(idx)
+        delete_annotation(index)
         """
-        anno = self.annotation(idx)
-        XDW_RemoveAnnotation(self.handle, anno.handle)
+        ann = self.annotation(index)
+        XDW_RemoveAnnotation(self.handle, ann.handle)
         self.annotations -= 1
-        if idx in self.observers:
-            del self.observers[idx]
-        self.notify(XDWNotification(EV_ANNO_REMOVED, idx))
+        self.detach(ann)
+        self.notify(XDWNotification(EV_ANNO_REMOVED, index))
         # Rewrite observer keys.
-        for pp in [p for p in sorted(self.observers.keys()) if idx < p]:
-            self.observers[pp - 1] = self.observers[pp]
-            del self.observers[pp]
+        for p in filter(lambda p: index < p, sorted(self.observers.keys())):
+            self.observers[p - 1] = self.observers[p]
+            del self.observers[p]
 
     def text(self):
         return XDW_GetPageTextToMemoryW(self.xdw.handle, self.pos + 1)
@@ -512,35 +583,18 @@ class XDWPage(XDWSubject, XDWObserver):
         XDW_ApplyOcr(self.xdw.handle, self.pos + 1, engine, byref(opt))
         self.finalize = True
 
-    def add_annotation(self, hpos, vpos, ann_type, **kw):
+    def add_annotation(self, ann_type, hpos, vpos, **kw):
         """Add an annotation.
 
-        add_annotation(hpos, vpos, ann_type, **kw)
+        add_annotation(ann_type, hpos, vpos, **kw)
         """
-        ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
-        init_dat_class = XDW_AID_INITIAL_DATA.get(ann_type, None)
-        if init_dat_class:
-            init_dat = init_dat_class()
-            init_dat.common.nAnnotationType = ann_type
-        else:
-            init_dat = NULL
-        for k, v in kw.items():
-            if k.startswith("n"):
-                v = int(v)
-            elif k.startswith("sz"):
-                v = str(v)
-            elif k.startswith("lpsz"):
-                v = byref(v)
-            elif k.startswith("p"):
-                v = byref(v)
-            setattr(init_dat, k, v)
-        ann = XDW_AddAnnotation(self.xdw.handle, ann_type, self.pos,
-                hpos, vpos, init_dat)
-        idx = self.annotations
-        self.annotations += 1
-        self.notify(XDWNotification(EV_ANNO_INSERTED, idx))
+        ann = XDWAnnotation.new(self, ann_type, hpos, vpos, **kw)
         # Rewrite observer keys.
-        self.observers[idx] = ann
+        for p in sorted(filter(lambda p: ann.pos < p, self.observers.keys()),
+                reverse=True):
+            self.observers[p + 1] = self.observers[p]
+            del self.observers[p]
+        self.attach(ann)
         return ann
 
 
