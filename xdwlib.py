@@ -481,7 +481,8 @@ class XDWPage(XDWSubject, XDWObserver):
         ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
         init_dat = XDWAnnotation.initial_data(ann_type, **kw)
         ann_handle = XDW_AddAnnotation(self.xdw.handle,
-                    ann_type, self.pos + 1, hpos, vpos, init_dat)
+                    ann_type, self.pos + 1,
+                    int(hpos * 100), int(vpos * 100), init_dat)
         self.annotations += 1
         ann = find_annotations(self, handles=[ann_handle])[0]
         self.notify(XDWNotification(EV_ANNO_INSERTED, ann.pos))
