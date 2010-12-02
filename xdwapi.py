@@ -1557,14 +1557,16 @@ def TRY(api, *args):
     return api(*args)
 
 
-def APPEND(*ext):
+def APPEND(*ext, **kw):
     """Decorator to call XDWAPI with trailing arguments *ext.
 
     NB. Decorated function must be of the same name as XDWAPI's one.
     """
     def deco(api):
-        def func(*args):
+        def func(*args, **kw):
             args = list(args)
+            if "codepage" in kw:
+                args.append(kw["codepage"])
             args.extend(ext)
             return TRY(getattr(DLL, api.__name__), *args)
         return func
@@ -2104,10 +2106,10 @@ def XDW_GetDocumentSignatureNumber(doc_handle):
     pass
 
 
-def XDW_AddAnnotationOnParentAnnotation(doc_handle, ann_handle, ann_type, hpos, vpos, aa_init_dat):
-    """XDW_AddAnnotationOnParentAnnotation(doc_handle, ann_handle, ann_type, hpos, vpos, aa_init_dat) --> new_ann_handle"""
+def XDW_AddAnnotationOnParentAnnotation(doc_handle, ann_handle, ann_type, hpos, vpos, init_dat):
+    """XDW_AddAnnotationOnParentAnnotation(doc_handle, ann_handle, ann_type, hpos, vpos, init_dat) --> new_ann_handle"""
     new_ann_handle = XDW_ANNOTATION_HANDLE()
-    TRY(DLL.XDW_AddAnnotationOnParentAnnotation, doc_handle, ann_handle, ann_type, hpos, vpos, ptr(aa_init_dat), byref(new_ann_handle), NULL)
+    TRY(DLL.XDW_AddAnnotationOnParentAnnotation, doc_handle, ann_handle, ann_type, hpos, vpos, ptr(init_dat), byref(new_ann_handle), NULL)
     return new_ann_handle
 
 
