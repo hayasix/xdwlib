@@ -411,13 +411,9 @@ class XDWPage(XDWSubject, XDWObserver):
             return (100, 200, 400, 200, 300, 400, 200)[n]
         return n
 
-    def __init__(self, xdw, page):
-        self.pos = page
-        XDWSubject.__init__(self)
-        XDWObserver.__init__(self, xdw)
-        self.xdw = xdw
+    def reset_attr(self):
         page_info = XDW_GetPageInformation(
-                xdw.handle, page + 1, extend=True)
+                self.xdw.handle, self.pos + 1, extend=True)
         self.width = page_info.nWidth / 100.0  # float, in mm
         self.height = page_info.nHeight / 100.0  # float, in mm
         # XDW_PGT_FROMIMAGE/FROMAPPL/NULL
@@ -437,6 +433,13 @@ class XDWPage(XDWSubject, XDWObserver):
                 page_info.nOrgVerRes)  # dpi
         self.image_width = page_info.nImageWidth  # px
         self.image_height = page_info.nImageHeight  # px
+
+    def __init__(self, xdw, page):
+        self.pos = page
+        XDWSubject.__init__(self)
+        XDWObserver.__init__(self, xdw)
+        self.xdw = xdw
+        self.reset_attr()
         # Register self for updates, eg. page deletion.
         xdw.attach(self)
 
@@ -527,6 +530,7 @@ class XDWPage(XDWSubject, XDWObserver):
             self.xdw.finalize = True
         else:
             XDW_RotatePage(self.xdw.handle, self.pos + 1, degree)
+        self.reset_attr()
 
     def reduce_noise(self, level=XDW_REDUCENOISE_NORMAL):
         """Process a page by noise reduction engine.
@@ -726,6 +730,9 @@ class XDWDocument(XDWSubject):
             self.observers[pp - 1] = self.observers[pp]
             del self.observers[pp]
 
+    def add_page(self, *args):
+        raise NotImplementedError()
+
     def text(self):
         return _join(PSEP, [page.text() for page in self])
 
@@ -779,6 +786,16 @@ class XDWDocumentInBinder(XDWSubject, XDWObserver):
         self.current_page += 1
         return self.binder.page(page)
 
+    def update(self, page):
+        if not isinstance(event, XDWNotification):
+            raise TypeError("not an instance of XDWNotification class")
+        if event.type == EV_PAGE_REMOVED and event.para[0] < self.page_offset:
+                self.page_offset -= 1
+        if event.type == EV_PAGE_INSERTED and event.para[0] < self.page_offset:
+                self.page_offset += 1
+        else:
+            raise ValueError("illegal event type")
+
     def is_document(self):
         """Always False."""
         return False
@@ -794,7 +811,7 @@ class XDWDocumentInBinder(XDWSubject, XDWObserver):
         self.observers[page] = XDWPage(self.binder, self.page_offset + page)
 
     def delete_page(self, page):
-        """Delete a page give by page number.
+        """Delete a page given by page number.
 
         delete_page(page)
         """
@@ -817,6 +834,9 @@ class XDWDocumentInBinder(XDWSubject, XDWObserver):
                 self.page_offset += 1
         else:
             raise ValueError("illegal event type: %d" % event.type)
+
+    def add_page(self, *args):
+        raise NotImplementedError()
 
     def text(self):
         return _join(PSEP, [page.text() for page in self])
