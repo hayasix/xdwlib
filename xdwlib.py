@@ -179,7 +179,6 @@ def find_annotations(obj, handles=None, types=None, rect=None,
     annotation_list = []
     for i in range(obj.annotations):
         annotation = obj.annotation(i)
-        print "DEBUG>>> find_annotations(): ann.pos =", annotation.pos
         sublist = []
         if recursive and annotation.annotations:
             sublist = find_annotations(annotation,
@@ -189,7 +188,7 @@ def find_annotations(obj, handles=None, types=None, rect=None,
                     recursive=recursive)
         if (not rect or annotation_in(annotation, rect)) and \
                 (not types or annotation.annotation_type in types) or \
-                annotation.handle in handles:
+                (not handles or annotation.handle in handles):
             if sublist:
                 sublist.insert(0, annotation)
                 annotation_list.append(sublist)
@@ -207,6 +206,16 @@ def inner_attribute_name(name):
     if "A" <= name[0] <= "Z":
         return "%" + name
     return "%" + "".join(map(lambda s: s.capitalize(), name.split("_")))
+
+
+def scale_annotation_value(attr_name, value, store=False):
+    if attr_name in (XDW_ATN_FontSize, XDW_ATN_TextSpacing):
+        return int(value * 10) if store else value / 10.0
+    elif attr_name in (XDW_ATN_LineSpace,
+            XDW_ATN_TextTopMargin, XDW_ATN_TextLeftMargin,
+            XDW_ATN_TextBottomMargin, XDW_ATN_TextRightMargin):
+        return int(value * 100) if store else value / 100.0
+    return value
 
 
 class XDWSubject(object):
@@ -270,7 +279,6 @@ class XDWAnnotation(XDWSubject, XDWObserver):
 
     def __init__(self, page, index, parent=None, handle=None):
         self.pos = index
-        print "DEBUG>>> Created XDWAnnotation(page, %d, ...)" % index
         XDWSubject.__init__(self)
         XDWObserver.__init__(self, page)
         self.page = page
@@ -298,6 +306,7 @@ class XDWAnnotation(XDWSubject, XDWObserver):
         attr_name = inner_attribute_name(name)
         t, v, tt = XDW_GetAnnotationAttributeW(
                 self.handle, attr_name, codepage=CP)
+        v = scale_annotation_value(attr_name, v)
         if t == XDW_ATYPE_STRING:
             self.is_unicode = (tt == XDW_TEXT_UNICODE)
         return v
@@ -315,7 +324,8 @@ class XDWAnnotation(XDWSubject, XDWObserver):
                         attr_name, XDW_ATYPE_STRING, value,
                         texttype, codepage=CP)
             else:
-                value = c_int(value)
+                value = c_int(
+                        scale_attribute_value(attr_name, value, store=True))
                 XDW_SetAnnotationAttributeW(
                         self.page.xdw.handle, self.handle,
                         attr_name, XDW_ATYPE_INT, byref(value), 0, 0)
@@ -326,7 +336,6 @@ class XDWAnnotation(XDWSubject, XDWObserver):
     def update(self, event):
         if not isinstance(event, XDWNotification):
             raise TypeError("not an instance of XDWNotification class")
-        print "DEBUG>>> XDWAnnotation.update(): Received event (%d, %d)" % (event.type, event.para[0])
         if event.type == EV_ANNO_REMOVED:
             if event.para[0] < self.pos:
                 self.pos -= 1
@@ -372,11 +381,9 @@ class XDWAnnotation(XDWSubject, XDWObserver):
         ann = find_annotations(self, handles=[ann_handle], parent=self)[0]
         self.notify(XDWNotification(EV_ANNO_INSERTED, ann.pos))
         self.attach(ann)
-        print "DEBUG>>> in XDWAnnotation.add_annotation(): ann.pos =", ann.pos
         # Rewrite observer keys.
         for p in sorted(filter(lambda p: ann.pos < p, self.observers.keys()),
                 reverse=True):
-            print "DEBUG>>> p =", p
             self.observers[p + 1] = self.observers[p]
             del self.observers[p]
         return ann
@@ -476,7 +483,6 @@ class XDWPage(XDWSubject, XDWObserver):
     def annotation(self, index):
         """annotation(n) --> XDWAnnotation"""
         if index not in self.observers:
-            print "DEBUG>>> Annotation #%d on page %d created." % (index, self.pos)
             self.observers[index] = XDWAnnotation(self, index)
         return self.observers[index]
 
@@ -499,11 +505,9 @@ class XDWPage(XDWSubject, XDWObserver):
         ann = find_annotations(self, handles=[ann_handle])[0]
         self.notify(XDWNotification(EV_ANNO_INSERTED, ann.pos))
         self.attach(ann)
-        print "DEBUG>>> in XDWPage.add_annotation(): ann.pos =", ann.pos
         # Rewrite observer keys.
         for p in sorted(filter(lambda p: ann.pos < p, self.observers.keys()),
                 reverse=True):
-            print "DEBUG>>> p =", p
             self.observers[p + 1] = self.observers[p]
             del self.observers[p]
         return ann
@@ -676,7 +680,7 @@ class XDWDocument(XDWSubject):
                 value = value.replace(tzinfo=DEFAULT_TZ)  # TODO: Care locale.
             value = unixtime(value)
         else:
-            attribute_type = XDW_ATYPE_INT
+            attribute_type = XDW_ATYPE_INT  # TODO: Scaling may be required.
         # TODO: XDW_ATYPE_OTHER should also be valid.
         if attribute_name in XDW_DOCUMENT_ATTRIBUTE:
             XDW_SetDocumentAttributeW(
