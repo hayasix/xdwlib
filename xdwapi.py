@@ -766,11 +766,11 @@ XDW_PF_XBD                          = 1
 XDW_PF_XDW_IN_XBD                   = 2
 
 XDW_ANNOTATION_ATTRIBUTE = {
-        # attribute_name = is_string
+        # attribute_id: (is_string, unit)
         XDW_ATN_Text                : 1,
         XDW_ATN_FontName            : 1,
         XDW_ATN_FontStyle           : 0,
-        XDW_ATN_FontSize            : 0,
+        XDW_ATN_FontSize            : 0,  # 1/10 pt
         XDW_ATN_ForeColor           : 0,
         XDW_ATN_FontPitchAndFamily  : 0,
         XDW_ATN_FontCharSet         : 0,
@@ -790,7 +790,7 @@ XDW_ANNOTATION_ATTRIBUTE = {
         XDW_ATN_OtherFilePath_Relative  : 0,
         XDW_ATN_MailAddress         : 1,
         XDW_ATN_BorderStyle         : 0,
-        XDW_ATN_BorderWidth         : 0,
+        XDW_ATN_BorderWidth         : 0,  # pt
         XDW_ATN_BorderColor         : 0,
         XDW_ATN_BorderTransparent   : 0,
         XDW_ATN_BorderType          : 0,
@@ -802,7 +802,7 @@ XDW_ANNOTATION_ATTRIBUTE = {
         XDW_ATN_WordWrap            : 0,
         XDW_ATN_TextDirection       : 0,
         XDW_ATN_TextOrientation     : 0,
-        XDW_ATN_LineSpace           : 0,
+        XDW_ATN_LineSpace           : 0,  # 1-10, 1/100 line
         XDW_ATN_AutoResize          : 0,
         XDW_ATN_Invisible           : 0,
         XDW_ATN_PageFrom            : 0,
@@ -828,13 +828,13 @@ XDW_ANNOTATION_ATTRIBUTE = {
         XDW_ATN_Zoom                : 0,
         XDW_ATN_ImageFile           : 0,
         XDW_ATN_Points              : 0,
-        XDW_ATN_DateFormat          : 1,
+        XDW_ATN_DateFormat          : 1,  # "yy.mm.dd", "yy.m.d", "dd.mmm.yy" or "dd.mmm.yyyy"
         XDW_ATN_DateOrder           : 0,
-        XDW_ATN_TextSpacing         : 0,
-        XDW_ATN_TextTopMargin       : 0,
-        XDW_ATN_TextLeftMargin      : 0,
-        XDW_ATN_TextBottomMargin    : 0,
-        XDW_ATN_TextRightMargin     : 0,
+        XDW_ATN_TextSpacing         : 0,  # 1/10 char
+        XDW_ATN_TextTopMargin       : 0,  # 0-20000, 1/100 mm
+        XDW_ATN_TextLeftMargin      : 0,  # 0-20000, 1/100 mm
+        XDW_ATN_TextBottomMargin    : 0,  # 0-20000, 1/100 mm
+        XDW_ATN_TextRightMargin     : 0,  # 0-20000, 1/100 mm
         XDW_ATN_TextAutoResizeHeight    : 0,
         XDW_ATN_GUID                : 0,
         XDW_ATN_CustomData          : 0,

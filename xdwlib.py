@@ -179,6 +179,7 @@ def find_annotations(obj, handles=None, types=None, rect=None,
     annotation_list = []
     for i in range(obj.annotations):
         annotation = obj.annotation(i)
+        print "DEBUG>>> find_annotations(): ann.pos =", annotation.pos
         sublist = []
         if recursive and annotation.annotations:
             sublist = find_annotations(annotation,
@@ -198,6 +199,14 @@ def find_annotations(obj, handles=None, types=None, rect=None,
             sublist.insert(0, None)
             annotation_list.append(sublist)
     return annotation_list
+
+
+def inner_attribute_name(name):
+    if name.startswith("%"):
+        return name
+    if "A" <= name[0] <= "Z":
+        return "%" + name
+    return "%" + "".join(map(lambda s: s.capitalize(), name.split("_")))
 
 
 class XDWSubject(object):
@@ -261,6 +270,7 @@ class XDWAnnotation(XDWSubject, XDWObserver):
 
     def __init__(self, page, index, parent=None, handle=None):
         self.pos = index
+        print "DEBUG>>> Created XDWAnnotation(page, %d, ...)" % index
         XDWSubject.__init__(self)
         XDWObserver.__init__(self, page)
         self.page = page
@@ -285,7 +295,7 @@ class XDWAnnotation(XDWSubject, XDWObserver):
                 )
 
     def __getattr__(self, name):
-        attr_name = "%" + name
+        attr_name = inner_attribute_name(name)
         t, v, tt = XDW_GetAnnotationAttributeW(
                 self.handle, attr_name, codepage=CP)
         if t == XDW_ATYPE_STRING:
@@ -293,7 +303,7 @@ class XDWAnnotation(XDWSubject, XDWObserver):
         return v
 
     def __setattr__(self, name, value):
-        attr_name = "%" + name
+        attr_name = inner_attribute_name(name)
         if attr_name in XDW_ANNOTATION_ATTRIBUTE:
             if isinstance(value, basestring):
                 texttype = XDW_TEXT_UNICODE if self.is_unicode \
@@ -316,6 +326,7 @@ class XDWAnnotation(XDWSubject, XDWObserver):
     def update(self, event):
         if not isinstance(event, XDWNotification):
             raise TypeError("not an instance of XDWNotification class")
+        print "DEBUG>>> XDWAnnotation.update(): Received event (%d, %d)" % (event.type, event.para[0])
         if event.type == EV_ANNO_REMOVED:
             if event.para[0] < self.pos:
                 self.pos -= 1
@@ -361,9 +372,11 @@ class XDWAnnotation(XDWSubject, XDWObserver):
         ann = find_annotations(self, handles=[ann_handle], parent=self)[0]
         self.notify(XDWNotification(EV_ANNO_INSERTED, ann.pos))
         self.attach(ann)
+        print "DEBUG>>> in XDWAnnotation.add_annotation(): ann.pos =", ann.pos
         # Rewrite observer keys.
-        for p in sorted(filter(lambda p: ann.pos <= p, self.observers.keys()),
+        for p in sorted(filter(lambda p: ann.pos < p, self.observers.keys()),
                 reverse=True):
+            print "DEBUG>>> p =", p
             self.observers[p + 1] = self.observers[p]
             del self.observers[p]
         return ann
@@ -380,22 +393,20 @@ class XDWAnnotation(XDWSubject, XDWObserver):
             self.observers[p - 1] = self.observers[p]
             del self.observers[p]
 
-    def text(self, recursive=True):
-        ga = XDW_GetAnnotationAttributeW
+    def content_text(self, recursive=True):
         if self.annotation_type == XDW_AID_TEXT:
-            s = ga(self.handle, XDW_ATN_Text, codepage=CP)[0]
+            s = getattr(self, XDW_ATN_Text)
         elif self.annotation_type == XDW_AID_LINK:
-            s = ga(self.handle, XDW_ATN_Caption, codepage=CP)[0]
+            s = getattr(self, XDW_ATN_Caption)
         elif self.annotation_type == XDW_AID_STAMP:
             s = "%s <DATE> %s" % (
-                    ga(self.handle, XDW_ATN_TopField, codepage=CP)[0],
-                    ga(self.handle, XDW_ATN_BottomField, codepage=CP)[0],
-                    )
+                    getattr(self, XDW_ATN_TopField),
+                    getattr(self, XDW_ATN_BottomField))
         else:
             s = None
         if recursive and self.annotations:
             s = [s]
-            s.extend([self.annotation(i).text(recursive=True) \
+            s.extend([self.annotation(i).content_text(recursive=True) \
                     for i in range(self.annotations)])
             s = _join(ASEP, s)
         return s
@@ -465,6 +476,7 @@ class XDWPage(XDWSubject, XDWObserver):
     def annotation(self, index):
         """annotation(n) --> XDWAnnotation"""
         if index not in self.observers:
+            print "DEBUG>>> Annotation #%d on page %d created." % (index, self.pos)
             self.observers[index] = XDWAnnotation(self, index)
         return self.observers[index]
 
@@ -487,9 +499,11 @@ class XDWPage(XDWSubject, XDWObserver):
         ann = find_annotations(self, handles=[ann_handle])[0]
         self.notify(XDWNotification(EV_ANNO_INSERTED, ann.pos))
         self.attach(ann)
+        print "DEBUG>>> in XDWPage.add_annotation(): ann.pos =", ann.pos
         # Rewrite observer keys.
-        for p in sorted(filter(lambda p: ann.pos <= p, self.observers.keys()),
+        for p in sorted(filter(lambda p: ann.pos < p, self.observers.keys()),
                 reverse=True):
+            print "DEBUG>>> p =", p
             self.observers[p + 1] = self.observers[p]
             del self.observers[p]
         return ann
@@ -509,15 +523,15 @@ class XDWPage(XDWSubject, XDWObserver):
             self.observers[p - 1] = self.observers[p]
             del self.observers[p]
 
-    def text(self):
+    def content_text(self):
         return XDW_GetPageTextToMemoryW(self.xdw.handle, self.pos + 1)
 
     def annotation_text(self, recursive=True):
         return _join(ASEP, [
-                a.text(recursive=recursive) for a in self.find_annotations()])
+                a.content_text(recursive=recursive) for a in self.find_annotations()])
 
     def fulltext(self):
-        return  _join(ASEP, [self.text(), self.annotation_text()])
+        return  _join(ASEP, [self.content_text(), self.annotation_text()])
 
     def rotate(self, degree=0, auto=False):
         """Rotate a page.
@@ -639,7 +653,7 @@ class XDWDocument(XDWSubject):
                 self.name, self.pages, self.documents)
 
     def __getattr__(self, name):
-        attribute_name = u"%" + name
+        attribute_name = inner_attribute_name(name)
         try:
             return XDW_GetDocumentAttributeByNameW(
                     self.handle, attribute_name, codepage=CP)[1]
@@ -651,7 +665,7 @@ class XDWDocument(XDWSubject):
                 raise
 
     def __setattr__(self, name, value):
-        attribute_name = "%" + name
+        attribute_name = inner_attribute_name(name)
         if isinstance(value, basestring):
             attribute_type = XDW_ATYPE_STRING
         elif isinstance(value, bool):
@@ -734,15 +748,15 @@ class XDWDocument(XDWSubject):
     def add_page(self, *args):
         raise NotImplementedError()
 
-    def text(self):
-        return _join(PSEP, [page.text() for page in self])
+    def content_text(self):
+        return _join(PSEP, [page.content_text() for page in self])
 
     def annotation_text(self):
         return _join(PSEP, [page.annotation_text() for page in self])
 
     def fulltext(self):
         return _join(PSEP, [
-                _join(ASEP, [page.text(), page.annotation_text()])
+                _join(ASEP, [page.content_text(), page.annotation_text()])
                 for page in self])
 
 
@@ -839,15 +853,15 @@ class XDWDocumentInBinder(XDWSubject, XDWObserver):
     def add_page(self, *args):
         raise NotImplementedError()
 
-    def text(self):
-        return _join(PSEP, [page.text() for page in self])
+    def content_text(self):
+        return _join(PSEP, [page.content_text() for page in self])
 
     def annotation_text(self):
         return _join(PSEP, [page.annotation_text() for page in self])
 
     def fulltext(self):
         return _join(PSEP, [
-                _join(ASEP, [page.text(), page.annotation_text()])
+                _join(ASEP, [page.content_text(), page.annotation_text()])
                 for page in self])
 
 
@@ -937,13 +951,13 @@ class XDWBinder(XDWDocument):
             self.observers[pp - 1] = self.observers[pp]
             del self.observers[pp]
 
-    def text(self):
-        return _join(PSEP, [doc.text() for doc in self])
+    def content_text(self):
+        return _join(PSEP, [doc.content_text() for doc in self])
 
     def annotation_text(self):
         return _join(PSEP, [doc.annotation_text() for doc in self])
 
     def fulltext(self):
         return _join(PSEP, [
-                _join(ASEP, [doc.text(), doc.annotation_text()])
+                _join(ASEP, [doc.content_text(), doc.annotation_text()])
                 for doc in self])
