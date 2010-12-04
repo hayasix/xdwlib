@@ -74,12 +74,12 @@ def unixtime(dt, utc=False):
 
 
 # Observer pattern event
-EV_DOCU_REMOVED = 11
-EV_DOCU_INSERTED = 12
+EV_DOC_REMOVED = 11
+EV_DOC_INSERTED = 12
 EV_PAGE_REMOVED = 21
 EV_PAGE_INSERTED = 22
-EV_ANNO_REMOVED = 31
-EV_ANNO_INSERTED = 32
+EV_ANN_REMOVED = 31
+EV_ANN_INSERTED = 32
 
 
 # The last resort to close documents in interactive session.
@@ -223,13 +223,21 @@ class XDWSubject(object):
     def __init__(self):
         self.observers = dict()
 
-    def attach(self, observer):
-        if observer.pos not in self.observers:
-            self.observers[observer.pos] = observer
+    def shift_keys(self, border, delete=False):
+        for pos in sorted(filter(lambda p: border < p, self.observers.keys()),
+                reverse=(not delete)):
+            self.observers[pos + (-1 if delete else 1)] = self.observers[pos]
+            del self.observers[pos]
 
-    def detach(self, observer):
-        if observer.pos in self.observers:
-            del self.observers[observer.pos]
+    def attach(self, observer, event):
+        self.shift_keys(observer.pos)
+        self.observers[observer.pos] = observer
+        self.notify(event=XDWNotification(event, observer.pos))
+
+    def detach(self, observer, event=None):
+        del self.observers[observer.pos]
+        self.shift_keys(observer.pos, delete=True)
+        self.notify(event=XDWNotification(event, observer.pos))
 
     def notify(self, event=None):
         for pos in self.observers:
@@ -238,8 +246,8 @@ class XDWSubject(object):
 
 class XDWObserver(object):
 
-    def __init__(self, subject):
-        subject.attach(self)
+    def __init__(self, subject, event):
+        subject.attach(self, event)
 
     def update(self, event):
         raise NotImplementedError  # Override it.
@@ -280,7 +288,7 @@ class XDWAnnotation(XDWSubject, XDWObserver):
     def __init__(self, page, index, parent=None, handle=None):
         self.pos = index
         XDWSubject.__init__(self)
-        XDWObserver.__init__(self, page)
+        XDWObserver.__init__(self, page, EV_ANN_INSERTED)
         self.page = page
         self.parent = parent
         pah = parent and parent.handle or NULL
@@ -336,10 +344,10 @@ class XDWAnnotation(XDWSubject, XDWObserver):
     def update(self, event):
         if not isinstance(event, XDWNotification):
             raise TypeError("not an instance of XDWNotification class")
-        if event.type == EV_ANNO_REMOVED:
+        if event.type == EV_ANN_REMOVED:
             if event.para[0] < self.pos:
                 self.pos -= 1
-        elif event.type == EV_ANNO_INSERTED:
+        elif event.type == EV_ANN_INSERTED:
             if event.para[0] < self.pos:
                 self.pos += 1
         else:
@@ -379,26 +387,15 @@ class XDWAnnotation(XDWSubject, XDWObserver):
                 int(hpos * 100), int(vpos * 100), init_dat)
         self.annotations += 1
         ann = find_annotations(self, handles=[ann_handle], parent=self)[0]
-        self.notify(XDWNotification(EV_ANNO_INSERTED, ann.pos))
-        self.attach(ann)
-        # Rewrite observer keys.
-        for p in sorted(filter(lambda p: ann.pos < p, self.observers.keys()),
-                reverse=True):
-            self.observers[p + 1] = self.observers[p]
-            del self.observers[p]
+        # self.attach(ann, EV_ANN_INSERTED) is done automatically.
         return ann
 
     def delete_annotation(self, index):
         """Delete a child annotation given by index."""
         ann = self.annotation(index)
         XDW_RemoveAnnotation(self.page.xdw.handle, ann.handle)
+        self.detach(ann, EV_ANN_REMOVED)
         self.annotations -= 1
-        self.detach(ann)
-        self.notify(XDWNotification(EV_ANNO_REMOVED, index))
-        # Rewrite observer keys.
-        for p in sorted(filter(lambda p: index < p, self.observers.keys())):
-            self.observers[p - 1] = self.observers[p]
-            del self.observers[p]
 
     def content_text(self, recursive=True):
         if self.annotation_type == XDW_AID_TEXT:
@@ -455,11 +452,9 @@ class XDWPage(XDWSubject, XDWObserver):
     def __init__(self, xdw, page):
         self.pos = page
         XDWSubject.__init__(self)
-        XDWObserver.__init__(self, xdw)
+        XDWObserver.__init__(self, xdw, EV_PAGE_INSERTED)
         self.xdw = xdw
         self.reset_attr()
-        # Register self for updates, eg. page deletion.
-        xdw.attach(self)
 
     def __str__(self):
         return "XDWPage(page %d: %.2f*%.2fmm, %s, %d annotations)" % (
@@ -503,13 +498,7 @@ class XDWPage(XDWSubject, XDWObserver):
                     int(hpos * 100), int(vpos * 100), init_dat)
         self.annotations += 1
         ann = find_annotations(self, handles=[ann_handle])[0]
-        self.notify(XDWNotification(EV_ANNO_INSERTED, ann.pos))
-        self.attach(ann)
-        # Rewrite observer keys.
-        for p in sorted(filter(lambda p: ann.pos < p, self.observers.keys()),
-                reverse=True):
-            self.observers[p + 1] = self.observers[p]
-            del self.observers[p]
+        # self.attach(ann, EV_ANN_INSERTED) is done automatically.
         return ann
 
     def delete_annotation(self, index):
@@ -519,13 +508,8 @@ class XDWPage(XDWSubject, XDWObserver):
         """
         ann = self.annotation(index)
         XDW_RemoveAnnotation(self.handle, ann.handle)
+        self.detach(ann, EV_ANN_REMOVED)
         self.annotations -= 1
-        self.detach(ann)
-        self.notify(XDWNotification(EV_ANNO_REMOVED, index))
-        # Rewrite observer keys.
-        for p in filter(lambda p: index < p, sorted(self.observers.keys())):
-            self.observers[p - 1] = self.observers[p]
-            del self.observers[p]
 
     def content_text(self):
         return XDW_GetPageTextToMemoryW(self.xdw.handle, self.pos + 1)
@@ -734,23 +718,18 @@ class XDWDocument(XDWSubject):
             self.observers[page] = XDWPage(self, page)
         return self.observers[page]
 
+    def add_page(self, *args):
+        raise NotImplementedError()
+
     def delete_page(self, page):
         """Delete a page given by page number.
 
         delete_page(page)
         """
-        XDW_DeletePage(self.handle, page + 1)
+        page = self.page(page)
+        XDW_DeletePage(self.handle, page.pos + 1)
+        self.detach(page, EV_PAGE_REMOVED)
         self.pages -= 1
-        if page in self.observers:
-            del self.observers[n]
-        self.notify(XDWNotification(EV_PAGE_REMOVED, page))
-        # Rewrite observer keys.
-        for pp in [p for p in sorted(self.observers.keys()) if page < p]:
-            self.observers[pp - 1] = self.observers[pp]
-            del self.observers[pp]
-
-    def add_page(self, *args):
-        raise NotImplementedError()
 
     def content_text(self):
         return _join(PSEP, [page.content_text() for page in self])
@@ -771,7 +750,7 @@ class XDWDocumentInBinder(XDWSubject, XDWObserver):
     def __init__(self, binder, position):
         self.pos = position
         XDWSubject.__init__(self)
-        XDWObserver.__init__(self, binder)
+        XDWObserver.__init__(self, binder, EV_DOC_INSERTED)
         self.binder = binder
         self.page_offset = sum(binder.document_pages[:position])
         self.name = XDW_GetDocumentNameInBinderW(
@@ -834,13 +813,12 @@ class XDWDocumentInBinder(XDWSubject, XDWObserver):
 
         delete_page(page)
         """
-        XDW_DeletePage(self.binder.handle, self.page_offset + page)
+        page = self.page(page)
+        XDW_DeletePage(self.binder.handle, page.pos)
+        self.detach(page, EV_PAGE_REMOVED)
+        self.binder.notify(XDWNotification(EV_PAGE_REMOVED, page.pos))
+        # TODO: avoid duplicate notification and self-position-shift.
         self.pages -= 1
-        if page in self.observers:
-            del self.observers[page]
-        self.notify(XDWNotification(EV_PAGE_REMOVED, self.page_offset + page))
-        self.binder.notify(
-                XDWNotification(EV_PAGE_REMOVED, self.page_offset + page))
 
     def update(self, page):
         if not isinstance(event, XDWNotification):
@@ -945,15 +923,10 @@ class XDWBinder(XDWDocument):
 
         delete_document(pos)
         """
-        XDW_DeleteDocumentInBinder(self.handle, pos + 1)
+        doc = self.document(pos)
+        XDW_DeleteDocumentInBinder(self.handle, doc.pos + 1)
+        self.detach(doc, EV_DOC_REMOVED)
         self.documents -= 1
-        if pos in self.observers:
-            del self.observers[pos]
-        self.notify(XDWNotification(EV_DOCU_REMOVED, pos))
-        # Rewrite observer keys.
-        for pp in [p for p in sorted(self.observers.keys()) if pos < p]:
-            self.observers[pp - 1] = self.observers[pp]
-            del self.observers[pp]
 
     def content_text(self):
         return _join(PSEP, [doc.content_text() for doc in self])
