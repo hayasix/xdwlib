@@ -168,7 +168,7 @@ def find_annotations(obj, handles=None, types=None, rect=None,
     find_annotations(object, handles=None, types=None, rect=None, half_open=True, recursive=False)
         handles     sequence of annotation handles.  None means all.
         types       sequence of types.  None means all.
-        rect        return annotations in given rectangular area,
+        rect        rectangular area which includes annotations,
                     (rect.left, rect.top) - (rect.right, rect.bottom).
                     Note that right/bottom value are innermost of outside
                     unless half_open==False.  None means all.
