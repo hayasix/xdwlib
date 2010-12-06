@@ -161,16 +161,19 @@ def create_binder(path, color=XDW_BINDER_COLOR_0, size=XDW_SIZE_FREE):
     XDW_CreateBinder(path, color, size)
 
 
-def annotation_in(annotation, rect):  # Assume rect is half-open.
-    return (rect.left <= annotation.horizontal_position \
-                     <= rect.right - annotation.width \
-            and \
-            rect.top <= annotation.vertical_position \
-                     <= rect.bottom - annotation.height)
-
-
 def find_annotations(obj, handles=None, types=None, rect=None,
         half_open=True, recursive=False):
+    """Find annotations on page, which meets criteria given.
+
+    find_annotations(object, handles=None, types=None, rect=None, half_open=True, recursive=False)
+        handles     return annotations that has given annotation handles.
+        types       return annotations of types given.  None means all.
+        rect        return annotations in given rectangular area,
+                    (rect.left, rect.top) - (rect.right, rect.bottom).
+                    Note that right/bottom value are innermost of outside
+                    unless half_open==False.  None means all.
+        recursive   also return descendant (child) annotations.
+    """
     if handles and not isinstance(handles, (tuple, list)):
         handles = list(handles)
     if types:
@@ -190,7 +193,7 @@ def find_annotations(obj, handles=None, types=None, rect=None,
                     types=types,
                     rect=rect, half_open=half_open,
                     recursive=recursive)
-        if (not rect or annotation_in(annotation, rect)) and \
+        if (not rect or annotation.inside(rect)) and \
                 (not types or annotation.annotation_type in types) and \
                 (not handles or annotation.handle in handles):
             if sublist:
@@ -210,16 +213,6 @@ def inner_attribute_name(name):
     if "A" <= name[0] <= "Z":
         return "%" + name
     return "%" + "".join(map(lambda s: s.capitalize(), name.split("_")))
-
-
-def scale_annotation_value(attr_name, value, store=False):
-    if attr_name in (XDW_ATN_FontSize, XDW_ATN_TextSpacing):
-        return int(value * 10) if store else value / 10.0
-    elif attr_name in (XDW_ATN_LineSpace,
-            XDW_ATN_TextTopMargin, XDW_ATN_TextLeftMargin,
-            XDW_ATN_TextBottomMargin, XDW_ATN_TextRightMargin):
-        return int(value * 100) if store else value / 100.0
-    return value
 
 
 class XDWSubject(object):
@@ -289,6 +282,16 @@ class XDWAnnotation(XDWSubject, XDWObserver):
             setattr(init_dat, k, v)
         return init_dat
 
+    @staticmethod
+    def scale(attr_name, value, store=False):
+        if attr_name in (XDW_ATN_FontSize, XDW_ATN_TextSpacing):
+            return int(value * 10) if store else value / 10.0
+        elif attr_name in (XDW_ATN_LineSpace,
+                XDW_ATN_TextTopMargin, XDW_ATN_TextLeftMargin,
+                XDW_ATN_TextBottomMargin, XDW_ATN_TextRightMargin):
+            return int(value * 100) if store else value / 100.0
+        return value
+
     def __init__(self, page, index, parent=None, info=None):
         self.pos = index
         XDWSubject.__init__(self)
@@ -300,10 +303,8 @@ class XDWAnnotation(XDWSubject, XDWObserver):
             info = XDW_GetAnnotationInformation(
                     page.xdw.handle, page.pos + 1, pah, index + 1)
         self.handle = info.handle
-        self.horizontal_position = info.nHorPos / 100.0  # mm
-        self.vertical_position = info.nVerPos / 100.0  # mm
-        self.width = info.nWidth / 100.0  # mm
-        self.height = info.nHeight / 100.0  # mm
+        self.position = (info.nHorPos / 100.0, info.nVerPos / 100.0)  # mm
+        self.size = (info.nWidth / 100.0, info.nHeight / 100.0)  # mm
         self.annotation_type = info.nAnnotationType
         self.annotations = info.nChildAnnotations
         self.is_unicode = False
@@ -312,14 +313,13 @@ class XDWAnnotation(XDWSubject, XDWObserver):
         return "XDWAnnotation(%s P%d: type=%s)" % (
                 self.page.xdw.name,
                 self.page.pos,
-                XDW_ANNOTATION_TYPE[self.annotation_type],
-                )
+                XDW_ANNOTATION_TYPE[self.annotation_type])
 
     def __getattr__(self, name):
         attr_name = inner_attribute_name(name)
         t, v, tt = XDW_GetAnnotationAttributeW(
                 self.handle, attr_name, codepage=CP)
-        v = scale_annotation_value(attr_name, v)
+        v = XDWAnnotation.scale(attr_name, v)
         if t == XDW_ATYPE_STRING:
             self.is_unicode = (tt == XDW_TEXT_UNICODE)
         return v
@@ -337,12 +337,17 @@ class XDWAnnotation(XDWSubject, XDWObserver):
                         attr_name, XDW_ATYPE_STRING, value,
                         texttype, codepage=CP)
             else:
-                value = c_int(
-                        scale_attribute_value(attr_name, value, store=True))
+                value = c_int(XDWAnnotation.scale(attr_name, value, store=True))
                 XDW_SetAnnotationAttributeW(
                         self.page.xdw.handle, self.handle,
                         attr_name, XDW_ATYPE_INT, byref(value), 0, 0)
             return
+        elif attr_name == "position":
+            XDW_SetAnnotationPosition(self.page.xdw.handle, self.handle,
+                    value[0], value[1])
+        elif attr_name == "size":
+            XDW_SetAnnotationSize(self.page.xdw.handle, self.handle,
+                    value[0], value[1])
         # Other attributes, not saved in xdw files.
         self.__dict__[name] = value  # volatile
 
@@ -364,26 +369,19 @@ class XDWAnnotation(XDWSubject, XDWObserver):
             self.observers[index] = XDWAnnotation(self.page, index, parent=self)
         return self.observers[index]
 
-    def find_annotations(self, *args, **kw):
-        """Find annotations on page, which meets criteria given.
+    def inside(self, rect):  # Assume rect is half-open.
+        return rect.left <= self.position[0] <= rect.right - self.size[0] and \
+               rect.top <= self.position[1] <= rect.bottom - self.size[1]
 
-        find_annotations(object, handles=None, types=None, rect=None, half_open=True, recursive=False)
-            handles     return annotations that has given annotation handles.
-            types       return annotations of types given.  None means all.
-            rect        return annotations in given rectangular area,
-                        (rect.left, rect.top) - (rect.right, rect.bottom).
-                        Note that right/bottom value are innermost of outside
-                        unless half_open==False.  None means all.
-            recursive   also return descendant (child) annotations.
-        """
+
+    def find_annotations(self, *args, **kw):
         return find_annotations(self, *args, **kw)
 
-    def add_annotation(self, ann_type, hpos, vpos, **kw):
+    def add_annotation(self, ann_type, position, **kw):
         """Add an annotation.
 
-        add_annotation(ann_type, hpos, vpos, **kw)
-            hpos    horizontal position (float, in mm)
-            vpos    vertical position (float, in mm)
+        add_annotation(ann_type, position, **kw)
+            position    (x, y); unit:mm
         """
         ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
         init_dat = XDWAnnotation.initial_data(ann_type, **kw)
@@ -392,8 +390,8 @@ class XDWAnnotation(XDWSubject, XDWObserver):
                 int(hpos * 100), int(vpos * 100), init_dat)
         info = XDW_ANNOTATION_INFO()
         info.handle = ann_handle
-        info.nHorPos = hpos
-        info.nVerPos = vpos
+        info.nHorPos = position[0]
+        info.nVerPos = position[1]
         info.nWidth = 0
         info.nHeight = 0
         info.nAnnotationType = ann_type
@@ -443,25 +441,19 @@ class XDWPage(XDWSubject, XDWObserver):
     def reset_attr(self):
         page_info = XDW_GetPageInformation(
                 self.xdw.handle, self.pos + 1, extend=True)
-        self.width = page_info.nWidth / 100.0  # float, in mm
-        self.height = page_info.nHeight / 100.0  # float, in mm
+        self.size = (page_info.nWidth / 100.0, page_info.nHeight / 100.0)  # float, in mm
         # XDW_PGT_FROMIMAGE/FROMAPPL/NULL
         self.page_type = page_info.nPageType
-        self.horizontal_resolution = XDWPage.normalize_resolution(
-                page_info.nHorRes)  # dpi
-        self.vertical_resolution = XDWPage.normalize_resolution(
-                page_info.nVerRes)  # dpi
+        self.resolution = (XDWPage.normalize_resolution(page_info.nHorRes),
+                           XDWPage.normalize_resolution(page_info.nVerRes))  # dpi
         self.compress_type = page_info.nCompressType
         self.annotations = page_info.nAnnotations
         self.degree = page_info.nDegree
-        self.original_width = page_info.nOrgWidth / 100.0  # float, in mm
-        self.original_height = page_info.nOrgHeight / 100.0  # float, in mm
-        self.original_horizontal_resolution = XDWPage.normalize_resolution(
-                page_info.nOrgHorRes)  # dpi
-        self.original_vertical_resolution = XDWPage.normalize_resolution(
-                page_info.nOrgVerRes)  # dpi
-        self.image_width = page_info.nImageWidth  # px
-        self.image_height = page_info.nImageHeight  # px
+        self.original_size = (page_info.nOrgWidth / 100.0,
+                              page_info.nOrgHeight / 100.0)  # float, in mm
+        self.original_resolution = (XDWPage.normalize_resolution(page_info.nOrgHorRes),
+                                    XDWPage.normalize_resolution(page_info.nOrgVerRes))  # dpi
+        self.image_size = (page_info.nImageWidth, page_info.nImageHeight)  # px
 
     def __init__(self, xdw, page):
         self.pos = page
