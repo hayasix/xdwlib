@@ -32,6 +32,10 @@ PSEP = "\f"
 ASEP = "\v"
 
 
+def DPRINT(*args):
+    sys.stderr.write(" ".join( map(lambda x: str(x) if hasattr(x, "__str__") and callable(x.__str__) else "<???>", args)) + "\n")
+
+
 # Timezone support
 
 class JST(datetime.tzinfo):
@@ -167,7 +171,8 @@ def annotation_in(annotation, rect):  # Assume rect is half-open.
 
 def find_annotations(obj, handles=None, types=None, rect=None,
         half_open=True, recursive=False):
-    if not (isinstance(handles, tuple) or isinstance(handles, list)):
+    DPRINT("find_annotations: handles=", handles)
+    if handles and not isinstance(handles, (tuple, list)):
         handles = list(handles)
     if types:
         if not isinstance(types, (list, tuple)):
@@ -179,6 +184,7 @@ def find_annotations(obj, handles=None, types=None, rect=None,
     annotation_list = []
     for i in range(obj.annotations):
         annotation = obj.annotation(i)
+        DPRINT("find_annotations: annotation.handle=", annotation.handle)
         sublist = []
         if recursive and annotation.annotations:
             sublist = find_annotations(annotation,
@@ -186,8 +192,9 @@ def find_annotations(obj, handles=None, types=None, rect=None,
                     types=types,
                     rect=rect, half_open=half_open,
                     recursive=recursive)
+        DPRINT("find_annotations: ", rect, type, handles)
         if (not rect or annotation_in(annotation, rect)) and \
-                (not types or annotation.annotation_type in types) or \
+                (not types or annotation.annotation_type in types) and \
                 (not handles or annotation.handle in handles):
             if sublist:
                 sublist.insert(0, annotation)
@@ -285,15 +292,16 @@ class XDWAnnotation(XDWSubject, XDWObserver):
             setattr(init_dat, k, v)
         return init_dat
 
-    def __init__(self, page, index, parent=None, handle=None):
+    def __init__(self, page, index, parent=None, info=None):
         self.pos = index
         XDWSubject.__init__(self)
         XDWObserver.__init__(self, page, EV_ANN_INSERTED)
         self.page = page
         self.parent = parent
-        pah = parent and parent.handle or NULL
-        info = XDW_GetAnnotationInformation(
-                page.xdw.handle, page.pos + 1, pah, index + 1)
+        if not info:
+            pah = parent.handle if parent else NULL
+            info = XDW_GetAnnotationInformation(
+                    page.xdw.handle, page.pos + 1, pah, index + 1)
         self.handle = info.handle
         self.horizontal_position = info.nHorPos / 100.0  # mm
         self.vertical_position = info.nVerPos / 100.0  # mm
@@ -385,9 +393,18 @@ class XDWAnnotation(XDWSubject, XDWObserver):
         ann_handle = XDW_AddAnnotationOnParentAnnotation(
                 self.page.xdw.handle, self.handle, ann_type,
                 int(hpos * 100), int(vpos * 100), init_dat)
+        info = XDW_ANNOTATION_INFO()
+        info.handle = ann_handle
+        info.nHorPos = hpos
+        info.nVerPos = vpos
+        info.nWidth = 0
+        info.nHeight = 0
+        info.nAnnotationType = ann_type
+        info.nChildAnnotations = 0
+        index = self.annotations  # TODO: Ensure this is correct.
+        ann = XDWAnnotation(self, index, parent=self, info=info)
         self.annotations += 1
-        ann = find_annotations(self, handles=[ann_handle], parent=self)[0]
-        # self.attach(ann, EV_ANN_INSERTED) is done automatically.
+        self.notify(event=XDWNotification(EV_ANN_INSERTED, index))
         return ann
 
     def delete_annotation(self, index):
@@ -496,9 +513,18 @@ class XDWPage(XDWSubject, XDWObserver):
         ann_handle = XDW_AddAnnotation(self.xdw.handle,
                     ann_type, self.pos + 1,
                     int(hpos * 100), int(vpos * 100), init_dat)
+        info = XDW_ANNOTATION_INFO()
+        info.handle = ann_handle
+        info.nHorPos = hpos
+        info.nVerPos = vpos
+        info.nWidth = 0
+        info.nHeight = 0
+        info.nAnnotationType = ann_type
+        info.nChildAnnotations = 0
+        index = self.annotations  # TODO: Ensure this is correct.
+        ann = XDWAnnotation(self, index, parent=None, info=info)
         self.annotations += 1
-        ann = find_annotations(self, handles=[ann_handle])[0]
-        # self.attach(ann, EV_ANN_INSERTED) is done automatically.
+        self.notify(event=XDWNotification(EV_ANN_INSERTED, index))
         return ann
 
     def delete_annotation(self, index):
@@ -507,7 +533,7 @@ class XDWPage(XDWSubject, XDWObserver):
         delete_annotation(index)
         """
         ann = self.annotation(index)
-        XDW_RemoveAnnotation(self.handle, ann.handle)
+        XDW_RemoveAnnotation(self.xdw.handle, ann.handle)
         self.detach(ann, EV_ANN_REMOVED)
         self.annotations -= 1
 
