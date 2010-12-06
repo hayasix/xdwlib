@@ -171,7 +171,6 @@ def annotation_in(annotation, rect):  # Assume rect is half-open.
 
 def find_annotations(obj, handles=None, types=None, rect=None,
         half_open=True, recursive=False):
-    DPRINT("find_annotations: handles=", handles)
     if handles and not isinstance(handles, (tuple, list)):
         handles = list(handles)
     if types:
@@ -184,7 +183,6 @@ def find_annotations(obj, handles=None, types=None, rect=None,
     annotation_list = []
     for i in range(obj.annotations):
         annotation = obj.annotation(i)
-        DPRINT("find_annotations: annotation.handle=", annotation.handle)
         sublist = []
         if recursive and annotation.annotations:
             sublist = find_annotations(annotation,
@@ -192,7 +190,6 @@ def find_annotations(obj, handles=None, types=None, rect=None,
                     types=types,
                     rect=rect, half_open=half_open,
                     recursive=recursive)
-        DPRINT("find_annotations: ", rect, type, handles)
         if (not rect or annotation_in(annotation, rect)) and \
                 (not types or annotation.annotation_type in types) and \
                 (not handles or annotation.handle in handles):
