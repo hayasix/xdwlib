@@ -33,42 +33,39 @@ ASEP = "\v"
 
 
 def DPRINT(*args):
-    sys.stderr.write(" ".join( map(lambda x: str(x) if hasattr(x, "__str__") and callable(x.__str__) else "<???>", args)) + "\n")
+    sys.stderr.write(" ".join(map(lambda x: str(x) \
+            if hasattr(x, "__str__") and callable(x.__str__) \
+            else "<???>", args)) + "\n")
 
 
-def TZ(offset, summertime=0):
-    """Decorator to define time zone."""
-    def deco(klass):
-        class cls(datetime.tzinfo):
-            def utcoffset(self, dt=None):
-                return datetime.timedelta(hours=-offset)
-            def dst(self, dt=None):
-                return datetime.timedelta(summertime)
-            def tzname(self, dt=None):
-                return klass.__name__
-        return cls
-    return deco
+class Timezone(datetime.tzinfo):
+
+    def __init__(self, tzname, utcoffset, dst=0):
+        self._tzname = tzname
+        self._utcoffset = datetime.timedelta(hours=-utcoffset)
+        self._dst = datetime.timedelta(dst)
+
+    def tzname(self, dt=None):
+        return self._tzname
+
+    def utcoffset(self, dt=None):
+        return self._utcoffset
+
+    def dst(self, dt=None):
+        return self._dst
 
 
-@TZ(0)
-class UTC: pass
+UTC = Timezone("UTC", 0)
+JST = Timezone("JST", -9)
+DEFAULT_TZ = JST
 
 
-@TZ(-9)
-class JST: pass
+def unixtime(dt):
+    return time.mktime(dt.utctimetuple())
 
 
-TZ_UTC = UTC()
-TZ_JST = JST()
-DEFAULT_TZ = TZ_JST
-
-
-def unixtime(dt, utc=False):
-    return time.mktime(dt.utctimetuple() if utc else dt.timetuple())
-
-
-def fromunixtime(t, utc=False):
-    return datetime.datetime.fromtimestamp(t, TZ_UTC if utc else DEFAULT_TZ)
+def fromunixtime(t, tz=DEFAULT_TZ):
+    return datetime.datetime.fromtimestamp(t, tz=tz)
 
 
 # Observer pattern event
