@@ -15,58 +15,33 @@ FOR A PARTICULAR PURPOSE.
 
 import sys
 from os.path import splitext, basename
-import time
 import datetime
 
 from xdwapi import *
+from xdwstruct import XDWPoint, XDWRect
+from xdwobserver import XDWSubject, XDWObserver, XDWNotification
+from xdwtimezone import Timezone, UTC, JST, unixtime, fromunixtime
+
 
 __all__ = (
-    "XDWDocument", "XDWDocumentInBinder", "XDWBinder", "XDWError",
-    "environ", "xdwopen", "create", "create_binder",
-    "PSEP", "ASEP",
-    )
+        "XDWDocument", "XDWDocumentInBinder", "XDWBinder",
+        "XDWError",
+        "environ", "xdwopen", "create", "create_binder",
+        "PSEP", "ASEP",
+        )
+
+PSEP = "\f"
+ASEP = "\v"
 
 CP = 932
 CODEPAGE = "cp%d" % CP
-PSEP = "\f"
-ASEP = "\v"
+DEFAULT_TZ = JST
 
 
 def DPRINT(*args):
     sys.stderr.write(" ".join(map(lambda x: str(x) \
             if hasattr(x, "__str__") and callable(x.__str__) \
             else "<???>", args)) + "\n")
-
-
-class Timezone(datetime.tzinfo):
-
-    def __init__(self, tzname, utcoffset, dst=0):
-        self._tzname = tzname
-        self._utcoffset = datetime.timedelta(hours=-utcoffset)
-        self._dst = datetime.timedelta(dst)
-
-    def tzname(self, dt=None):
-        return self._tzname
-
-    def utcoffset(self, dt=None):
-        return self._utcoffset
-
-    def dst(self, dt=None):
-        return self._dst
-
-
-UTC = Timezone("UTC", 0)
-JST = Timezone("JST", -9)
-DEFAULT_TZ = JST
-
-
-def unixtime(dt):
-    return time.mktime(dt.utctimetuple())
-
-
-def fromunixtime(t, tz=DEFAULT_TZ):
-    return datetime.datetime.fromtimestamp(t, tz=tz)
-
 
 # Observer pattern event
 EV_DOC_REMOVED = 11
@@ -75,7 +50,6 @@ EV_PAGE_REMOVED = 21
 EV_PAGE_INSERTED = 22
 EV_ANN_REMOVED = 31
 EV_ANN_INSERTED = 32
-
 
 # The last resort to close documents in interactive session.
 try:
@@ -160,8 +134,7 @@ def find_annotations(obj, handles=None, types=None, rect=None,
             half_open=True, recursive=False)
         handles     sequence of annotation handles.  None means all.
         types       sequence of types.  None means all.
-        rect        rectangular area which includes annotations,
-                    (rect.left, rect.top) - (rect.right, rect.bottom).
+        rect        XDWRect which includes annotations,
                     Note that right/bottom value are innermost of outside
                     unless half_open==False.  None means all.
         recursive   also return descendant (child) annotations.
@@ -214,53 +187,25 @@ def outer_attribute_name(name):
     return re.sub("([A-Z])", r"_\1", name[1:])[1:].lower()
 
 
-def split_unit(s):
+def split_unit(unit):
     import re
     factor = re.match(r"(1/)?[\d.]*", unit).group(0)
     unit = unit[len(factor):]
     return (factor, unit)
 
 
-class XDWSubject(object):
-
-    def __init__(self):
-        self.observers = dict()
-
-    def shift_keys(self, border, delete=False):
-        for pos in sorted(filter(lambda p: border < p, self.observers.keys()),
-                reverse=(not delete)):
-            self.observers[pos + (-1 if delete else 1)] = self.observers[pos]
-            del self.observers[pos]
-
-    def attach(self, observer, event):
-        self.shift_keys(observer.pos)
-        self.observers[observer.pos] = observer
-        self.notify(event=XDWNotification(event, observer.pos))
-
-    def detach(self, observer, event=None):
-        del self.observers[observer.pos]
-        self.shift_keys(observer.pos, delete=True)
-        self.notify(event=XDWNotification(event, observer.pos))
-
-    def notify(self, event=None):
-        for pos in self.observers:
-            self.observers[pos].update(event)
-
-
-class XDWObserver(object):
-
-    def __init__(self, subject, event):
-        subject.attach(self, event)
-
-    def update(self, event):
-        raise NotImplementedError  # Override it.
-
-
-class XDWNotification(object):
-
-    def __init__(self, type, *para):
-        self.type = type
-        self.para = para
+def decode_fake_unicode(ustring):
+    result = []
+    for c in ustring:
+        c = ord(c)
+        if c < 256:
+            result.append(c)
+        else:
+            result.append(c & 0xff)
+            result.append(c >> 8)
+    result = ''.join(map(chr, result))
+    result = unicode(result, "mbcs")
+    return result
 
 
 class XDWAnnotation(XDWSubject, XDWObserver):
@@ -305,7 +250,7 @@ class XDWAnnotation(XDWSubject, XDWObserver):
                 factor = 1 / float(factor[2:]) if factor.startswith("1/") \
                         else float(factor)
                 value = value / factor if store else value * factor
-        return value
+        return int(value)
 
     def __init__(self, page, pos, parent=None, info=None):
         self.pos = pos
@@ -318,8 +263,8 @@ class XDWAnnotation(XDWSubject, XDWObserver):
             info = XDW_GetAnnotationInformation(
                     page.xdw.handle, page.pos + 1, pah, pos + 1)
         self.handle = info.handle
-        self.position = (info.nHorPos / 100.0, info.nVerPos / 100.0)  # mm
-        self.size = (info.nWidth / 100.0, info.nHeight / 100.0)  # mm
+        self.position = XDWPoint(info.nHorPos / 100.0, info.nVerPos / 100.0)  # mm
+        self.size = XDWPoint(info.nWidth / 100.0, info.nHeight / 100.0)  # mm
         self.type = info.nAnnotationType
         self.annotations = info.nChildAnnotations
         self.is_unicode = False
@@ -332,16 +277,32 @@ class XDWAnnotation(XDWSubject, XDWObserver):
 
     def __getattr__(self, name):
         attrname = inner_attribute_name(name)
-        t, v, tt = XDW_GetAnnotationAttributeW(
-                self.handle, attrname, codepage=CP)
-        v = XDWAnnotation.scale(attrname, v)
-        if t == XDW_ATYPE_STRING:
-            self.is_unicode = (tt == XDW_TEXT_UNICODE)
-        return v
+        try:
+            t, v, tt = XDW_GetAnnotationAttributeW(
+                    self.handle, attrname, codepage=CP)
+            if t == XDW_ATYPE_INT:
+                v = XDWAnnotation.scale(attrname, v)
+            if t == XDW_ATYPE_STRING:
+                self.is_unicode = (tt == XDW_TEXT_UNICODE)
+                if name == "font_name":
+                    v = decode_fake_unicode(v)  # TODO: investigate...
+            return v
+        except XDWError as e:
+            if e.error_code != XDW_E_INVALIDARG:
+                raise
+        return self.__dict__[name]
 
     def __setattr__(self, name, value):
         attrname = inner_attribute_name(name)
-        if attrname in XDW_ANNOTATION_ATTRIBUTE:
+        if attrname == "position":
+            XDW_SetAnnotationPosition(self.page.xdw.handle, self.handle,
+                    int(value.x * 100), int(value.y * 100))
+            self.position = value
+        elif attrname == "size":
+            XDW_SetAnnotationSize(self.page.xdw.handle, self.handle,
+                    int(value.x * 100), int(value.y * 100))
+            self.size = value
+        elif attrname in XDW_ANNOTATION_ATTRIBUTE:
             if isinstance(value, basestring):
                 texttype = XDW_TEXT_UNICODE if self.is_unicode \
                             else XDW_TEXT_MULTIBYTE
@@ -357,12 +318,6 @@ class XDWAnnotation(XDWSubject, XDWObserver):
                         self.page.xdw.handle, self.handle,
                         attrname, XDW_ATYPE_INT, byref(value), 0, 0)
             return
-        elif attrname == "position":
-            XDW_SetAnnotationPosition(self.page.xdw.handle, self.handle,
-                    value[0], value[1])
-        elif attrname == "size":
-            XDW_SetAnnotationSize(self.page.xdw.handle, self.handle,
-                    value[0], value[1])
         # Other attributes, not saved in xdw files.
         self.__dict__[name] = value  # volatile
 
@@ -393,8 +348,10 @@ class XDWAnnotation(XDWSubject, XDWObserver):
         return self.observers[pos]
 
     def inside(self, rect):  # Assume rect is half-open.
-        return rect.left <= self.position[0] <= rect.right - self.size[0] and \
-               rect.top <= self.position[1] <= rect.bottom - self.size[1]
+        if isinstance(rect, tuple):
+            rect = XDWRect(rect.left, rect.top, rect.right, rect.bottom)
+        return rect.left <= self.position.x <= rect.right - self.size.x and \
+               rect.top <= self.position.y <= rect.bottom - self.size.y
 
     def find_annotations(self, *args, **kw):
         return find_annotations(self, *args, **kw)
@@ -403,17 +360,19 @@ class XDWAnnotation(XDWSubject, XDWObserver):
         """Add an annotation.
 
         add_annotation(ann_type, position, **kw)
-            position    (x, y); unit:mm
+            position    XDWPoint; unit:mm
         """
         ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
+        if isinstance(position, (tuple, list)):
+            position = XDWPoint(*position)
         init_dat = XDWAnnotation.initial_data(ann_type, **kw)
         ann_handle = XDW_AddAnnotationOnParentAnnotation(
                 self.page.xdw.handle, self.handle, ann_type,
-                int(position[0] * 100), int(position[1] * 100), init_dat)
+                int(position.x * 100), int(position.y * 100), init_dat)
         info = XDW_ANNOTATION_INFO()
         info.handle = ann_handle
-        info.nHorPos = position[0]
-        info.nVerPos = position[1]
+        info.nHorPos = int(position.x * 100)
+        info.nVerPos = int(position.y * 100)
         info.nWidth = 0
         info.nHeight = 0
         info.nAnnotationType = ann_type
@@ -463,8 +422,8 @@ class XDWPage(XDWSubject, XDWObserver):
     def reset_attr(self):
         page_info = XDW_GetPageInformation(
                 self.xdw.handle, self.pos + 1, extend=True)
-        self.size = (page_info.nWidth / 100.0,
-                     page_info.nHeight / 100.0)  # float, in mm
+        self.size = XDWPoint(page_info.nWidth / 100.0,
+                             page_info.nHeight / 100.0)  # float, in mm
         # XDW_PGT_FROMIMAGE/FROMAPPL/NULL
         self.page_type = page_info.nPageType
         self.resolution = (XDWPage.norm_res(page_info.nHorRes),
@@ -473,7 +432,7 @@ class XDWPage(XDWSubject, XDWObserver):
         self.annotations = page_info.nAnnotations
         self.degree = page_info.nDegree
         self.original_size = (page_info.nOrgWidth / 100.0,
-                              page_info.nOrgHeight / 100.0)  # float, in mm
+                              page_info.nOrgHeight / 100.0)  # mm
         self.original_resolution = (
                 XDWPage.norm_res(page_info.nOrgHorRes),
                 XDWPage.norm_res(page_info.nOrgVerRes))  # dpi
@@ -520,18 +479,20 @@ class XDWPage(XDWSubject, XDWObserver):
 
         add_annotation(ann_type, position, **kw)
             ann_type    annotation type
-            position    (x, y); float, unit:mm
+            position    XDWPoint; float, unit:mm
         """
         ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
+        if isinstance(position, (tuple, list)):
+            position = XDWPoint(*position)
         init_dat = XDWAnnotation.initial_data(ann_type, **kw)
         ann_handle = XDW_AddAnnotation(self.xdw.handle,
                     ann_type, self.pos + 1,
-                    int(position[0] * 100), int(position[1] * 100),
+                    int(position.x * 100), int(position.y * 100),
                     init_dat)
         info = XDW_ANNOTATION_INFO()
         info.handle = ann_handle
-        info.nHorPos = position[0]
-        info.nVerPos = position[1]
+        info.nHorPos = int(position.x * 100)
+        info.nVerPos = int(position.y * 100)
         info.nWidth = 0
         info.nHeight = 0
         info.nAnnotationType = ann_type
@@ -621,10 +582,10 @@ class XDWPage(XDWSubject, XDWObserver):
             opt.nAreaNum = len(rects)
             rectlist = XDW_RECT() * len(rects)
             for r, rect in zip(rectlist, rects):
-                r.left = rect[0][0]
-                r.top = rect[0][1]
-                r.right = rect[1][0]
-                r.bottom = rect[1][1]
+                r.left = rect.left
+                r.top = rect.top
+                r.right = rect.right
+                r.bottom = rect.bottom
             opt.pAreaRects = byref(rectlist)
         else:
             opt.pAreaRects = NULL
@@ -635,6 +596,14 @@ class XDWPage(XDWSubject, XDWObserver):
 class XDWDocument(XDWSubject):
 
     """DocuWorks document"""
+
+    @staticmethod
+    def all_types():
+        return XDW_DOCUMENT_TYPE
+
+    @staticmethod
+    def all_attributes():
+        return [outer_attribute_name(k) for k in XDW_DOCUMENT_ATTRIBUTE_W]
 
     def register(self):
         VALID_DOCUMENT_HANDLES.append(self.handle)
@@ -683,18 +652,18 @@ class XDWDocument(XDWSubject):
                 self.name, self.pages, self.documents)
 
     def __getattr__(self, name):
+        name = unicode(name)
         attribute_name = inner_attribute_name(name)
         try:
             return XDW_GetDocumentAttributeByNameW(
                     self.handle, attribute_name, codepage=CP)[1]
         except XDWError as e:
-            if e.error_code == XDW_E_INVALIDARG:
-                raise AttributeError("'%s' object has no attribute '%s'" % (
-                        self.__class__.__name__, name))
-            else:
+            if e.error_code != XDW_E_INVALIDARG:
                 raise
+        return self.__dict__[name]
 
     def __setattr__(self, name, value):
+        name = unicode(name)
         attribute_name = inner_attribute_name(name)
         if isinstance(value, basestring):
             attribute_type = XDW_ATYPE_STRING
@@ -708,9 +677,9 @@ class XDWDocument(XDWSubject):
         else:
             attribute_type = XDW_ATYPE_INT  # TODO: Scaling may be required.
         # TODO: XDW_ATYPE_OTHER should also be valid.
-        if attribute_name in XDW_DOCUMENT_ATTRIBUTE:
+        if attribute_name in XDW_DOCUMENT_ATTRIBUTE_W:
             XDW_SetDocumentAttributeW(
-                    self.handle, attribute_name, attribute_type, byref(value),
+                    self.handle, attribute_name, attribute_type, value,
                     XDW_TEXT_MULTIBYTE, codepage=CP)
             return
         self.__dict__[name] = value
@@ -734,6 +703,9 @@ class XDWDocument(XDWSubject):
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
+
+    def typename(self):
+        return XDW_DOCUMENT_TYPE[self.type]
 
     def save(self):
         """Save document regardless of whether it is modified or not."""
@@ -789,16 +761,16 @@ class XDWDocumentInBinder(XDWSubject, XDWObserver):
 
     """Document part of DocuWorks binder"""
 
-    def __init__(self, binder, position):
-        self.pos = position
+    def __init__(self, binder, pos):
+        self.pos = pos
         XDWSubject.__init__(self)
         XDWObserver.__init__(self, binder, EV_DOC_INSERTED)
         self.binder = binder
-        self.page_offset = sum(binder.document_pages[:position])
+        self.page_offset = sum(binder.document_pages[:pos])
         self.name = XDW_GetDocumentNameInBinderW(
-                self.binder.handle, position + 1, codepage=CP)[0]
+                self.binder.handle, pos + 1, codepage=CP)[0]
         document_info = XDW_GetDocumentInformationInBinder(
-                self.binder.handle, position + 1)
+                self.binder.handle, pos + 1)
         self.pages = document_info.nPages
         self.original_data = document_info.nOriginalData
 
@@ -806,8 +778,7 @@ class XDWDocumentInBinder(XDWSubject, XDWObserver):
         return "XDWDocumentInBinder(" \
                 "%s = %s[%d]: %d pages, %d attachments)" % (
                 self.name,
-                self.binder.name, self.position,
-                self.position + 1,
+                self.binder.name, self.pos,
                 self.pages,
                 self.original_data,
                 )
@@ -911,15 +882,15 @@ class XDWBinder(XDWDocument):
         return self.documents
 
     def __iter__(self):
-        self.current_position = 0
+        self.current_pos = 0
         return self
 
     def next(self):
-        if self.documents <= self.current_position:
+        if self.documents <= self.current_pos:
             raise StopIteration
-        position = self.current_position
-        self.current_position += 1
-        return self.document(position)
+        pos = self.current_pos
+        self.current_pos += 1
+        return self.document(pos)
 
     def is_document(self):
         """Always False."""
@@ -954,14 +925,14 @@ class XDWBinder(XDWDocument):
     def document_pages(self):
         """Get list of page count for each document in binder. """
         pages = []
-        for position in range(self.documents):
+        for pos in range(self.documents):
             docinfo = XDW_GetDocumentInformationInBinder(
-                    self.handle, position + 1)
+                    self.handle, pos + 1)
             pages.append(docinfo.nPages)
         return pages
 
     def delete_document(self, pos):
-        """Delete a document in binder given by position.
+        """Delete a document in binder given by pos.
 
         delete_document(pos)
         """

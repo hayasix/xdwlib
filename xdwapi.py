@@ -385,13 +385,21 @@ XDW_PROP_AUTHOR                     = "%Author"
 XDW_PROP_KEYWORDS                   = "%Keywords"
 XDW_PROP_COMMENTS                   = "%Comments"
 
+XDW_DOCUMENT_ATTRIBUTE = XDWConst({
+        XDW_PROP_TITLE:             "%Title",
+        XDW_PROP_SUBJECT:           "%Subject",
+        XDW_PROP_AUTHOR:            "%Author",
+        XDW_PROP_KEYWORDS:          "%Keywords",
+        XDW_PROP_COMMENTS:          "%Comments",
+        }, default=None)
+
 XDW_PROPW_TITLE                     = u"%Title"
 XDW_PROPW_SUBJECT                   = u"%Subject"
 XDW_PROPW_AUTHOR                    = u"%Author"
 XDW_PROPW_KEYWORDS                  = u"%Keywords"
 XDW_PROPW_COMMENTS                  = u"%Comments"
 
-XDW_DOCUMENT_ATTRIBUTE = XDWConst({
+XDW_DOCUMENT_ATTRIBUTE_W = XDWConst({
         XDW_PROPW_TITLE:            u"%Title",
         XDW_PROPW_SUBJECT:          u"%Subject",
         XDW_PROPW_AUTHOR:           u"%Author",
@@ -1488,8 +1496,8 @@ XDW_FOUND_RECT_STATUS_PAGE = 1
 
 class XDW_POINT(Structure):
     _fields_ = [
-        ("x", c_int),
-        ("y", c_int),
+        ("x", c_long),
+        ("y", c_long),
         ]
 
 

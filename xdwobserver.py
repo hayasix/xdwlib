@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+#vim:fileencoding=cp932:fileformat=dos
+
+"""xdwlib.py -- DocuWorks library for Python.
+
+Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>  All rights reserved.
+
+This software is subject to the provisions of the Zope Public License,
+Version 2.1 (ZPL). A copy of the ZPL should accompany this distribution.
+THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
+WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
+FOR A PARTICULAR PURPOSE.
+"""
+
+__all__ = ("XDWSubject", "XDWObserver", "XDWNotification")
+
+
+class XDWSubject(object):
+
+    def __init__(self):
+        self.observers = dict()
+
+    def shift_keys(self, border, delete=False):
+        for pos in sorted(filter(lambda p: border < p, self.observers.keys()),
+                reverse=(not delete)):
+            self.observers[pos + (-1 if delete else 1)] = self.observers[pos]
+            del self.observers[pos]
+
+    def attach(self, observer, event):
+        self.shift_keys(observer.pos)
+        self.observers[observer.pos] = observer
+        self.notify(event=XDWNotification(event, observer.pos))
+
+    def detach(self, observer, event=None):
+        del self.observers[observer.pos]
+        self.shift_keys(observer.pos, delete=True)
+        self.notify(event=XDWNotification(event, observer.pos))
+
+    def notify(self, event=None):
+        for pos in self.observers:
+            self.observers[pos].update(event)
+
+
+class XDWObserver(object):
+
+    def __init__(self, subject, event):
+        subject.attach(self, event)
+
+    def update(self, event):
+        raise NotImplementedError  # Override it.
+
+
+class XDWNotification(object):
+
+    def __init__(self, type, *para):
+        self.type = type
+        self.para = para
