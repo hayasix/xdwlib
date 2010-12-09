@@ -154,9 +154,10 @@ def create_binder(path, color=XDW_BINDER_COLOR_0, size=XDW_SIZE_FREE):
 
 def find_annotations(obj, handles=None, types=None, rect=None,
         half_open=True, recursive=False):
-    """Find annotations on page, which meets criteria given.
+    """Find annotations on obj, page or annotation, which meets criteria given.
 
-    find_annotations(object, handles=None, types=None, rect=None, half_open=True, recursive=False)
+    find_annotations(object, handles=None, types=None, rect=None,
+            half_open=True, recursive=False)
         handles     sequence of annotation handles.  None means all.
         types       sequence of types.  None means all.
         rect        rectangular area which includes annotations,
@@ -185,7 +186,7 @@ def find_annotations(obj, handles=None, types=None, rect=None,
                     rect=rect, half_open=half_open,
                     recursive=recursive)
         if (not rect or annotation.inside(rect)) and \
-                (not types or annotation.annotation_type in types) and \
+                (not types or annotation.type in types) and \
                 (not handles or annotation.handle in handles):
             if sublist:
                 sublist.insert(0, annotation)
@@ -204,6 +205,20 @@ def inner_attribute_name(name):
     if "A" <= name[0] <= "Z":
         return "%" + name
     return "%" + "".join(map(lambda s: s.capitalize(), name.split("_")))
+
+
+def outer_attribute_name(name):
+    import string, re
+    if not name.startswith("%"):
+        return name
+    return re.sub("([A-Z])", r"_\1", name[1:])[1:].lower()
+
+
+def split_unit(s):
+    import re
+    factor = re.match(r"(1/)?[\d.]*", unit).group(0)
+    unit = unit[len(factor):]
+    return (factor, unit)
 
 
 class XDWSubject(object):
@@ -253,6 +268,14 @@ class XDWAnnotation(XDWSubject, XDWObserver):
     """Annotation on DocuWorks document page"""
 
     @staticmethod
+    def all_types():
+        return XDW_ANNOTATION_TYPE
+
+    @staticmethod
+    def all_attributes():
+        return [outer_attribute_name(k) for k in XDW_ANNOTATION_ATTRIBUTE]
+
+    @staticmethod
     def initial_data(ann_type, **kw):
         ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
         cls = XDW_AID_INITIAL_DATA.get(ann_type, None)
@@ -274,17 +297,18 @@ class XDWAnnotation(XDWSubject, XDWObserver):
         return init_dat
 
     @staticmethod
-    def scale(attr_name, value, store=False):
-        if attr_name in (XDW_ATN_FontSize, XDW_ATN_TextSpacing):
-            return int(value * 10) if store else value / 10.0
-        elif attr_name in (XDW_ATN_LineSpace,
-                XDW_ATN_TextTopMargin, XDW_ATN_TextLeftMargin,
-                XDW_ATN_TextBottomMargin, XDW_ATN_TextRightMargin):
-            return int(value * 100) if store else value / 100.0
+    def scale(attrname, value, store=False):
+        unit = XDW_ANNOTATION_ATTRIBUTE[attrname][1]
+        if unit:
+            factor = split_unit(unit)[0]
+            if factor:
+                factor = 1 / float(factor[2:]) if factor.startswith("1/") \
+                        else float(factor)
+                value = value / factor if store else value * factor
         return value
 
-    def __init__(self, page, index, parent=None, info=None):
-        self.pos = index
+    def __init__(self, page, pos, parent=None, info=None):
+        self.pos = pos
         XDWSubject.__init__(self)
         XDWObserver.__init__(self, page, EV_ANN_INSERTED)
         self.page = page
@@ -292,11 +316,11 @@ class XDWAnnotation(XDWSubject, XDWObserver):
         if not info:
             pah = parent.handle if parent else NULL
             info = XDW_GetAnnotationInformation(
-                    page.xdw.handle, page.pos + 1, pah, index + 1)
+                    page.xdw.handle, page.pos + 1, pah, pos + 1)
         self.handle = info.handle
         self.position = (info.nHorPos / 100.0, info.nVerPos / 100.0)  # mm
         self.size = (info.nWidth / 100.0, info.nHeight / 100.0)  # mm
-        self.annotation_type = info.nAnnotationType
+        self.type = info.nAnnotationType
         self.annotations = info.nChildAnnotations
         self.is_unicode = False
 
@@ -304,20 +328,20 @@ class XDWAnnotation(XDWSubject, XDWObserver):
         return "XDWAnnotation(%s P%d: type=%s)" % (
                 self.page.xdw.name,
                 self.page.pos,
-                XDW_ANNOTATION_TYPE[self.annotation_type])
+                XDW_ANNOTATION_TYPE[self.type])
 
     def __getattr__(self, name):
-        attr_name = inner_attribute_name(name)
+        attrname = inner_attribute_name(name)
         t, v, tt = XDW_GetAnnotationAttributeW(
-                self.handle, attr_name, codepage=CP)
-        v = XDWAnnotation.scale(attr_name, v)
+                self.handle, attrname, codepage=CP)
+        v = XDWAnnotation.scale(attrname, v)
         if t == XDW_ATYPE_STRING:
             self.is_unicode = (tt == XDW_TEXT_UNICODE)
         return v
 
     def __setattr__(self, name, value):
-        attr_name = inner_attribute_name(name)
-        if attr_name in XDW_ANNOTATION_ATTRIBUTE:
+        attrname = inner_attribute_name(name)
+        if attrname in XDW_ANNOTATION_ATTRIBUTE:
             if isinstance(value, basestring):
                 texttype = XDW_TEXT_UNICODE if self.is_unicode \
                             else XDW_TEXT_MULTIBYTE
@@ -325,18 +349,18 @@ class XDWAnnotation(XDWSubject, XDWObserver):
                     value = unicode(value, CODEPAGE)
                 XDW_SetAnnotationAttributeW(
                         self.page.xdw.handle, self.handle,
-                        attr_name, XDW_ATYPE_STRING, value,
+                        attrname, XDW_ATYPE_STRING, value,
                         texttype, codepage=CP)
             else:
-                value = c_int(XDWAnnotation.scale(attr_name, value, store=True))
+                value = c_int(XDWAnnotation.scale(attrname, value, store=True))
                 XDW_SetAnnotationAttributeW(
                         self.page.xdw.handle, self.handle,
-                        attr_name, XDW_ATYPE_INT, byref(value), 0, 0)
+                        attrname, XDW_ATYPE_INT, byref(value), 0, 0)
             return
-        elif attr_name == "position":
+        elif attrname == "position":
             XDW_SetAnnotationPosition(self.page.xdw.handle, self.handle,
                     value[0], value[1])
-        elif attr_name == "size":
+        elif attrname == "size":
             XDW_SetAnnotationSize(self.page.xdw.handle, self.handle,
                     value[0], value[1])
         # Other attributes, not saved in xdw files.
@@ -354,16 +378,23 @@ class XDWAnnotation(XDWSubject, XDWObserver):
         else:
             raise ValueError("Illegal event type: %d" % event.type)
 
-    def annotation(self, index):
-        """annotation(index) --> XDWAnnotation"""
-        if index not in self.observers:
-            self.observers[index] = XDWAnnotation(self.page, index, parent=self)
-        return self.observers[index]
+    def typename(self):
+        return XDW_ANNOTATION_TYPE[self.type]
+
+    def attributes(self):
+        return [outer_attribute_name(k) for (k, v)
+                in XDW_ANNOTATION_ATTRIBUTE.items()
+                if self.type in v[2]]
+
+    def annotation(self, pos):
+        """annotation(pos) --> XDWAnnotation"""
+        if pos not in self.observers:
+            self.observers[pos] = XDWAnnotation(self.page, pos, parent=self)
+        return self.observers[pos]
 
     def inside(self, rect):  # Assume rect is half-open.
         return rect.left <= self.position[0] <= rect.right - self.size[0] and \
                rect.top <= self.position[1] <= rect.bottom - self.size[1]
-
 
     def find_annotations(self, *args, **kw):
         return find_annotations(self, *args, **kw)
@@ -387,25 +418,25 @@ class XDWAnnotation(XDWSubject, XDWObserver):
         info.nHeight = 0
         info.nAnnotationType = ann_type
         info.nChildAnnotations = 0
-        index = self.annotations  # TODO: Ensure this is correct.
-        ann = XDWAnnotation(self, index, parent=self, info=info)
+        pos = self.annotations  # TODO: Ensure this is correct.
+        ann = XDWAnnotation(self, pos, parent=self, info=info)
         self.annotations += 1
-        self.notify(event=XDWNotification(EV_ANN_INSERTED, index))
+        self.notify(event=XDWNotification(EV_ANN_INSERTED, pos))
         return ann
 
-    def delete_annotation(self, index):
-        """Delete a child annotation given by index."""
-        ann = self.annotation(index)
+    def delete_annotation(self, pos):
+        """Delete a child annotation given by pos."""
+        ann = self.annotation(pos)
         XDW_RemoveAnnotation(self.page.xdw.handle, ann.handle)
         self.detach(ann, EV_ANN_REMOVED)
         self.annotations -= 1
 
     def content_text(self, recursive=True):
-        if self.annotation_type == XDW_AID_TEXT:
+        if self.type == XDW_AID_TEXT:
             s = getattr(self, XDW_ATN_Text)
-        elif self.annotation_type == XDW_AID_LINK:
+        elif self.type == XDW_AID_LINK:
             s = getattr(self, XDW_ATN_Caption)
-        elif self.annotation_type == XDW_AID_STAMP:
+        elif self.type == XDW_AID_STAMP:
             s = "%s <DATE> %s" % (
                     getattr(self, XDW_ATN_TopField),
                     getattr(self, XDW_ATN_BottomField))
@@ -449,8 +480,8 @@ class XDWPage(XDWSubject, XDWObserver):
         self.image_size = (page_info.nImageWidth,
                            page_info.nImageHeight)  # px
 
-    def __init__(self, xdw, page):
-        self.pos = page
+    def __init__(self, xdw, pos):
+        self.pos = pos
         XDWSubject.__init__(self)
         XDWObserver.__init__(self, xdw, EV_PAGE_INSERTED)
         self.xdw = xdw
@@ -475,11 +506,11 @@ class XDWPage(XDWSubject, XDWObserver):
         else:
             raise ValueError("illegal event type: %d" % event.type)
 
-    def annotation(self, index):
-        """annotation(n) --> XDWAnnotation"""
-        if index not in self.observers:
-            self.observers[index] = XDWAnnotation(self, index)
-        return self.observers[index]
+    def annotation(self, pos):
+        """annotation(pos) --> XDWAnnotation"""
+        if pos not in self.observers:
+            self.observers[pos] = XDWAnnotation(self, pos)
+        return self.observers[pos]
 
     def find_annotations(self, *args, **kw):
         return find_annotations(self, *args, **kw)
@@ -505,18 +536,18 @@ class XDWPage(XDWSubject, XDWObserver):
         info.nHeight = 0
         info.nAnnotationType = ann_type
         info.nChildAnnotations = 0
-        index = self.annotations  # TODO: Ensure this is correct.
-        ann = XDWAnnotation(self, index, parent=None, info=info)
+        pos = self.annotations  # TODO: Ensure this is correct.
+        ann = XDWAnnotation(self, pos, parent=None, info=info)
         self.annotations += 1
-        self.notify(event=XDWNotification(EV_ANN_INSERTED, index))
+        self.notify(event=XDWNotification(EV_ANN_INSERTED, pos))
         return ann
 
-    def delete_annotation(self, index):
-        """Delete an annotation given by index.
+    def delete_annotation(self, pos):
+        """Delete an annotation given by pos.
 
-        delete_annotation(index)
+        delete_annotation(pos)
         """
-        ann = self.annotation(index)
+        ann = self.annotation(pos)
         XDW_RemoveAnnotation(self.xdw.handle, ann.handle)
         self.detach(ann, EV_ANN_REMOVED)
         self.annotations -= 1
@@ -632,7 +663,7 @@ class XDWDocument(XDWSubject):
         self.pages = document_info.nPages
         self.version = document_info.nVersion - 3  # DocuWorks version
         self.original_data = document_info.nOriginalData
-        self.document_type = document_info.nDocType
+        self.type = document_info.nDocType
         self.editable = bool(document_info.nPermission & XDW_PERM_DOC_EDIT)
         self.annotatable = bool(document_info.nPermission & XDW_PERM_ANNO_EDIT)
         self.printable = bool(document_info.nPermission & XDW_PERM_PRINT)
@@ -688,15 +719,15 @@ class XDWDocument(XDWSubject):
         return self.pages
 
     def __iter__(self):
-        self.current_page = 0
+        self.current_pos = 0
         return self
 
     def next(self):
-        if self.pages <= self.current_page:
+        if self.pages <= self.current_pos:
             raise StopIteration
-        page = self.current_page
-        self.current_page += 1
-        return self.page(page)
+        pos = self.current_pos
+        self.current_pos += 1
+        return self.page(pos)
 
     def __enter__(self):
         return self
@@ -723,21 +754,21 @@ class XDWDocument(XDWSubject):
         """Always False."""
         return False
 
-    def page(self, page):
-        """page(page) --> XDWPage"""
-        if page not in self.observers:
-            self.observers[page] = XDWPage(self, page)
-        return self.observers[page]
+    def page(self, pos):
+        """page(pos) --> XDWPage"""
+        if pos not in self.observers:
+            self.observers[pos] = XDWPage(self, pos)
+        return self.observers[pos]
 
     def add_page(self, *args):
         raise NotImplementedError()
 
-    def delete_page(self, page):
-        """Delete a page given by page number.
+    def delete_page(self, pos):
+        """Delete a page given by pos.
 
-        delete_page(page)
+        delete_page(pos)
         """
-        page = self.page(page)
+        page = self.page(pos)
         XDW_DeletePage(self.handle, page.pos + 1)
         self.detach(page, EV_PAGE_REMOVED)
         self.pages -= 1
@@ -785,17 +816,17 @@ class XDWDocumentInBinder(XDWSubject, XDWObserver):
         return self.pages
 
     def __iter__(self):
-        self.current_page = 0
+        self.current_pos = 0
         return self
 
     def next(self):
-        if self.pages <= self.current_page:
+        if self.pages <= self.current_pos:
             raise StopIteration
-        page = self.page_offset + self.current_page
-        self.current_page += 1
-        return self.binder.page(page)
+        pos = self.page_offset + self.current_pos
+        self.current_pos += 1
+        return self.binder.page(pos)
 
-    def update(self, page):
+    def update(self, event):
         if not isinstance(event, XDWNotification):
             raise TypeError("not an instance of XDWNotification class")
         if event.type == EV_PAGE_REMOVED and event.para[0] < self.page_offset:
@@ -813,25 +844,25 @@ class XDWDocumentInBinder(XDWSubject, XDWObserver):
         """Always False."""
         return False
 
-    def page(self, page):
-        """page(n) --> XDWPage"""
+    def page(self, pos):
+        """page(pos) --> XDWPage"""
         if page in self.observers:
-            return self.observers[page]
-        self.observers[page] = XDWPage(self.binder, self.page_offset + page)
+            return self.observers[pos]
+        self.observers[pos] = XDWPage(self.binder, self.page_offset + pos)
 
-    def delete_page(self, page):
-        """Delete a page given by page number.
+    def delete_page(self, pos):
+        """Delete a page given by pos.
 
-        delete_page(page)
+        delete_page(pos)
         """
-        page = self.page(page)
+        page = self.page(pos)
         XDW_DeletePage(self.binder.handle, page.pos)
         self.detach(page, EV_PAGE_REMOVED)
         self.binder.notify(XDWNotification(EV_PAGE_REMOVED, page.pos))
         # TODO: avoid duplicate notification and self-position-shift.
         self.pages -= 1
 
-    def update(self, page):
+    def update(self, event):
         if not isinstance(event, XDWNotification):
             raise TypeError("not an instance of XDWNotification class")
         if event.type == EV_PAGE_REMOVED:
@@ -865,7 +896,7 @@ class XDWBinder(XDWDocument):
     def __init__(self, path, readonly=False, authenticate=True):
         XDWDocument.__init__(self,
                 path=path, readonly=readonly, authenticate=authenticate)
-        assert self.document_type == XDW_DT_BINDER
+        assert self.type == XDW_DT_BINDER
         self.document_pages = self.document_pages()
 
     def __str__(self):
@@ -904,21 +935,21 @@ class XDWBinder(XDWDocument):
             self.observers[pos] = XDWDocumentInBinder(self, pos)
         return self.observers[pos]
 
-    def document_and_page(self, page):
-        """document_and_page(page) --> (XDWDocumentInBinder, XDWPage)"""
-        if self.pages <= page:
-            raise IndexError("page %d exceeds total pages of binder" % page)
+    def document_and_page(self, pos):
+        """document_and_page(pos) --> (XDWDocumentInBinder, XDWPage)"""
+        if self.pages <= pos:
+            raise IndexError("page %d exceeds total pages of binder" % pos)
         acc = 0
-        for pos, pages in enumerate(self.document_pages()):
+        for docnum, pages in enumerate(self.document_pages()):
             acc += pages
-            if page < acc:
-                doc = self.document(pos)
-                page = doc.page(page - (acc - pages))
+            if pos < acc:
+                doc = self.document(docnum)
+                page = doc.page(pos - (acc - pages))
                 return (doc, page)
 
-    def page(self, page):
-        """page(page) --> XDWPage"""
-        return self.document_and_page(self, page)[1]
+    def page(self, pos):
+        """page(pos) --> XDWPage"""
+        return self.document_and_page(self, pos)[1]
 
     def document_pages(self):
         """Get list of page count for each document in binder. """
