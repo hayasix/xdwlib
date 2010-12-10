@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #vim:fileencoding=cp932:fileformat=dos
 
-"""xdwlib.py -- DocuWorks library for Python.
+"""struct.py -- DocuWorks library for Python.
 
 Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>  All rights reserved.
 
@@ -13,33 +13,44 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE.
 """
 
-__all__ = ("XDWPoint", "XDWRect")
+__all__ = ("Point", "Rect")
 
 
-class XDWPoint(object):
+class Point(object):
 
     def __init__(self, x=0, y=0):
         self.x = x
         self.y = y
 
     def __str__(self):
-        return "(%f, %f)" % (self.x, self.y)
+        return "(%.2f, %.2f)" % (self.x, self.y)
 
     def __repr__(self):
         return "%s%s" % (self.__class__.__name__, str(self))
 
+    def __iter__(self):
+        self._pos = 0
+        return self
+
+    def next(self):
+        if 2 <= self._pos:
+            raise StopIteration
+        pos = self._pos
+        self._pos += 1
+        return (self.x, self.y)[pos]
+
     def __mul__(self, n):
         if not isinstance(n, (int, float)):
             raise NotImplementedError
-        return XDWPoint(self.x * n, self.y * n)
+        return Point(self.x * n, self.y * n)
 
     def __div__(self, n):
         if not isinstance(n, (int, float)):
             raise NotImplementedError
-        return XDWPoint(self.x / n, self.y / n)
+        return Point(self.x / n, self.y / n)
 
     def shift(self, pnt, _y=0):
-        if isinstance(pnt, XDWPoint):
+        if isinstance(pnt, Point):
             x, y = pnt.x, pnt.y
         elif isinstance(pnt, (tuple, list)):
             x, y = pnt[:2]
@@ -47,10 +58,10 @@ class XDWPoint(object):
             x, y = pnt, _y
         else:
             raise NotImplementedError
-        return XDWPoint(self.x + x, self.y + y)
+        return Point(self.x + x, self.y + y)
 
 
-class XDWRect(object):
+class Rect(object):
 
     def __init__(self, left=0, top=0, right=0, bottom=0):
         self.left = left
@@ -59,31 +70,42 @@ class XDWRect(object):
         self.bottom = bottom
 
     def __str__(self):
-        return "((%f, %f)-(%f, %f))" % (
+        return "((%.2f, %.2f)-(%.2f, %.2f))" % (
                 self.left, self.top, self.right, self.bottom)
 
     def __repr__(self):
         return "%s%s" % (self.__class__.__name__, str(self))
 
+    def __iter__(self):
+        self._pos = 0
+        return self
+
+    def next(self):
+        if 4 <= self._pos:
+            raise StopIteration
+        pos = self._pos
+        self._pos += 1
+        return (self.left, self.top, self.right, self.bottom)[pos]
+
     def size(self):
-        return XDWPoint(self.right - self.left, self.bottom - self.top)
+        return Point(self.right - self.left, self.bottom - self.top)
 
     def __mul__(self, n):
         if not isinstance(n, (int, float)):
             raise NotImplementedError
-        return XDWRect(self.left, self.top,
+        return Rect(self.left, self.top,
                 self.left + float(self.right - self.left) * n,
                 self.top + float(self.bottom - self.top) * n)
 
     def __div__(self, n):
         if not isinstance(n, (int, float)):
             raise NotImplementedError
-        return XDWRect(self.left, self.top,
+        return Rect(self.left, self.top,
                 self.left + float(self.right - self.left) / n,
                 self.top + float(self.bottom - self.top) / n)
 
     def shift(self, pnt, _y=0):
-        if isinstance(pnt, XDWPoint):
+        if isinstance(pnt, Point):
             x, y = pnt.x, pnt.y
         elif isinstace(pnt, (tuple, list)):
             x, y = pnt
@@ -91,5 +113,5 @@ class XDWRect(object):
             x, y = pnt, _y
         else:
             raise NotImplementedError
-        return XDWRect(self.left + x, self.top + y,
+        return Rect(self.left + x, self.top + y,
                        self.right + x, self.bottom + y)

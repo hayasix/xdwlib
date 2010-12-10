@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #vim:fileencoding=cp932:fileformat=dos
 
-"""xdwlib.py -- DocuWorks library for Python.
+"""observer.py -- DocuWorks library for Python.
 
 Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>  All rights reserved.
 
@@ -13,10 +13,10 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE.
 """
 
-__all__ = ("XDWSubject", "XDWObserver", "XDWNotification")
+__all__ = ("Subject", "Observer", "Notification")
 
 
-class XDWSubject(object):
+class Subject(object):
 
     def __init__(self):
         self.observers = dict()
@@ -30,19 +30,19 @@ class XDWSubject(object):
     def attach(self, observer, event):
         self.shift_keys(observer.pos)
         self.observers[observer.pos] = observer
-        self.notify(event=XDWNotification(event, observer.pos))
+        self.notify(event=Notification(event, observer.pos))
 
     def detach(self, observer, event=None):
         del self.observers[observer.pos]
         self.shift_keys(observer.pos, delete=True)
-        self.notify(event=XDWNotification(event, observer.pos))
+        self.notify(event=Notification(event, observer.pos))
 
     def notify(self, event=None):
         for pos in self.observers:
             self.observers[pos].update(event)
 
 
-class XDWObserver(object):
+class Observer(object):
 
     def __init__(self, subject, event):
         subject.attach(self, event)
@@ -51,7 +51,7 @@ class XDWObserver(object):
         raise NotImplementedError  # Override it.
 
 
-class XDWNotification(object):
+class Notification(object):
 
     def __init__(self, type, *para):
         self.type = type

@@ -774,7 +774,8 @@ XDW_PF_XBD                          = 1
 XDW_PF_XDW_IN_XBD                   = 2
 
 XDW_ANNOTATION_ATTRIBUTE = {
-        # attribute_id: (is_string, unit, available_ann_types)
+        # attribute_id: (type, unit, available_ann_types)
+        #   where type is either 0(int), 1(string) or 2(points)
         XDW_ATN_Alignment           : (0, None, ()),
         XDW_ATN_ArrowheadStyle      : (0, None, (XDW_AID_STRAIGHTLINE,)),
         XDW_ATN_ArrowheadType       : (0, None, (XDW_AID_STRAIGHTLINE,)),
@@ -820,7 +821,7 @@ XDW_ANNOTATION_ATTRIBUTE = {
         XDW_ATN_OtherFilePath_Relative  : (0, None, (XDW_AID_LINK,)),
         XDW_ATN_PageFrom            : (0, None, (XDW_AID_LINK,)),
         XDW_ATN_PageRange           : (0, None, ()),
-        XDW_ATN_Points              : (0, None, (XDW_AID_STRAIGHTLINE, XDW_AID_MARKER, XDW_AID_POLYGON,)),  # TODO: TREAT SPECIALLY
+        XDW_ATN_Points              : (2, None, (XDW_AID_STRAIGHTLINE, XDW_AID_MARKER, XDW_AID_POLYGON,)),  # TODO: TREAT SPECIALLY
         XDW_ATN_ShowIcon            : (0, None, (XDW_AID_LINK,)),
         XDW_ATN_StartingNumber      : (0, None, ()),
         XDW_ATN_Text                : (1, None, (XDW_AID_TEXT,)),
@@ -2286,18 +2287,23 @@ def XDW_GetFullTextW(doc_handle, output_path):
 
 def XDW_GetAnnotationAttributeW(ann_handle, attr_name, codepage=932):
     """XDW_GetAnnotationAttributeW(ann_handle, attr_name, codepage=932) --> (attr_type, attr_val, text_type)"""
-    is_string = XDW_ANNOTATION_ATTRIBUTE[attr_name]
+    data_type = XDW_ANNOTATION_ATTRIBUTE[attr_name][0]
     text_type = c_int()
-    if is_string:
-        size = TRY(DLL.XDW_GetAnnotationAttributeW, ann_handle, attr_name, NULL, 0, byref(text_type), codepage, NULL)
+    size = TRY(DLL.XDW_GetAnnotationAttributeW, ann_handle, attr_name, NULL, 0, byref(text_type), codepage, NULL)
+    if data_type == 0:
         attr_val = create_unicode_buffer(size)
-    else:
+    elif data_type == 1:
         attr_val = c_int()
+    else:  # data_type == 2
+        count = size / sizeof(XDW_POINT)
+        attr_val = (XDW_POINT * count)()
     TRY(DLL.XDW_GetAnnotationAttributeW, ann_handle, attr_name, byref(attr_val), size, byref(text_type), codepage, NULL)
-    if is_string:
-        return (XDW_ATYPE_STRING, attr_val.value, text_type.value)
-    else:
+    if data_type == 0:
         return (XDW_ATYPE_INT, attr_val.value, XDW_TEXT_UNKNOWN)
+    elif data_type == 1:
+        return (XDW_ATYPE_STRING, attr_val.value, text_type.value)
+    else:  # data_type == 2
+        return (XDW_ATYPE_OTHER, attr_val, XDW_TEXT_UNKNOWN)
 
 
 @APPEND(0, NULL)
