@@ -400,7 +400,7 @@ class Binder(Document):
 
     def page(self, pos):
         """page(pos) --> Page"""
-        return self.document_and_page(self, pos)[1]
+        return self.document_and_page(pos)[1]
 
     def document_pages(self):
         """Get list of page count for each document in binder. """
