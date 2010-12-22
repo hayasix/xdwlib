@@ -37,9 +37,18 @@ def decode_fake_unicode(ustring):
         else:
             result.append(c & 0xff)
             result.append(c >> 8)
-    result = ''.join(map(chr, result))
+    result = "".join(map(chr, result))
     result = unicode(result, "mbcs")
     return result
+
+
+def encode_fake_unicode(ustring):
+    s = ustring.encode("mbcs")
+    ss = zip(s[::2], s[1::2])
+    result = [unichr(ord(x) | (ord(y) << 8)) for x, y in ss]
+    if len(s) % 2:
+        result.append(unichr(ord(s[-1])))
+    return "".join(result)
 
 
 class Annotation(Subject, Observer):
@@ -116,7 +125,7 @@ class Annotation(Subject, Observer):
                 v = Annotation.scale(attrname, v)
             elif t == XDW_ATYPE_STRING:
                 self.is_unicode = (tt == XDW_TEXT_UNICODE)
-                if name == "font_name":
+                if name in ("FontName", "font_name"):
                     v = decode_fake_unicode(v)  # TODO: investigate...
             else:  # t == XDW_ATYPE_OTHER:  # Quick hack for points.
                 v = [Point(p.x, p.y) for p in v]
@@ -136,6 +145,8 @@ class Annotation(Subject, Observer):
                             else XDW_TEXT_MULTIBYTE
                 if isinstance(value, str):
                     value = unicode(value, CODEPAGE)
+                if name in ("FontName", "font_name"):
+                    value = encode_fake_unicode(value)
                 XDW_SetAnnotationAttributeW(
                         self.page.xdw.handle, self.handle,
                         attrname, XDW_ATYPE_STRING, value,
@@ -217,6 +228,19 @@ class Annotation(Subject, Observer):
         ann = Annotation(self, pos, parent=self, info=info)
         self.annotations += 1
         self.notify(event=Notification(EV_ANN_INSERTED, pos))
+        return ann
+
+    def add_text_annotation(self, text, position=Point(0, 0), **kw):
+        ann = self.add_annotation(XDW_AID_TEXT, position)
+        ann.Text = text
+        for k, v in kw.items():
+            if k in ("ForeColor", "fore_color", "BackColor", "back_color"):
+                v = XDW_COLOR.normalize(v)
+            elif k in ("FontPitchAndFamily", "font_pitch_and_family"):
+                v = XDW_PITCH_AND_FAMILY.get(k, 0)
+            setattr(ann, k, v)
+            if k in ("FontName", "font_name"):
+                ann.font_char_set = XDW_FONT_CHARSET.get("DEFAULT_CHARSET", 0)
         return ann
 
     def delete_annotation(self, pos):

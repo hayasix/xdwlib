@@ -758,6 +758,37 @@ XDW_COLOR_FUSEN_PALE_BLUE           = 0xFAE1C8
 XDW_COLOR_FUSEN_PALE_YELLOW         = 0xC3FAFF
 XDW_COLOR_FUSEN_PALE_LIME           = 0xD2FACD
 
+XDW_COLOR = XDWConst({
+        XDW_COLOR_NONE                  : "NONE",
+        XDW_COLOR_BLACK                 : "BLACK",
+        XDW_COLOR_MAROON                : "MAROON",
+        XDW_COLOR_GREEN                 : "GREEN",
+        XDW_COLOR_OLIVE                 : "OLIVE",
+        XDW_COLOR_NAVY                  : "NAVY",
+        XDW_COLOR_PURPLE                : "PURPLE",
+        XDW_COLOR_TEAL                  : "TEAL",
+        XDW_COLOR_GRAY                  : "GRAY",
+        XDW_COLOR_SILVER                : "SILVER",
+        XDW_COLOR_RED                   : "RED",
+        XDW_COLOR_LIME                  : "LIME",
+        XDW_COLOR_YELLOW                : "YELLOW",
+        XDW_COLOR_BLUE                  : "BLUE",
+        XDW_COLOR_FUCHIA                : "FUCHIA",
+        XDW_COLOR_AQUA                  : "AQUA",
+        XDW_COLOR_WHITE                 : "WHITE",
+        }, default=XDW_COLOR_BLACK)
+
+XDW_COLOR_FUSEN = XDWConst({
+        XDW_COLOR_FUSEN_RED             : "RED",
+        XDW_COLOR_FUSEN_BLUE            : "BLUE",
+        XDW_COLOR_FUSEN_YELLOW          : "YELLOW",
+        XDW_COLOR_FUSEN_LIME            : "LIME",
+        XDW_COLOR_FUSEN_PALE_RED        : "PALE_RED",
+        XDW_COLOR_FUSEN_PALE_BLUE       : "PALE_BLUE",
+        XDW_COLOR_FUSEN_PALE_YELLOW     : "PALE_YELLOW",
+        XDW_COLOR_FUSEN_PALE_LIME       : "PALE_LIME",
+        }, default=XDW_COLOR_FUSEN_PALE_YELLOW)
+
 XDW_FS_ITALIC_FLAG                  = 1
 XDW_FS_BOLD_FLAG                    = 2
 XDW_FS_UNDERLINE_FLAG               = 4
@@ -772,6 +803,10 @@ XDW_LT_LINK_TO_MAILADDR             = 4
 XDW_PF_XDW                          = 0
 XDW_PF_XBD                          = 1
 XDW_PF_XDW_IN_XBD                   = 2
+
+# Assert to ensure XDW_ANNOTATION_ATTRIBUTE.
+assert XDW_ATYPE_INT == 0
+assert XDW_ATYPE_STRING == 1
 
 XDW_ANNOTATION_ATTRIBUTE = {
         # attribute_id: (type, unit, available_ann_types)
@@ -847,6 +882,34 @@ XDW_ANNOTATION_ATTRIBUTE = {
         XDW_ATN_XdwPath_Relative    : (0, None, (XDW_AID_LINK,)),
         XDW_ATN_YearField           : (1, None, (XDW_AID_STAMP,)),
         XDW_ATN_Zoom                : (0, None, ()),
+        }
+
+XDW_FONT_CHARSET = {
+        "ANSI_CHARSET"              : 0,
+        "DEFAULT_CHARSET"           : 1,
+        "SYMBOL_CHARSET"            : 2,
+        "MAC_CHARSET"               : 77,
+        "SHIFTJIS_CHARSET"          : 128,
+        "HANGEUL_CHARSET"           : 129,
+        "CHINESEBIG5_CHARSET"       : 136,
+        "GREEK_CHARSET"             : 161,
+        "TURKISH_CHARSET"           : 162,
+        "BALTIC_CHARSET"            : 186,
+        "RUSSIAN_CHARSET"           : 204,
+        "EASTEUROPE_CHARSET"        : 238,
+        "OEM_CHARSET"               : 255,
+        }
+
+XDW_PITCH_AND_FAMILY = {
+        "DEFAULT_PITCH"             : 0,
+        "FIXED_PITCH"               : 1,
+        "VARIABLE_PITCH"            : 2,
+        "FF_DONTCARE"               : 0,
+        "FF_ROMAN"                  : 16,
+        "FF_SWISS"                  : 32,
+        "FF_MODERN"                 : 48,
+        "FF_SCRIPT"                 : 64,
+        "FF_DECORATIVE"             : 80,
         }
 
 ######################################################################
@@ -2290,18 +2353,18 @@ def XDW_GetAnnotationAttributeW(ann_handle, attr_name, codepage=932):
     data_type = XDW_ANNOTATION_ATTRIBUTE[attr_name][0]
     text_type = c_int()
     size = TRY(DLL.XDW_GetAnnotationAttributeW, ann_handle, attr_name, NULL, 0, byref(text_type), codepage, NULL)
-    if data_type == 0:
-        attr_val = create_unicode_buffer(size)
-    elif data_type == 1:
+    if data_type == XDW_ATYPE_INT:
         attr_val = c_int()
+    elif data_type == XDW_ATYPE_STRING:
+        attr_val = create_unicode_buffer(size)
     else:  # data_type == 2
         count = size / sizeof(XDW_POINT)
         attr_val = (XDW_POINT * count)()
     TRY(DLL.XDW_GetAnnotationAttributeW, ann_handle, attr_name, byref(attr_val), size, byref(text_type), codepage, NULL)
-    if data_type == 0:
-        return (XDW_ATYPE_INT, attr_val.value, XDW_TEXT_UNKNOWN)
-    elif data_type == 1:
-        return (XDW_ATYPE_STRING, attr_val.value, text_type.value)
+    if data_type == XDW_ATYPE_INT:
+        return (data_type, attr_val.value, XDW_TEXT_UNKNOWN)
+    elif data_type == XDW_ATYPE_STRING:
+        return (data_type, attr_val.value, text_type.value)
     else:  # data_type == 2
         return (XDW_ATYPE_OTHER, attr_val, XDW_TEXT_UNKNOWN)
 

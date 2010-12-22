@@ -114,6 +114,19 @@ class Page(Subject, Observer):
         self.notify(event=Notification(EV_ANN_INSERTED, pos))
         return ann
 
+    def add_text_annotation(self, text, position=Point(0, 0), **kw):
+        ann = self.add_annotation(XDW_AID_TEXT, position)
+        ann.Text = text
+        for k, v in kw.items():
+            if k in ("fore_color", "back_color"):
+                v = XDW_COLOR.normalize(v)
+            elif k in ("font_pitch_and_family"):
+                v = XDW_PITCH_AND_FAMILY.get(k, 0)
+            setattr(ann, k, v)
+            if k in ("font_name"):
+                ann.font_char_set = XDW_FONT_CHARSET.get("DEFAULT_CHARSET", 0)
+        return ann
+
     def delete_annotation(self, pos):
         """Delete an annotation given by pos.
 

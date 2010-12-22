@@ -212,7 +212,10 @@ class Document(Subject):
             self.observers[pos] = Page(self, pos)
         return self.observers[pos]
 
-    def add_page(self, *args):
+    def append_page(self, page):
+        self.insert_page(-1, page)
+
+    def insert_page(self, pos, page):
         raise NotImplementedError()
 
     def delete_page(self, pos):
@@ -300,6 +303,12 @@ class DocumentInBinder(Subject, Observer):
         if page in self.observers:
             return self.observers[pos]
         self.observers[pos] = Page(self.binder, self.page_offset + pos)
+
+    def append_page(self, pos, page):
+        self.insert_page(-1, page)
+
+    def insert_page(self, pos, page):
+        raise NotImplementedError
 
     def delete_page(self, pos):
         """Delete a page given by pos.
@@ -410,6 +419,12 @@ class Binder(Document):
                     self.handle, pos + 1)
             pages.append(docinfo.nPages)
         return pages
+
+    def append_document(self, doc):
+        self.insert_document(-1, doc)
+
+    def insert_document(self, pos, doc):
+        raise NotImplementedError
 
     def delete_document(self, pos):
         """Delete a document in binder given by pos.
