@@ -31,24 +31,32 @@ class Page(Subject, Observer):
         return n
 
     def reset_attr(self):
-        page_info = XDW_GetPageInformation(self.xdw.handle, self.pos + 1,
-                                           extend=True)
-        self.size = Point(page_info.nWidth / 100.0,
-                          page_info.nHeight / 100.0)  # float, in mm
+        page_info = XDW_GetPageInformation(
+                self.xdw.handle, self.pos + 1, extend=True)
+        self.size = Point(
+                page_info.nWidth / 100.0,
+                page_info.nHeight / 100.0)  # float, in mm
         # XDW_PGT_FROMIMAGE/FROMAPPL/NULL
         self.page_type = page_info.nPageType
-        self.resolution = (Page.norm_res(page_info.nHorRes),
-                           Page.norm_res(page_info.nVerRes))  # dpi
+        self.resolution = Point(
+                Page.norm_res(page_info.nHorRes),
+                Page.norm_res(page_info.nVerRes))  # dpi
         self.compress_type = page_info.nCompressType
         self.annotations = page_info.nAnnotations
         self.degree = page_info.nDegree
-        self.original_size = (page_info.nOrgWidth / 100.0,
-                              page_info.nOrgHeight / 100.0)  # mm
-        self.original_resolution = (
+        self.original_size = Point(
+                page_info.nOrgWidth / 100.0,
+                page_info.nOrgHeight / 100.0)  # mm
+        self.original_resolution = Point(
                 Page.norm_res(page_info.nOrgHorRes),
                 Page.norm_res(page_info.nOrgVerRes))  # dpi
-        self.image_size = (page_info.nImageWidth,
-                           page_info.nImageHeight)  # px
+        self.image_size = Point(
+                page_info.nImageWidth,
+                page_info.nImageHeight)  # px
+        # Page color info.
+        pci = XDW_GetPageColorInformation(self.xdw.handle, self.pos)
+        self.is_color = bool(pci.nColor)
+        self.bpp = pci.nImageDepth
 
     def __init__(self, xdw, pos):
         self.pos = pos
@@ -60,9 +68,36 @@ class Page(Subject, Observer):
     def __str__(self):
         return "Page(page %d: %.2f*%.2fmm, %s, %d annotations)" % (
                 self.pos,
-                self.width, self.height,
+                self.size.x, self.size.y,
                 XDW_PAGE_TYPE[self.page_type],
                 self.annotations)
+
+    def _split_attrname(name, store=False):
+        if "_" not in name:
+            return (None, name)
+        forms = {
+                "header": XDW_PAGEFORM_HEADER,
+                "footer": XDW_PAGEFORM_FOOTER,
+                "pagenumber": XDW_PAGEFORM_PAGENUMBER
+                }
+        if store:
+            forms["topimage"] = XDW_PAGEFORM_TOPIMAGE
+            forms["bottomimage"] = XDW_PAGEFORM_BOTTOMIMAGE
+        form = forms.get(name.split("_")[0], None)
+        if form is not None:
+            name = name[name.index("_")+1:]
+        return (form, name)
+
+    def __getattr__(self, name):
+        if "_" in name:
+            form, name = _split_attrname(name)
+            if form is not None:
+                name = inner_attribute_name(name)
+                return XDW_GetPageFormAttribute(self.xdw.handle, form, name)
+        return self.__dict__[name]
+
+    def __setattr__(self, name, value):
+        raise NotImplementedError
 
     def update(self, event):
         if not isinstance(event, Notification):
