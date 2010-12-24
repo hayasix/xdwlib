@@ -38,12 +38,12 @@ def decode_fake_unicode(ustring):
             result.append(c & 0xff)
             result.append(c >> 8)
     result = "".join(map(chr, result))
-    result = unicode(result, "mbcs")
+    result = unicode(result, CODEPAGE)
     return result
 
 
 def encode_fake_unicode(ustring):
-    s = ustring.encode("mbcs")
+    s = ustring.encode(CODEPAGE)
     ss = zip(s[::2], s[1::2])
     result = [unichr(ord(x) | (ord(y) << 8)) for x, y in ss]
     if len(s) % 2:
@@ -119,14 +119,15 @@ class Annotation(Subject, Observer):
     def __getattr__(self, name):
         attrname = inner_attribute_name(name)
         if attrname in XDW_ANNOTATION_ATTRIBUTE:
+            if name in ("FontName", "font_name"):  # TODO: investigate...
+                v = XDW_GetAnnotationAttribute(self.handle, attrname)
+                return unicode(v, CODEPAGE)
             t, v, tt = XDW_GetAnnotationAttributeW(
                     self.handle, attrname, codepage=CP)
             if t == XDW_ATYPE_INT:
                 v = Annotation.scale(attrname, v)
             elif t == XDW_ATYPE_STRING:
                 self.is_unicode = (tt == XDW_TEXT_UNICODE)
-                if name in ("FontName", "font_name"):
-                    v = decode_fake_unicode(v)  # TODO: investigate...
             else:  # t == XDW_ATYPE_OTHER:  # Quick hack for points.
                 v = [Point(p.x, p.y) for p in v]
             return v
@@ -145,12 +146,16 @@ class Annotation(Subject, Observer):
                             else XDW_TEXT_MULTIBYTE
                 if isinstance(value, str):
                     value = unicode(value, CODEPAGE)
-                if name in ("FontName", "font_name"):
-                    value = encode_fake_unicode(value)
-                XDW_SetAnnotationAttributeW(
-                        self.page.xdw.handle, self.handle,
-                        attrname, XDW_ATYPE_STRING, value,
-                        texttype, codepage=CP)
+                if name in ("FontName", "font_name"):  # TODO: investigate...
+                    value = value.encode(CODEPAGE)
+                    XDW_SetAnnotationAttribute(
+                            self.page.xdw.handle, self.handle,
+                            attrname, XDW_ATYPE_STRING, value)
+                else:
+                    XDW_SetAnnotationAttributeW(
+                            self.page.xdw.handle, self.handle,
+                            attrname, XDW_ATYPE_STRING, value,
+                            texttype, codepage=CP)
             elif isinstance(value, (int, float)):
                 value = c_int(Annotation.scale(attrname, value, store=True))
                 XDW_SetAnnotationAttributeW(
