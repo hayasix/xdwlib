@@ -13,28 +13,23 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE.
 """
 
-from annotation import *
-from page import *
-from document import *
+from os.path import splitext, basename
+
+from common import *
+from binder import Binder, copy_pages_to_binder
+from document import Document
+from documentinbinder import DocumentInBinder
+from page import Page
+from annotation import Annotation
 
 
-def environ(name=None):
-    """DocuWorks environment information"""
-    if name:
-        value = XDW_GetInformation(XDW_ENVIRON.normalize(name))
-        if name == XDW_ENVIRON[XDW_GI_DWDESK_FILENAME_DIGITS]:
-            value = ord(value)
-        return value
-    values = dict()
-    for k, v in XDW_ENVIRON.items():
-        try:
-            value = XDW_GetInformation(k)
-            if k == XDW_GI_DWDESK_FILENAME_DIGITS:
-                value = ord(value)
-            values[v] = value
-        except XDWError as e:
-            if e.error_code == XDW_E_INFO_NOT_FOUND:
-                continue
-            else:
-                raise
-    return values
+def xdwopen(path, readonly=False, authenticate=True):
+    """General opener"""
+    types = {
+            ".XDW": Document,
+            ".XBD": Binder,
+            }
+    ext = splitext(basename(path))[1].upper()
+    if ext not in types:
+        raise XDWError(XDW_E_INVALIDARG)
+    return types[ext](path, readonly=readonly, authenticate=authenticate)

@@ -48,7 +48,7 @@ class Observer(object):
         subject.attach(self, event)
 
     def update(self, event):
-        raise NotImplementedError  # Override it.
+        raise NotImplementedError  # abstract
 
 
 class Notification(object):

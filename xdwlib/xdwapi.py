@@ -2076,7 +2076,6 @@ def XDW_Finalize():
     pass
 
 
-@RAISE
 def XDW_GetPageColorInformation(doc_handle, page):
     """XDW_GetPageColorInformation(doc_handle, page) --> page_color_info"""
     page_color_info = XDW_PAGE_COLOR_INFO()

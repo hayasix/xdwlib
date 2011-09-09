@@ -13,8 +13,6 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE.
 """
 
-import datetime
-
 from common import *
 
 
@@ -104,15 +102,18 @@ class Annotation(Subject, Observer):
         if not info:
             pah = parent.handle if parent else NULL
             info = XDW_GetAnnotationInformation(
-                    page.xdw.handle, page.pos + 1, pah, pos + 1)
+                    page.doc.handle, page.absolute_page() + 1, pah, pos + 1)
         self.handle = info.handle
         self.type = info.nAnnotationType
         self.annotations = info.nChildAnnotations
         self.is_unicode = False
 
+    def __repr__(self):
+        return u"Annotation(%s[%d][%d])" % (self.page.doc.name, self.page.pos, self.pos)
+
     def __str__(self):
-        return "Annotation(%s P%d: type=%s)" % (
-                self.page.xdw.name,
+        return u"Annotation(%s P%d: type=%s)" % (
+                self.page.doc.name,
                 self.page.pos,
                 XDW_ANNOTATION_TYPE[self.type])
 
@@ -134,7 +135,7 @@ class Annotation(Subject, Observer):
         if name in ("position", "size"):
             pah = self.parent.handle if self.parent else NULL
             info = XDW_GetAnnotationInformation(
-                    self.page.xdw.handle, self.page.pos + 1, pah, self.pos + 1)
+                    self.page.doc.handle, self.page.absolute_page() + 1, pah, self.pos + 1)
             self.__dict__[name] = Point(info.nWidth, info.nHeight) / 100.0 # mm
         return self.__dict__[name]
 
@@ -149,11 +150,11 @@ class Annotation(Subject, Observer):
                 if name in ("FontName", "font_name"):  # TODO: investigate...
                     value = value.encode(CODEPAGE)
                     XDW_SetAnnotationAttribute(
-                            self.page.xdw.handle, self.handle,
+                            self.page.doc.handle, self.handle,
                             attrname, XDW_ATYPE_STRING, value)
                 else:
                     XDW_SetAnnotationAttributeW(
-                            self.page.xdw.handle, self.handle,
+                            self.page.doc.handle, self.handle,
                             attrname, XDW_ATYPE_STRING, value,
                             texttype, codepage=CP)
             elif isinstance(value, (int, float)):
@@ -166,10 +167,10 @@ class Annotation(Subject, Observer):
                                 str(value))
             return
         if name == "position":
-            XDW_SetAnnotationPosition(self.page.xdw.handle, self.handle,
+            XDW_SetAnnotationPosition(self.page.doc.handle, self.handle,
                     int(value.x * 100), int(value.y * 100))
         elif name == "size":
-            XDW_SetAnnotationSize(self.page.xdw.handle, self.handle,
+            XDW_SetAnnotationSize(self.page.doc.handle, self.handle,
                     int(value.x * 100), int(value.y * 100))
         self.__dict__[name] = value
 
@@ -195,6 +196,10 @@ class Annotation(Subject, Observer):
 
     def annotation(self, pos):
         """annotation(pos) --> Annotation"""
+        if self.annotations <= pos:
+            raise IndexError(
+                    "Annotation number must be < %d, %d given" % (
+                    self.annotations, pos))
         if pos not in self.observers:
             self.observers[pos] = Annotation(self.page, pos, parent=self)
         return self.observers[pos]
@@ -219,7 +224,7 @@ class Annotation(Subject, Observer):
             position = Point(*position)
         init_dat = Annotation.initial_data(ann_type, **kw)
         ann_handle = XDW_AddAnnotationOnParentAnnotation(
-                self.page.xdw.handle, self.handle, ann_type,
+                self.page.doc.handle, self.handle, ann_type,
                 int(position.x * 100), int(position.y * 100), init_dat)
         info = XDW_ANNOTATION_INFO()
         info.handle = ann_handle
@@ -251,7 +256,7 @@ class Annotation(Subject, Observer):
     def delete_annotation(self, pos):
         """Delete a child annotation given by pos."""
         ann = self.annotation(pos)
-        XDW_RemoveAnnotation(self.page.xdw.handle, ann.handle)
+        XDW_RemoveAnnotation(self.page.doc.handle, ann.handle)
         self.detach(ann, EV_ANN_REMOVED)
         self.annotations -= 1
 
