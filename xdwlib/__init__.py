@@ -16,10 +16,10 @@ FOR A PARTICULAR PURPOSE.
 from os.path import splitext, basename
 
 from common import *
-from binder import Binder, copy_pages_to_binder
+from binder import Binder
 from document import Document
 from documentinbinder import DocumentInBinder
-from page import Page
+from page import Page, PageCollection
 from annotation import Annotation
 
 

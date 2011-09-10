@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.6
 #vim:fileencoding=cp932:fileformat=dos
 
 """basedocument.py -- DocuWorks library for Python.
@@ -100,33 +100,30 @@ class BaseDocument(Subject):
         self.pages -= 1
 
     def content_text(self):
+        """Get all content text."""
         return joinf(PSEP, [page.content_text() for page in self])
 
     def annotation_text(self):
+        """Get all text in annotations."""
         return joinf(PSEP, [page.annotation_text() for page in self])
 
     def fulltext(self):
+        """Get all content text and annotation text."""
         return joinf(PSEP, [
                 joinf(ASEP, [page.content_text(), page.annotation_text()])
                 for page in self])
 
-    def find_fulltext(self, text, path=None):
-        """Find given text throughout document.
+    def find_fulltext(self, pattern):
+        """Find given pattern (text or regex) throughout document.
 
-        Returns a Page object list, each of which contains the given text in
-        its content text or annotations.
-
-        If path is specified, a new binder which holds all the result pages
-        is created.  The binder is closed in this method and path to it is
-        returned, so you can reopen it if necessary.
+        Returns a PageCollection object, each of which contains the given
+        pattern in its content text or annotations.
         """
-        from binder import copy_pages_to_binder
-        found = [page for page in self if text in page.fulltext()]
-        if not path:
-            return found
-        binderpath = new_filename(path, dir=self.dirname())
-        copy_pages_to_binder(found, binderpath)
-        return binderpath
+        if isinstance(pattern, (str, unicode))
+            f = lambda page: pattern in page.fulltext()
+        else:
+            f = lambda page: pattern.search(page.fulltext())
+        return PageCollection(filter(f, self))
 
     def dirname(self):
         raise NotImplementedError()  # abstract

@@ -16,10 +16,30 @@ FOR A PARTICULAR PURPOSE.
 import os
 
 from common import *
+from binder import Binder
 from annotation import Annotation
 
 
-__all__ = ("Page",)
+__all__ = ("Page", "PageCollection")
+
+
+class PageCollection(list):
+
+    """Page collection class"""
+
+    def __repr__(self):
+        return "[%s]" % ", ".join(
+                "%s[%d]" % (page.doc.name, page.pos) for page in self)
+
+    def save(self, path):
+        create_binder(path)
+        binder = Binder(path)
+        for pos, page in enumerate(self):
+            temp = page.copy()
+            XDW_InsertDocumentToBinder(binder.handle, pos + 1, temp)
+            os.remove(temp)
+        binder.save()
+        binder.close()
 
 
 class Page(Subject, Observer):
@@ -266,11 +286,12 @@ class Page(Subject, Observer):
     def copy(self, path=None):
         """Copy current page and create another document.
 
-        Returns the path name for output."""
+        Returns the path name for output.
+        """
         # Given no path, name the new document 'DOCUMENTNAME_Pxx.xdw'.
         # Page number is intra-document, and its origin is not 0 but 1.
         if not path:
             path = "%s_P%d.xdw" % (self.doc.name, self.pos + 1)
-        path = new_filename(path, dir=self.doc.dirname(), coding=CODEPAGE)
+        path = adjust_path(path, default_dir=self.doc.dirname(), coding=CODEPAGE)
         XDW_GetPage(self.doc.handle, self.absolute_page() + 1, path)
         return path

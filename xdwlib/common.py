@@ -155,11 +155,11 @@ def outer_attribute_name(name):
         return name
     return re.sub("([A-Z])", r"_\1", name[1:])[1:].lower()
 
-def new_filename(path, dir="", coding=None):
-    dirname, name = os.path.split(path)
+
+def adjust_path(path, default_dir="", coding=None):
+    directory, basename = os.path.split(path)
     # Given no dir, create the new document in the same dir as original one.
-    if not dirname: path = os.path.join(dir, name)
-    if not os.path.splitext(name)[1]: path += ".xdw"
+    if not directory: path = os.path.join(default_dir, basename)
+    if not os.path.splitext(basename)[1]: path += ".xdw"
     if coding: path = path.encode(coding)
     return path
-

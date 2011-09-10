@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.6
 #vim:fileencoding=cp932:fileformat=dos
 
 """binder.py -- DocuWorks library for Python.
@@ -16,24 +16,10 @@ FOR A PARTICULAR PURPOSE.
 from common import *
 from xdwfile import XDWFile
 from documentinbinder import DocumentInBinder
-from page import Page
+from page import Page, PageCollection
 
 
-__all__ = ("Binder", "copy_pages_to_binder")
-
-
-def copy_pages_to_binder(pages, binderpath):
-    create_binder(binderpath)
-    binder = Binder(binderpath)
-    pos = 0
-    for page in pages:
-        pagepath = page.copy()
-        XDW_InsertDocumentToBinder(binder.handle, pos + 1, pagepath)
-        pos += 1
-        os.remove(pagepath)
-    binder.save()
-    binder.close()
-    return binderpath
+__all__ = ("Binder",)
 
 
 class Binder(Subject, XDWFile):
@@ -120,21 +106,24 @@ class Binder(Subject, XDWFile):
         self.documents -= 1
 
     def content_text(self):
+        """Get all content text."""
         return joinf(PSEP, [doc.content_text() for doc in self])
 
     def annotation_text(self):
+        """Get all text in annotations."""
         return joinf(PSEP, [doc.annotation_text() for doc in self])
 
     def fulltext(self):
+        """Get all content text and annotation text."""
         return joinf(PSEP, [
                 joinf(ASEP, [doc.content_text(), doc.annotation_text()])
                 for doc in self])
 
-    def find_fulltext(self, text, path=None):
+    def find_fulltext(self, pattern):
+        """Find given pattern (text or regex) throughout binder.
+
+        Returns a PageCollection object, each of which contains the given
+        pattern in its content text or annotations.
+        """
         from operator import add
-        found = reduce(add, [doc.find_fulltext(text) for doc in self])
-        if not path:
-            return found
-        binderpath = new_filename(path, dir=self.dirname)
-        copy_pages_to_binder(found, binderpath)
-        return binderpath
+        return reduce(add, [doc.find_fulltext(pattern) for doc in self])
