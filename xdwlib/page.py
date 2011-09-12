@@ -16,7 +16,8 @@ FOR A PARTICULAR PURPOSE.
 import os
 
 from common import *
-from binder import Binder
+from observer import Subject, Observer
+from struct import Point
 from annotation import Annotation
 
 
@@ -28,10 +29,27 @@ class PageCollection(list):
     """Page collection class"""
 
     def __repr__(self):
-        return "[%s]" % ", ".join(
+        return "PageCollection(%s)" % ", ".join(
                 "%s[%d]" % (page.doc.name, page.pos) for page in self)
 
+    def __add__(self, y):
+        if isinstance(y, Page):
+            return PageCollection(list.__add__(self, [y]))
+        elif isinstance(y, PageCollection):
+            return PageCollection(list.__add__(self, y))
+        raise TypeError("can only concatenate Page or PageCollection to PageCollection")
+
+    def __iadd__(self, y):
+        if isinstance(y, Page):
+            self.append(y)
+        elif isinstance(y, PageCollection):
+            self.extend(y)
+        else:
+            TypeError("can only concatenate Page or PageCollection to PageCollection")
+        return self
+
     def save(self, path):
+        from binder import Binder, create_binder
         create_binder(path)
         binder = Binder(path)
         for pos, page in enumerate(self):
@@ -101,6 +119,7 @@ class Page(Subject, Observer):
                 XDW_PAGE_TYPE[self.page_type],
                 self.annotations)
 
+    @staticmethod
     def _split_attrname(name, store=False):
         if "_" not in name:
             return (None, name)
@@ -119,7 +138,7 @@ class Page(Subject, Observer):
 
     def __getattr__(self, name):
         if "_" in name:
-            form, name = _split_attrname(name)
+            form, name = self._split_attrname(name)
             if form is not None:
                 name = inner_attribute_name(name)
                 return XDW_GetPageFormAttribute(self.doc.handle, form, name)

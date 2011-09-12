@@ -13,23 +13,21 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE.
 """
 
-from os.path import splitext, basename
+import os
 
-from common import *
+from xdwapi import XDWError, XDW_E_INVALIDARG
 from binder import Binder
 from document import Document
-from documentinbinder import DocumentInBinder
-from page import Page, PageCollection
-from annotation import Annotation
+
+
+XDW_TYPES = {".XDW": Document, ".XBD": Binder}
 
 
 def xdwopen(path, readonly=False, authenticate=True):
     """General opener"""
-    types = {
-            ".XDW": Document,
-            ".XBD": Binder,
-            }
-    ext = splitext(basename(path))[1].upper()
-    if ext not in types:
+    ext = os.path.splitext(path)[1].upper()
+    if ext not in XDW_TYPES:
         raise XDWError(XDW_E_INVALIDARG)
-    return types[ext](path, readonly=readonly, authenticate=authenticate)
+    return XDW_TYPES[ext](path, readonly=readonly, authenticate=authenticate)
+
+

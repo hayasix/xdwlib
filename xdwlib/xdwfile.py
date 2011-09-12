@@ -20,7 +20,30 @@ from xdwapi import *
 from common import *
 
 
-__all__ = ("XDWFile",)
+__all__ = ("XDWFile", "environ")
+
+
+def environ(name=None):
+    """DocuWorks environment information"""
+    if name:
+        value = XDW_GetInformation(XDW_ENVIRON.normalize(name))
+        if name == XDW_ENVIRON[XDW_GI_DWDESK_FILENAME_DIGITS]:
+            value = ord(value)
+        return value
+    values = dict()
+    for k, v in XDW_ENVIRON.items():
+        try:
+            value = XDW_GetInformation(k)
+            if k == XDW_GI_DWDESK_FILENAME_DIGITS:
+                value = ord(value)
+            values[v] = value
+        except XDWError as e:
+            if e.error_code == XDW_E_INFO_NOT_FOUND:
+                continue
+            else:
+                raise
+    return values
+
 
 
 # The last resort to close documents in interactive session.

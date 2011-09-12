@@ -14,7 +14,7 @@ FOR A PARTICULAR PURPOSE.
 """
 
 from common import *
-from page import Page
+from page import Page, PageCollection
 
 
 __all__ = ("BaseDocument",)
@@ -48,7 +48,7 @@ class BaseDocument(Subject):
     def __getitem__(self, pos):
         return self.page(pos)
 
-    def __setitem__(self, pos):
+    def __setitem__(self, pos, val):
         raise NotImplementedError()
 
     def __iter__(self):
@@ -61,12 +61,6 @@ class BaseDocument(Subject):
         page = self.page(self._pos)
         self._pos += 1
         return page
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
 
     def absolute_page(self, pos):
         """Get absolute page number in binder/document."""
@@ -119,7 +113,7 @@ class BaseDocument(Subject):
         Returns a PageCollection object, each of which contains the given
         pattern in its content text or annotations.
         """
-        if isinstance(pattern, (str, unicode))
+        if isinstance(pattern, (str, unicode)):
             f = lambda page: pattern in page.fulltext()
         else:
             f = lambda page: pattern.search(page.fulltext())

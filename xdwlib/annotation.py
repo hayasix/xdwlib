@@ -14,6 +14,8 @@ FOR A PARTICULAR PURPOSE.
 """
 
 from common import *
+from observer import Subject, Observer
+from struct import Point, Rect
 
 
 __all__ = ("Annotation",)

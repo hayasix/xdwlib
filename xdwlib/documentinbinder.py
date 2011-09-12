@@ -15,7 +15,6 @@ FOR A PARTICULAR PURPOSE.
 
 from common import *
 from basedocument import BaseDocument
-from page import Page
 
 
 __all__ = ("DocumentInBinder",)

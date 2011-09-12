@@ -13,14 +13,45 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE.
 """
 
+from os.path import abspath, dirname, join
+from shutil import copyfile
+
 from common import *
 from xdwfile import XDWFile
 from basedocument import BaseDocument
-from documentinbinder import DocumentInBinder
-from page import Page
 
 
-__all__ = ("Document",)
+__all__ = ("Document", "create_document", "create_document_from_image")
+
+
+def create_document(path):
+    """The XDW generator, preparing dummy A4 white page"""
+    blank = join(dirname(abspath(__file__)), "__blank__.xdw")
+    copyfile(blank, path)
+
+
+def create_document_from_image(
+        inputPath,
+        outputPath,
+        size=XDW_SIZE_A4_PORTRAIT,
+        fit_image=XDW_CREATE_FIT,
+        compress=XDW_COMPRESS_LOSSLESS,
+        zoom=100,
+        width=0.0, height=0.0,
+        horizontal_position=XDW_CREATE_HCENTER,
+        vertical_position=XDW_CREATE_VCENTER,
+        ):
+    """A XDW generator from image file"""
+    opt = XDW_CREATE_OPTION()
+    opt.nSize = normalize_binder_size(size)
+    opt.nFitImage = fit_image
+    opt.nCompress = compress
+    opt.nZoom = int(zoom)
+    opt.nWidth = int(width * 100)
+    opt.nHeight = int(height * 100)
+    opt.nHorPos = int(horizontal_position * 100)
+    opt.nVerPos = int(vertical_position * 100)
+    XDW_CreateXdwFromImageFile(inputPath, outputPath, opt)
 
 
 class Document(BaseDocument, XDWFile):

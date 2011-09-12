@@ -19,7 +19,15 @@ from documentinbinder import DocumentInBinder
 from page import Page, PageCollection
 
 
-__all__ = ("Binder",)
+__all__ = ("Binder", "create_binder")
+
+
+def create_binder(path, color=XDW_BINDER_COLOR_0, size=XDW_SIZE_FREE, coding=CODEPAGE):
+    """The XBD generator"""
+    data = XDW_BINDER_INITIAL_DATA()
+    data.nBinderColor = color
+    data.nBinderSize = size
+    XDW_CreateBinder(path.encode(coding), data)
 
 
 class Binder(Subject, XDWFile):

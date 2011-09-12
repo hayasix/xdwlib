@@ -16,9 +16,8 @@ FOR A PARTICULAR PURPOSE.
 import os
 
 from xdwapi import *
-from struct import Point, Rect
-from observer import Subject, Observer, Notification
-from timezone import Timezone, UTC, JST, unixtime, fromunixtime
+from observer import *
+from timezone import JST
 
 
 PSEP = "\f"
@@ -38,58 +37,6 @@ EV_ANN_REMOVED = 31
 EV_ANN_INSERTED = 32
 
 
-def create(
-        inputPath,
-        outputPath,
-        size=XDW_SIZE_A4_PORTRAIT,
-        fit_image=XDW_CREATE_FIT,
-        compress=XDW_COMPRESS_LOSSLESS,
-        zoom=100,
-        width=0.0, height=0.0,
-        horizontal_position=XDW_CREATE_HCENTER,
-        vertical_position=XDW_CREATE_VCENTER,
-        ):
-    """A XDW generator"""
-    opt = XDW_CREATE_OPTION()
-    opt.nSize = normalize_binder_size(size)
-    opt.nFitImage = fit_image
-    opt.nCompress = compress
-    opt.nZoom = int(zoom)
-    opt.nWidth = int(width * 100)
-    opt.nHeight = int(height * 100)
-    opt.nHorPos = int(horizontal_position * 100)
-    opt.nVerPos = int(vertical_position * 100)
-    XDW_CreateXdwFromImageFile(inputPath, outputPath, opt)
-
-
-def create_binder(path, color=XDW_BINDER_COLOR_0, size=XDW_SIZE_FREE, coding=CODEPAGE):
-    """The XBD generator"""
-    data = XDW_BINDER_INITIAL_DATA()
-    data.nBinderColor = color
-    data.nBinderSize = size
-    XDW_CreateBinder(path.encode(coding), data)
-
-
-def environ(name=None):
-    """DocuWorks environment information"""
-    if name:
-        value = XDW_GetInformation(XDW_ENVIRON.normalize(name))
-        if name == XDW_ENVIRON[XDW_GI_DWDESK_FILENAME_DIGITS]:
-            value = ord(value)
-        return value
-    values = dict()
-    for k, v in XDW_ENVIRON.items():
-        try:
-            value = XDW_GetInformation(k)
-            if k == XDW_GI_DWDESK_FILENAME_DIGITS:
-                value = ord(value)
-            values[v] = value
-        except XDWError as e:
-            if e.error_code == XDW_E_INFO_NOT_FOUND:
-                continue
-            else:
-                raise
-    return values
 def joinf(sep, seq):
     """sep.join(seq), omitting None, null or so."""
     return sep.join([s for s in filter(bool, seq)]) or None
