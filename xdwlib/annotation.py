@@ -162,7 +162,7 @@ class Annotation(Subject, Observer):
             elif isinstance(value, (int, float)):
                 value = c_int(Annotation.scale(attrname, value, store=True))
                 XDW_SetAnnotationAttributeW(
-                        self.page.xdw.handle, self.handle,
+                        self.page.doc.handle, self.handle,
                         attrname, XDW_ATYPE_INT, byref(value), 0, 0)
             else:
                 raise TypeError("Invalid type to set attribute value: " + \
