@@ -119,6 +119,26 @@ class Page(Subject, Observer):
                 XDW_PAGE_TYPE[self.page_type],
                 self.annotations)
 
+    def __len__(self):
+        return self.annotations
+
+    def __getitem__(self, pos):
+        return self.annotation(pos)
+
+    def __setitem__(self, pos, val):
+        raise NotImplementedError()
+
+    def __iter__(self):
+        self._pos = 0
+        return self
+
+    def next(self):
+        if self.annotations <= self._pos:
+            raise StopIteration
+        ann = self.annotation(self._pos)
+        self._pos += 1
+        return ann
+
     @staticmethod
     def _split_attrname(name, store=False):
         if "_" not in name:
@@ -206,13 +226,16 @@ class Page(Subject, Observer):
         ann = self.add_annotation(XDW_AID_TEXT, position)
         ann.Text = text
         for k, v in kw.items():
-            if k in ("fore_color", "back_color"):
-                v = XDW_COLOR.normalize(v)
-            elif k in ("font_pitch_and_family"):
-                v = XDW_PITCH_AND_FAMILY.get(k, 0)
-            setattr(ann, k, v)
-            if k in ("font_name"):
-                ann.font_char_set = XDW_FONT_CHARSET.get("DEFAULT_CHARSET", 0)
+            if k in ("ForeColor", "fore_color", "BackColor", "back_color"):
+                setattr(ann, k, XDW_COLOR.normalize(v))
+            elif k in ("FontPitchAndFamily", "font_pitch_and_family"):
+                ann.FontPitchAndFamily = XDW_PITCH_AND_FAMILY.get(k, 0)
+            elif k in ("FontName", "font_name"):
+                ann.FontName = v
+            elif k in ("FontCharSet", "font_char_set"):
+                ann.FontCharSet = XDW_FONT_CHARSET.get("DEFAULT_CHARSET", 0)
+        if hasattr(ann, "FontName") and not hasattr(ann, "FontCharSet"):
+            raise ValueError("FontName must be specified with FontCharSet")
         return ann
 
     def delete_annotation(self, pos):

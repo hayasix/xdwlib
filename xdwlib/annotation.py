@@ -247,12 +247,15 @@ class Annotation(Subject, Observer):
         ann.Text = text
         for k, v in kw.items():
             if k in ("ForeColor", "fore_color", "BackColor", "back_color"):
-                v = XDW_COLOR.normalize(v)
+                setattr(ann, k, XDW_COLOR.normalize(v))
             elif k in ("FontPitchAndFamily", "font_pitch_and_family"):
-                v = XDW_PITCH_AND_FAMILY.get(k, 0)
-            setattr(ann, k, v)
-            if k in ("FontName", "font_name"):
-                ann.font_char_set = XDW_FONT_CHARSET.get("DEFAULT_CHARSET", 0)
+                ann.FontPitchAndFamily = XDW_PITCH_AND_FAMILY.get(k, 0)
+            elif k in ("FontName", "font_name"):
+                ann.FontName = v
+            elif k in ("FontCharSet", "font_char_set"):
+                ann.FontCharSet = XDW_FONT_CHARSET.get("DEFAULT_CHARSET", 0)
+        if hasattr(ann, "FontName") and not hasattr(ann, "FontCharSet"):
+            raise ValueError("FontName must be specified with FontCharSet")
         return ann
 
     def delete_annotation(self, pos):
