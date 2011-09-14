@@ -41,53 +41,6 @@ def joinf(sep, seq):
     """sep.join(seq), omitting None, null or so."""
     return sep.join([s for s in filter(bool, seq)]) or None
 
-
-def find_annotations(obj, handles=None, types=None, rect=None,
-        half_open=True, recursive=False):
-    """Find annotations on obj, page or annotation, which meets criteria given.
-
-    find_annotations(object, handles=None, types=None, rect=None,
-            half_open=True, recursive=False)
-        handles     sequence of annotation handles.  None means all.
-        types       sequence of types.  None means all.
-        rect        XDWRect which includes annotations,
-                    Note that right/bottom value are innermost of outside
-                    unless half_open==False.  None means all.
-        recursive   also return descendant (child) annotations.
-    """
-    if handles and not isinstance(handles, (tuple, list)):
-        handles = list(handles)
-    if types:
-        if not isinstance(types, (list, tuple)):
-            types = [types]
-        types = [XDW_ANNOTATION_TYPE.normalize(t) for t in types]
-    if rect and not half_open:
-        rect.right += 1
-        rect.bottom += 1
-    annotation_list = []
-    for i in range(obj.annotations):
-        annotation = obj.annotation(i)
-        sublist = []
-        if recursive and annotation.annotations:
-            sublist = find_annotations(annotation,
-                    handles=handles,
-                    types=types,
-                    rect=rect, half_open=half_open,
-                    recursive=recursive)
-        if (not rect or annotation.inside(rect)) and \
-                (not types or annotation.type in types) and \
-                (not handles or annotation.handle in handles):
-            if sublist:
-                sublist.insert(0, annotation)
-                annotation_list.append(sublist)
-            else:
-                annotation_list.append(annotation)
-        elif sublist:
-            sublist.insert(0, None)
-            annotation_list.append(sublist)
-    return annotation_list
-
-
 def inner_attribute_name(name):
     if name.startswith("%"):
         return name

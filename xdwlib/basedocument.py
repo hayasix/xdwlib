@@ -36,11 +36,11 @@ class BaseDocument(Subject):
     def __init__(self):
         Subject.__init__(self)
 
-    def __repr__(self):
-        raise NotImplementedError()  # abstract
+    def __repr__(self):  # abstract
+        raise NotImplementedError()
 
-    def __str__(self):
-        raise NotImplementedError()  # abstract
+    def __str__(self):  # abstract
+        raise NotImplementedError()
 
     def __len__(self):
         return self.pages
@@ -62,9 +62,9 @@ class BaseDocument(Subject):
         self._pos += 1
         return page
 
-    def absolute_page(self, pos):
+    def absolute_page(self, pos):  # abstract
         """Get absolute page number in binder/document."""
-        raise NotImplementedError()  # abstract
+        raise NotImplementedError()
 
     def page(self, pos):
         """Get a Page object."""
@@ -119,5 +119,5 @@ class BaseDocument(Subject):
             f = lambda page: pattern.search(page.fulltext())
         return PageCollection(filter(f, self))
 
-    def dirname(self):
-        raise NotImplementedError()  # abstract
+    def dirname(self):  # abstract
+        raise NotImplementedError()

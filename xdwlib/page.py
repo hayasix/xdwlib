@@ -18,7 +18,7 @@ import os
 from common import *
 from observer import Subject, Observer
 from struct import Point
-from annotation import Annotation
+from annotatable import Annotatable
 
 
 __all__ = ("Page", "PageCollection")
@@ -60,7 +60,7 @@ class PageCollection(list):
         binder.close()
 
 
-class Page(Subject, Observer):
+class Page(Annotatable, Observer):
 
     """Page of DocuWorks document"""
 
@@ -101,7 +101,7 @@ class Page(Subject, Observer):
 
     def __init__(self, doc, pos):
         self.pos = pos
-        Subject.__init__(self)
+        Annotatable.__init__(self)
         Observer.__init__(self, doc, EV_PAGE_INSERTED)
         self.doc = doc
         self.reset_attr()
@@ -118,26 +118,6 @@ class Page(Subject, Observer):
                 self.size.x, self.size.y,
                 XDW_PAGE_TYPE[self.page_type],
                 self.annotations)
-
-    def __len__(self):
-        return self.annotations
-
-    def __getitem__(self, pos):
-        return self.annotation(pos)
-
-    def __setitem__(self, pos, val):
-        raise NotImplementedError()
-
-    def __iter__(self):
-        self._pos = 0
-        return self
-
-    def next(self):
-        if self.annotations <= self._pos:
-            raise StopIteration
-        ann = self.annotation(self._pos)
-        self._pos += 1
-        return ann
 
     @staticmethod
     def _split_attrname(name, store=False):
@@ -179,82 +159,17 @@ class Page(Subject, Observer):
         else:
             raise ValueError("illegal event type: %d" % event.type)
 
-    def annotation(self, pos):
-        """annotation(pos) --> Annotation"""
-        if self.annotations <= pos:
-            raise IndexError(
-                    "Annotation number must be < %d, %d given" % (
-                    self.annotations, pos))
-        if pos not in self.observers:
-            self.observers[pos] = Annotation(self, pos)
-        return self.observers[pos]
+    def _add_annotation(self, ann_type, position, init_dat):
+        return XDW_AddAnnotation(self.doc.handle,
+                ann_type, self.absolute_page() + 1,
+                int(position.x * 100), int(position.y * 100),
+                init_dat)
 
-    def find_annotations(self, *args, **kw):
-        return find_annotations(self, *args, **kw)
-
-    def add_annotation(self, ann_type, position, **kw):
-        """Paste an annotation.
-
-        add_annotation(ann_type, position, **kw)
-            ann_type    annotation type
-            position    Point; float, unit:mm
-        """
-        ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
-        if isinstance(position, (tuple, list)):
-            position = Point(*position)
-        init_dat = Annotation.initial_data(ann_type, **kw)
-        ann_handle = XDW_AddAnnotation(self.doc.handle,
-                    ann_type, self.absolute_page() + 1,
-                    int(position.x * 100), int(position.y * 100),
-                    init_dat)
-        info = XDW_ANNOTATION_INFO()
-        info.handle = ann_handle
-        info.nHorPos = int(position.x * 100)
-        info.nVerPos = int(position.y * 100)
-        info.nWidth = 0
-        info.nHeight = 0
-        info.nAnnotationType = ann_type
-        info.nChildAnnotations = 0
-        pos = self.annotations  # TODO: Ensure this is correct.
-        ann = Annotation(self, pos, parent=None, info=info)
-        self.annotations += 1
-        self.notify(event=Notification(EV_ANN_INSERTED, pos))
-        return ann
-
-    def add_text_annotation(self, text, position=Point(0, 0), **kw):
-        """Paste a text annotation."""
-        ann = self.add_annotation(XDW_AID_TEXT, position)
-        ann.Text = text
-        for k, v in kw.items():
-            if k in ("ForeColor", "fore_color", "BackColor", "back_color"):
-                setattr(ann, k, XDW_COLOR.normalize(v))
-            elif k in ("FontPitchAndFamily", "font_pitch_and_family"):
-                ann.FontPitchAndFamily = XDW_PITCH_AND_FAMILY.get(k, 0)
-            elif k in ("FontName", "font_name"):
-                ann.FontName = v
-            elif k in ("FontCharSet", "font_char_set"):
-                ann.FontCharSet = XDW_FONT_CHARSET.get("DEFAULT_CHARSET", 0)
-        if hasattr(ann, "FontName") and not hasattr(ann, "FontCharSet"):
-            raise ValueError("FontName must be specified with FontCharSet")
-        return ann
-
-    def delete_annotation(self, pos):
-        """Delete an annotation."""
-        ann = self.annotation(pos)
+    def _delete_annotation(self, ann):
         XDW_RemoveAnnotation(self.doc.handle, ann.handle)
-        self.detach(ann, EV_ANN_REMOVED)
-        self.annotations -= 1
 
     def content_text(self):
         return XDW_GetPageTextToMemoryW(self.doc.handle, self.absolute_page() + 1)
-
-    def annotation_text(self, recursive=True):
-        return joinf(ASEP, [
-                a.content_text(recursive=recursive) for a
-                        in self.find_annotations()])
-
-    def fulltext(self):
-        return  joinf(ASEP, [self.content_text(), self.annotation_text()])
 
     def rotate(self, degree=0, auto=False):
         """Rotate a page.
