@@ -101,8 +101,9 @@ class Annotation(Annotatable, Observer):
                 "".join("[%d]" % pos for pos in reversed(parent_pos)))
 
     def __str__(self):
-        return u"Annotation(%s P%d: type=%s)" % (
-                self.page.doc.name, self.page.pos, XDW_ANNOTATION_TYPE[self.type])
+        return u"Annotation(%s[%d]:%s)" % (
+                self.page.doc.name, self.page.pos,
+                XDW_ANNOTATION_TYPE[self.type])
 
     def __getattr__(self, name):
         attrname = inner_attribute_name(name)
@@ -122,8 +123,9 @@ class Annotation(Annotatable, Observer):
         if name in ("position", "size"):
             pah = self.parent.handle if self.parent else NULL
             info = XDW_GetAnnotationInformation(
-                    self.page.doc.handle, self.page.absolute_page() + 1, pah, self.pos + 1)
-            self.__dict__[name] = Point(info.nWidth, info.nHeight) / 100.0 # mm
+                    self.page.doc.handle, self.page.absolute_page() + 1,
+                    pah, self.pos + 1)
+            self.__dict__[name] = Point(info.nWidth, info.nHeight) / 100.  # mm
         return self.__dict__[name]
 
     def __setattr__(self, name, value):

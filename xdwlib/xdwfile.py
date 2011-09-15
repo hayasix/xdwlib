@@ -45,7 +45,6 @@ def environ(name=None):
     return values
 
 
-
 # The last resort to close documents in interactive session.
 try:
     VALID_DOCUMENT_HANDLES

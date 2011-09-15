@@ -822,40 +822,63 @@ XDW_ANNOTATION_ATTRIBUTE = {
         XDW_ATN_Alignment           : (0, None, ()),
         XDW_ATN_ArrowheadStyle      : (0, None, (XDW_AID_STRAIGHTLINE,)),
         XDW_ATN_ArrowheadType       : (0, None, (XDW_AID_STRAIGHTLINE,)),
-        XDW_ATN_AutoResize          : (0, None, (XDW_AID_LINK, XDW_AID_FUSEN,)),
+        XDW_ATN_AutoResize          : (0, None, (XDW_AID_LINK,
+                                                 XDW_AID_FUSEN,)),
         XDW_ATN_BackColor           : (0, None, (XDW_AID_TEXT,)),
         XDW_ATN_BasisYear           : (0, None, (XDW_AID_STAMP,)),
         XDW_ATN_BasisYearStyle      : (0, None, (XDW_AID_STAMP,)),
         XDW_ATN_BeginningPage       : (0, None, ()),
-        XDW_ATN_BorderColor         : (0, None, (XDW_AID_STRAIGHTLINE, XDW_AID_RECTANGLE, XDW_AID_ARC, XDW_AID_STAMP, XDW_AID_MARKER, XDW_AID_POLYGON,)),
-        XDW_ATN_BorderStyle         : (0, None, (XDW_AID_RECTANGLE, XDW_AID_ARC, XDW_AID_POLYGON,)),
-        XDW_ATN_BorderTransparent   : (0, None, (XDW_AID_STRAIGHTLINE, XDW_AID_MARKER,)),
+        XDW_ATN_BorderColor         : (0, None, (XDW_AID_STRAIGHTLINE,
+                                                 XDW_AID_RECTANGLE,
+                                                 XDW_AID_ARC,
+                                                 XDW_AID_STAMP,
+                                                 XDW_AID_MARKER,
+                                                 XDW_AID_POLYGON,)),
+        XDW_ATN_BorderStyle         : (0, None, (XDW_AID_RECTANGLE,
+                                                 XDW_AID_ARC,
+                                                 XDW_AID_POLYGON,)),
+        XDW_ATN_BorderTransparent   : (0, None, (XDW_AID_STRAIGHTLINE,
+                                                 XDW_AID_MARKER,)),
         XDW_ATN_BorderType          : (0, None, (XDW_AID_STRAIGHTLINE,)),
-        XDW_ATN_BorderWidth         : (0, "pt", (XDW_AID_STRAIGHTLINE, XDW_AID_RECTANGLE, XDW_AID_ARC, XDW_AID_MARKER, XDW_AID_POLYGON,)),
+        XDW_ATN_BorderWidth         : (0, "pt", (XDW_AID_STRAIGHTLINE,
+                                                 XDW_AID_RECTANGLE,
+                                                 XDW_AID_ARC,
+                                                 XDW_AID_MARKER,
+                                                 XDW_AID_POLYGON,)),
         XDW_ATN_BottomField         : (1, None, (XDW_AID_STAMP,)),
         XDW_ATN_Caption             : (1, None, (XDW_AID_LINK,)),
         XDW_ATN_CustomData          : (0, None, ()),
         XDW_ATN_DateField_FirstChar : (1, None, (XDW_AID_STAMP,)),
-        XDW_ATN_DateFormat          : (1, None, (XDW_AID_STAMP,)),  # "yy.mm.dd", "yy.m.d", "dd.mmm.yy" or "dd.mmm.yyyy"
+        # DateFormat in ("yy.mm.dd", "yy.m.d", "dd.mmm.yy", "dd.mmm.yyyy")
+        XDW_ATN_DateFormat          : (1, None, (XDW_AID_STAMP,)),
         XDW_ATN_DateOrder           : (0, None, (XDW_AID_STAMP,)),
         XDW_ATN_DateStyle           : (0, None, (XDW_AID_STAMP,)),
         XDW_ATN_DayField            : (1, None, (XDW_AID_STAMP,)),
         XDW_ATN_Digit               : (0, None, ()),
         XDW_ATN_EndingPage          : (0, None, ()),
-        XDW_ATN_FillColor           : (0, None, (XDW_AID_FUSEN, XDW_AID_RECTANGLE, XDW_AID_ARC, XDW_AID_POLYGON,)),
-        XDW_ATN_FillStyle           : (0, None, (XDW_AID_RECTANGLE, XDW_AID_ARC, XDW_AID_POLYGON,)),
-        XDW_ATN_FillTransparent     : (0, None, (XDW_AID_RECTANGLE, XDW_AID_ARC, XDW_AID_POLYGON,)),
+        XDW_ATN_FillColor           : (0, None, (XDW_AID_FUSEN,
+                                                 XDW_AID_RECTANGLE,
+                                                 XDW_AID_ARC,
+                                                 XDW_AID_POLYGON,)),
+        XDW_ATN_FillStyle           : (0, None, (XDW_AID_RECTANGLE,
+                                                 XDW_AID_ARC,
+                                                 XDW_AID_POLYGON,)),
+        XDW_ATN_FillTransparent     : (0, None, (XDW_AID_RECTANGLE,
+                                                 XDW_AID_ARC,
+                                                 XDW_AID_POLYGON,)),
         XDW_ATN_FontCharSet         : (0, None, (XDW_AID_TEXT, XDW_AID_LINK,)),
         XDW_ATN_FontName            : (1, None, (XDW_AID_TEXT, XDW_AID_LINK,)),
         XDW_ATN_FontPitchAndFamily  : (0, None, (XDW_AID_TEXT, XDW_AID_LINK,)),
-        XDW_ATN_FontSize            : (0, "1/10pt", (XDW_AID_TEXT, XDW_AID_LINK,)),
+        XDW_ATN_FontSize            : (0, "1/10pt", (XDW_AID_TEXT,
+                                                     XDW_AID_LINK,)),
         XDW_ATN_FontStyle           : (0, None, (XDW_AID_TEXT, XDW_AID_LINK,)),
         XDW_ATN_ForeColor           : (0, None, (XDW_AID_TEXT, XDW_AID_LINK,)),
         XDW_ATN_GUID                : (0, None, ()),
         XDW_ATN_ImageFile           : (0, None, ()),
         XDW_ATN_Invisible           : (0, None, (XDW_AID_LINK,)),
         XDW_ATN_LeftRightMargin     : (0, None, ()),
-        XDW_ATN_LineSpace           : (0, "1/100line", (XDW_AID_TEXT,)),  # 1-10
+        # 1 <= LineSpace <= 10
+        XDW_ATN_LineSpace           : (0, "1/100line", (XDW_AID_TEXT,)),
         XDW_ATN_LinkAtn_Title       : (1, None, (XDW_AID_LINK,)),
         XDW_ATN_LinkType            : (0, None, (XDW_AID_LINK,)),
         XDW_ATN_MailAddress         : (1, None, (XDW_AID_LINK,)),
@@ -864,18 +887,25 @@ XDW_ANNOTATION_ATTRIBUTE = {
         XDW_ATN_OtherFilePath_Relative  : (0, None, (XDW_AID_LINK,)),
         XDW_ATN_PageFrom            : (0, None, (XDW_AID_LINK,)),
         XDW_ATN_PageRange           : (0, None, ()),
-        XDW_ATN_Points              : (2, None, (XDW_AID_STRAIGHTLINE, XDW_AID_MARKER, XDW_AID_POLYGON,)),  # TODO: TREAT SPECIALLY
+        # TODO: TREAT Points SPECIALLY
+        XDW_ATN_Points              : (2, None, (XDW_AID_STRAIGHTLINE,
+                                                 XDW_AID_MARKER,
+                                                 XDW_AID_POLYGON,)),
         XDW_ATN_ShowIcon            : (0, None, (XDW_AID_LINK,)),
         XDW_ATN_StartingNumber      : (0, None, ()),
         XDW_ATN_Text                : (1, None, (XDW_AID_TEXT,)),
         XDW_ATN_TextAutoResizeHeight    : (0, None, (XDW_AID_TEXT,)),
-        XDW_ATN_TextBottomMargin    : (0, "1/100mm", (XDW_AID_TEXT,)),  # 0-20000
+        # 0 <= TextBottomMargin <= 2000
+        XDW_ATN_TextBottomMargin    : (0, "1/100mm", (XDW_AID_TEXT,)),
         XDW_ATN_TextDirection       : (0, None, (XDW_AID_TEXT,)),
-        XDW_ATN_TextLeftMargin      : (0, "1/100mm", (XDW_AID_TEXT,)),  # 0-20000
+        # 0 <= TextLeftMargin <= 2000
+        XDW_ATN_TextLeftMargin      : (0, "1/100mm", (XDW_AID_TEXT,)),
         XDW_ATN_TextOrientation     : (0, None, (XDW_AID_TEXT,)),
-        XDW_ATN_TextRightMargin     : (0, "1/100mm", (XDW_AID_TEXT,)),  # 0-20000
+        # 0 <= TextRightMargin <= 2000
+        XDW_ATN_TextRightMargin     : (0, "1/100mm", (XDW_AID_TEXT,)),
         XDW_ATN_TextSpacing         : (0, "1/10char", (XDW_AID_TEXT,)),
-        XDW_ATN_TextTopMargin       : (0, "1/100mm", (XDW_AID_TEXT,)),  # 0-20000
+        # 0 <= TextTopMargin <= 2000
+        XDW_ATN_TextTopMargin       : (0, "1/100mm", (XDW_AID_TEXT,)),
         XDW_ATN_Tooltip             : (0, None, (XDW_AID_LINK,)),
         XDW_ATN_Tooltip_String      : (1, None, (XDW_AID_LINK,)),
         XDW_ATN_TopBottomMargin     : (0, None, ()),
@@ -1706,7 +1736,7 @@ def ATTR(by_order=False, widechar=False):
             else:
                 args.extend([byref(attr_type), NULL, 0, NULL])
             size = TRY(getattr(DLL, api.__name__), *args)
-            if attr_type.value in (XDW_ATYPE_INT, XDW_ATYPE_BOOL, XDW_ATYPE_DATE):
+            if attr_type.value in (XDW_ATYPE_INT, XDW_ATYPE_BOOL):
                 attr_val = c_int()
             elif attr_type.value == XDW_ATYPE_DATE:
                 attr_val = c_long()

@@ -42,7 +42,8 @@ class DocumentInBinder(BaseDocument, Observer):
         self.original_data = document_info.nOriginalData
 
     def __repr__(self):
-        return u"DocumentInBinder(%s (%s[%d])" % (self.name, self.binder.name, self.pos)
+        return u"DocumentInBinder(%s(%s[%d]))" % (
+                self.name, self.binder.name, self.pos)
 
     def __str__(self):
         return u"DocumentInBinder(%s (%s[%d]): %d pages, %d attachments)" % (

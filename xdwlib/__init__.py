@@ -29,5 +29,3 @@ def xdwopen(path, readonly=False, authenticate=True):
     if ext not in XDW_TYPES:
         raise XDWError(XDW_E_INVALIDARG)
     return XDW_TYPES[ext](path, readonly=readonly, authenticate=authenticate)
-
-

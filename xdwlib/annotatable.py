@@ -148,13 +148,16 @@ class Annotatable(Subject):
         return joinf(ASEP, result)
 
     def fulltext(self):
-        return  joinf(ASEP, [self.content_text(), self.annotation_text(recursive=True)])
+        return  joinf(ASEP, [
+                self.content_text(),
+                self.annotation_text(recursive=True)])
 
     def find_annotations(self, handles=None, types=None, rect=None,
             half_open=True, recursive=False):
-        """Find annotations on self, page or annotation, which meets criteria given.
+        """Find annotations on page or annotation, which meets criteria given.
 
-        find_annotations(handles=None, types=None, rect=None, half_open=True, recursive=False)
+        find_annotations(handles=None, types=None, rect=None, half_open=True,
+                         recursive=False)
             handles     sequence of annotation handles.  None means all.
             types       sequence of types.  None means all.
             rect        XDWRect which includes annotations,
@@ -193,4 +196,3 @@ class Annotatable(Subject):
                 sublist.insert(0, None)
                 annotation_list.append(sublist)
         return annotation_list
-

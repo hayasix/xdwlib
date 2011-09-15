@@ -41,6 +41,7 @@ def joinf(sep, seq):
     """sep.join(seq), omitting None, null or so."""
     return sep.join([s for s in filter(bool, seq)]) or None
 
+
 def inner_attribute_name(name):
     if name.startswith("%"):
         return name
@@ -50,7 +51,8 @@ def inner_attribute_name(name):
 
 
 def outer_attribute_name(name):
-    import string, re
+    import string
+    import re
     if not name.startswith("%"):
         return name
     return re.sub("([A-Z])", r"_\1", name[1:])[1:].lower()
@@ -59,7 +61,10 @@ def outer_attribute_name(name):
 def adjust_path(path, default_dir="", coding=None):
     directory, basename = os.path.split(path)
     # Given no dir, create the new document in the same dir as original one.
-    if not directory: path = os.path.join(default_dir, basename)
-    if not os.path.splitext(basename)[1]: path += ".xdw"
-    if coding: path = path.encode(coding)
+    if not directory:
+        path = os.path.join(default_dir, basename)
+    if not os.path.splitext(basename)[1]:
+        path += ".xdw"
+    if coding:
+        path = path.encode(coding)
     return path

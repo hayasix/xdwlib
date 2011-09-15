@@ -69,7 +69,7 @@ class BaseDocument(Subject):
     def page(self, pos):
         """Get a Page object."""
         if self.pages <= pos:
-            raise IndexError("Page number must be < %d, %d given" %(
+            raise IndexError("Page number must be < %d, %d given" % (
                     self.pages, pos))
         if pos not in self.observers:
             self.observers[pos] = Page(self, pos)

@@ -37,7 +37,8 @@ class PageCollection(list):
             return PageCollection(list.__add__(self, [y]))
         elif isinstance(y, PageCollection):
             return PageCollection(list.__add__(self, y))
-        raise TypeError("can only concatenate Page or PageCollection to PageCollection")
+        raise TypeError("can only concatenate Page or PageCollection "
+                        "to PageCollection")
 
     def __iadd__(self, y):
         if isinstance(y, Page):
@@ -45,7 +46,8 @@ class PageCollection(list):
         elif isinstance(y, PageCollection):
             self.extend(y)
         else:
-            TypeError("can only concatenate Page or PageCollection to PageCollection")
+            TypeError("can only concatenate Page or PageCollection "
+                      "to PageCollection")
         return self
 
     def save(self, path):
@@ -126,14 +128,14 @@ class Page(Annotatable, Observer):
         forms = {
                 "header": XDW_PAGEFORM_HEADER,
                 "footer": XDW_PAGEFORM_FOOTER,
-                "pagenumber": XDW_PAGEFORM_PAGENUMBER
+                "pagenumber": XDW_PAGEFORM_PAGENUMBER,
                 }
         if store:
             forms["topimage"] = XDW_PAGEFORM_TOPIMAGE
             forms["bottomimage"] = XDW_PAGEFORM_BOTTOMIMAGE
         form = forms.get(name.split("_")[0], None)
         if form is not None:
-            name = name[name.index("_")+1:]
+            name = name[name.index("_") + 1:]
         return (form, name)
 
     def __getattr__(self, name):
@@ -169,7 +171,8 @@ class Page(Annotatable, Observer):
         XDW_RemoveAnnotation(self.doc.handle, ann.handle)
 
     def content_text(self):
-        return XDW_GetPageTextToMemoryW(self.doc.handle, self.absolute_page() + 1)
+        return XDW_GetPageTextToMemoryW(
+                self.doc.handle, self.absolute_page() + 1)
 
     def rotate(self, degree=0, auto=False):
         """Rotate a page.
@@ -237,7 +240,8 @@ class Page(Annotatable, Observer):
             opt.pAreaRects = byref(rectlist)
         else:
             opt.pAreaRects = NULL
-        XDW_ApplyOcr(self.doc.handle, self.absolute_page() + 1, engine, byref(opt))
+        XDW_ApplyOcr(self.doc.handle, self.absolute_page() + 1,
+                engine, byref(opt))
         self.doc.require_finalization()
 
     def copy(self, path=None):
@@ -249,6 +253,7 @@ class Page(Annotatable, Observer):
         # Page number is intra-document, and its origin is not 0 but 1.
         if not path:
             path = "%s_P%d.xdw" % (self.doc.name, self.pos + 1)
-        path = adjust_path(path, default_dir=self.doc.dirname(), coding=CODEPAGE)
+        path = adjust_path(path,
+                default_dir=self.doc.dirname(), coding=CODEPAGE)
         XDW_GetPage(self.doc.handle, self.absolute_page() + 1, path)
         return path
