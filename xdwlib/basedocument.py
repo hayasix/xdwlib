@@ -52,15 +52,8 @@ class BaseDocument(Subject):
         raise NotImplementedError()
 
     def __iter__(self):
-        self._pos = 0
-        return self
-
-    def next(self):
-        if self.pages <= self._pos:
-            raise StopIteration
-        page = self.page(self._pos)
-        self._pos += 1
-        return page
+        for pos in xrange(self.pages):
+            yield self.page(pos)
 
     def absolute_page(self, pos):  # abstract
         """Get absolute page number in binder/document."""

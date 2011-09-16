@@ -58,15 +58,8 @@ class Annotatable(Subject):
         raise NotImplementedError()
 
     def __iter__(self):
-        self._pos = 0
-        return self
-
-    def next(self):
-        if self.annotations <= self._pos:
-            raise StopIteration
-        ann = self.annotation(self._pos)
-        self._pos += 1
-        return ann
+        for pos in xrange(self.annotations):
+            yield self.annotation(pos)
 
     def annotation(self, pos):
         """annotation(pos) --> Annotation"""

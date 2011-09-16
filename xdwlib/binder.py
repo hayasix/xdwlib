@@ -57,15 +57,8 @@ class Binder(Subject, XDWFile):
         raise NotImplementError()
 
     def __iter__(self):
-        self._pos = 0
-        return self
-
-    def next(self):
-        if self.documents <= self._pos:
-            raise StopIteration
-        doc = self.document(self._pos)
-        self._pos += 1
-        return doc
+        for pos in xrange(self.documents):
+            yield self.document(pos)
 
     def document(self, pos):
         """Get DocumentInBinder object for given position."""

@@ -29,15 +29,8 @@ class Point(object):
         return "%s%s" % (self.__class__.__name__, str(self))
 
     def __iter__(self):
-        self._pos = 0
-        return self
-
-    def next(self):
-        if 2 <= self._pos:
-            raise StopIteration
-        pos = self._pos
-        self._pos += 1
-        return (self.x, self.y)[pos]
+        for pos in range(2):
+            yield (self.x, self.y)[pos]
 
     def __mul__(self, n):
         if not isinstance(n, (int, float)):
@@ -77,15 +70,8 @@ class Rect(object):
         return "%s%s" % (self.__class__.__name__, str(self))
 
     def __iter__(self):
-        self._pos = 0
-        return self
-
-    def next(self):
-        if 4 <= self._pos:
-            raise StopIteration
-        pos = self._pos
-        self._pos += 1
-        return (self.left, self.top, self.right, self.bottom)[pos]
+       for pos in range(4):
+            yield (self.left, self.top, self.right, self.bottom)[pos]
 
     def size(self):
         return Point(self.right - self.left, self.bottom - self.top)
