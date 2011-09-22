@@ -52,6 +52,17 @@ except NameError:
     VALID_DOCUMENT_HANDLES = []
 
 
+def xdwopen(path, readonly=False, authenticate=True):
+    """General opener"""
+    from document import Document
+    from binder import Binder
+    XDW_TYPES = {".XDW": Document, ".XBD": Binder}
+    ext = os.path.splitext(path)[1].upper()
+    if ext not in XDW_TYPES:
+        raise XDWError(XDW_E_INVALIDARG)
+    return XDW_TYPES[ext](path, readonly=readonly, authenticate=authenticate)
+
+
 class XDWFile(object):
 
     """Docuworks file (XDW or XBD)"""
@@ -78,9 +89,10 @@ class XDWFile(object):
             open_mode.nAuthMode = XDW_AUTH_NONE
         if isinstance(path, str):
             path = unicode(path, CODEPAGE)
+        path = os.path.abspath(path)
         self.handle = XDW_OpenDocumentHandle(path, open_mode)
         self.register()
-        self.dirname, self.name = os.path.split(path)
+        self.dir, self.name = os.path.split(path)
         self.name = os.path.splitext(self.name)[0]
         # Set document properties.
         document_info = XDW_GetDocumentInformation(self.handle)

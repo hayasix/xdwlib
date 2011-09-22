@@ -51,15 +51,31 @@ class PageCollection(list):
         return self
 
     def save(self, path):
+        """Create a binder (XBD file) as a container for page collection."""
         from binder import Binder, create_binder
         create_binder(path)
         binder = Binder(path)
         for pos, page in enumerate(self):
+            # Preserve original document name.
             temp = page.copy()
             XDW_InsertDocumentToBinder(binder.handle, pos + 1, temp)
             os.remove(temp)
         binder.save()
         binder.close()
+        return path
+
+    def combine(self, path):
+        """Create a document (XDW file) as a container for page collection."""
+        from document import Document, create_document
+        path = self.pop(0).copy(path)
+        doc = Document(path)
+        for pos, page in enumerate(self):
+            temp = page.copy()
+            XDW_InsertDocument(doc.handle, pos + 1 + 1, temp)
+            os.remove(temp)
+        doc.save()
+        doc.close()
+        return path
 
 
 class Page(Annotatable, Observer):
@@ -247,13 +263,17 @@ class Page(Annotatable, Observer):
     def copy(self, path=None):
         """Copy current page and create another document.
 
-        Returns the path name for output.
+        Returns the path name of created XDW file.
+        Default path name is "DOCUMENTNAME_Pxx.xdw".
         """
-        # Given no path, name the new document 'DOCUMENTNAME_Pxx.xdw'.
-        # Page number is intra-document, and its origin is not 0 but 1.
-        if not path:
-            path = "%s_P%d.xdw" % (self.doc.name, self.pos + 1)
+        path = path or "%s_P%d.xdw" % (self.doc.name, self.pos + 1)
         path = adjust_path(path,
                 default_dir=self.doc.dirname(), coding=CODEPAGE)
+        # Append _2, _3, _4,...  for filename collision.
+        n = 1
+        root, ext = os.path.splitext(path)
+        while os.path.exists(path):
+            n += 1
+            path = os.path.join("%s_%d" % (root, n), ext)
         XDW_GetPage(self.doc.handle, self.absolute_page() + 1, path)
         return path

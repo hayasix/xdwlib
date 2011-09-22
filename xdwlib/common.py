@@ -14,6 +14,7 @@ FOR A PARTICULAR PURPOSE.
 """
 
 import os
+import tempfile
 
 from xdwapi import *
 from observer import *
@@ -68,3 +69,23 @@ def adjust_path(path, default_dir="", coding=None):
     if coding:
         path = path.encode(coding)
     return path
+
+
+class XDWTemp(object):
+
+    """Temporary XDW file"""
+
+    def __init__(self, dir, prefix="$$", suffix=".xdw"):
+        self.fd, self.path = tempfile.mkstemp(suffix, prefix, dir)
+        blank = join(dirname(abspath(__file__)), "__blank__.xdw")
+        os.write(self.fd, data)
+        return self.path
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self):
+        self.close()
+
+    def close(self):
+        os.fdopen(self.fd).close()
