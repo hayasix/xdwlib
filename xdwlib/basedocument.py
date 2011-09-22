@@ -14,6 +14,7 @@ FOR A PARTICULAR PURPOSE.
 """
 
 from common import *
+from xdwfile import xdwopen
 from page import Page, PageCollection
 
 
@@ -68,18 +69,45 @@ class BaseDocument(Subject):
             self.observers[pos] = Page(self, pos)
         return self.observers[pos]
 
-    def append_page(self, page):
-        """Append a page on the tail of document."""
-        self.insert_page(-1, page)
+    def append(self, obj):
+        """Append a page/pagecollection/document at the end of document."""
+        self.insert(self.pages, obj)
 
-    def insert_page(self, pos, page):
-        """Insert a page."""
-        raise NotImplementedError()
-        # (.. some code to insert a page ..)
-        self.attach(page, EV_PAGE_INSERTED)
-        self.pages += 1
+    def insert(self, pos, obj):
+        """Insert a page/pagecollection/document.
 
-    def delete_page(self, pos):
+        insert(pos, obj) --> None
+
+        pos: position to insert; starts with 0
+        obj: Page/PageCollection/BaseDocument
+        """
+        doc = None
+        if isinstance(obj, Page): pc = PageCollection([obj])
+        elif isinstance(obj, PageCollection):
+            pc = obj
+        elif isinstance(obj, BaseDocument):
+            pc = PageCollection(obj)
+        elif isinstance(obj, basestring):  # XDW path
+            assert obj.lower().endswith(".xdw")  # binder is not acceptable
+            doc = xdwopen(obj)
+            pc = PageCollection(doc)
+        else:
+            raise ValueError("can't insert %s object" % (obj.__class__))
+        if pos < 0:
+            pos += self.pages
+        temp = os.path.join(self.dirname(), "$$%s.xdw" % (self.name,))
+        temp = pc.combine(temp)
+        XDW_InsertDocument(self.handle, pos + 1, temp)
+        os.remove(temp)
+        if doc:
+            doc.close()
+        # Check inserted pages in order to attach them to this document and
+        # shift observer entries appropriately.
+        for p in xrange(pos, pos + len(pc)):
+            page = Page(self, p)
+        self.pages += len(pc)
+
+    def delete(self, pos):
         """Delete a page."""
         page = self.page(pos)
         XDW_DeletePage(self.handle, self.absolute_page(pos) + 1)
@@ -100,16 +128,29 @@ class BaseDocument(Subject):
                 joinf(ASEP, [page.content_text(), page.annotation_text()])
                 for page in self])
 
-    def find_fulltext(self, pattern):
-        """Find given pattern (text or regex) throughout document.
+    def find_content_text(self, pattern):
+        return self.find(pattern, func=lambda page: page.content_text())
 
-        Returns a PageCollection object, each of which contains the given
-        pattern in its content text or annotations.
+    def find_annotation_text(self, pattern):
+        return self.find(pattern, func=lambda page: page.annotation_text())
+
+    def find_fulltext(self, pattern):
+        return self.find(pattern)
+
+    def find(self, pattern, func=None):
+        """Find given pattern (text or regex) through document.
+
+        find(pattern, func) --> PageCollection
+
+        pattern:  a string/unicode or regexp (by re module)
+        func:  a function which takes a page and returns text in it
+               (default) lambda page: page.fulltext()
         """
+        func = func or (lambda page: page.fulltext())
         if isinstance(pattern, (str, unicode)):
-            f = lambda page: pattern in page.fulltext()
+            f = lambda page: pattern in func(page)
         else:
-            f = lambda page: pattern.search(page.fulltext())
+            f = lambda page: pattern.search(func(page))
         return PageCollection(filter(f, self))
 
     def dirname(self):  # abstract

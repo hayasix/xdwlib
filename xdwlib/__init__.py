@@ -18,14 +18,4 @@ import os
 from xdwapi import XDWError, XDW_E_INVALIDARG
 from binder import Binder
 from document import Document
-
-
-XDW_TYPES = {".XDW": Document, ".XBD": Binder}
-
-
-def xdwopen(path, readonly=False, authenticate=True):
-    """General opener"""
-    ext = os.path.splitext(path)[1].upper()
-    if ext not in XDW_TYPES:
-        raise XDWError(XDW_E_INVALIDARG)
-    return XDW_TYPES[ext](path, readonly=readonly, authenticate=authenticate)
+from xdwfile import xdwopen

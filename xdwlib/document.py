@@ -78,4 +78,4 @@ class Document(BaseDocument, XDWFile):
         return pos
 
     def dirname(self):
-        return self.dirname
+        return self.dir

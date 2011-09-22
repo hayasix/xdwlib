@@ -74,4 +74,4 @@ class DocumentInBinder(BaseDocument, Observer):
         return self.page_offset + pos
 
     def dirname(self):
-        return self.binder.dirname
+        return self.binder.dir

@@ -21,10 +21,10 @@ class Subject(object):
     def __init__(self):
         self.observers = dict()
 
-    def shift_keys(self, border, delete=False):
+    def shift_keys(self, border, delete=False, count=1):
         for pos in sorted(filter(lambda p: border < p, self.observers.keys()),
                 reverse=(not delete)):
-            self.observers[pos + (-1 if delete else 1)] = self.observers[pos]
+            self.observers[pos + (-count if delete else count)] = self.observers[pos]
             del self.observers[pos]
 
     def attach(self, observer, event):
