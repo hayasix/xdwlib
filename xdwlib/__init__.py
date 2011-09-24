@@ -13,9 +13,4 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE.
 """
 
-import os
-
-from xdwapi import XDWError, XDW_E_INVALIDARG
-from binder import Binder
-from document import Document
 from xdwfile import xdwopen
