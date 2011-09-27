@@ -15,8 +15,8 @@ FOR A PARTICULAR PURPOSE.
 
 import sys
 
-from xdwlib import xdwopen, XDWError
-from xdwapi import XDW_E_INVALIDARG
+from xdwlib import xdwopen
+from xdwlib.xdwapi import XDWError, XDW_E_INVALIDARG
 
 
 OPTION_ASK = False
@@ -28,23 +28,23 @@ def parse():
     from optparse import OptionParser
 
     parser = OptionParser()
+    parser.add_option("-a", "--all",
+            action="store_const", dest="spec",
+            const="Title,Subject,Author,Keywords,Comments,fulltext",
+            help="all properties, content text and annotation text")
     parser.add_option("--text",
-            action="store_const", dest="spec", const="text,annotation_fulltext",
+            action="store_const", dest="spec", const="fulltext",
             help="document text, OCR text and text annotations")
-    parser.add_option("--property",
-            action="store_const", dest="spec",
-            const="Title,Subject,Author,Keywords,Comments",
-            help="properties (title, subject, author, keyword, comment)")
-    parser.add_option("-a",
-            action="store_const", dest="spec",
-            const="Title,Subject,Author,Keywords,Comments,text,annotation_fulltext",
-            help="all text and properties")
-    parser.add_option("--page-text",
-            action="store_const", dest="spec", const="text",
+    parser.add_option("--content-text", "--page-text",
+            action="store_const", dest="spec", const="content_text",
             help="document text and OCR text")
     parser.add_option("--annotation-text",
-            action="store_const", dest="spec", const="annotation_fulltext",
+            action="store_const", dest="spec", const="annotation_text",
             help="text annotations")
+    parser.add_option("--properties",
+            action="store_const", dest="spec",
+            const="Title,Subject,Author,Keywords,Comments",
+            help="all properties ie. title, subject, author, keyword and comment")
     parser.add_option("--title",
             action="store_const", dest="spec", const="Title",
             help="document title")
@@ -100,13 +100,16 @@ if __name__ == "__main__":
         sys.exit(0)
 
     if not options.spec:
-        options.spec = "text,annotation_fulltext"
+        options.spec = "fulltext"
 
     out = []
     for name in options.spec.split(","):
         try:
-            out.append(getattr(doc, name)())
-        except AttributeError:
+            text = getattr(doc, name)
+            if callable(text):
+                text = text()
+            out.append("%s=%s" % (name, text))
+        except KeyError:
             pass
     out = "".join(out)
     if options.pipe:
