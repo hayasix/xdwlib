@@ -16,12 +16,18 @@ FOR A PARTICULAR PURPOSE.
 import os
 
 from common import *
+from struct import Point, Rect
 from observer import Subject
-from struct import Point
 
 
 __all__ = ("Annotatable",)
 
+
+DEFAULT_POSITION = Point(0, 0)
+DEFAULT_RECT = Rect(0, 0)
+DEFAULT_SIZE = Point(100, 100)
+DEFAULT_WIDTH = 100
+DEFAULT_POINTS = (DEFAULT_POSITION, DEFAULT_SIZE)
 
 def initial_data(ann_type, **kw):
     ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
@@ -52,6 +58,8 @@ class Annotatable(Subject):
         return self.annotations
 
     def __getitem__(self, pos):
+        if pos < 0:
+            pos += self.annotations
         return self.annotation(pos)
 
     def __setitem__(self, pos, val):
@@ -102,7 +110,7 @@ class Annotatable(Subject):
         self.notify(event=Notification(EV_ANN_INSERTED, pos))
         return ann
 
-    def add_text_annotation(self, text, position=Point(0, 0), **kw):
+    def add_text_annotation(self, text, position=DEFAULT_POSITION, **kw):
         """Paste a text annotation."""
         ann = self.add_annotation(XDW_AID_TEXT, position)
         ann.Text = text
@@ -118,6 +126,50 @@ class Annotatable(Subject):
         if hasattr(ann, "FontName") and not hasattr(ann, "FontCharSet"):
             raise ValueError("FontName must be specified with FontCharSet")
         return ann
+
+    def add_fusen_annotation(self, position=DEFAULT_POSITION, size=DEFAULT_SIZE):
+        self.add_annotation(XDW_AID_FUSEN, position,
+                nWidth=size.x, nHeight=size.y)
+
+    def add_line_annotation(self, points=(DEFAULT_POSITION, DEFAULT_SIZE)):
+        self.add_annotation(XDW_AID_STRAIGHTLINE, points[0],
+                nWidth=points[1].x, nHeight=point[1].y)
+
+    add_straightline_annotation = add_line_annotation
+
+    def add_rectangle_annotation(self, rect=DEFAULT_RECT):
+        position, size = rect.position_and_size()
+        self.add_annotation(XDW_AID_RECT, position,
+                nWidth=size.x, nHeight=size.y)
+
+    add_rect_annotation = add_rectangle_annotation
+
+    def add_arc_annotation(self, rect=DEFAULT_RECT):
+        position, size = rect.position_and_size()
+        self.add_annotation(XDW_AID_ARC, position,
+                nWidth=size.x, nHeight=size.y)
+
+    def add_stamp_annotation(self, position=DEFAULT_POSITION, width=DEFAULT_WIDTH):
+        self.add_annotation(XDW_AID_STAMP, position,
+                nWidth=width)
+
+    def add_receivedstamp_annotation(self, position=DEFAULT_POSITION, width=DEFAULT_WIDTH):
+        self.add_annotation(XDW_AID_RECEIVEDSTAMP, position,
+                nWidth=width)
+
+    def add_custom_annotation(self, position=DEFAULT_POSITION,
+                size=DEFAULT_SIZE, guid="???", data="???"):
+        self.add_annotation(XDW_AID_CUSTOM, position,
+                nWidth=size.x, nHeight=size.y, lpszGuid=byref(guid),
+                nCustomDataSize=len(data), pCustomData=byref(data))
+
+    def add_marker_annotation(self, position=DEFAULT_POSITION, points=DEFAULT_POINTS):
+        self.add_annotation(XDW_AID_MARKER, position,
+                nCounts=len(points), pPoints=byref(points))
+
+    def add_polygon_annotation(self, position=DEFAULT_POSITION, points=DEFAULT_POINTS):
+        self.add_annotation(XDW_AID_POLYGON, position,
+                nCounts=len(points), pPoints=byref(points))
 
     def _delete_annotation(self, pos):  # abstract
         raise NotImplementedError()

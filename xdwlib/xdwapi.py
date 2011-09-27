@@ -966,6 +966,12 @@ class SizedStructure(Structure):
         self.nSize = sizeof(self)
 
 
+class ResizedStructure(SizedStructure):
+    def __init__(self):
+        SizedStructure.__init__(self)
+        self.common.nSize = sizeof(self)
+
+
 class XDW_DOCUMENT_HANDLE(Structure):
     _fields_ = [("dummy", c_int), ]
 
@@ -1193,7 +1199,7 @@ class XDW_AA_INITIAL_DATA(SizedStructure):
         ]
 
 
-class XDW_AA_FUSEN_INITIAL_DATA(Structure):
+class XDW_AA_FUSEN_INITIAL_DATA(ResizedStructure):
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("nWidth", c_int),
@@ -1201,7 +1207,7 @@ class XDW_AA_FUSEN_INITIAL_DATA(Structure):
         ]
 
 
-class XDW_AA_STRAIGHTLINE_INITIAL_DATA(Structure):
+class XDW_AA_STRAIGHTLINE_INITIAL_DATA(ResizedStructure):
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("nHorVec", c_int),
@@ -1209,7 +1215,7 @@ class XDW_AA_STRAIGHTLINE_INITIAL_DATA(Structure):
         ]
 
 
-class XDW_AA_RECT_INITIAL_DATA(Structure):
+class XDW_AA_RECT_INITIAL_DATA(ResizedStructure):
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("nWidth", c_int),
@@ -1217,7 +1223,7 @@ class XDW_AA_RECT_INITIAL_DATA(Structure):
         ]
 
 
-class XDW_AA_ARC_INITIAL_DATA(Structure):
+class XDW_AA_ARC_INITIAL_DATA(ResizedStructure):
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("nWidth", c_int),
@@ -1225,21 +1231,21 @@ class XDW_AA_ARC_INITIAL_DATA(Structure):
         ]
 
 
-class XDW_AA_BITMAP_INITIAL_DATA(Structure):
+class XDW_AA_BITMAP_INITIAL_DATA(ResizedStructure):
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("szImagePath", c_char * 256),
         ]
 
 
-class XDW_AA_STAMP_INITIAL_DATA(Structure):
+class XDW_AA_STAMP_INITIAL_DATA(ResizedStructure):
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("nWidth", c_int),
         ]
 
 
-class XDW_AA_RECEIVEDSTAMP_INITIAL_DATA(Structure):
+class XDW_AA_RECEIVEDSTAMP_INITIAL_DATA(ResizedStructure):
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("nWidth", c_int),
@@ -1249,7 +1255,7 @@ class XDW_AA_RECEIVEDSTAMP_INITIAL_DATA(Structure):
 XDW_SIZEOF_GUID = 36
 
 
-class XDW_AA_CUSTOM_INITIAL_DATA(Structure):
+class XDW_AA_CUSTOM_INITIAL_DATA(ResizedStructure):
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("nWidth", c_int),
@@ -1603,7 +1609,7 @@ class XDW_POINT(Structure):
         ]
 
 
-class XDW_AA_MARKER_INITIAL_DATA(Structure):
+class XDW_AA_MARKER_INITIAL_DATA(ResizedStructure):
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("nCounts", c_int),
@@ -1611,7 +1617,7 @@ class XDW_AA_MARKER_INITIAL_DATA(Structure):
         ]
 
 
-class XDW_AA_POLYGON_INITIAL_DATA(Structure):
+class XDW_AA_POLYGON_INITIAL_DATA(ResizedStructure):
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("nCounts", c_int),

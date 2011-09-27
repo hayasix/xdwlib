@@ -32,6 +32,15 @@ class Point(object):
         for pos in range(2):
             yield (self.x, self.y)[pos]
 
+    def __neg__(self):
+        return Point(-self.x, -self.y)
+
+    def __add__(self, pnt):
+        return self.shift(pnt)
+
+    def __sub__(self, pnt):
+        return self.shift(-pnt)
+
     def __mul__(self, n):
         if not isinstance(n, (int, float)):
             raise NotImplementedError
@@ -57,6 +66,10 @@ class Point(object):
 class Rect(object):
 
     def __init__(self, left=0, top=0, right=0, bottom=0):
+        if right < left:
+            left, right = right, left
+        if bottom < top:
+            top, bottom = bottom, top
         self.left = left
         self.top = top
         self.right = right
@@ -73,8 +86,14 @@ class Rect(object):
        for pos in range(4):
             yield (self.left, self.top, self.right, self.bottom)[pos]
 
+    def position(self):
+        return Point(self.left, self.top)
+
     def size(self):
         return Point(self.right - self.left, self.bottom - self.top)
+
+    def position_and_size(self):
+        return (self.position(), self.size())
 
     def __mul__(self, n):
         if not isinstance(n, (int, float)):
