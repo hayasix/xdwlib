@@ -96,16 +96,8 @@ class Annotatable(Subject):
             position = Point(*position)
         init_dat = initial_data(ann_type, **kw)
         ann_handle = self._add_annotation(ann_type, position, init_dat)
-        info = XDW_ANNOTATION_INFO()
-        info.handle = ann_handle
-        info.nHorPos = int(position.x * 100)
-        info.nVerPos = int(position.y * 100)
-        info.nWidth = 0
-        info.nHeight = 0
-        info.nAnnotationType = ann_type
-        info.nChildAnnotations = 0
         pos = self.annotations  # TODO: Ensure this is correct.
-        ann = Annotation(self.page, pos, parent=self, info=info)
+        ann = Annotation(self.page, pos, parent=self)
         self.annotations += 1
         self.notify(event=Notification(EV_ANN_INSERTED, pos))
         return ann
