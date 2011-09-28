@@ -29,14 +29,16 @@ DEFAULT_SIZE = Point(100, 100)
 DEFAULT_WIDTH = 100
 DEFAULT_POINTS = (DEFAULT_POSITION, DEFAULT_SIZE)
 
+
 def initial_data(ann_type, **kw):
+    """Generate annotation-type-specific initialization data."""
     ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
-    cls = XDW_AID_INITIAL_DATA.get(ann_type, None)
-    if cls:
-        init_dat = cls()
-        init_dat.common.nAnnotationType = ann_type
-    else:
-        init_dat = NULL
+    try:
+        cls = XDW_AID_INITIAL_DATA[ann_type]
+    except KeyError:
+        raise ValueError("illegal annotation type %d" % ann_type)
+    init_dat = cls()
+    init_dat.common.nAnnotationType = ann_type
     for k, v in kw.items():
         if k.startswith("n"):
             v = int(v)
@@ -70,7 +72,7 @@ class Annotatable(Subject):
             yield self.annotation(pos)
 
     def annotation(self, pos):
-        """annotation(pos) --> Annotation"""
+        """Get an annotation by position."""
         from annotation import Annotation
         if self.annotations <= pos:
             raise IndexError(
@@ -120,16 +122,19 @@ class Annotatable(Subject):
         return ann
 
     def add_fusen_annotation(self, position=DEFAULT_POSITION, size=DEFAULT_SIZE):
+        """Paste a fusen annotation."""
         self.add_annotation(XDW_AID_FUSEN, position,
                 nWidth=size.x, nHeight=size.y)
 
     def add_line_annotation(self, points=(DEFAULT_POSITION, DEFAULT_SIZE)):
+        """Paste a straight line annotation."""
         self.add_annotation(XDW_AID_STRAIGHTLINE, points[0],
                 nWidth=points[1].x, nHeight=point[1].y)
 
     add_straightline_annotation = add_line_annotation
 
     def add_rectangle_annotation(self, rect=DEFAULT_RECT):
+        """Paste a rectangular annotation."""
         position, size = rect.position_and_size()
         self.add_annotation(XDW_AID_RECT, position,
                 nWidth=size.x, nHeight=size.y)
@@ -137,29 +142,40 @@ class Annotatable(Subject):
     add_rect_annotation = add_rectangle_annotation
 
     def add_arc_annotation(self, rect=DEFAULT_RECT):
+        """Paste an ellipse annotation."""
         position, size = rect.position_and_size()
         self.add_annotation(XDW_AID_ARC, position,
                 nWidth=size.x, nHeight=size.y)
 
+    def add_bitmap_annotation(self, position=DEFAUTL_POSITION, path=None):
+        """Paste an image annotation."""
+        self.add_annotation(XDW_AID_BITMAP, position,
+                szImagePath=byref(path))
+
     def add_stamp_annotation(self, position=DEFAULT_POSITION, width=DEFAULT_WIDTH):
+        """Paste a (date) stamp annotation."""
         self.add_annotation(XDW_AID_STAMP, position,
                 nWidth=width)
 
     def add_receivedstamp_annotation(self, position=DEFAULT_POSITION, width=DEFAULT_WIDTH):
+        """Paste a received (datetime) stamp annotation."""
         self.add_annotation(XDW_AID_RECEIVEDSTAMP, position,
                 nWidth=width)
 
     def add_custom_annotation(self, position=DEFAULT_POSITION,
                 size=DEFAULT_SIZE, guid="???", data="???"):
+        """Paste a custom specification annotation."""
         self.add_annotation(XDW_AID_CUSTOM, position,
                 nWidth=size.x, nHeight=size.y, lpszGuid=byref(guid),
                 nCustomDataSize=len(data), pCustomData=byref(data))
 
     def add_marker_annotation(self, position=DEFAULT_POSITION, points=DEFAULT_POINTS):
+        """Paste a marker annotation."""
         self.add_annotation(XDW_AID_MARKER, position,
                 nCounts=len(points), pPoints=byref(points))
 
     def add_polygon_annotation(self, position=DEFAULT_POSITION, points=DEFAULT_POINTS):
+        """Paste a polygon annotation."""
         self.add_annotation(XDW_AID_POLYGON, position,
                 nCounts=len(points), pPoints=byref(points))
 
@@ -177,6 +193,10 @@ class Annotatable(Subject):
         raise NotImplementedError()
 
     def annotation_text(self, recursive=True):
+        """Get text in annotation(s).
+
+        annotation_text(recursive=True) --> str
+        """
         result = []
         for ann in self:
             result.append(ann.content_text())
@@ -185,13 +205,17 @@ class Annotatable(Subject):
         return joinf(ASEP, result)
 
     def fulltext(self):
+        """Get text in annotation(s).
+
+        fulltext(recursive=True) --> str
+        """
         return  joinf(ASEP, [
                 self.content_text(),
                 self.annotation_text(recursive=True)])
 
     def find_annotations(self, handles=None, types=None, rect=None,
             half_open=True, recursive=False):
-        """Find annotations on page or annotation, which meets criteria given.
+        """Find annotations on page or annotation by criteria.
 
         find_annotations(handles=None, types=None, rect=None, half_open=True,
                          recursive=False)
