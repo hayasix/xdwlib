@@ -81,10 +81,9 @@ class Annotation(Annotatable, Observer):
         Observer.__init__(self, page, EV_ANN_INSERTED)
         self.page = page.page if isinstance(page, Annotation) else page
         self.parent = parent if isinstance(parent, Annotation) else None
-        pah = self.parent.handle if self.parent else NULL
         info = XDW_GetAnnotationInformation(
                 self.page.doc.handle, self.page.absolute_page() + 1,
-                pah, pos + 1)
+                self.parent.handle if self.parent else NULL, pos + 1)
         self.handle = info.handle
         self.type = info.nAnnotationType
         self.annotations = info.nChildAnnotations
@@ -120,11 +119,12 @@ class Annotation(Annotatable, Observer):
                 v = [Point(p.x, p.y) for p in v]
             return v
         if name in ("position", "size"):
-            pah = self.parent.handle if self.parent else NULL
             info = XDW_GetAnnotationInformation(
                     self.page.doc.handle, self.page.absolute_page() + 1,
-                    pah, self.pos + 1)
-            self.__dict__[name] = Point(info.nWidth, info.nHeight) / 100.  # mm
+                    self.parent.handle if self.parent else NULL, self.pos + 1)
+            v = Point(info.nHorPos, info.nVerPos) if name == "position"
+                    else Point(info.nWidth, info.nHeight)
+            self.__dict__[name] = v / 100.0  # mm;  update this property
         return self.__dict__[name]
 
     def __setattr__(self, name, value):

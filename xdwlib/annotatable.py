@@ -222,8 +222,8 @@ class Annotatable(Subject):
             handles     sequence of annotation handles.  None means all.
             types       sequence of types.  None means all.
             rect        XDWRect which includes annotations,
-                        Note that right/bottom value are innermost of outside
-                        unless half_open==False.  None means all.
+                        Note that right and bottom values are innermost of
+                        outside unless half_open==False.  None means all.
             recursive   also return descendant (child) annotations.
         """
         if handles and not isinstance(handles, (tuple, list)):
