@@ -13,6 +13,8 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE.
 """
 
+import re
+
 from common import *
 from observer import Subject, Observer
 from struct import Point, Rect
@@ -22,14 +24,8 @@ from annotatable import Annotatable
 __all__ = ("Annotation",)
 
 
-def split_unit(unit):
-    import re
-    factor = re.match(r"(1/)?[\d.]*", unit).group(0)
-    unit = unit[len(factor):]
-    return (factor, unit)
-
-
 def decode_fake_unicode(ustring):
+    """Unpack a 16bit-data sequence and decode it by CODEPAGE."""
     result = []
     for c in ustring:
         c = ord(c)
@@ -44,6 +40,7 @@ def decode_fake_unicode(ustring):
 
 
 def encode_fake_unicode(ustring):
+    """Encode unicode in CODEPAGE and pack it in a 16bit-data sequence."""
     s = ustring.encode(CODEPAGE)
     ss = zip(s[::2], s[1::2])
     result = [unichr(ord(x) | (ord(y) << 8)) for x, y in ss]
@@ -58,22 +55,21 @@ class Annotation(Annotatable, Observer):
 
     @staticmethod
     def all_types():
+        """Returns all annotation types for convenience."""
         return XDW_ANNOTATION_TYPE
 
     @staticmethod
     def all_attributes():
+        """Returns all annotation attributes for convenience."""
         return [outer_attribute_name(k) for k in XDW_ANNOTATION_ATTRIBUTE]
 
     @staticmethod
     def scale(attrname, value, store=False):
+        """Scale actual size (length) to stored value and vice versa."""
         unit = XDW_ANNOTATION_ATTRIBUTE[attrname][1]
-        if unit:
-            factor = split_unit(unit)[0]
-            if factor:
-                factor = 1 / float(factor[2:]) if factor.startswith("1/") \
-                        else float(factor)
-                value = value / factor if store else value * factor
-        return int(value)
+        if not unit: return value
+        inv, unit = re.match(r"(1/)?([\d.]+)", unit).groups()
+        return value / float(unit) if inv ^ store else value * float(unit)
 
     def __init__(self, page, pos, parent=None):
         self.pos = pos
@@ -163,6 +159,7 @@ class Annotation(Annotatable, Observer):
         self.__dict__[name] = value
 
     def update(self, event):
+        """Update self as an observer."""
         if not isinstance(event, Notification):
             raise TypeError("not an instance of Notification class")
         if event.type == EV_ANN_REMOVED:
@@ -175,28 +172,42 @@ class Annotation(Annotatable, Observer):
             raise ValueError("Illegal event type: %d" % event.type)
 
     def typename(self):
+        """Returns annotation type name for convenience."""
         return XDW_ANNOTATION_TYPE[self.type]
 
     def attributes(self):
+        """Returns annotation attribute names for covenience."""
         return [outer_attribute_name(k) for (k, v)
                 in XDW_ANNOTATION_ATTRIBUTE.items()
                 if self.type in v[2]]
 
     def inside(self, rect):  # Assume rect is half-open.
+        """Returns if annotation is placed inside rect.
+
+        Note: rect should be defined as half-open.
+        """
         if isinstance(rect, tuple):
             rect = Rect(rect.left, rect.top, rect.right, rect.bottom)
         return rect.left <= self.position.x <= rect.right - self.size.x and \
                rect.top <= self.position.y <= rect.bottom - self.size.y
 
     def _add_annotation(self, ann_type, position, init_dat):
+        """Concrete method over add_annotation()."""
         return XDW_AddAnnotationOnParentAnnotation(
                 self.page.doc.handle, self.handle, ann_type,
                 int(position.x * 100), int(position.y * 100), init_dat)
 
     def _delete_annotation(self, ann):
+        """Concrete method over delete_annotation()."""
         XDW_RemoveAnnotation(self.page.doc.handle, ann.handle)
 
     def content_text(self):
+        """Returns content text of annotation.
+
+        Text annotation --> text
+        Link annotation --> caption
+        Stamp annotation --> [TopField] <DATE> [BottomField]
+        """
         if self.type == XDW_AID_TEXT:
             return getattr(self, XDW_ATN_Text)
         elif self.type == XDW_AID_LINK:

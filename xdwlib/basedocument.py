@@ -123,18 +123,21 @@ class BaseDocument(Subject):
         return joinf(PSEP, [page.annotation_text() for page in self])
 
     def fulltext(self):
-        """Get all content text and annotation text."""
+        """Get all content and annotation text."""
         return joinf(PSEP, [
                 joinf(ASEP, [page.content_text(), page.annotation_text()])
                 for page in self])
 
     def find_content_text(self, pattern):
+        """Find given pattern (text or regex) in all content text."""
         return self.find(pattern, func=lambda page: page.content_text())
 
     def find_annotation_text(self, pattern):
+        """Find given pattern (text or regex) in all annotation text."""
         return self.find(pattern, func=lambda page: page.annotation_text())
 
     def find_fulltext(self, pattern):
+        """Find given pattern in all content and annotation text."""
         return self.find(pattern)
 
     def find(self, pattern, func=None):
@@ -153,5 +156,6 @@ class BaseDocument(Subject):
             f = lambda page: pattern.search(func(page))
         return PageCollection(filter(f, self))
 
-    def dirname(self):  # abstract
+    def dirname(self):
+        """Abstract method for concrete dirname()."""
         raise NotImplementedError()

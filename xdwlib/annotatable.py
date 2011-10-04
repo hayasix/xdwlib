@@ -82,7 +82,8 @@ class Annotatable(Subject):
             self.observers[pos] = Annotation(self, pos, parent=self)
         return self.observers[pos]
 
-    def _add_annotation(self, ann_type, position, init_dat):  # abstract
+    def _add_annotation(self, ann_type, position, init_dat):
+        """Abstract method as a stub for add_annotation()."""
         raise NotImplementedError()
 
     def add_annotation(self, ann_type, position, **kw):
@@ -179,7 +180,8 @@ class Annotatable(Subject):
         self.add_annotation(XDW_AID_POLYGON, position,
                 nCounts=len(points), pPoints=byref(points))
 
-    def _delete_annotation(self, pos):  # abstract
+    def _delete_annotation(self, pos):
+        """Abstract method as a stub for delete_annotation()."""
         raise NotImplementedError()
 
     def delete_annotation(self, pos):
@@ -189,7 +191,8 @@ class Annotatable(Subject):
         self.detach(ann, EV_ANN_REMOVED)
         self.annotations -= 1
 
-    def content_text(self, recursive=True):  # abstract
+    def content_text(self, recursive=True):
+        """Abstract method for concrete content_text()."""
         raise NotImplementedError()
 
     def annotation_text(self, recursive=True):
