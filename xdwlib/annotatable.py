@@ -30,31 +30,9 @@ DEFAULT_WIDTH = 100
 DEFAULT_POINTS = (DEFAULT_POSITION, DEFAULT_SIZE)
 
 
-def initial_data(ann_type, **kw):
-    """Generate annotation-type-specific initialization data."""
-    ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
-    try:
-        cls = XDW_AID_INITIAL_DATA[ann_type]
-    except KeyError:
-        raise ValueError("illegal annotation type %d" % ann_type)
-    init_dat = cls()
-    init_dat.common.nAnnotationType = ann_type
-    for k, v in kw.items():
-        if k.startswith("n"):
-            v = int(v)
-        elif k.startswith("sz"):
-            v = str(v)
-        elif k.startswith("lpsz"):
-            v = byref(v)
-        elif k.startswith("p"):
-            v = byref(v)
-        setattr(init_dat, k, v)
-    return init_dat
-
-
 class Annotatable(Subject):
 
-    """Annotatable objects ie. page or annotation"""
+    """Annotatable objects ie. page or annotation."""
 
     def __len__(self):
         return self.annotations
@@ -82,6 +60,28 @@ class Annotatable(Subject):
             self.observers[pos] = Annotation(self, pos, parent=self)
         return self.observers[pos]
 
+    @staticmethod
+    def initial_data(ann_type, **kw):
+        """Generate annotation-type-specific initialization data."""
+        ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
+        try:
+            cls = XDW_AID_INITIAL_DATA[ann_type]
+        except KeyError:
+            raise ValueError("illegal annotation type %d" % ann_type)
+        init_dat = cls()
+        init_dat.common.nAnnotationType = ann_type
+        for k, v in kw.items():
+            if k.startswith("n"):
+                v = int(v)
+            elif k.startswith("sz"):
+                v = str(v)
+            elif k.startswith("lpsz"):
+                v = byref(v)
+            elif k.startswith("p"):
+                v = byref(v)
+            setattr(init_dat, k, v)
+        return init_dat
+
     def _add_annotation(self, ann_type, position, init_dat):
         """Abstract method as a stub for add_annotation()."""
         raise NotImplementedError()
@@ -97,7 +97,7 @@ class Annotatable(Subject):
         ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
         if isinstance(position, (tuple, list)):
             position = Point(*position)
-        init_dat = initial_data(ann_type, **kw)
+        init_dat = Annotatable.initial_data(ann_type, **kw)
         ann_handle = self._add_annotation(ann_type, position, init_dat)
         pos = self.annotations  # TODO: Ensure this is correct.
         ann = Annotation(self.page, pos, parent=self)

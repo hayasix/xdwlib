@@ -182,10 +182,7 @@ class Annotation(Annotatable, Observer):
                 if self.type in v[2]]
 
     def inside(self, rect):  # Assume rect is half-open.
-        """Returns if annotation is placed inside rect.
-
-        Note: rect should be defined as half-open.
-        """
+        """Returns if annotation is placed inside rect."""
         if isinstance(rect, tuple):
             rect = Rect(rect.left, rect.top, rect.right, rect.bottom)
         return rect.left <= self.position.x <= rect.right - self.size.x and \

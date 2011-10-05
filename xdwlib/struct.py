@@ -65,7 +65,56 @@ class Point(object):
 
 class Rect(object):
 
-    def __init__(self, left=0, top=0, right=0, bottom=0):
+    """Half-open rectangular region.
+
+    A region is represented by half-open coodinate intervals.  Left-top
+    coordinate is inclusive but right-bottom one is exclusive.
+
+    >>> r = Rect(0, 10, 20, 30)
+    >>> r
+    Rect((0.00, 10.00)-(20.00, 30.00))
+    >>> r.position()
+    Point(0.00, 10.00)
+    >>> r.size()
+    Point(20.00, 20.00)
+    >>> r = Rect(Point(0, 10), Point(20, 30))
+    >>> r.size()
+    Point(20.00, 20.00)
+    >>> r.shift(Point(15, 25))
+    Rect((15.00, 35.00)-(35.00, 55.00))
+    >>> r * 2
+    Rect((0.00, 10.00)-(40.00, 50.00))
+    >>> r / 2
+    Rect((0.00, 10.00)-(10.00, 20.00))
+    >>> list(r)
+    [0, 10, 20, 30]
+    """
+
+    def __init__(self, *args, **kw):
+        if args:
+            if len(args) == 2:
+                ((left, top), (right, bottom)) = args
+            elif len(args) == 4:
+                left, top, right, bottom = args
+            else:
+                raise TypeError("argument should be 4 numerics or 2 Points")
+        else:
+            for k, v in kw.items():
+                k = k.upper()
+                if k in ("LEFT", "L"):
+                    left = v
+                elif k in ("TOP", "T"):
+                    top = v
+                elif k in ("RIGHT", "R"):
+                    right = v
+                elif k in ("BOTTOM", "B"):
+                    bottom = v
+                elif k in ("LEFTTOP", "LT"):
+                    left, top = v
+                elif k in ("RIGHTBOTTOM", "RB"):
+                    right, bottom = v
+                else:
+                    raise TypeError("unexpected keyword '%s'", k)
         if right < left:
             left, right = right, left
         if bottom < top:
