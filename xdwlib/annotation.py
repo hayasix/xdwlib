@@ -51,7 +51,7 @@ def encode_fake_unicode(ustring):
 
 class Annotation(Annotatable, Observer):
 
-    """Annotation on DocuWorks document page"""
+    """Annotation on DocuWorks document page."""
 
     @staticmethod
     def all_types():
@@ -118,7 +118,7 @@ class Annotation(Annotatable, Observer):
             info = XDW_GetAnnotationInformation(
                     self.page.doc.handle, self.page.absolute_page() + 1,
                     self.parent.handle if self.parent else NULL, self.pos + 1)
-            v = Point(info.nHorPos, info.nVerPos) if name == "position"
+            v = Point(info.nHorPos, info.nVerPos) if name == "position" \
                     else Point(info.nWidth, info.nHeight)
             self.__dict__[name] = v / 100.0  # mm;  update this property
         return self.__dict__[name]
@@ -189,7 +189,7 @@ class Annotation(Annotatable, Observer):
                rect.top <= self.position.y <= rect.bottom - self.size.y
 
     def _add_annotation(self, ann_type, position, init_dat):
-        """Concrete method over add_annotation()."""
+        """Concrete method over _add_annotation() for add_annotation()."""
         return XDW_AddAnnotationOnParentAnnotation(
                 self.page.doc.handle, self.handle, ann_type,
                 int(position.x * 100), int(position.y * 100), init_dat)

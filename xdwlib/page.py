@@ -26,7 +26,7 @@ __all__ = ("Page", "PageCollection")
 
 class PageCollection(list):
 
-    """Page collection class"""
+    """Page collection ie. container for pages."""
 
     def __repr__(self):
         return "PageCollection(%s)" % ", ".join(
@@ -80,7 +80,7 @@ class PageCollection(list):
 
 class Page(Annotatable, Observer):
 
-    """Page of DocuWorks document"""
+    """Page of DocuWorks document."""
 
     @staticmethod
     def norm_res(n):
@@ -178,15 +178,18 @@ class Page(Annotatable, Observer):
             raise ValueError("illegal event type: %d" % event.type)
 
     def _add_annotation(self, ann_type, position, init_dat):
+        """Concrete method over _add_annotation() for add_annotation()."""
         return XDW_AddAnnotation(self.doc.handle,
                 ann_type, self.absolute_page() + 1,
                 int(position.x * 100), int(position.y * 100),
                 init_dat)
 
     def _delete_annotation(self, ann):
+        """Concrete method over _delete_annotation() for delete_annotation()."""
         XDW_RemoveAnnotation(self.doc.handle, ann.handle)
 
     def content_text(self):
+        """Returns content text of page."""
         return XDW_GetPageTextToMemoryW(
                 self.doc.handle, self.absolute_page() + 1)
 

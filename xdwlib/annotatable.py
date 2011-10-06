@@ -24,7 +24,7 @@ __all__ = ("Annotatable",)
 
 
 DEFAULT_POSITION = Point(0, 0)
-DEFAULT_RECT = Rect(0, 0)
+DEFAULT_RECT = Rect(0, 0, 100, 100)
 DEFAULT_SIZE = Point(100, 100)
 DEFAULT_WIDTH = 100
 DEFAULT_POINTS = (DEFAULT_POSITION, DEFAULT_SIZE)
@@ -148,7 +148,7 @@ class Annotatable(Subject):
         self.add_annotation(XDW_AID_ARC, position,
                 nWidth=size.x, nHeight=size.y)
 
-    def add_bitmap_annotation(self, position=DEFAUTL_POSITION, path=None):
+    def add_bitmap_annotation(self, position=DEFAULT_POSITION, path=None):
         """Paste an image annotation."""
         self.add_annotation(XDW_AID_BITMAP, position,
                 szImagePath=byref(path))

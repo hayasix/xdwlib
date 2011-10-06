@@ -44,6 +44,7 @@ def joinf(sep, seq):
 
 
 def inner_attribute_name(name):
+    """Get XDWAPI style attribute name eg. font_name --> %FontName"""
     if name.startswith("%"):
         return name
     if "A" <= name[0] <= "Z":
@@ -52,7 +53,7 @@ def inner_attribute_name(name):
 
 
 def outer_attribute_name(name):
-    import string
+    """Get xdwlib style attribute name eg. %FontName --> font_name"""
     import re
     if not name.startswith("%"):
         return name
@@ -60,6 +61,7 @@ def outer_attribute_name(name):
 
 
 def adjust_path(path, default_dir="", coding=None):
+    """Build a pathname by filename and default directory."""
     directory, basename = os.path.split(path)
     # Given no dir, create the new document in the same dir as original one.
     if not directory:
@@ -73,7 +75,7 @@ def adjust_path(path, default_dir="", coding=None):
 
 class XDWTemp(object):
 
-    """Temporary XDW file"""
+    """Temporary XDW file."""
 
     def __init__(self, dir, prefix="$$", suffix=".xdw"):
         self.fd, self.path = tempfile.mkstemp(suffix, prefix, dir)

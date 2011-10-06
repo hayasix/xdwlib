@@ -18,6 +18,31 @@ __all__ = ("Point", "Rect")
 
 class Point(object):
 
+    """Point represented by 2D coordinate.
+
+    >>> p = Point(0, 10)
+    >>> p
+    Point(0.00, 10.00)
+    >>> p + Point(5, 10)
+    Point(5.00, 20.00)
+    >>> p - Point(5, 10)
+    Point(-5.00, 0.00)
+    >>> -p
+    Point(0.00, -10.00)
+    >>> p * 2
+    Point(0.00, 20.00)
+    >>> p / 2
+    Point(0.00, 5.00)
+    >>> p.shift(Point(20, 30))
+    Point(20.00, 40.00)
+    >>> p.shift([20, 30])
+    Point(20.00, 40.00)
+    >>> p.shift(20)
+    Point(20.00, 10.00)
+    >>> list(p)
+    [0, 10]
+    """
+
     def __init__(self, x=0, y=0):
         self.x = x
         self.y = y

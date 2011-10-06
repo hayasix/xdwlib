@@ -56,12 +56,12 @@ class BaseDocument(Subject):
         for pos in xrange(self.pages):
             yield self.page(pos)
 
-    def absolute_page(self, pos):  # abstract
-        """Get absolute page number in binder/document."""
+    def absolute_page(self, pos):
+        """Abstract method to get absolute page number in binder/document."""
         raise NotImplementedError()
 
     def page(self, pos):
-        """Get a Page object."""
+        """Get a Page."""
         if self.pages <= pos:
             raise IndexError("Page number must be < %d, %d given" % (
                     self.pages, pos))
@@ -70,11 +70,11 @@ class BaseDocument(Subject):
         return self.observers[pos]
 
     def append(self, obj):
-        """Append a page/pagecollection/document at the end of document."""
+        """Append a Page/PageCollection/Document at the end of document."""
         self.insert(self.pages, obj)
 
     def insert(self, pos, obj):
-        """Insert a page/pagecollection/document.
+        """Insert a Page/PageCollection/Document.
 
         insert(pos, obj) --> None
 

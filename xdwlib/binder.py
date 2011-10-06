@@ -24,7 +24,7 @@ __all__ = ("Binder", "create_binder")
 
 def create_binder(path, color=XDW_BINDER_COLOR_0, size=XDW_SIZE_FREE,
         coding=CODEPAGE):
-    """The XBD generator"""
+    """The XBD generator."""
     data = XDW_BINDER_INITIAL_DATA()
     data.nBinderColor = color
     data.nBinderSize = size
@@ -33,7 +33,7 @@ def create_binder(path, color=XDW_BINDER_COLOR_0, size=XDW_SIZE_FREE,
 
 class Binder(Subject, XDWFile):
 
-    """DocuWorks Binder"""
+    """DocuWorks Binder."""
 
     def __init__(self, path, readonly=False, authenticate=True):
         Subject.__init__(self)
@@ -61,7 +61,7 @@ class Binder(Subject, XDWFile):
             yield self.document(pos)
 
     def document(self, pos):
-        """Get DocumentInBinder object for given position."""
+        """Get a DocumentInBinder."""
         if self.documents <= pos:
             raise IndexError(
                     "Document number must be < %d, %d given" % (
@@ -69,11 +69,11 @@ class Binder(Subject, XDWFile):
         return DocumentInBinder(self, pos)
 
     def page(self, pos):
-        """Get Page object for absolute page number."""
+        """Get a Page for absolute page number."""
         return self.document_and_page(pos)[1]
 
     def document_pages(self):
-        """Get list of page count for each document. """
+        """Get the list of page count for each document. """
         return [XDW_GetDocumentInformationInBinder(self.handle, pos + 1).nPages
                 for pos in range(self.documents)]
 
@@ -91,11 +91,11 @@ class Binder(Subject, XDWFile):
                 return (doc, page)
 
     def append_document(self, path):
-        """Append a document at the last position."""
+        """Append a document by path at the end of binder."""
         self.insert_document(self.documents, path)
 
     def insert_document(self, pos, path):
-        """Insert a document."""
+        """Insert a document by path ."""
         XDW_InsertDocumentToBinder(self.handle, pos + 1, path)
         self.attach(doc, EV_DOC_INSERTED)
         self.documents += 1

@@ -25,7 +25,7 @@ __all__ = ("Document", "create_document", "create_document_from_image")
 
 
 def create_document(path):
-    """The XDW generator, preparing dummy A4 white page"""
+    """The XDW generator, preparing dummy A4 white page."""
     blank = join(dirname(abspath(__file__)), "__blank__.xdw")
     copyfile(blank, path)
 
@@ -41,7 +41,7 @@ def create_document_from_image(
         horizontal_position=XDW_CREATE_HCENTER,
         vertical_position=XDW_CREATE_VCENTER,
         ):
-    """A XDW generator from image file"""
+    """XDW generator from image file."""
     opt = XDW_CREATE_OPTION()
     opt.nSize = normalize_binder_size(size)
     opt.nFitImage = fit_image
@@ -56,7 +56,7 @@ def create_document_from_image(
 
 class Document(BaseDocument, XDWFile):
 
-    """DocuWorks document (XDW)"""
+    """DocuWorks document (XDW)."""
 
     def __init__(self, path, readonly=False, authenticate=True):
         BaseDocument.__init__(self)
@@ -72,10 +72,13 @@ class Document(BaseDocument, XDWFile):
                 self.name, self.pages, self.original_data)
 
     def require_finalization(self):
+        """Set `finalize' flag to invoke finalization process on exit."""
         self.finalize = True
 
     def absolute_page(self, pos):
+        """Concrete method over absolute_page()."""
         return pos
 
     def dirname(self):
+        """Concrete method over dirname()."""
         return self.dir

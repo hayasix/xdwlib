@@ -20,11 +20,11 @@ from xdwapi import *
 from common import *
 
 
-__all__ = ("XDWFile", "environ")
+__all__ = ("XDWFile", "environ", "xdwopen", "VALID_DOCUMENT_HANDLES")
 
 
 def environ(name=None):
-    """DocuWorks environment information"""
+    """DocuWorks environment information."""
     if name:
         value = XDW_GetInformation(XDW_ENVIRON.normalize(name))
         if name == XDW_ENVIRON[XDW_GI_DWDESK_FILENAME_DIGITS]:
@@ -65,7 +65,7 @@ def xdwopen(path, readonly=False, authenticate=True):
 
 class XDWFile(object):
 
-    """Docuworks file (XDW or XBD)"""
+    """Docuworks file, XDW or XBD."""
 
     @staticmethod
     def all_attributes():  # for debugging
@@ -159,4 +159,5 @@ class XDWFile(object):
         self.__dict__[name] = value
 
     def typename(self):
+        """DocuWorks file type, document or binder."""
         return XDW_DOCUMENT_TYPE[self.type]
