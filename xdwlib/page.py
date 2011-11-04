@@ -260,7 +260,7 @@ class Page(Annotatable, Observer):
         else:
             opt.pAreaRects = NULL
         XDW_ApplyOcr(self.doc.handle, self.absolute_page() + 1,
-                engine, byref(opt))
+                engine, opt)
         self.doc.require_finalization()
 
     def copy(self, path=None):

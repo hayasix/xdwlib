@@ -1,0 +1,15 @@
+setup.py
+xdwlib\__init__.py
+xdwlib\annotatable.py
+xdwlib\annotation.py
+xdwlib\basedocument.py
+xdwlib\binder.py
+xdwlib\common.py
+xdwlib\document.py
+xdwlib\documentinbinder.py
+xdwlib\observer.py
+xdwlib\page.py
+xdwlib\struct.py
+xdwlib\timezone.py
+xdwlib\xdwapi.py
+xdwlib\xdwfile.py

@@ -121,7 +121,7 @@ class XDWFile(object):
     def close(self):
         """Finalize document if neccesary, and close document."""
         if self.finalize:
-            XDW_Finalize(self.handle)
+            XDW_Finalize()
         XDW_CloseDocumentHandle(self.handle)
         self.free()
 
