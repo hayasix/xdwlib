@@ -75,12 +75,15 @@ def adjust_path(path, default_dir="", coding=None):
 
 class XDWTemp(object):
 
-    """Temporary XDW file."""
+    """Temporary XDW file with optional single blank page."""
 
-    def __init__(self, dir, prefix="$$", suffix=".xdw"):
-        self.fd, self.path = tempfile.mkstemp(suffix, prefix, dir)
-        blank = join(dirname(abspath(__file__)), "__blank__.xdw")
-        os.write(self.fd, data)
+    def __init__(self, suffix=".xdw", dir=None, blank_page=False):
+        args = [suffix, "", dir] if dir else [suffix]
+        self.fd, self.path = tempfile.mkstemp(*args)
+        if blank_page:
+            blank = os.path.join(dirname(abspath(__file__)), "__blank__.xdw")
+            with open(blank, "rb") as b:
+                os.write(self.fd, b.read())
         return self.path
 
     def __enter__(self):

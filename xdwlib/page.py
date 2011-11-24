@@ -14,6 +14,7 @@ FOR A PARTICULAR PURPOSE.
 """
 
 import os
+import tempfile
 
 from common import *
 from observer import Subject, Observer
@@ -64,9 +65,15 @@ class PageCollection(list):
         binder.close()
         return path
 
-    def combine(self, path):
-        """Create a document (XDW file) as a container for page collection."""
+    def combine(self, path=None):
+        """Create a document (XDW file) as a container for page collection.
+
+        Returns path;  if no path is given, this method creates a temporary
+        file somewhere and returns its path.  You have to remove the temporary
+        file after use.
+        """
         from document import Document, create_document
+        path = path or tempfile.mkstemp(".xdw")
         path = self.pop(0).copy(path)
         doc = Document(path)
         for pos, page in enumerate(self):
@@ -277,6 +284,6 @@ class Page(Annotatable, Observer):
         root, ext = os.path.splitext(path)
         while os.path.exists(path):
             n += 1
-            path = os.path.join("%s_%d" % (root, n), ext)
+            path = "%s_%d" % (root, n) + ext
         XDW_GetPage(self.doc.handle, self.absolute_page() + 1, path)
         return path

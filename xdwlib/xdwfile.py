@@ -63,6 +63,39 @@ def xdwopen(path, readonly=False, authenticate=True):
     return XDW_TYPES[ext](path, readonly=readonly, authenticate=authenticate)
 
 
+def create_sfx(input_path, output_path=None):
+    """Create self-extract executable file.
+
+    Returns path;  if no path is given, this method creates a temporary
+    file somewhere and returns its path.  You have to remove the temporary
+    file after use.
+    """
+    output_path = os.path.splitext(output_path or input_path)[1] + ".exe"
+    XDW_CreateSfxDocument(input_path, output_path)
+    return output_path
+
+
+def extract_sfx(input_path, output_path=None):
+    """Extract DocuWorks document/binder from self-extract executable file.
+
+    Returns path;  if no path is given, this method creates a temporary
+    file somewhere and returns its path.  You have to remove the temporary
+    file after use.
+    """
+    root, ext = os.path.splitext(output_path or input_path)
+    output_path = root + ".xdw"  # for now
+    XDW_CreateSfxDocument(input_path, output_path)
+    # Created file can be either document or binder.  We have to examine
+    # which type of file was generated and rename if needed.
+    doc = xdwopen(output_path, readonly=True)
+    doctype = doc.type
+    doc.close()
+    if doctype == XDW_DT_BINDER:
+        orig, output_path = output_path, root + ".xbd"
+        os.rename(orig, output_path)
+    return output_path
+
+
 class XDWFile(object):
 
     """Docuworks file, XDW or XBD."""

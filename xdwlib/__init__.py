@@ -13,4 +13,4 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE.
 """
 
-from xdwfile import xdwopen
+from xdwfile import xdwopen, create_sfx, extract_sfx
