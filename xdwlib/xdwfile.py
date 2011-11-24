@@ -70,7 +70,7 @@ def create_sfx(input_path, output_path=None):
     file somewhere and returns its path.  You have to remove the temporary
     file after use.
     """
-    output_path = os.path.splitext(output_path or input_path)[1] + ".exe"
+    output_path = os.path.splitext(output_path or input_path)[0] + ".exe"
     XDW_CreateSfxDocument(input_path, output_path)
     return output_path
 
@@ -82,7 +82,7 @@ def extract_sfx(input_path, output_path=None):
     file somewhere and returns its path.  You have to remove the temporary
     file after use.
     """
-    root, ext = os.path.splitext(output_path or input_path)
+    root = os.path.splitext(output_path or input_path)[0]
     output_path = root + ".xdw"  # for now
     XDW_CreateSfxDocument(input_path, output_path)
     # Created file can be either document or binder.  We have to examine
