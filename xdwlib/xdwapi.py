@@ -173,13 +173,41 @@ XDW_COMPRESS_MRC_HIGHCOMPRESS       = 10
 XDW_COMPRESS_MRC                    = 11
 XDW_COMPRESS_JPEG_TTN2              = 12
 
+XDW_COMPRESS = XDWConst({
+        XDW_COMPRESS_NORMAL                 : "NORMAL",
+        XDW_COMPRESS_LOSSLESS               : "LOSSLESS",
+        XDW_COMPRESS_HIGHQUALITY            : "HIGHQUALITY",
+        XDW_COMPRESS_HIGHCOMPRESS           : "HIGHCOMPRESS",
+        XDW_COMPRESS_NOCOMPRESS             : "NOCOMPRESS",
+        XDW_COMPRESS_JPEG                   : "JPEG",
+        XDW_COMPRESS_PACKBITS               : "PACKBITS",
+        XDW_COMPRESS_G4                     : "G4",
+        XDW_COMPRESS_MRC_NORMAL             : "MRC_NORMAL",
+        XDW_COMPRESS_MRC_HIGHQUALITY        : "MRC_HIGHQUALITY",
+        XDW_COMPRESS_MRC_HIGHCOMPRESS       : "MRC_HIGHCOMPRESS",
+        XDW_COMPRESS_MRC                    : "MRC",
+        XDW_COMPRESS_JPEG_TTN2              : "JPEG_TTN2",
+        }, default=XDW_COMPRESS_NORMAL)
+
 XDW_CONVERT_MRC_ORIGINAL            = 0
 XDW_CONVERT_MRC_OS                  = 1
+
+XDW_CONVERT_MRC = XDWConst({
+        XDW_CONVERT_MRC_ORIGINAL    : "ORIGINAL",
+        XDW_CONVERT_MRC_OS          : "OS",
+        }, default=XDW_CONVERT_MRC_ORIGINAL)
 
 XDW_IMAGE_DIB                       = 0
 XDW_IMAGE_TIFF                      = 1
 XDW_IMAGE_JPEG                      = 2
 XDW_IMAGE_PDF                       = 3
+
+XDW_IMAGE = XDWConst({
+        XDW_IMAGE_DIB               : "DIB",
+        XDW_IMAGE_TIFF              : "TIFF",
+        XDW_IMAGE_JPEG              : "JPEG",
+        XDW_IMAGE_PDF               : "PDF",
+        })
 
 XDW_TEXT_UNKNOWN                    = 0
 XDW_TEXT_MULTIBYTE                  = 1
@@ -190,6 +218,7 @@ XDW_TEXT_TYPE = XDWConst({
         XDW_TEXT_UNKNOWN            : "UNKNOWN",
         XDW_TEXT_MULTIBYTE          : "MULTIBYTE",
         XDW_TEXT_UNICODE            : "UNICODE",
+        XDW_TEST_UNICODE_IFNECESSARY: "UNICODE_IFNECESSARY",
         }, default=XDW_TEXT_UNKNOWN)
 
 ### Document/Binder related
@@ -217,17 +246,42 @@ XDW_CREATE_USERDEF                  = 2
 XDW_CREATE_USERDEF_FIT              = 3
 XDW_CREATE_FITDEF_DIVIDEBMP         = 4
 
+XDW_CREATE_FITIMAGE = XDWConst({
+        XDW_CREATE_FITDEF           : "FITDEF",
+        XDW_CREATE_FIT              : "FIT",
+        XDW_CREATE_USERDEF          : "USERDEF",
+        XDW_CREATE_USERDEF_FIT      : "USERDEF_FIT",
+        XDW_CREATE_FITDEF_DIVIDEBMP : "FITDEF_DIVIDEBMP",
+        })
+
 XDW_CREATE_HCENTER                  = 0
 XDW_CREATE_LEFT                     = 1
 XDW_CREATE_RIGHT                    = 2
+
+XDW_CREATE_HPOS = XDWConst({
+        XDW_CREATE_HCENTER          : "CENTER",
+        XDW_CREATE_LEFT             : "LEFT",
+        XDW_CREATE_RIGHT            : "RIGHT",
+        }, default=XDW_CREATE_HCENTER)
 
 XDW_CREATE_VCENTER                  = 0
 XDW_CREATE_TOP                      = 1
 XDW_CREATE_BOTTOM                   = 2
 
+XDW_CREATE_VPOS = XDWConst({
+        XDW_CREATE_VCENTER          : "CENTER",
+        XDW_CREATE_TOP              : "TOP",
+        XDW_CREATE_BOTTOM           : "BOTTOM",
+        }, default=XDW_CREATE_VCENTER)
+
 XDW_CREATE_DEFAULT_SIZE             = 0
 XDW_CREATE_A3_SIZE                  = 1
 XDW_CREATE_2A0_SIZE                 = 2
+
+XDW_CREATE_MAXPAPERSIZE = XDWConst({
+        XDW_CREATE_DEFAULT_SIZE     : "DEFAULT",
+        XDW_CREATE_A3_SIZE          : "A3",
+        XDW_CREATE_2A0_SIZE         : "2A0",
 
 XDW_CRTP_BEGINNING                  = 1
 XDW_CRTP_PRINTING                   = 2
@@ -252,6 +306,20 @@ XDW_SIZE_B4_PORTRAIT                = 7
 XDW_SIZE_B4_LANDSCAPE               = 8
 XDW_SIZE_B5_PORTRAIT                = 9
 XDW_SIZE_B5_LANDSCAPE               = 10
+
+XDW_SIZE = XDWConst({
+        XDW_SIZE_FREE               : "FREE",
+        XDW_SIZE_A3_PORTRAIT        : "A3R",
+        XDW_SIZE_A3_LANDSCAPE       : "A3",
+        XDW_SIZE_A4_PORTRAIT        : "A4R",
+        XDW_SIZE_A4_LANDSCAPE       : "A4",
+        XDW_SIZE_A5_PORTRAIT        : "A5R",
+        XDW_SIZE_A5_LANDSCAPE       : "A5",
+        XDW_SIZE_B4_PORTRAIT        : "B4R",
+        XDW_SIZE_B4_LANDSCAPE       : "B4",
+        XDW_SIZE_B5_PORTRAIT        : "B5R",
+        XDW_SIZE_B5_LANDSCAPE       : "B5",
+        }, default=XDW_SIZE_A4_PORTRAIT)
 
 # binder color
 
@@ -386,11 +454,11 @@ XDW_PROP_KEYWORDS                   = "%Keywords"
 XDW_PROP_COMMENTS                   = "%Comments"
 
 XDW_DOCUMENT_ATTRIBUTE = XDWConst({
-        XDW_PROP_TITLE:             "%Title",
-        XDW_PROP_SUBJECT:           "%Subject",
-        XDW_PROP_AUTHOR:            "%Author",
-        XDW_PROP_KEYWORDS:          "%Keywords",
-        XDW_PROP_COMMENTS:          "%Comments",
+        XDW_PROP_TITLE              : "%Title",
+        XDW_PROP_SUBJECT            : "%Subject",
+        XDW_PROP_AUTHOR             : "%Author",
+        XDW_PROP_KEYWORDS           : "%Keywords",
+        XDW_PROP_COMMENTS           : "%Comments",
         }, default=None)
 
 XDW_PROPW_TITLE                     = u"%Title"
@@ -400,11 +468,11 @@ XDW_PROPW_KEYWORDS                  = u"%Keywords"
 XDW_PROPW_COMMENTS                  = u"%Comments"
 
 XDW_DOCUMENT_ATTRIBUTE_W = XDWConst({
-        XDW_PROPW_TITLE:            u"%Title",
-        XDW_PROPW_SUBJECT:          u"%Subject",
-        XDW_PROPW_AUTHOR:           u"%Author",
-        XDW_PROPW_KEYWORDS:         u"%Keywords",
-        XDW_PROPW_COMMENTS:         u"%Comments",
+        XDW_PROPW_TITLE             : u"%Title",
+        XDW_PROPW_SUBJECT           : u"%Subject",
+        XDW_PROPW_AUTHOR            : u"%Author",
+        XDW_PROPW_KEYWORDS          : u"%Keywords",
+        XDW_PROPW_COMMENTS          : u"%Comments",
         }, default=None)
 
 XDW_BINDER_SIZE = XDWConst({

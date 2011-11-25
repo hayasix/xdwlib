@@ -194,3 +194,25 @@ class XDWFile(object):
     def typename(self):
         """DocuWorks file type, document or binder."""
         return XDW_DOCUMENT_TYPE[self.type]
+
+    def insert_image(self, pos, input_path,
+            fitimage=XDW_CREATE_FITDEF,
+            compress=XDW_COMPRESS_NORMAL,
+            zoom=0,  # %; 0=100%
+            size=Point(0, 0),  # Point(width, height); 0=A4
+            align=("center", "center"),  # left/center/right, top/center/bottom
+            maxpapersize=XDW_CREATE_DEFAULT_SIZE,
+            ):
+        """Insert pages created from image files."""
+        opt = XDW_CREATE_OPTION_EX2()
+        opt.nFitImage = XDW_CREATE_FITIMAGE.normalize(fitimage)
+        opt.nCompress = XDW_COMPRESS.normalize(compress)
+        #opt.nZoom = 0
+        opt.nZoomDetail = int(zoom * 1000)  # .3f
+        # NB. Width and height are valid only for XDW_CREATE_USERDEF(_FIT).
+        opt.nWidth, opt.nHeight = int(size * 100)  # .2f;
+        opt.nHorPos = XDW_CREATE_HPOS.normalize(align[0])
+        opt.nVerPos = XDW_CREATE_VPOS.normalize(align[1])
+        opt.nMaxPaperSize = XDW_CREATE_MAXPAPERSIZE.normalize(maxpapersize)
+        XDW_CreateXdwFromImageFileAndInsertDocument(
+                self.handle, pos + 1, input_path, opt))

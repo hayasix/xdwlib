@@ -13,6 +13,9 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE.
 """
 
+import math
+
+
 __all__ = ("Point", "Rect")
 
 
@@ -56,6 +59,18 @@ class Point(object):
     def __iter__(self):
         for pos in range(2):
             yield (self.x, self.y)[pos]
+
+    def __int__(self):
+        return Point(int(self.x), int(self.y))
+
+    int = __int__
+
+    @staticmethod
+    def _round(f, places=0):
+        return math.floor(f * math.pow(10, places) + .5) / math.pow(10, places)
+
+    def round(self, places=0):
+        return Point(self._round(self.x, places), self._round(self.y, places)
 
     def __neg__(self):
         return Point(-self.x, -self.y)
