@@ -15,6 +15,7 @@ FOR A PARTICULAR PURPOSE.
 
 import re
 
+from xdwapi import *
 from common import *
 from observer import Subject, Observer
 from struct import Point, Rect

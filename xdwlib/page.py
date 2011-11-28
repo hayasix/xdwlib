@@ -16,6 +16,7 @@ FOR A PARTICULAR PURPOSE.
 import os
 import tempfile
 
+from xdwapi import *
 from common import *
 from observer import Subject, Observer
 from struct import Point

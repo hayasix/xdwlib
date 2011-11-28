@@ -14,8 +14,8 @@ FOR A PARTICULAR PURPOSE.
 """
 
 from os.path import abspath, dirname, join
-from shutil import copyfile
 
+from xdwapi import *
 from common import *
 from struct import Point
 from xdwfile import XDWFile
@@ -36,8 +36,8 @@ def create_document(path, source=None, **kw):
             return create_document_from_pdf(source, path)
         elif source.upper().endswith((".BMP", "JPG", "JPEG", "TIF", "TIFF")):
             return create_document_from_image(source, path, **kw)
-    blank = join(dirname(abspath(__file__)), "__blank__.xdw")
-    copyfile(blank, path)
+    with open(path, "wb") as f:
+        f.write(BLANKPAGE)
     return path
 
 

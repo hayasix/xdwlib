@@ -13,7 +13,9 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE.
 """
 
+from xdwapi import *
 from common import *
+from observer import Observer
 from basedocument import BaseDocument
 
 

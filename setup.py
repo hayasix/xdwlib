@@ -6,7 +6,7 @@ from distutils.core import setup
 
 setup(
     name="xdwlib",
-    version="2.4.0",
+    version="2.4.1",
     author="HAYASI Hideki",
     author_email="linxs@linxs.org",
     url="https://launchpad.net/xdwlib",
