@@ -70,7 +70,7 @@ class Point(object):
         return math.floor(f * math.pow(10, places) + .5) / math.pow(10, places)
 
     def round(self, places=0):
-        return Point(self._round(self.x, places), self._round(self.y, places)
+        return Point(self._round(self.x, places), self._round(self.y, places))
 
     def __neg__(self):
         return Point(-self.x, -self.y)

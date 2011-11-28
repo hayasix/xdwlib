@@ -18,6 +18,7 @@ import datetime
 
 from xdwapi import *
 from common import *
+from struct import Point
 
 
 __all__ = ("XDWFile", "environ", "xdwopen", "VALID_DOCUMENT_HANDLES")
@@ -199,7 +200,7 @@ class XDWFile(object):
             fitimage=XDW_CREATE_FITDEF,
             compress=XDW_COMPRESS_NORMAL,
             zoom=0,  # %; 0=100%
-            size=Point(0, 0),  # Point(width, height); 0=A4
+            size=Point(0, 0),  # Point(width, height); 0=A4R
             align=("center", "center"),  # left/center/right, top/center/bottom
             maxpapersize=XDW_CREATE_DEFAULT_SIZE,
             ):
@@ -215,4 +216,4 @@ class XDWFile(object):
         opt.nVerPos = XDW_CREATE_VPOS.normalize(align[1])
         opt.nMaxPaperSize = XDW_CREATE_MAXPAPERSIZE.normalize(maxpapersize)
         XDW_CreateXdwFromImageFileAndInsertDocument(
-                self.handle, pos + 1, input_path, opt))
+                self.handle, pos + 1, input_path, opt)

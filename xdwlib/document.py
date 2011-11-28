@@ -17,41 +17,61 @@ from os.path import abspath, dirname, join
 from shutil import copyfile
 
 from common import *
+from struct import Point
 from xdwfile import XDWFile
 from basedocument import BaseDocument
 
 
-__all__ = ("Document", "create_document", "create_document_from_image")
+__all__ = ("Document",
+        "create_document",
+        "create_document_from_image",
+        "create_document_from_pdf",
+        )
 
 
-def create_document(path):
-    """The XDW generator, preparing dummy A4 white page."""
+def create_document(path, source=None, **kw):
+    """The XDW generator."""
+    if isinstance(source, basestring):
+        if source.upper().endswith(".PDF"):
+            return create_document_from_pdf(source, path)
+        elif source.upper().endswith((".BMP", "JPG", "JPEG", "TIF", "TIFF")):
+            return create_document_from_image(source, path, **kw)
     blank = join(dirname(abspath(__file__)), "__blank__.xdw")
     copyfile(blank, path)
+    return path
 
 
-def create_document_from_image(
-        inputPath,
-        outputPath,
-        size=XDW_SIZE_A4_PORTRAIT,
-        fit_image=XDW_CREATE_FIT,
-        compress=XDW_COMPRESS_LOSSLESS,
-        zoom=100,
-        width=0.0, height=0.0,
-        horizontal_position=XDW_CREATE_HCENTER,
-        vertical_position=XDW_CREATE_VCENTER,
+def create_document_from_image(input_path, output_path=None,
+        fitimage=XDW_CREATE_FITDEF,
+        compress=XDW_COMPRESS_NORMAL,
+        zoom=0,  # %; 0=100%
+        size=Point(0, 0),  # Point(width, height); 0=A4R
+        align=("center", "center"),  # left/center/right, top/center/bottom
+        maxpapersize=XDW_CREATE_DEFAULT_SIZE,
         ):
     """XDW generator from image file."""
-    opt = XDW_CREATE_OPTION()
-    opt.nSize = normalize_binder_size(size)
-    opt.nFitImage = fit_image
-    opt.nCompress = compress
-    opt.nZoom = int(zoom)
-    opt.nWidth = int(width * 100)
-    opt.nHeight = int(height * 100)
-    opt.nHorPos = int(horizontal_position * 100)
-    opt.nVerPos = int(vertical_position * 100)
-    XDW_CreateXdwFromImageFile(inputPath, outputPath, opt)
+    if not output_path:
+        output_path = input_path + ".xdw"
+    opt = XDW_CREATE_OPTION_EX2()
+    opt.nFitImage = XDW_CREATE_FITIMAGE.normalize(fitimage)
+    opt.nCompress = XDW_COMPRESS.normalize(compress)
+    #opt.nZoom = int(zoom)
+    opt.nZoomDetail = int(zoom * 1000)  # .3f
+    # NB. Width and height are valid only for XDW_CREATE_USERDEF(_FIT).
+    opt.nWidth, opt.nHeight = int(size * 100)  # .2f;
+    opt.nHorPos = XDW_CREATE_HPOS.normalize(align[0])
+    opt.nVerPos = XDW_CREATE_VPOS.normalize(align[1])
+    opt.nMaxPaperSize = XDW_CREATE_MAXPAPERSIZE.normalize(maxpapersize)
+    XDW_CreateXdwFromImageFile(input_path, output_path, opt)
+    return output_path
+
+
+def create_document_from_pdf(input_path, output_path):
+    """XDW generator from image PDF file."""
+    if not output_path:
+        output_path = input_path + ".xdw"
+    XDW_CreateXdwFromImagePdfFile(input_path, output_path)
+    return output_path
 
 
 class Document(BaseDocument, XDWFile):

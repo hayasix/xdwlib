@@ -218,7 +218,7 @@ XDW_TEXT_TYPE = XDWConst({
         XDW_TEXT_UNKNOWN            : "UNKNOWN",
         XDW_TEXT_MULTIBYTE          : "MULTIBYTE",
         XDW_TEXT_UNICODE            : "UNICODE",
-        XDW_TEST_UNICODE_IFNECESSARY: "UNICODE_IFNECESSARY",
+        XDW_TEXT_UNICODE_IFNECESSARY: "UNICODE_IFNECESSARY",
         }, default=XDW_TEXT_UNKNOWN)
 
 ### Document/Binder related
@@ -282,6 +282,7 @@ XDW_CREATE_MAXPAPERSIZE = XDWConst({
         XDW_CREATE_DEFAULT_SIZE     : "DEFAULT",
         XDW_CREATE_A3_SIZE          : "A3",
         XDW_CREATE_2A0_SIZE         : "2A0",
+        }, default=XDW_CREATE_DEFAULT_SIZE)
 
 XDW_CRTP_BEGINNING                  = 1
 XDW_CRTP_PRINTING                   = 2
