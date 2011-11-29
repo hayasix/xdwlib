@@ -18,7 +18,7 @@ import tempfile
 
 from xdwapi import *
 from common import *
-from observer import Subject, Observer
+from observer import *
 from struct import Point
 from annotatable import Annotatable
 

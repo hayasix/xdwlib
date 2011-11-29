@@ -15,7 +15,7 @@ FOR A PARTICULAR PURPOSE.
 
 from xdwapi import *
 from common import *
-from observer import Observer
+from observer import *
 from basedocument import BaseDocument
 
 

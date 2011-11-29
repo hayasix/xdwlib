@@ -15,7 +15,7 @@ FOR A PARTICULAR PURPOSE.
 
 from xdwapi import *
 from common import *
-from observer import Subject
+from observer import *
 from xdwfile import xdwopen
 from page import Page, PageCollection
 

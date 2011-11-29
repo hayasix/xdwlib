@@ -17,7 +17,7 @@ import re
 
 from xdwapi import *
 from common import *
-from observer import Subject, Observer
+from observer import *
 from struct import Point, Rect
 from annotatable import Annotatable
 

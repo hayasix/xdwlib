@@ -17,8 +17,8 @@ import os
 
 from xdwapi import *
 from common import *
+from observer import *
 from struct import Point, Rect
-from observer import Subject
 
 
 __all__ = ("Annotatable",)
