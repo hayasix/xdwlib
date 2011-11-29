@@ -145,17 +145,13 @@ class XDWFile(object):
         self.binder_size = document_info.nBinderSize
         # Document attributes.
         self.attributes = XDW_GetDocumentAttributeNumber(self.handle)
-        # Remember if this must be finalized.
-        self.finalize = False
 
     def save(self):
         """Save document regardless of whether it is modified or not."""
         XDW_SaveDocument(self.handle)
 
     def close(self):
-        """Finalize document if neccesary, and close document."""
-        if self.finalize:
-            XDW_Finalize()
+        """Close document."""
         XDW_CloseDocumentHandle(self.handle)
         self.free()
 

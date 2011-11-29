@@ -549,7 +549,7 @@ XDW_OCR_PREPROCESSING = XDWConst({
         XDW_PRIORITY_NONE                       : "NONE",
         XDW_PRIORITY_SPEED                      : "SPEED",
         XDW_PRIORITY_RECOGNITION                : "ACCURACY",
-        })
+        }, default=XDW_PRIORITY_NONE)
 
 XDW_OCR_ENGINE_V4                               = 1  # for = compatibility
 XDW_OCR_ENGINE_DEFAULT                          = 1
@@ -559,7 +559,7 @@ XDW_OCR_ENGINE_FRE                              = 3
 XDW_OCR_ENGINE = XDWConst({
         XDW_OCR_ENGINE_DEFAULT                  : "DEFAULT",
         XDW_OCR_ENGINE_WRP                      : "WINREADER PRO",
-        })
+        }, default=XDW_OCR_ENGINE_DEFAULT)
 
 XDW_OCR_LANGUAGE_AUTO                           = -1
 XDW_OCR_LANGUAGE_JAPANESE                       = 0
@@ -569,7 +569,7 @@ XDW_OCR_LANGUAGE = XDWConst({
         XDW_OCR_LANGUAGE_AUTO                   : "AUTO",
         XDW_OCR_LANGUAGE_JAPANESE               : "JAPANESE",
         XDW_OCR_LANGUAGE_ENGLISH                : "ENGLISH",
-        })
+        }, default=XDW_OCR_LANGUAGE_AUTO)
 
 XDW_OCR_MULTIPLELANGUAGES_ENGLISH               = 0x02
 XDW_OCR_MULTIPLELANGUAGES_FRENCH                = 0x04
@@ -585,7 +585,7 @@ XDW_OCR_FORM = XDWConst({
         XDW_OCR_FORM_AUTO                       : "AUTO",
         XDW_OCR_FORM_TABLE                      : "TABLE",
         XDW_OCR_FORM_WRITING                    : "WRITING",
-        })
+        }, default=XDW_OCR_FORM_AUTO)
 
 XDW_OCR_COLUMN_AUTO                             = 0
 XDW_OCR_COLUMN_HORIZONTAL_SINGLE                = 1
@@ -599,7 +599,7 @@ XDW_OCR_COLUMN = XDWConst({
         XDW_OCR_COLUMN_HORIZONTAL_MULTI         : "HORIZONTAL MULTI",
         XDW_OCR_COLUMN_VERTICAL_SINGLE          : "VERTICAL SINGLE",
         XDW_OCR_COLUMN_VERTICAL_MULTI           : "VERTICAL MULTI",
-        })
+        }, default=XDW_OCR_COLUMN_AUTO)
 
 XDW_OCR_DOCTYPE_AUTO                            = 0
 XDW_OCR_DOCTYPE_HORIZONTAL_SINGLE               = 1
@@ -613,7 +613,7 @@ XDW_OCR_STRATEGY = XDWConst({
         XDW_OCR_ENGINE_LEVEL_SPEED              : "SPEED",
         XDW_OCR_ENGINE_LEVEL_STANDARD           : "STANDARD",
         XDW_OCR_ENGINE_LEVEL_ACCURACY           : "ACCURACY",
-        })
+        }, default=XDW_OCR_ENGINE_LEVEL_STANDARD)
 
 XDW_OCR_MIXEDRATE_JAPANESE                      = 1
 XDW_OCR_MIXEDRATE_BALANCED                      = 2
@@ -623,7 +623,7 @@ XDW_OCR_MAIN_LANGUAGE = XDWConst({
         XDW_OCR_MIXEDRATE_JAPANESE              : "JAPANESE",
         XDW_OCR_MIXEDRATE_BALANCED              : "BALANCED",
         XDW_OCR_MIXEDRATE_ENGLISH               : "ENGLISH",
-        })
+        }, default=XDW_OCR_MIXEDRATE_BALANCED)
 
 # page type
 

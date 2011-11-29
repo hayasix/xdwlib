@@ -70,10 +70,6 @@ class DocumentInBinder(BaseDocument, Observer):
         """Private method to renew the page offset for DocumentInBinder."""
         self.page_offset = sum(self.binder.document_pages()[:self.pos])
 
-    def require_finalization(self):
-        """Set `finalize' flag to invoke finalization process on exit."""
-        self.binder.finalize = True
-
     def absolute_page(self, pos):
         """Concrete method over dirname()."""
         return self.page_offset + pos

@@ -14,6 +14,7 @@ FOR A PARTICULAR PURPOSE.
 """
 
 import os
+import atexit
 import tempfile
 import base64
 
@@ -32,6 +33,7 @@ __all__ = (
         "XDWTemp",
         "inner_attribute_name", "outer_attribute_name",
         "adjust_path",
+        "joinf",
         )
 
 
@@ -81,6 +83,12 @@ BLANKPAGE = base64.b64decode(
         "Iu15yzQVWGKYwqc/FqVIqdCNZ2GH78VOiq6O6Z6Kv4Ks7ukFTpKs9FTCp01V"
         "KeAO5OV1pR017/sBaYtCOxaHgGUagAEAggEAgwIHJ4QCBI2FBFLFTQqGBBoA"
         "AAA=")
+
+
+@atexit.register
+def atexithandler():
+    """Perform finalization before finishing this process."""
+    XDW_Finalize()
 
 
 def joinf(sep, seq):

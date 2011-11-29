@@ -211,7 +211,6 @@ class Page(Annotatable, Observer):
         abspos = self.absolute_page()
         if auto:
             XDW_RotatePageAuto(self.doc.handle, abspos + 1)
-            self.doc.require_finalization()
         else:
             XDW_RotatePage(self.doc.handle, abspos + 1, degree)
         self.reset_attr()
@@ -269,7 +268,6 @@ class Page(Annotatable, Observer):
             opt.pAreaRects = NULL
         XDW_ApplyOcr(self.doc.handle, self.absolute_page() + 1,
                 engine, opt)
-        self.doc.require_finalization()
 
     def copy(self, path=None):
         """Copy current page and create another document.

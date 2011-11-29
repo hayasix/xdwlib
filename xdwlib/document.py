@@ -91,10 +91,6 @@ class Document(BaseDocument, XDWFile):
         return u"Document(%s: %d pages, %d attachments)" % (
                 self.name, self.pages, self.original_data)
 
-    def require_finalization(self):
-        """Set `finalize' flag to invoke finalization process on exit."""
-        self.finalize = True
-
     def absolute_page(self, pos):
         """Concrete method over absolute_page()."""
         return pos
