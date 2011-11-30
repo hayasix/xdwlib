@@ -13,7 +13,7 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE.
 """
 
-from os.path import abspath, dirname, join
+from os.path import abspath, dirname, join, splitext
 
 from xdwapi import *
 from common import *
@@ -29,17 +29,28 @@ __all__ = ("Document",
         )
 
 
-def create_document(path, source=None, **kw):
+def create_document(input_path=None, output_path=None, **kw):
     """The XDW generator."""
-    path = cp(path)
-    if isinstance(source, basestring):
-        if source.upper().endswith(".PDF"):
-            return create_document_from_pdf(source, path)
-        elif source.upper().endswith((".BMP", "JPG", "JPEG", "TIF", "TIFF")):
-            return create_document_from_image(source, path, **kw)
-    with open(path, "wb") as f:
+    input_path, output_path = cp(input_path), cp(output_path)
+    if isinstance(input_path, basestring):
+        if not output_path:
+            output_path = splitext(input_path)[0] + ".xdw"
+        if input_path.upper().endswith(".PDF"):
+            create_document_from_pdf(input_path, output_path)  # no fallthru
+            return output_path
+        if input_path.upper().endswith((
+                ".BMP", ".JPG", ".JPEG", ".TIF", ".TIFF")):
+            try:
+                create_document_from_image(input_path, output_path, **kw)
+                return output_path
+            except Exception as e:
+                pass  # fall through; processed by respective apps.
+        create_document_from_app(input_path, output_path)
+        return output_path
+    # input_path==None means generating single blank page.
+    with open(output_path, "wb") as f:
         f.write(BLANKPAGE)
-    return path
+    return output_path
 
 
 def create_document_from_image(input_path, output_path=None,
@@ -53,7 +64,7 @@ def create_document_from_image(input_path, output_path=None,
     """XDW generator from image file."""
     input_path, output_path = cp(input_path), cp(output_path)
     if not output_path:
-        output_path = input_path + ".xdw"
+        output_path = splitext(input_path)[0] + ".xdw"
     opt = XDW_CREATE_OPTION_EX2()
     opt.nFitImage = XDW_CREATE_FITIMAGE.normalize(fitimage)
     opt.nCompress = XDW_COMPRESS.normalize(compress)
@@ -72,8 +83,11 @@ def create_document_from_pdf(input_path, output_path=None):
     """XDW generator from image PDF file."""
     input_path, output_path = cp(input_path), cp(output_path)
     if not output_path:
-        output_path = input_path + ".xdw"
-    XDW_CreateXdwFromImagePdfFile(input_path, output_path)
+        output_path = splitext(input_path)[0] + ".xdw"
+    try:
+        XDW_CreateXdwFromImagePdfFile(input_path, output_path)
+    except Exception as e:
+        create_document_from_app(input_path, output_path, timeout=3600)
     return output_path
 
 
@@ -90,7 +104,7 @@ def create_document_from_app(input_path, output_path=None,
     import time
     input_path, output_path = cp(input_path), cp(output_path)
     if not output_path:
-        output_path = input_path + ".xdw"
+        output_path = splitext(input_path)[0] + ".xdw"
     handle = XDW_BeginCreationFromAppFile(input_path, output_path,
             bool(attachment))
     st = time.time()
@@ -100,7 +114,7 @@ def create_document_from_app(input_path, output_path=None,
             if status.phase in (XDW_CRTP_FINISHED,
                     XDW_CRTP_CANCELED, XDW_CRTP_CANCELING):
                 break
-            if timeout and timeout < time() - st:
+            if timeout and timeout < time.time() - st:
                 XDW_CancelCreationFromAppFile(handle)
                 break
             time.sleep(2)

@@ -128,7 +128,7 @@ def adjust_path(path, default_dir="", coding=None):
 
 def cp(s):
     """Returns string, converted to codepage CP if needed."""
-    return s.encode(CODEPAGE) if isinstance(s, str) else s
+    return s.encode(CODEPAGE) if isinstance(s, unicode) else s
 
 
 class XDWTemp(object):

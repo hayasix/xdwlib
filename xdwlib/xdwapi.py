@@ -202,7 +202,7 @@ XDW_IMAGE_TIFF                      = 1
 XDW_IMAGE_JPEG                      = 2
 XDW_IMAGE_PDF                       = 3
 
-XDW_IMAGE = XDWConst({
+XDW_IMAGE_FORMAT = XDWConst({
         XDW_IMAGE_DIB               : "DIB",
         XDW_IMAGE_TIFF              : "TIFF",
         XDW_IMAGE_JPEG              : "JPEG",
@@ -531,6 +531,12 @@ XDW_GPTI_TYPE_OCRTEXT               = 1
 XDW_IMAGE_MONO                      = 0
 XDW_IMAGE_COLOR                     = 1
 XDW_IMAGE_MONO_HIGHQUALITY          = 2
+
+XDW_IMAGE_COLORSCHEME = XDWConst({
+        XDW_IMAGE_MONO              : "MONO",
+        XDW_IMAGE_COLOR             : "COLOR",
+        XDW_IMAGE_MONO_HIGHQUALITY  : "MONO_HIGHQUALITY",
+        }, default=XDW_IMAGE_COLOR)
 
 # rotation
 

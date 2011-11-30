@@ -60,10 +60,8 @@ class Point(object):
         for pos in range(2):
             yield (self.x, self.y)[pos]
 
-    def __int__(self):
+    def int(self):
         return Point(int(self.x), int(self.y))
-
-    int = __int__
 
     @staticmethod
     def _round(f, places=0):

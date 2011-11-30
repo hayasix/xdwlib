@@ -16,6 +16,7 @@ FOR A PARTICULAR PURPOSE.
 from xdwapi import *
 from common import *
 from observer import *
+from struct import Point
 from xdwfile import xdwopen
 from page import Page, PageCollection
 
@@ -109,12 +110,59 @@ class BaseDocument(Subject):
             page = Page(self, p)
         self.pages += len(pc)
 
+    def insert_image(self, pos, input_path,
+            fitimage=XDW_CREATE_FITDEF,
+            compress=XDW_COMPRESS_NORMAL,
+            zoom=0,  # %; 0=100%
+            size=Point(0, 0),  # Point(width, height); 0=A4R
+            align=("center", "center"),  # left/center/right, top/center/bottom
+            maxpapersize=XDW_CREATE_DEFAULT_SIZE,
+            ):
+        """Insert a page created from image files."""
+        if pos < 0:
+            pos += self.pages
+        opt = XDW_CREATE_OPTION_EX2()
+        opt.nFitImage = XDW_CREATE_FITIMAGE.normalize(fitimage)
+        opt.nCompress = XDW_COMPRESS.normalize(compress)
+        #opt.nZoom = 0
+        opt.nZoomDetail = int(zoom * 1000)  # .3f
+        # NB. Width and height are valid only for XDW_CREATE_USERDEF(_FIT).
+        opt.nWidth, opt.nHeight = size.int() * 100  # .2f;
+        opt.nHorPos = XDW_CREATE_HPOS.normalize(align[0])
+        opt.nVerPos = XDW_CREATE_VPOS.normalize(align[1])
+        opt.nMaxPaperSize = XDW_CREATE_MAXPAPERSIZE.normalize(maxpapersize)
+        XDW_CreateXdwFromImageFileAndInsertDocument(
+                self.handle, pos + 1, input_path, opt)
+        # Check inserted pages in order to attach them to this document and
+        # shift observer entries appropriately.
+        page = Page(self, pos)
+        self.pages += 1
+        ## TODO: recalc page data if image has been divided into pages.
+
     def delete(self, pos):
         """Delete a page."""
         page = self.page(pos)
         XDW_DeletePage(self.handle, self.absolute_page(pos) + 1)
         self.detach(page, EV_PAGE_REMOVED)
         self.pages -= 1
+
+    def rasterize(self, pos, dpi=600, color="COLOR"):
+        """Rasterize; convert an application page into DocuWorks image page."""
+        import os
+        import tempfile
+        dpi = int(dpi)
+        if not (10 <= dpi <= 600):
+            raise ValueError("specify resolution between 10 and 600")
+        opt = XDW_IMAGE_OPTION()
+        opt.nDpi = int(dpi)
+        opt.nColor = XDW_IMAGE_COLORSCHEME.normalize(color)
+        temp = tempfile.NamedTemporaryFile(suffix=".bmp")
+        temppath = temp.name
+        temp.close()  # On Windows, you cannot reopen temp.  TODO: better code
+        XDW_ConvertPageToImageFile(self.handle, pos + 1, temppath, opt)
+        self.insert_image(pos, temppath)
+        self.delete(pos + 1)
+        os.remove(temppath)
 
     def content_text(self):
         """Get all content text."""
