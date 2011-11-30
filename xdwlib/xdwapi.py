@@ -294,6 +294,18 @@ XDW_CRTP_CANCELING                  = 7
 XDW_CRTP_FINISHED                   = 8
 XDW_CRTP_CANCELED                   = 9
 
+XDW_CREATE_PHASE = XDWConst({
+        XDW_CRTP_BEGINNING          : "INITIALIZING",
+        XDW_CRTP_PRINTING           : "PRINTING",
+        XDW_CRTP_PAGE_CREATING      : "GENERATING",
+        XDW_CRTP_ORIGINAL_APPENDING : "ATTACHING",
+        XDW_CRTP_WRITING            : "WRITING",
+        XDW_CRTP_ENDING             : "FINISHING",
+        XDW_CRTP_CANCELING          : "CANCELLING",
+        XDW_CRTP_FINISHED           : "FINISHED",
+        XDW_CRTP_CANCELED           : "CANCELLED",
+        })
+
 # size
 
 XDW_SIZE_FREE                       = 0
@@ -1979,7 +1991,7 @@ def XDW_GetStatusCreationFromAppFile(cre_handle):
     """XDW_GetStatusCreationFromAppFile(cre_handle) --> create_status"""
     create_status = XDW_CREATE_STATUS()
     TRY(DLL.XDW_GetStatusCreationFromAppFile, cre_handle, byref(create_status))
-    return createStatus
+    return create_status
 
 
 @APPEND(NULL)

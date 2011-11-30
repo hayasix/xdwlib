@@ -31,6 +31,7 @@ __all__ = ("Document",
 
 def create_document(path, source=None, **kw):
     """The XDW generator."""
+    path = cp(path)
     if isinstance(source, basestring):
         if source.upper().endswith(".PDF"):
             return create_document_from_pdf(source, path)
@@ -50,6 +51,7 @@ def create_document_from_image(input_path, output_path=None,
         maxpapersize=XDW_CREATE_DEFAULT_SIZE,
         ):
     """XDW generator from image file."""
+    input_path, output_path = cp(input_path), cp(output_path)
     if not output_path:
         output_path = input_path + ".xdw"
     opt = XDW_CREATE_OPTION_EX2()
@@ -66,12 +68,46 @@ def create_document_from_image(input_path, output_path=None,
     return output_path
 
 
-def create_document_from_pdf(input_path, output_path):
+def create_document_from_pdf(input_path, output_path=None):
     """XDW generator from image PDF file."""
+    input_path, output_path = cp(input_path), cp(output_path)
     if not output_path:
         output_path = input_path + ".xdw"
     XDW_CreateXdwFromImagePdfFile(input_path, output_path)
     return output_path
+
+
+def create_document_from_app(input_path, output_path=None,
+        attachment=False, timeout=0):
+    """Create document through other app with optional attachment.
+
+    create_document_from_app(input_path, output_path=None,
+            attachment=False, timeout=0) --> generated_pages or None
+
+    attachment: (bool) attach original data file (given by input_path) or not
+    timeout: (int) max seconds to wait until application printing is done
+    """
+    import time
+    input_path, output_path = cp(input_path), cp(output_path)
+    if not output_path:
+        output_path = input_path + ".xdw"
+    handle = XDW_BeginCreationFromAppFile(input_path, output_path,
+            bool(attachment))
+    st = time.time()
+    try:
+        while True:
+            status = XDW_GetStatusCreationFromAppFile(handle)
+            if status.phase in (XDW_CRTP_FINISHED,
+                    XDW_CRTP_CANCELED, XDW_CRTP_CANCELING):
+                break
+            if timeout and timeout < time() - st:
+                XDW_CancelCreationFromAppFile(handle)
+                break
+            time.sleep(2)
+        # status.phase, status.nTotalPage, status.nPage
+    finally:
+        XDW_EndCreationFromAppFile(handle)
+    return status.nTotalPage if status.phase == XDW_CRTP_FINISHED else None
 
 
 class Document(BaseDocument, XDWFile):

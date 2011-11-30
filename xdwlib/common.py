@@ -32,13 +32,13 @@ __all__ = (
         "BLANKPAGE",
         "XDWTemp",
         "inner_attribute_name", "outer_attribute_name",
-        "adjust_path",
+        "adjust_path", "cp",
         "joinf",
         )
 
 
-PSEP = "\f"
-ASEP = "\v"
+PSEP = "\f"  # page separator
+ASEP = "\v"  # annotation separator
 
 CP = 932
 CODEPAGE = "cp%d" % CP
@@ -124,6 +124,11 @@ def adjust_path(path, default_dir="", coding=None):
     if coding:
         path = path.encode(coding)
     return path
+
+
+def cp(s):
+    """Returns string, converted to codepage CP if needed."""
+    return s.encode(CODEPAGE) if isinstance(s, str) else s
 
 
 class XDWTemp(object):

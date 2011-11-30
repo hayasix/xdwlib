@@ -57,6 +57,7 @@ def xdwopen(path, readonly=False, authenticate=True):
     """General opener"""
     from document import Document
     from binder import Binder
+    path = cp(path)
     XDW_TYPES = {".XDW": Document, ".XBD": Binder}
     ext = os.path.splitext(path)[1].upper()
     if ext not in XDW_TYPES:
@@ -71,6 +72,7 @@ def create_sfx(input_path, output_path=None):
     file somewhere and returns its path.  You have to remove the temporary
     file after use.
     """
+    input_path, output_path = cp(input_path), cp(output_path)
     output_path = os.path.splitext(output_path or input_path)[0] + ".exe"
     XDW_CreateSfxDocument(input_path, output_path)
     return output_path
@@ -83,6 +85,7 @@ def extract_sfx(input_path, output_path=None):
     file somewhere and returns its path.  You have to remove the temporary
     file after use.
     """
+    input_path, output_path = cp(input_path), cp(output_path)
     root = os.path.splitext(output_path or input_path)[0]
     output_path = root + ".xdw"  # for now
     XDW_CreateSfxDocument(input_path, output_path)

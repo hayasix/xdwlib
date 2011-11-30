@@ -119,9 +119,7 @@ class Binder(Subject, XDWFile):
 
     def fulltext(self):
         """Get all content text and annotation text."""
-        return joinf(PSEP, [
-                joinf(ASEP, [doc.content_text(), doc.annotation_text()])
-                for doc in self])
+        return joinf(PSEP, [doc.fulltext() for doc in self])
 
     def find_fulltext(self, pattern):
         """Find given pattern (text or regex) throughout binder.

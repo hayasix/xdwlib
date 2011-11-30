@@ -197,10 +197,7 @@ class Annotatable(Subject):
         raise NotImplementedError()
 
     def annotation_text(self, recursive=True):
-        """Get text in annotation(s).
-
-        annotation_text(recursive=True) --> str
-        """
+        """Get text in child/descendant annotations."""
         result = []
         for ann in self:
             result.append(ann.content_text())
@@ -209,10 +206,7 @@ class Annotatable(Subject):
         return joinf(ASEP, result)
 
     def fulltext(self):
-        """Get text in annotation(s).
-
-        fulltext(recursive=True) --> str
-        """
+        """Get text in this object and all descendant annotations."""
         return  joinf(ASEP, [
                 self.content_text(),
                 self.annotation_text(recursive=True)])
