@@ -203,11 +203,11 @@ XDW_IMAGE_JPEG                      = 2
 XDW_IMAGE_PDF                       = 3
 
 XDW_IMAGE_FORMAT = XDWConst({
-        XDW_IMAGE_DIB               : "DIB",
+        XDW_IMAGE_DIB               : "BMP",
         XDW_IMAGE_TIFF              : "TIFF",
         XDW_IMAGE_JPEG              : "JPEG",
         XDW_IMAGE_PDF               : "PDF",
-        })
+        }, default=XDW_IMAGE_DIB)
 
 XDW_TEXT_UNKNOWN                    = 0
 XDW_TEXT_MULTIBYTE                  = 1
@@ -1637,14 +1637,14 @@ XDW_SIZEOF_PKISIGNEDTIME    = 32
 class XDW_SIGNATURE_PKI_INFO_V5(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
-     ("lpszModule", c_char * XDW_SIZEOF_PKIMODULENAME),
-     ("lpszSubjectDN", c_char * XDW_SIZEOF_PKISUBJECTDN),
-     ("lpszSubject", c_char * XDW_SIZEOF_PKISUBJECT),
-     ("lpszIssuerDN", c_char * XDW_SIZEOF_PKIISSUERDN),
-     ("lpszIssuer", c_char * XDW_SIZEOF_PKIISSUER),
-     ("lpszNotBefore", c_char * XDW_SIZEOF_PKINOTBEFORE),
-     ("lpszNotAfter", c_char * XDW_SIZEOF_PKINOTAFTER),
-     ("lpszSerial", c_char * XDW_SIZEOF_PKISERIAL),
+        ("lpszModule", c_char * XDW_SIZEOF_PKIMODULENAME),
+        ("lpszSubjectDN", c_char * XDW_SIZEOF_PKISUBJECTDN),
+        ("lpszSubject", c_char * XDW_SIZEOF_PKISUBJECT),
+        ("lpszIssuerDN", c_char * XDW_SIZEOF_PKIISSUERDN),
+        ("lpszIssuer", c_char * XDW_SIZEOF_PKIISSUER),
+        ("lpszNotBefore", c_char * XDW_SIZEOF_PKINOTBEFORE),
+        ("lpszNotAfter", c_char * XDW_SIZEOF_PKINOTAFTER),
+        ("lpszSerial", c_char * XDW_SIZEOF_PKISERIAL),
         ("pSignerCert", c_void_p),
         ("nSignerCertSize", c_int),
         ("lpszRemarks", c_char * XDW_SIZEOF_PKIREMARKS),

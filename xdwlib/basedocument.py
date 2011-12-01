@@ -13,6 +13,8 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE.
 """
 
+import os
+
 from xdwapi import *
 from common import *
 from observer import *
@@ -71,6 +73,9 @@ class BaseDocument(Subject):
         if pos not in self.observers:
             self.observers[pos] = Page(self, pos)
         return self.observers[pos]
+
+    def range(self, start, end):
+        return PageCollection(self.page(i) for i in xrange(start, end))
 
     def append(self, obj):
         """Append a Page/PageCollection/Document at the end of document."""
@@ -139,6 +144,89 @@ class BaseDocument(Subject):
         self.pages += 1
         ## TODO: recalc page data if image has been divided into pages.
 
+    def export_image(self, pos, pages=1, path=None,
+            dpi=600, color="COLOR", format=None, compress="NORMAL"):
+        """Export page(s) to image file.
+
+        export_image(pos, pages=1, path=None, dpi=600, color="COLOR",
+                     format=None, compress="NORMAL")
+
+        pos:        (int) or (tuple like slice)
+        dpi:        (int) 10..600
+        color:      COLOR | MONO | MONO_HIGHQUALITY
+        format:     BMP | TIFF | JPEG | PDF
+        compress:   for BMP, not available
+                    for TIFF, NOCOMPRESS | PACKBITS | JPEG | JPEG_TTN2 | G4
+                    for JPEG, NORMAL | HIGHQUALITY | HIGHCOMPRESS
+                    for PDF,  NORMAL | HIGHQUALITY | HIGHCOMPRESS |
+                              MRC_NORMAL | MRC_HIGHQUALITY | MRC_HIGHCOMPRESS
+        """
+        path = cp(path)
+        if isinstance(pos, (list, tuple)):
+            pos, pages = pos
+            pages -= pos
+        if not format:
+            _, ext = os.path.splitext(path)
+            ext = ((ext or "").lstrip(".") or "bmp").lower()
+            table = {"dib":"bmp", "tif":"tiff", "jpg":"jpeg"}
+            format = table.get(ext, ext)
+        if format.lower() not in ("bmp", "tiff", "jpeg", "pdf"):
+            raise TypeError("image type must be BMP, TIFF, JPEG or PDF.")
+        if not path:
+            path = "%s_P%d" % (self.name, pos + 1)
+            path = adjust_path(path,
+                    default_dir=self.dirname(), coding=CODEPAGE)
+            if 1 < pages:
+                path += "-%d" % (pos + 1) + (pages - 1)
+            path += "." + format
+        dpi = int(dpi)
+        if not (10 <= dpi <= 600):
+            raise ValueError("specify resolution between 10 and 600")
+        opt = XDW_IMAGE_OPTION_EX()
+        opt.nDpi = int(dpi)
+        opt.nColor = XDW_IMAGE_COLORSCHEME.normalize(color)
+        opt.nImageType = XDW_IMAGE_FORMAT.normalize(format)
+        if opt.nImageType == XDW_IMAGE_DIB:
+            dopt = None
+        elif opt.nImageType == XDW_IMAGE_TIFF:
+            dopt = XDW_IMAGE_OPTION_TIFF()
+            dopt.nCompress = XDW_COMPRESS.normalize(compress)
+            if dopt.nCompress not in (
+                    XDW_COMPRESS_NOCOMPRESS,
+                    XDW_COMPRESS_PACKBITS,
+                    XDW_COMPRESS_JPEG,
+                    XDW_COMPRESS_JPEG_TTN2,
+                    XDW_COMPRESS_G4,
+                    ):
+                dopt.nCompress = XDW_COMPRESS_NOCOMPRESS
+            dopt.nEndOfMultiPages = (pos + 1) + (pages - 1)
+        elif opt.nImageType == XDW_IMAGE_JPEG:
+            dopt = XDW_IMAGE_OPTION_JPEG()
+            dopt.nCompress = XDW_COMPRESS.normalize(compress)
+            if dopt.nCompress not in (
+                    XDW_COMPRESS_NORMAL,
+                    XDW_COMPRESS_HIGHQUALITY,
+                    XDW_COMPRESS_HIGHCOMPRESS,
+                    ):
+                dopt.nCompress = XDW_COMPRESS_NORMAL
+        elif opt.nImageType == XDW_IMAGE_PDF:
+            dopt = XDW_IMAGE_OPTION_PDF()
+            dopt.nCompress = XDW_COMPRESS.normalize(compress)
+            if dopt.nCompress not in (
+                    XDW_COMPRESS_NORMAL,
+                    XDW_COMPRESS_HIGHQUALITY,
+                    XDW_COMPRESS_HIGHCOMPRESS,
+                    XDW_COMPRESS_MRC_NORMAL,
+                    XDW_COMPRESS_MRC_HIGHQUALITY,
+                    XDW_COMPRESS_MRC_HIGHCOMPRESS,
+                    ):
+                dopt.nCompress = XDW_COMPRESS_MRC_NORMAL
+            dopt.nEndOfMultiPages = (pos + 1) + (pages - 1)
+            # Compression method option is deprecated.
+            dopt.nConvertMethod = XDW_CONVERT_MRC_OS
+        opt.pDetailOption = cast(pointer(dopt), c_void_p)
+        XDW_ConvertPageToImageFile(self.handle, pos + 1, path, opt)
+
     def delete(self, pos):
         """Delete a page."""
         page = self.page(pos)
@@ -148,7 +236,6 @@ class BaseDocument(Subject):
 
     def rasterize(self, pos, dpi=600, color="COLOR"):
         """Rasterize; convert an application page into DocuWorks image page."""
-        import os
         import tempfile
         dpi = int(dpi)
         if not (10 <= dpi <= 600):
@@ -209,3 +296,5 @@ class BaseDocument(Subject):
     def dirname(self):
         """Abstract method for concrete dirname()."""
         raise NotImplementedError()
+
+

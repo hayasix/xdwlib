@@ -21,29 +21,7 @@ from common import *
 from struct import Point
 
 
-__all__ = ("XDWFile", "environ", "xdwopen", "VALID_DOCUMENT_HANDLES")
-
-
-def environ(name=None):
-    """DocuWorks environment information."""
-    if name:
-        value = XDW_GetInformation(XDW_ENVIRON.normalize(name))
-        if name == XDW_ENVIRON[XDW_GI_DWDESK_FILENAME_DIGITS]:
-            value = ord(value)
-        return value
-    values = dict()
-    for k, v in XDW_ENVIRON.items():
-        try:
-            value = XDW_GetInformation(k)
-            if k == XDW_GI_DWDESK_FILENAME_DIGITS:
-                value = ord(value)
-            values[v] = value
-        except XDWError as e:
-            if e.error_code == XDW_E_INFO_NOT_FOUND:
-                continue
-            else:
-                raise
-    return values
+__all__ = ("XDWFile", "xdwopen", "VALID_DOCUMENT_HANDLES")
 
 
 # The last resort to close documents in interactive session.
