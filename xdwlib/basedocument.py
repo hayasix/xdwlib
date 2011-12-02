@@ -105,7 +105,7 @@ class BaseDocument(Subject):
             pos += self.pages
         temp = os.path.join(self.dirname(), "$$%s.xdw" % (self.name,))
         temp = pc.combine(temp)
-        XDW_InsertDocument(self.handle, pos + 1, temp)
+        XDW_InsertDocument(self.handle, self.absolute_page(pos) + 1, temp)
         os.remove(temp)
         if doc:
             doc.close()
@@ -137,7 +137,7 @@ class BaseDocument(Subject):
         opt.nVerPos = XDW_CREATE_VPOS.normalize(align[1])
         opt.nMaxPaperSize = XDW_CREATE_MAXPAPERSIZE.normalize(maxpapersize)
         XDW_CreateXdwFromImageFileAndInsertDocument(
-                self.handle, pos + 1, input_path, opt)
+                self.handle, self.absolute_page(pos) + 1, input_path, opt)
         # Check inserted pages in order to attach them to this document and
         # shift observer entries appropriately.
         page = Page(self, pos)
@@ -225,7 +225,8 @@ class BaseDocument(Subject):
             # Compression method option is deprecated.
             dopt.nConvertMethod = XDW_CONVERT_MRC_OS
         opt.pDetailOption = cast(pointer(dopt), c_void_p)
-        XDW_ConvertPageToImageFile(self.handle, pos + 1, path, opt)
+        XDW_ConvertPageToImageFile(
+                self.handle, self.absolute_page(pos) + 1, path, opt)
 
     def delete(self, pos):
         """Delete a page."""
@@ -246,9 +247,10 @@ class BaseDocument(Subject):
         temp = tempfile.NamedTemporaryFile(suffix=".bmp")
         temppath = temp.name
         temp.close()  # On Windows, you cannot reopen temp.  TODO: better code
-        XDW_ConvertPageToImageFile(self.handle, pos + 1, temppath, opt)
-        self.insert_image(pos, temppath)
-        self.delete(pos + 1)
+        XDW_ConvertPageToImageFile(
+                self.handle, self.absolute_page(pos) + 1, temppath, opt)
+        self.insert_image(pos, temppath)  # Insert rasterized image page.
+        self.delete(pos + 1)  # Delete original application page.
         os.remove(temppath)
 
     def content_text(self):

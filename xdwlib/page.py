@@ -73,7 +73,7 @@ class PageCollection(list):
         file somewhere and returns its path.  You have to remove the temporary
         file after use.
         """
-        from document import Document, create_document
+        from document import Document
         path = path or tempfile.mkstemp(".xdw")
         path = self.pop(0).copy(path)
         doc = Document(path)
