@@ -66,7 +66,7 @@ def extract_sfx(input_path, output_path=None):
     input_path, output_path = cp(input_path), cp(output_path)
     root = os.path.splitext(output_path or input_path)[0]
     output_path = root + ".xdw"  # for now
-    XDW_CreateSfxDocument(input_path, output_path)
+    XDW_ExtractFromSfxDocument(input_path, output_path)
     # Created file can be either document or binder.  We have to examine
     # which type of file was generated and rename if needed.
     doc = xdwopen(output_path, readonly=True)
