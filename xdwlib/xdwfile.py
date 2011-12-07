@@ -39,7 +39,7 @@ def xdwopen(path, readonly=False, authenticate=True):
     XDW_TYPES = {".XDW": Document, ".XBD": Binder}
     ext = os.path.splitext(path)[1].upper()
     if ext not in XDW_TYPES:
-        raise XDWError(XDW_E_INVALIDARG)
+        raise BadFormatError("extension must be .xdw or .xbd")
     return XDW_TYPES[ext](path, readonly=readonly, authenticate=authenticate)
 
 
@@ -142,9 +142,8 @@ class XDWFile(object):
         try:
             return XDW_GetDocumentAttributeByNameW(
                     self.handle, attribute_name, codepage=CP)[1]
-        except XDWError as e:
-            if e.error_code != XDW_E_INVALIDARG:
-                raise
+        except InvalidArgError as e:
+            pass
         return self.__dict__[name]
 
     def __setattr__(self, name, value):

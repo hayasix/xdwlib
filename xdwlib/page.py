@@ -287,13 +287,15 @@ class Page(Annotatable, Observer):
         XDW_GetPage(self.doc.handle, self.absolute_page() + 1, path)
         return path
 
-    def view(self, wait=True):
+    def view(self, wait=True, light=False):
         """View current page with DocuWorks Viewer (Light)."""
         import subprocess
-        try:
-            viewer = environ("DWVLTPATH")
-        except InfoNotFoundError:
-            viewer = environ("DWVIEWERPATH")
+        env = environ()
+        viewer = env.get("DWVIEWERPATH")
+        if light or not viewer:
+            viewer = environ("DWVLTPATH", viewer)
+        if not viewer:
+            raise NotInstalledError("DocuWorks/Viewer is not installed")
         temp = tempfile.NamedTemporaryFile(suffix=".bmp")
         temppath = temp.name
         temp.close()  # On Windows, you cannot reopen temp.  TODO: better code

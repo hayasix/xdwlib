@@ -97,11 +97,8 @@ def environ(name=None):
             if k == XDW_GI_DWDESK_FILENAME_DIGITS:
                 value = ord(value)
             values[v] = value
-        except XDWError as e:
-            if e.error_code == XDW_E_INFO_NOT_FOUND:
+        except InfoNotFoundError as e:
                 continue
-            else:
-                raise
     return values
 
 

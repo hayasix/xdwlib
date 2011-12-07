@@ -82,37 +82,42 @@ XDW_ERROR_MESSAGES = {
 
 class XDWError(Exception):
 
-    def __init__(self, error_code):
-        self.error_code = error_code
-        msg = XDW_ERROR_MESSAGES.get(error_code, "XDW_E_UNDEFINED")
-        Exception.__init__(self, "%s (%08X)" % (msg, _uint32(error_code)))
+    def __init__(self, message=""):
+        Exception.__init__(self, message)
+        self.code = self.__class__.e
+        self.msg = XDW_ERROR_MESSAGES.get(self.code, "XDW_E_UNDEFINED")
 
+    def __str__(self):
+        return "%s (%08X)" % (self.msg, _uint32(self.code))
 
-class NotInstalledError(XDWError): pass
-class InfoNotFoundError(XDWError): pass
-class InsufficientBufferError(XDWError): pass
-class FileNotFoundError(XDWError): pass
-class FileExistsError(XDWError): pass
-class AccessDeniedError(XDWError): pass
-class BadFormatError(XDWError): pass
-class OutOfMemoryError(XDWError): pass
-class WriteFaultError(XDWError): pass
-class SharingViolationError(XDWError): pass
-class DiskFullError(XDWError): pass
-class InvalidArgError(XDWError): pass
-class InvalidNameError(XDWError): pass
-class InvalidAccessError(XDWError): pass
-class InvalidOperationError(XDWError): pass
-class NewFormatError(XDWError): pass
-class BadNetPathError(XDWError): pass
-class ApplicationFailedError(XDWError): pass
-class SignatureModuleError(XDWError): pass
-class ProtectModuleError(XDWError): pass
-class UnexpectedError(XDWError): pass
-class CancelledError(XDWError): pass
-class AnnotationNotAcceptedError(XDWError): pass
+    def __repr__(self):
+        return self.msg
 
-class UndefinedError(XDWError): pass
+class NotInstalledError(XDWError): e = XDW_E_NOT_INSTALLED
+class InfoNotFoundError(XDWError): e = XDW_E_INFO_NOT_FOUND
+class InsufficientBufferError(XDWError): e = XDW_E_INSUFFICIENT_BUFFER
+class FileNotFoundError(XDWError): e = XDW_E_FILE_NOT_FOUND
+class FileExistsError(XDWError): e = XDW_E_FILE_EXISTS
+class AccessDeniedError(XDWError): e = XDW_E_ACCESSDENIED
+class BadFormatError(XDWError): e = XDW_E_BAD_FORMAT
+class OutOfMemoryError(XDWError): e = XDW_E_OUTOFMEMORY
+class WriteFaultError(XDWError): e = XDW_E_WRITE_FAULT
+class SharingViolationError(XDWError): e = XDW_E_SHARING_VIOLATION
+class DiskFullError(XDWError): e = XDW_E_DISK_FULL
+class InvalidArgError(XDWError): e = XDW_E_INVALIDARG
+class InvalidNameError(XDWError): e = XDW_E_INVALID_NAME
+class InvalidAccessError(XDWError): e = XDW_E_INVALID_ACCESS
+class InvalidOperationError(XDWError): e = XDW_E_INVALID_OPERATION
+class NewFormatError(XDWError): e = XDW_E_NEWFORMAT
+class BadNetPathError(XDWError): e = XDW_E_BAD_NETPATH
+class ApplicationFailedError(XDWError): e = XDW_E_APPLICATION_FAILED
+class SignatureModuleError(XDWError): e = XDW_E_SIGNATURE_MODULE
+class ProtectModuleError(XDWError): e = XDW_E_PROTECT_MODULE
+class UnexpectedError(XDWError): e = XDW_E_UNEXPECTED
+class CancelledError(XDWError): e = XDW_E_CANCELED
+class AnnotationNotAcceptedError(XDWError): e = XDW_E_ANNOTATION_NOT_ACCEPTED
+
+class UndefinedError(XDWError): e = _int32(0x8000fffe)
 
 XDW_ERROR_CLASSES = {
         XDW_E_NOT_INSTALLED             : NotInstalledError,
@@ -140,9 +145,8 @@ XDW_ERROR_CLASSES = {
         XDW_E_ANNOTATION_NOT_ACCEPTED   : AnnotationNotAcceptedError,
         }
 
-
-def XDWErrorFactory(errorcode):
-    return XDW_ERROR_CLASSES.get(errorcode, UndefinedError)(errorcode)
+def XDWErrorFactory(errorcode, message=""):
+    return XDW_ERROR_CLASSES.get(errorcode, UndefinedError)(message)
 
 
 ######################################################################
@@ -757,13 +761,36 @@ XDW_ATYPE_BOOL                      = 3
 XDW_ATYPE_OCTS                      = 4
 XDW_ATYPE_OTHER                     = 999
 
+XDW_ATTRIBUTE_TYPE = XDWConst({
+        XDW_ATYPE_INT               : "INT",
+        XDW_ATYPE_STRING            : "STRING",
+        XDW_ATYPE_DATE              : "DATE",
+        XDW_ATYPE_BOOL              : "BOOL",
+        XDW_ATYPE_OCTS              : "OCTS",
+        XDW_ATYPE_OTHER             : "OTHER",
+        })
+
 XDW_LINE_NONE                       = 0
 XDW_LINE_BEGINNING                  = 1
 XDW_LINE_ENDING                     = 2
 XDW_LINE_BOTH                       = 3
+
+XDW_ARROWHEAD_TYPE = XDWConst({
+        XDW_LINE_NONE               : "NONE",
+        XDW_LINE_BEGINNING          : "BEGINNING",
+        XDW_LINE_ENDING             : "ENDING",
+        XDW_LINE_BOTH               : "BOTH",
+        }, default=XDW_LINE_NONE)
+
 XDW_LINE_WIDE_POLYLINE              = 0
 XDW_LINE_POLYLINE                   = 1
 XDW_LINE_POLYGON                    = 2
+
+XDW_ARROWHEAD_STYLE = XDWConst({
+        XDW_LINE_WIDE_POLYLINE      : "WIDE",
+        XDW_LINE_POLYLINE           : "NORMAL",
+        XDW_LINE_POLYGON            : "FILL",
+        }, default="NORMAL")
 
 XDW_BORDER_TYPE_SOLID               = 0
 XDW_BORDER_TYPE_DOT                 = 1
@@ -771,12 +798,37 @@ XDW_BORDER_TYPE_DASH                = 2
 XDW_BORDER_TYPE_DASHDOT             = 3
 XDW_BORDER_TYPE_DOUBLE              = 4
 
+XDW_BORDER_TYPE = XDWConst({
+        XDW_BORDER_TYPE_SOLID       : "SOLID",
+        XDW_BORDER_TYPE_DOT         : "DOT",
+        XDW_BORDER_TYPE_DASH        : "DASH",
+        XDW_BORDER_TYPE_DASHDOT     : "DASHDOT",
+        XDW_BORDER_TYPE_DOUBLE      : "DOUBLE",
+        }, default=XDW_BORDER_TYPE_SOLID)
+
 XDW_STAMP_AUTO                      = 0
 XDW_STAMP_MANUAL                    = 1
+
+XDW_STAMP_DATE_STYLE = XDWConst({
+        XDW_STAMP_AUTO              : "AUTO",
+        XDW_STAMP_MANUAL            : "MANUAL",
+        }, default=XDW_STAMP_AUTO)
+
 XDW_STAMP_NO_BASISYEAR              = 0
 XDW_STAMP_BASISYEAR                 = 1
+
+XDW_STAMP_BASISYEAR_STYLE = XDWConst({
+        XDW_STAMP_NO_BASISYEAR      : "CLEAR",
+        XDW_STAMP_BASISYEAR         : "SET",
+        }, default=XDW_STAMP_NO_BASISYEAR)
+
 XDW_STAMP_DATE_YMD                  = 0
 XDW_STAMP_DATE_DMY                  = 1
+
+XDW_STAMP_DATE_FORMAT = XDWConst({
+        XDW_STAMP_DATE_YMD          : "YMD",
+        XDW_STAMP_DATE_DMY          : "DMY",
+        }, default=XDW_STAMP_DATE_YMD)
 
 XDW_PAGEFORM_HEADER                 = 0
 XDW_PAGEFORM_FOOTER                 = 1
@@ -911,34 +963,34 @@ XDW_COLOR_FUSEN_PALE_YELLOW         = 0xC3FAFF
 XDW_COLOR_FUSEN_PALE_LIME           = 0xD2FACD
 
 XDW_COLOR = XDWConst({
-        XDW_COLOR_NONE                  : "NONE",
-        XDW_COLOR_BLACK                 : "BLACK",
-        XDW_COLOR_MAROON                : "MAROON",
-        XDW_COLOR_GREEN                 : "GREEN",
-        XDW_COLOR_OLIVE                 : "OLIVE",
-        XDW_COLOR_NAVY                  : "NAVY",
-        XDW_COLOR_PURPLE                : "PURPLE",
-        XDW_COLOR_TEAL                  : "TEAL",
-        XDW_COLOR_GRAY                  : "GRAY",
-        XDW_COLOR_SILVER                : "SILVER",
-        XDW_COLOR_RED                   : "RED",
-        XDW_COLOR_LIME                  : "LIME",
-        XDW_COLOR_YELLOW                : "YELLOW",
-        XDW_COLOR_BLUE                  : "BLUE",
-        XDW_COLOR_FUCHIA                : "FUCHIA",
-        XDW_COLOR_AQUA                  : "AQUA",
-        XDW_COLOR_WHITE                 : "WHITE",
+        XDW_COLOR_NONE              : "NONE",
+        XDW_COLOR_BLACK             : "BLACK",
+        XDW_COLOR_MAROON            : "MAROON",
+        XDW_COLOR_GREEN             : "GREEN",
+        XDW_COLOR_OLIVE             : "OLIVE",
+        XDW_COLOR_NAVY              : "NAVY",
+        XDW_COLOR_PURPLE            : "PURPLE",
+        XDW_COLOR_TEAL              : "TEAL",
+        XDW_COLOR_GRAY              : "GRAY",
+        XDW_COLOR_SILVER            : "SILVER",
+        XDW_COLOR_RED               : "RED",
+        XDW_COLOR_LIME              : "LIME",
+        XDW_COLOR_YELLOW            : "YELLOW",
+        XDW_COLOR_BLUE              : "BLUE",
+        XDW_COLOR_FUCHIA            : "FUCHIA",
+        XDW_COLOR_AQUA              : "AQUA",
+        XDW_COLOR_WHITE             : "WHITE",
         }, default=XDW_COLOR_BLACK)
 
 XDW_COLOR_FUSEN = XDWConst({
-        XDW_COLOR_FUSEN_RED             : "RED",
-        XDW_COLOR_FUSEN_BLUE            : "BLUE",
-        XDW_COLOR_FUSEN_YELLOW          : "YELLOW",
-        XDW_COLOR_FUSEN_LIME            : "LIME",
-        XDW_COLOR_FUSEN_PALE_RED        : "PALE_RED",
-        XDW_COLOR_FUSEN_PALE_BLUE       : "PALE_BLUE",
-        XDW_COLOR_FUSEN_PALE_YELLOW     : "PALE_YELLOW",
-        XDW_COLOR_FUSEN_PALE_LIME       : "PALE_LIME",
+        XDW_COLOR_FUSEN_RED         : "RED",
+        XDW_COLOR_FUSEN_BLUE        : "BLUE",
+        XDW_COLOR_FUSEN_YELLOW      : "YELLOW",
+        XDW_COLOR_FUSEN_LIME        : "LIME",
+        XDW_COLOR_FUSEN_PALE_RED    : "PALE_RED",
+        XDW_COLOR_FUSEN_PALE_BLUE   : "PALE_BLUE",
+        XDW_COLOR_FUSEN_PALE_YELLOW : "PALE_YELLOW",
+        XDW_COLOR_FUSEN_PALE_LIME   : "PALE_LIME",
         }, default=XDW_COLOR_FUSEN_PALE_YELLOW)
 
 XDW_FS_ITALIC_FLAG                  = 1
@@ -946,15 +998,36 @@ XDW_FS_BOLD_FLAG                    = 2
 XDW_FS_UNDERLINE_FLAG               = 4
 XDW_FS_STRIKEOUT_FLAG               = 8
 
+XDW_FONT_STYLE = XDWConst({
+        XDW_FS_ITALIC_FLAG          : "ITALIC",
+        XDW_FS_BOLD_FLAG            : "BOLD",
+        XDW_FS_UNDERLINE_FLAG       : "UNDERLINE",
+        XDW_FS_STRIKEOUT_FLAG       : "STRIKEOUT",
+        }, default=0)
+
 XDW_LT_LINK_TO_ME                   = 0
 XDW_LT_LINK_TO_XDW                  = 1
 XDW_LT_LINK_TO_URL                  = 2
 XDW_LT_LINK_TO_OTHERFILE            = 3
 XDW_LT_LINK_TO_MAILADDR             = 4
 
+XDW_LINK_TYPE = XDWConst({
+        XDW_LT_LINK_TO_ME           : "ME",
+        XDW_LT_LINK_TO_XDW          : "XDW",
+        XDW_LT_LINK_TO_URL          : "URL",
+        XDW_LT_LINK_TO_OTHERFILE    : "OTHERFILE",
+        XDW_LT_LINK_TO_MAILADDR     : "MAILADDR",
+        }, default=XDW_LT_LINK_TO_ME)
+
 XDW_PF_XDW                          = 0
 XDW_PF_XBD                          = 1
 XDW_PF_XDW_IN_XBD                   = 2
+
+XDW_PAGE_FORM = XDWConst({
+        XDW_PF_XDW                  : "DOCUMENT",
+        XDW_PF_XBD                  : "BINDER",
+        XDW_PF_XDW_IN_XBD           : "DOCUMENTINBINDER",
+        }, default=XDW_PF_XDW)
 
 # Assert to ensure XDW_ANNOTATION_ATTRIBUTE.
 assert XDW_ATYPE_INT == 0
@@ -1807,7 +1880,6 @@ def RAISE(api):
     def apifunc(*args):
         result = api(*args)
         if result & 0x80000000:
-            #raise XDWError(result)
             raise XDWErrorFactory(result)
         return result
     return apifunc
@@ -1895,7 +1967,8 @@ def ATTR(by_order=False, widechar=False):
                 attr_val = create_unicode_buffer(size) if widechar \
                             else create_string_buffer(size)
             else:
-                raise XDWError(XDW_E_UNEXPECTED)
+                raise UnexpectedError(
+                        "invalid attribute type: %08X" % (attr_type.value))
             p = -5 if widechar else -3
             args[p:p + 2] = [byref(attr_val), size]
             TRY(getattr(DLL, api.__name__), *args)
