@@ -132,7 +132,6 @@ class Document(BaseDocument, XDWFile):
         BaseDocument.__init__(self)
         XDWFile.__init__(self, path,
                 readonly=readonly, authenticate=authenticate)
-        assert self.type == XDW_DT_DOCUMENT
 
     def __repr__(self):
         return u"Document(%s)" % self.name

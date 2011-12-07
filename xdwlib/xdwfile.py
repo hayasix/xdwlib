@@ -114,7 +114,7 @@ class XDWFile(object):
         self.pages = document_info.nPages
         self.version = document_info.nVersion - 3  # DocuWorks version
         self.original_data = document_info.nOriginalData
-        self.type = document_info.nDocType
+        self.type = XDW_DOCUMENT_TYPE[document_info.nDocType]
         self.editable = bool(document_info.nPermission & XDW_PERM_DOC_EDIT)
         self.annotatable = bool(document_info.nPermission & XDW_PERM_ANNO_EDIT)
         self.printable = bool(document_info.nPermission & XDW_PERM_PRINT)
@@ -122,8 +122,8 @@ class XDWFile(object):
         self.show_annotations = bool(document_info.nShowAnnotations)
         # Followings are effective only for binders.
         self.documents = document_info.nDocuments
-        self.binder_color = document_info.nBinderColor
-        self.binder_size = document_info.nBinderSize
+        self.binder_color = XDW_BINDER_COLOR[document_info.nBinderColor]
+        self.binder_size = XDW_BINDER_SIZE[document_info.nBinderSize]
         # Document attributes.
         self.attributes = XDW_GetDocumentAttributeNumber(self.handle)
 

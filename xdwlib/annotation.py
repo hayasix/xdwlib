@@ -82,7 +82,7 @@ class Annotation(Annotatable, Observer):
                 self.page.doc.handle, self.page.absolute_page() + 1,
                 self.parent.handle if self.parent else NULL, pos + 1)
         self.handle = info.handle
-        self.type = info.nAnnotationType
+        self.type = XDW_ANNOTATION_TYPE[info.nAnnotationType]
         self.annotations = info.nChildAnnotations
         self.is_unicode = False
 

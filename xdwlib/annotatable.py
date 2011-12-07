@@ -101,9 +101,8 @@ class Annotatable(Subject):
         init_dat = Annotatable.initial_data(ann_type, **kw)
         ann_handle = self._add_annotation(ann_type, position, init_dat)
         pos = self.annotations  # TODO: Ensure this is correct.
-        ann = Annotation(self.page, pos, parent=self)
         self.annotations += 1
-        self.notify(event=Notification(EV_ANN_INSERTED, pos))
+        ann = self.annotation(pos)
         return ann
 
     def add_text_annotation(self, text, position=DEFAULT_POSITION, **kw):
@@ -125,60 +124,68 @@ class Annotatable(Subject):
 
     def add_fusen_annotation(self, position=DEFAULT_POSITION, size=DEFAULT_SIZE):
         """Paste a fusen annotation."""
-        self.add_annotation(XDW_AID_FUSEN, position,
-                nWidth=size.x, nHeight=size.y)
+        if size.x < 5 or size.y < 5:
+            raise ValueError("Fusen annotation must be >= 5mm square")
+        return self.add_annotation(XDW_AID_FUSEN, position,
+                nWidth=int(size.x * 100), nHeight=int(size.y * 100))
 
     def add_line_annotation(self, points=(DEFAULT_POSITION, DEFAULT_SIZE)):
         """Paste a straight line annotation."""
-        self.add_annotation(XDW_AID_STRAIGHTLINE, points[0],
-                nWidth=points[1].x, nHeight=point[1].y)
+        return self.add_annotation(XDW_AID_STRAIGHTLINE, int(points[0] * 100),
+                nWidth=int(points[1].x * 100), nHeight=int(point[1].y * 100))
 
     add_straightline_annotation = add_line_annotation
 
     def add_rectangle_annotation(self, rect=DEFAULT_RECT):
         """Paste a rectangular annotation."""
         position, size = rect.position_and_size()
-        self.add_annotation(XDW_AID_RECT, position,
-                nWidth=size.x, nHeight=size.y)
+        if size.x < 3 or size.y < 3:
+            raise ValueError("Rectangle annotation must be >= 3mm square")
+        return self.add_annotation(XDW_AID_RECTANGLE, position,
+                nWidth=int(size.x * 100), nHeight=int(size.y * 100))
 
     add_rect_annotation = add_rectangle_annotation
 
     def add_arc_annotation(self, rect=DEFAULT_RECT):
         """Paste an ellipse annotation."""
         position, size = rect.position_and_size()
-        self.add_annotation(XDW_AID_ARC, position,
-                nWidth=size.x, nHeight=size.y)
+        if size.x < 3 or size.y < 3:
+            raise ValueError("Arc/ellipse annotation must be >= 3mm in diameter")
+        return self.add_annotation(XDW_AID_ARC, position,
+                nWidth=int(size.x * 100), nHeight=int(size.y * 100))
 
     def add_bitmap_annotation(self, position=DEFAULT_POSITION, path=None):
         """Paste an image annotation."""
-        self.add_annotation(XDW_AID_BITMAP, position,
+        return self.add_annotation(XDW_AID_BITMAP, position,
                 szImagePath=byref(path))
 
     def add_stamp_annotation(self, position=DEFAULT_POSITION, width=DEFAULT_WIDTH):
         """Paste a (date) stamp annotation."""
-        self.add_annotation(XDW_AID_STAMP, position,
-                nWidth=width)
+        return self.add_annotation(XDW_AID_STAMP, position,
+                nWidth=int(width * 100))
 
     def add_receivedstamp_annotation(self, position=DEFAULT_POSITION, width=DEFAULT_WIDTH):
         """Paste a received (datetime) stamp annotation."""
-        self.add_annotation(XDW_AID_RECEIVEDSTAMP, position,
-                nWidth=width)
+        return self.add_annotation(XDW_AID_RECEIVEDSTAMP, position,
+                nWidth=int(width * 100))
 
     def add_custom_annotation(self, position=DEFAULT_POSITION,
                 size=DEFAULT_SIZE, guid="???", data="???"):
         """Paste a custom specification annotation."""
-        self.add_annotation(XDW_AID_CUSTOM, position,
-                nWidth=size.x, nHeight=size.y, lpszGuid=byref(guid),
+        return self.add_annotation(XDW_AID_CUSTOM, position,
+                nWidth=int(size.x * 100), nHeight=int(size.y * 100), lpszGuid=byref(guid),
                 nCustomDataSize=len(data), pCustomData=byref(data))
 
     def add_marker_annotation(self, position=DEFAULT_POSITION, points=DEFAULT_POINTS):
         """Paste a marker annotation."""
-        self.add_annotation(XDW_AID_MARKER, position,
+        points = [p * 100 for p in points]  # Assuming isinstance(p, Point).
+        return self.add_annotation(XDW_AID_MARKER, position,
                 nCounts=len(points), pPoints=byref(points))
 
     def add_polygon_annotation(self, position=DEFAULT_POSITION, points=DEFAULT_POINTS):
         """Paste a polygon annotation."""
-        self.add_annotation(XDW_AID_POLYGON, position,
+        points = [p * 100 for p in points]  # Assuming isinstance(p, Point).
+        return self.add_annotation(XDW_AID_POLYGON, position,
                 nCounts=len(points), pPoints=byref(points))
 
     def _delete_annotation(self, pos):

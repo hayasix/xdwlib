@@ -41,7 +41,6 @@ class Binder(Subject, XDWFile):
         Subject.__init__(self)
         XDWFile.__init__(self, path,
                 readonly=readonly, authenticate=authenticate)
-        assert self.type == XDW_DT_BINDER
 
     def __repr__(self):
         return u"Binder(%s)" % self.name

@@ -54,28 +54,28 @@ XDW_E_CANCELED                      = _int32(0x80040005)
 XDW_E_ANNOTATION_NOT_ACCEPTED       = _int32(0x80040006)
 
 XDW_ERROR_MESSAGES = {
-        XDW_E_NOT_INSTALLED         : "XDW_E_NOT_INSTALLED",
-        XDW_E_INFO_NOT_FOUND        : "XDW_E_INFO_NOT_FOUND",
-        XDW_E_INSUFFICIENT_BUFFER   : "XDW_E_INSUFFICIENT_BUFFER",
-        XDW_E_FILE_NOT_FOUND        : "XDW_E_FILE_NOT_FOUND",
-        XDW_E_FILE_EXISTS           : "XDW_E_FILE_EXISTS",
-        XDW_E_ACCESSDENIED          : "XDW_E_ACCESSDENIED",
-        XDW_E_BAD_FORMAT            : "XDW_E_BAD_FORMAT",
-        XDW_E_OUTOFMEMORY           : "XDW_E_OUTOFMEMORY",
-        XDW_E_WRITE_FAULT           : "XDW_E_WRITE_FAULT",
-        XDW_E_SHARING_VIOLATION     : "XDW_E_SHARING_VIOLATION",
-        XDW_E_DISK_FULL             : "XDW_E_DISK_FULL",
-        XDW_E_INVALIDARG            : "XDW_E_INVALIDARG",
-        XDW_E_INVALID_NAME          : "XDW_E_INVALID_NAME",
-        XDW_E_INVALID_ACCESS        : "XDW_E_INVALID_ACCESS",
-        XDW_E_INVALID_OPERATION     : "XDW_E_INVALID_OPERATION",
-        XDW_E_NEWFORMAT             : "XDW_E_NEWFORMAT",
-        XDW_E_BAD_NETPATH           : "XDW_E_BAD_NETPATH",
-        XDW_E_APPLICATION_FAILED    : "XDW_E_APPLICATION_FAILED",
-        XDW_E_SIGNATURE_MODULE      : "XDW_E_SIGNATURE_MODULE",
-        XDW_E_PROTECT_MODULE        : "XDW_E_PROTECT_MODULE",
-        XDW_E_UNEXPECTED            : "XDW_E_UNEXPECTED",
-        XDW_E_CANCELED              : "XDW_E_CANCELED",
+        XDW_E_NOT_INSTALLED             : "XDW_E_NOT_INSTALLED",
+        XDW_E_INFO_NOT_FOUND            : "XDW_E_INFO_NOT_FOUND",
+        XDW_E_INSUFFICIENT_BUFFER       : "XDW_E_INSUFFICIENT_BUFFER",
+        XDW_E_FILE_NOT_FOUND            : "XDW_E_FILE_NOT_FOUND",
+        XDW_E_FILE_EXISTS               : "XDW_E_FILE_EXISTS",
+        XDW_E_ACCESSDENIED              : "XDW_E_ACCESSDENIED",
+        XDW_E_BAD_FORMAT                : "XDW_E_BAD_FORMAT",
+        XDW_E_OUTOFMEMORY               : "XDW_E_OUTOFMEMORY",
+        XDW_E_WRITE_FAULT               : "XDW_E_WRITE_FAULT",
+        XDW_E_SHARING_VIOLATION         : "XDW_E_SHARING_VIOLATION",
+        XDW_E_DISK_FULL                 : "XDW_E_DISK_FULL",
+        XDW_E_INVALIDARG                : "XDW_E_INVALIDARG",
+        XDW_E_INVALID_NAME              : "XDW_E_INVALID_NAME",
+        XDW_E_INVALID_ACCESS            : "XDW_E_INVALID_ACCESS",
+        XDW_E_INVALID_OPERATION         : "XDW_E_INVALID_OPERATION",
+        XDW_E_NEWFORMAT                 : "XDW_E_NEWFORMAT",
+        XDW_E_BAD_NETPATH               : "XDW_E_BAD_NETPATH",
+        XDW_E_APPLICATION_FAILED        : "XDW_E_APPLICATION_FAILED",
+        XDW_E_SIGNATURE_MODULE          : "XDW_E_SIGNATURE_MODULE",
+        XDW_E_PROTECT_MODULE            : "XDW_E_PROTECT_MODULE",
+        XDW_E_UNEXPECTED                : "XDW_E_UNEXPECTED",
+        XDW_E_CANCELED                  : "XDW_E_CANCELED",
         XDW_E_ANNOTATION_NOT_ACCEPTED   : "XDW_E_ANNOTATION_NOT_ACCEPTED",
         }
 
@@ -86,6 +86,63 @@ class XDWError(Exception):
         self.error_code = error_code
         msg = XDW_ERROR_MESSAGES.get(error_code, "XDW_E_UNDEFINED")
         Exception.__init__(self, "%s (%08X)" % (msg, _uint32(error_code)))
+
+
+class NotInstalledError(XDWError): pass
+class InfoNotFoundError(XDWError): pass
+class InsufficientBufferError(XDWError): pass
+class FileNotFoundError(XDWError): pass
+class FileExistsError(XDWError): pass
+class AccessDeniedError(XDWError): pass
+class BadFormatError(XDWError): pass
+class OutOfMemoryError(XDWError): pass
+class WriteFaultError(XDWError): pass
+class SharingViolationError(XDWError): pass
+class DiskFullError(XDWError): pass
+class InvalidArgError(XDWError): pass
+class InvalidNameError(XDWError): pass
+class InvalidAccessError(XDWError): pass
+class InvalidOperationError(XDWError): pass
+class NewFormatError(XDWError): pass
+class BadNetPathError(XDWError): pass
+class ApplicationFailedError(XDWError): pass
+class SignatureModuleError(XDWError): pass
+class ProtectModuleError(XDWError): pass
+class UnexpectedError(XDWError): pass
+class CancelledError(XDWError): pass
+class AnnotationNotAcceptedError(XDWError): pass
+
+class UndefinedError(XDWError): pass
+
+XDW_ERROR_CLASSES = {
+        XDW_E_NOT_INSTALLED             : NotInstalledError,
+        XDW_E_INFO_NOT_FOUND            : InfoNotFoundError,
+        XDW_E_INSUFFICIENT_BUFFER       : InsufficientBufferError,
+        XDW_E_FILE_NOT_FOUND            : FileNotFoundError,
+        XDW_E_FILE_EXISTS               : FileExistsError,
+        XDW_E_ACCESSDENIED              : AccessDeniedError,
+        XDW_E_BAD_FORMAT                : BadFormatError,
+        XDW_E_OUTOFMEMORY               : OutOfMemoryError,
+        XDW_E_WRITE_FAULT               : WriteFaultError,
+        XDW_E_SHARING_VIOLATION         : SharingViolationError,
+        XDW_E_DISK_FULL                 : DiskFullError,
+        XDW_E_INVALIDARG                : InvalidArgError,
+        XDW_E_INVALID_NAME              : InvalidNameError,
+        XDW_E_INVALID_ACCESS            : InvalidAccessError,
+        XDW_E_INVALID_OPERATION         : InvalidOperationError,
+        XDW_E_NEWFORMAT                 : NewFormatError,
+        XDW_E_BAD_NETPATH               : BadNetPathError,
+        XDW_E_APPLICATION_FAILED        : ApplicationFailedError,
+        XDW_E_SIGNATURE_MODULE          : SignatureModuleError,
+        XDW_E_PROTECT_MODULE            : ProtectModuleError,
+        XDW_E_UNEXPECTED                : UnexpectedError,
+        XDW_E_CANCELED                  : CancelledError,
+        XDW_E_ANNOTATION_NOT_ACCEPTED   : AnnotationNotAcceptedError,
+        }
+
+
+def XDWErrorFactory(errorcode):
+    return XDW_ERROR_CLASSES.get(errorcode, UndefinedError)(errorcode)
 
 
 ######################################################################
@@ -652,7 +709,7 @@ XDW_PGT_FROMAPPL                    = 2
 XDW_PAGE_TYPE = XDWConst({
         XDW_PGT_FROMIMAGE           : "IMAGE",
         XDW_PGT_FROMAPPL            : "APPLICATION",
-        XDW_PGT_NULL                : "UNKNOWN",
+        XDW_PGT_NULL                : "NULL",
         }, default=XDW_PGT_NULL)
 
 ### Annotation related
@@ -1750,7 +1807,8 @@ def RAISE(api):
     def apifunc(*args):
         result = api(*args)
         if result & 0x80000000:
-            raise XDWError(result)
+            #raise XDWError(result)
+            raise XDWErrorFactory(result)
         return result
     return apifunc
 
@@ -2380,13 +2438,13 @@ def XDW_CreateXdwFromImagePdfFile(input_path, output_path):
 def XDW_FindTextInPage(doc_handle, page, text, find_text_option):
     """XDW_FindTextInPage(doc_handle, page, text, find_text_option) --> found_handle"""
     found_handle = XDW_FOUND_HANDLE()
-    TRY(DLL.XDW_FindTextInPage, doc_handle, page, text, ptr(find_text_option), byref(found_handle), NULL)
+    TRY(DLL.XDW_FindTextInPage, doc_handle, page, text, ptr(find_text_option), pointer(found_handle), NULL)
     return found_handle
 
 
 def XDW_FindNext(found_handle):
     """XDW_FindNext(found_handle) --> found_handle"""
-    TRY(DLL.XDW_FindNext, byref(found_handle), NULL)
+    TRY(DLL.XDW_FindNext, pointer(found_handle), NULL)
     return found_handle
 
 

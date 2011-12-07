@@ -19,7 +19,7 @@ import tempfile
 from xdwapi import *
 from common import *
 from observer import *
-from struct import Point
+from struct import Point, Rect
 from annotatable import Annotatable
 
 
@@ -104,11 +104,11 @@ class Page(Annotatable, Observer):
                 page_info.nWidth / 100.0,
                 page_info.nHeight / 100.0)  # float, in mm
         # XDW_PGT_FROMIMAGE/FROMAPPL/NULL
-        self.page_type = page_info.nPageType
+        self.page_type = XDW_PAGE_TYPE[page_info.nPageType]
         self.resolution = Point(
                 Page.norm_res(page_info.nHorRes),
                 Page.norm_res(page_info.nVerRes))  # dpi
-        self.compress_type = page_info.nCompressType
+        self.compress_type = XDW_COMPRESS[page_info.nCompressType]
         self.annotations = page_info.nAnnotations
         self.degree = page_info.nDegree
         self.original_size = Point(
@@ -286,3 +286,80 @@ class Page(Annotatable, Observer):
             path = "%s_%d" % (root, n) + ext
         XDW_GetPage(self.doc.handle, self.absolute_page() + 1, path)
         return path
+
+    def view(self, wait=True):
+        """View current page with DocuWorks Viewer (Light)."""
+        import subprocess
+        try:
+            viewer = environ("DWVLTPATH")
+        except InfoNotFoundError:
+            viewer = environ("DWVIEWERPATH")
+        temp = tempfile.NamedTemporaryFile(suffix=".bmp")
+        temppath = temp.name
+        temp.close()  # On Windows, you cannot reopen temp.  TODO: better code
+        self.copy(path=temppath)
+        proc = subprocess.Popen([viewer, temppath])
+        if wait:
+            proc.wait()
+            os.remove(temppath)
+            return None
+        else:
+            return (proc, temppath)
+
+    def text_regions(self, text,
+            ignore_case=False, ignore_width=False, ignore_hirakata=False):
+        """Search text in current page and get regions occupied by them.
+
+        text_regions(self, text, ignore_case=False, ignore_width=False, ignore_hirakata=False):
+
+        Returns a list of Rect or None (when rect is unavailable).
+        """
+        result = []
+        opt = XDW_FIND_TEXT_OPTION()
+        opt.nIgnoreMode = 0
+        if ignore_case: opt.nIgnoreMode |= XDW_IGNORE_CASE
+        if ignore_width: opt.nIgnoreMode |= XDW_IGNORE_WIDTH
+        if ignore_hirakata: opt.nIgnoreMode |= XDW_IGNORE_HIRAKATA
+        opt.nReserved = opt.nReserved2 = 0
+        """TODO: unicode handling.
+        Currently Author has no idea to take unicode with ord < 256.
+        Python's unicode may have inner representation with 0x00,
+        eg.  0x41 0x00 0x42 0x00 0x43 0x00 for "ABC".  This results in
+        unexpected string termination eg. "ABC" -> "A".  So, if the next
+        if-block is not placed, you will get much more but inexact
+        elements in result for abbreviated search string.
+        """
+        if isinstance(text, unicode):
+            text = text.encode(CODEPAGE)  # TODO: how can we take all unicodes?
+        fh = XDW_FindTextInPage(
+                self.doc.handle, self.absolute_page() + 1, text, opt)
+        try:
+            while fh:
+                try:
+                    n = XDW_GetNumberOfRectsInFoundObject(fh)
+                except InvalidArgError as e:
+                    break
+                for i in xrange(n):
+                    r, s = XDW_GetRectInFoundObject(fh, i + 1)
+                    if s == XDW_FOUND_RECT_STATUS_HIT:
+                        # Rect is half open.
+                        r.right +=1
+                        r.bottom += 1
+                        r = Rect(r.left / 100.0, r.top / 100.0,
+                                r.right / 100.0, r.bottom / 100.0)
+                    else:
+                        r = None  # Actually rect is not available.
+                    result.append(r)
+                fh = XDW_FindNext(fh)
+        finally:
+            XDW_CloseFoundHandle(fh)
+        return result
+
+    def re_regions(self, pattern):
+        if isinstance(pattern, basestring):
+            import re
+            pattern = re.compile(pattern)
+        result = []
+        for text in set(pattern.findall(self.fulltext())):
+            result.extend(self.text_regions(text))
+        return result
