@@ -864,6 +864,11 @@ XDW_IGNORE_HIRAKATA                 = 0x08
 XDW_STARCH                          = 1
 XDW_STARCH_OFF                      = 0
 
+XDW_STARCH_ACTION = XDWConst({
+        XDW_STARCH                  : "ON",
+        XDW_STARCH_OFF              : "OFF",
+        }, default=XDW_STARCH_ON)
+
 XDW_ATN_Text                        = "%Text"
 XDW_ATN_FontName                    = "%FontName"
 XDW_ATN_FontStyle                   = "%FontStyle"

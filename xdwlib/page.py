@@ -269,6 +269,10 @@ class Page(Annotatable, Observer):
         XDW_ApplyOcr(self.doc.handle, self.absolute_page() + 1,
                 engine, opt)
 
+    def clear_ocr_text(self):
+        """Clear OCR text."""
+        XDW_SetOcrData(self.doc.handle, self.absolute_page(), NULL)
+
     def copy(self, path=None):
         """Copy current page and create another document.
 

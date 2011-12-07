@@ -12,7 +12,7 @@ py2exe_options = dict(
 
 setup(
     name="xdwlib",
-    version="2.8.1",
+    version="2.8.2",
     author="HAYASI Hideki",
     author_email="linxs@linxs.org",
     url="https://launchpad.net/xdwlib",

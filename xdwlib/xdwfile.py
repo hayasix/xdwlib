@@ -78,6 +78,20 @@ def extract_sfx(input_path, output_path=None):
     return output_path
 
 
+def optimize(input_path, output_path=None):
+    """Optimize DocuWorks document/binder.
+
+    Returns path;  if no path is given, this method creates a temporary
+    file somewhere and returns its path.  You have to remove the temporary
+    file after use.
+    """
+    input_path, output_path = cp(input_path), cp(output_path)
+    if not output_path:
+        root, ext = os.path.splitext(output_path or input_path)
+        output_path = root + "-opt" + ext
+    XDW_OptimizeDocument(input_path, output_path)
+
+
 class XDWFile(object):
 
     """Docuworks file, XDW or XBD."""
@@ -171,3 +185,9 @@ class XDWFile(object):
     def typename(self):
         """DocuWorks file type, document or binder."""
         return XDW_DOCUMENT_TYPE[self.type]
+
+    def show_annotations(self, show=True):
+        XDW_ShowOrHideAnnotations(self.handle, bool(show))
+
+    def hide_annotations(self):
+        XDW_ShowOrHideAnnotations(self.handle, 0)

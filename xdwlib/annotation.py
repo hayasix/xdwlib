@@ -250,3 +250,8 @@ class Annotation(Annotatable, Observer):
                     getattr(self, XDW_ATN_TopField),
                     getattr(self, XDW_ATN_BottomField))
         return None
+
+    def peg(self, action):
+        """Peg current annotation on current position."""
+        action = XDW_STARCH_ACTION.normalize(action)
+        XDW_StarchAnnotation(self.page.doc.handle, self.handle, action)
