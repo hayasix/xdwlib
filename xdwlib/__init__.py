@@ -14,4 +14,3 @@ FOR A PARTICULAR PURPOSE.
 """
 
 from xdwfile import environ, xdwopen, create_sfx, extract_sfx
-from document import create_document

@@ -566,22 +566,22 @@ XDW_BINDER_SIZE = XDWConst({
 XDW_BINDER_COLOR = XDWConst({
         # Here we describe colors in RRGGBB format, though DocuWorks
         # inner color representation is BBGGRR.
-        XDW_BINDER_COLOR_0          : "003366",   # neutral navy (kon)
-        XDW_BINDER_COLOR_1          : "006633",   # neutral green
-        XDW_BINDER_COLOR_2          : "3366FF",   # neutral bule
-        XDW_BINDER_COLOR_3          : "FFFF66",   # neutral yellow
-        XDW_BINDER_COLOR_4          : "FF6633",   # neutral orange
-        XDW_BINDER_COLOR_5          : "FF3366",   # neutral red
-        XDW_BINDER_COLOR_6          : "FF00FF",   # fuchsia (akamurasaki)
-        XDW_BINDER_COLOR_7          : "FFCCFF",   # neutral pink
-        XDW_BINDER_COLOR_8          : "CC99FF",   # neutral purple
-        XDW_BINDER_COLOR_9          : "663333",   # neutral brown
-        XDW_BINDER_COLOR_10         : "999933",   # neutral olive
-        XDW_BINDER_COLOR_11         : "00FF00",   # lime (kimidori)
-        XDW_BINDER_COLOR_12         : "00FFFF",   # aqua (mizuiro)
-        XDW_BINDER_COLOR_13         : "FFFFCC",   # neutral lightyellow (cream)
-        XDW_BINDER_COLOR_14         : "BBBBBB",   # neutral silver
-        XDW_BINDER_COLOR_15         : "FFFFFF",   # white
+        XDW_BINDER_COLOR_0          : "NAVY",       # 0x003366
+        XDW_BINDER_COLOR_1          : "GREEN",      # 0x006633
+        XDW_BINDER_COLOR_2          : "BLUE",       # 0x3366FF
+        XDW_BINDER_COLOR_3          : "YELLOW",     # 0xFFFF66
+        XDW_BINDER_COLOR_4          : "ORANGE",     # 0xFF6633
+        XDW_BINDER_COLOR_5          : "RED",        # 0xFF3366
+        XDW_BINDER_COLOR_6          : "FUCHSIA",    # 0xFF00FF
+        XDW_BINDER_COLOR_7          : "PINK",       # 0xFFCCFF
+        XDW_BINDER_COLOR_8          : "PURPLE",     # 0xCC99FF
+        XDW_BINDER_COLOR_9          : "BROWN",      # 0x663333
+        XDW_BINDER_COLOR_10         : "OLIVE",      # 0x999933
+        XDW_BINDER_COLOR_11         : "LIME",       # 0x00FF00
+        XDW_BINDER_COLOR_12         : "AQUA",       # 0x00FFFF
+        XDW_BINDER_COLOR_13         : "CREAM",      # 0xFFFFCC
+        XDW_BINDER_COLOR_14         : "SILVER",     # 0xBBBBBB
+        XDW_BINDER_COLOR_15         : "WHITE",      # 0xFFFFFF
         }, default=XDW_BINDER_COLOR_5)
 
 ### Page related
@@ -867,7 +867,7 @@ XDW_STARCH_OFF                      = 0
 XDW_STARCH_ACTION = XDWConst({
         XDW_STARCH                  : "ON",
         XDW_STARCH_OFF              : "OFF",
-        }, default=XDW_STARCH_ON)
+        }, default=XDW_STARCH)
 
 XDW_ATN_Text                        = "%Text"
 XDW_ATN_FontName                    = "%FontName"

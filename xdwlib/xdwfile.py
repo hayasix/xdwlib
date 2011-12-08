@@ -21,7 +21,11 @@ from common import *
 from struct import Point
 
 
-__all__ = ("XDWFile", "xdwopen", "VALID_DOCUMENT_HANDLES")
+__all__ = (
+        "XDWFile",
+        "xdwopen", "create_sfx", "extract_sfx", "optimize", "copy",
+        "VALID_DOCUMENT_HANDLES",
+        )
 
 
 # The last resort to close documents in interactive session.
@@ -32,7 +36,7 @@ except NameError:
 
 
 def xdwopen(path, readonly=False, authenticate=True):
-    """General opener"""
+    """General opener.  Returns Document or Binder object."""
     from document import Document
     from binder import Binder
     path = cp(path)
@@ -46,9 +50,7 @@ def xdwopen(path, readonly=False, authenticate=True):
 def create_sfx(input_path, output_path=None):
     """Create self-extract executable file.
 
-    Returns path;  if no path is given, this method creates a temporary
-    file somewhere and returns its path.  You have to remove the temporary
-    file after use.
+    Returns pathname of generated sfx executable file.
     """
     input_path, output_path = cp(input_path), cp(output_path)
     output_path = os.path.splitext(output_path or input_path)[0] + ".exe"
@@ -59,9 +61,7 @@ def create_sfx(input_path, output_path=None):
 def extract_sfx(input_path, output_path=None):
     """Extract DocuWorks document/binder from self-extract executable file.
 
-    Returns path;  if no path is given, this method creates a temporary
-    file somewhere and returns its path.  You have to remove the temporary
-    file after use.
+    Returns pathname of generated document/binder file.
     """
     input_path, output_path = cp(input_path), cp(output_path)
     root = os.path.splitext(output_path or input_path)[0]
@@ -79,17 +79,52 @@ def extract_sfx(input_path, output_path=None):
 
 
 def optimize(input_path, output_path=None):
-    """Optimize DocuWorks document/binder.
+    """Optimize document/binder file.
 
-    Returns path;  if no path is given, this method creates a temporary
-    file somewhere and returns its path.  You have to remove the temporary
-    file after use.
+    Returns pathname of optimized document/binder file.
     """
     input_path, output_path = cp(input_path), cp(output_path)
-    if not output_path:
-        root, ext = os.path.splitext(output_path or input_path)
-        output_path = root + "-opt" + ext
+    if output_path:
+        root, ext = os.path.splitext(output_path)
+    else:
+        root, ext = os.path.splitext(input_path)
+        root += "-Optimized"
+        output_path = root + ext
+    n = 1  # not 0
+    while n < 100:
+        if not os.path.exists(output_path):
+            break
+        n += 1
+        output_path = "%s-%d%s" % (root, n, ext)
+    else:
+        raise FileExistsError()
     XDW_OptimizeDocument(input_path, output_path)
+    return output_path
+
+
+def copy(input_path, output_path=None):
+    """Copy DocuWorks document/binder to another one.
+
+    Returns pathname of copied file.
+    """
+    import shutil
+    input_path, output_path = cp(input_path), cp(output_path)
+    if output_path:
+        root, ext = os.path.splitext(output_path)
+    else:
+        root, ext = os.path.splitext(input_path)
+        root += "-Copied"
+        output_path = root + ext
+    n = 1  # not 0
+    while n < 100:
+        if not os.path.exists(output_path):
+            break
+        n += 1
+        output_path = "%s-%d%s" % (root, n, ext)
+    else:
+        raise FileExistsError()
+    shutil.copyfile(input_path, output_path)
+    return output_path
 
 
 class XDWFile(object):
@@ -181,10 +216,6 @@ class XDWFile(object):
                     XDW_TEXT_MULTIBYTE, codepage=CP)
             return
         self.__dict__[name] = value
-
-    def typename(self):
-        """DocuWorks file type, document or binder."""
-        return XDW_DOCUMENT_TYPE[self.type]
 
     def show_annotations(self, show=True):
         XDW_ShowOrHideAnnotations(self.handle, bool(show))

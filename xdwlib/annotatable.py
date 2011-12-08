@@ -24,11 +24,16 @@ from struct import Point, Rect
 __all__ = ("Annotatable",)
 
 
-DEFAULT_POSITION = Point(0, 0)
-DEFAULT_RECT = Rect(0, 0, 100, 100)
-DEFAULT_SIZE = Point(100, 100)
-DEFAULT_WIDTH = 100
-DEFAULT_POINTS = (DEFAULT_POSITION, DEFAULT_SIZE)
+DEFAULT_WIDTH = 75
+DEFAULT_HEIGHT =25
+DEFAULT_POSITION = Point(DEFAULT_HEIGHT, DEFAULT_HEIGHT)
+DEFAULT_SIZE = Point(DEFAULT_WIDTH, DEFAULT_HEIGHT)
+DEFAULT_RECT = Rect(DEFAULT_POSITION, DEFAULT_POSITION + DEFAULT_SIZE)
+DEFAULT_POINTS = (
+        DEFAULT_POSITION,
+        DEFAULT_POSITION + Point(DEFAULT_WIDTH, 0),
+        DEFAULT_POSITION + DEFAULT_SIZE,
+        DEFAULT_POSITION + Point(0, DEFAULT_HEIGHT))
 
 
 class Annotatable(Subject):
@@ -64,13 +69,13 @@ class Annotatable(Subject):
     @staticmethod
     def initial_data(ann_type, **kw):
         """Generate annotation-type-specific initialization data."""
-        ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
         try:
             cls = XDW_AID_INITIAL_DATA[ann_type]
         except KeyError:
             raise ValueError("illegal annotation type %d" % ann_type)
         init_dat = cls()
-        init_dat.common.nAnnotationType = ann_type
+        init_dat.common.nAnnotationType = \
+                XDW_ANNOTATION_TYPE.normalize(ann_type)
         for k, v in kw.items():
             if k.startswith("n"):
                 v = int(v)
@@ -95,7 +100,6 @@ class Annotatable(Subject):
             position    Point; float, unit:mm
         """
         from annotation import Annotation
-        ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
         if isinstance(position, (tuple, list)):
             position = Point(*position)
         init_dat = Annotatable.initial_data(ann_type, **kw)
@@ -111,7 +115,7 @@ class Annotatable(Subject):
         ann.Text = text
         for k, v in kw.items():
             if k in ("ForeColor", "fore_color", "BackColor", "back_color"):
-                setattr(ann, k, XDW_COLOR.normalize(v))
+                setattr(ann, k, v)
             elif k in ("FontPitchAndFamily", "font_pitch_and_family"):
                 ann.FontPitchAndFamily = XDW_PITCH_AND_FAMILY.get(k, 0)
             elif k in ("FontName", "font_name"):
@@ -209,7 +213,7 @@ class Annotatable(Subject):
         for ann in self:
             result.append(ann.content_text())
             if ann.annotations and recursive:
-                result.extend(ann.annotation_text(recursive=True))
+                result.append(ann.annotation_text(recursive=True))
         return joinf(ASEP, result)
 
     def fulltext(self):
@@ -236,7 +240,6 @@ class Annotatable(Subject):
         if types:
             if not isinstance(types, (list, tuple)):
                 types = [types]
-            types = [XDW_ANNOTATION_TYPE.normalize(t) for t in types]
         if rect and not half_open:
             rect.right += 1
             rect.bottom += 1

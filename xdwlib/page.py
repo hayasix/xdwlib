@@ -187,6 +187,7 @@ class Page(Annotatable, Observer):
 
     def _add_annotation(self, ann_type, position, init_dat):
         """Concrete method over _add_annotation() for add_annotation()."""
+        ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
         return XDW_AddAnnotation(self.doc.handle,
                 ann_type, self.absolute_page() + 1,
                 int(position.x * 100), int(position.y * 100),
@@ -227,16 +228,16 @@ class Page(Annotatable, Observer):
         XDW_ReducePageNoise(self.doc.handle, self.absolute_page() + 1, level)
 
     def ocr(self,
-            engine=XDW_OCR_ENGINE_DEFAULT,
-            strategy=XDW_OCR_ENGINE_LEVEL_SPEED,
-            preprocessing=XDW_PRIORITY_SPEED,
-            noise_reduction=XDW_REDUCENOISE_NONE,
+            engine="DEFAULT",
+            strategy="SPEED",
+            preprocessing="SPEED",
+            noise_reduction="NONE",
             deskew=True,
-            form=XDW_OCR_FORM_AUTO,
-            column=XDW_OCR_COLUMN_AUTO,
+            form="AUTO",
+            column="AUTO",
             rects=None,
-            language=XDW_OCR_LANGUAGE_AUTO,
-            main_language=XDW_OCR_MIXEDRATE_BALANCED,
+            language="AUTO",
+            main_language="BALANCED",
             use_ascii=True,
             insert_space=False,
             verbose=False,
@@ -279,9 +280,11 @@ class Page(Annotatable, Observer):
         Returns the path name of created XDW file.
         Default path name is "DOCUMENTNAME_Pxx.xdw".
         """
-        path = path or "%s_P%d.xdw" % (self.doc.name, self.pos + 1)
-        path = adjust_path(path,
-                default_dir=self.doc.dirname(), coding=CODEPAGE)
+        if path:
+            path = cp(path)
+        else:
+            path = "%s_P%d.xdw" % (self.doc.name, self.pos + 1)
+            path = adjust_path(path, dir=self.doc.dirname())
         # Append _2, _3, _4,...  for filename collision.
         n = 1
         root, ext = os.path.splitext(path)
@@ -297,10 +300,10 @@ class Page(Annotatable, Observer):
         env = environ()
         viewer = env.get("DWVIEWERPATH")
         if light or not viewer:
-            viewer = environ("DWVLTPATH", viewer)
+            viewer = env.get("DWVLTPATH", viewer)
         if not viewer:
             raise NotInstalledError("DocuWorks/Viewer is not installed")
-        temp = tempfile.NamedTemporaryFile(suffix=".bmp")
+        temp = tempfile.NamedTemporaryFile(suffix=".xdw")
         temppath = temp.name
         temp.close()  # On Windows, you cannot reopen temp.  TODO: better code
         self.copy(path=temppath)

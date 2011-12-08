@@ -130,22 +130,30 @@ def outer_attribute_name(name):
     return re.sub("([A-Z])", r"_\1", name[1:])[1:].lower()
 
 
-def adjust_path(path, default_dir="", coding=None):
-    """Build a pathname by filename and default directory."""
+def adjust_path(path, dir="", ext=".xdw", coding=None):
+    """Build a new pathname with filename and directory name.
+
+    adjust_path(path, dir="", ext="", coding=None)
+
+    path: pathname.  Only a filename is also acceptable.
+    dir: directory pathname.  Given dir, directory chain of path is ignored.
+    ext: extension.  Added if original path has no one.
+    coding: coding name.  Returned pathname is encoded by this.
+            For None, unicode pathname is returned.
+    """
     directory, basename = os.path.split(path)
-    # Given no dir, create the new document in the same dir as original one.
-    if not directory:
-        path = os.path.join(default_dir, basename)
+    directory = dir or directory or os.getcwd()
+    path = os.path.abspath(os.path.join(directory, basename))
     if not os.path.splitext(basename)[1]:
-        path += ".xdw"
+        path += "." + ext.lstrip(".")
     if coding and isinstance(path, unicode):
         path = path.encode(coding)
     return path
 
 
-def cp(s):
-    """Returns string, converted to codepage CP if needed."""
-    return s.encode(CODEPAGE) if isinstance(s, unicode) else s
+def cp(path, dir="", ext=".xdw"):
+    """Returns adjust_path(pathname, coding=CODEPAGE)"""
+    return adjust_path(path, dir=dir, ext=ext, coding=CODEPAGE)
 
 
 class XDWTemp(object):

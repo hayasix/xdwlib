@@ -23,29 +23,31 @@ from basedocument import BaseDocument
 
 
 __all__ = ("Document",
-        "create_document",
-        "create_document_from_image",
-        "create_document_from_pdf",
+        "create",
+        "create_from_image",
+        "create_from_pdf",
+        "merge",
         )
 
 
-def create_document(input_path=None, output_path=None, **kw):
+def create(input_path=None, output_path=None, **kw):
     """The XDW generator."""
-    input_path, output_path = cp(input_path), cp(output_path)
+    output_path = cp(output_path)
     if isinstance(input_path, basestring):
+        input_path = cp(input_path)
+        root, ext = os.path.splitext(input_path)[1].lstrip(".").upper()
         if not output_path:
-            output_path = splitext(input_path)[0] + ".xdw"
-        if input_path.upper().endswith(".PDF"):
-            create_document_from_pdf(input_path, output_path)  # no fallthru
+            output_path = root + ".xdw"
+        if ext in ("PDF",):
+            create_from_pdf(input_path, output_path)  # no fallthru
             return output_path
-        if input_path.upper().endswith((
-                ".BMP", ".JPG", ".JPEG", ".TIF", ".TIFF")):
+        if ext in ("BMP", "JPG", "JPEG", "TIF", "TIFF"):
             try:
-                create_document_from_image(input_path, output_path, **kw)
+                create_from_image(input_path, output_path, **kw)
                 return output_path
             except Exception as e:
                 pass  # fall through; processed by respective apps.
-        create_document_from_app(input_path, output_path)
+        create_from_app(input_path, output_path)
         return output_path
     # input_path==None means generating single blank page.
     with open(output_path, "wb") as f:
@@ -53,7 +55,7 @@ def create_document(input_path=None, output_path=None, **kw):
     return output_path
 
 
-def create_document_from_image(input_path, output_path=None,
+def create_from_image(input_path, output_path=None,
         fitimage=XDW_CREATE_FITDEF,
         compress=XDW_COMPRESS_NORMAL,
         zoom=0,  # %; 0=100%
@@ -63,8 +65,9 @@ def create_document_from_image(input_path, output_path=None,
         ):
     """XDW generator from image file."""
     input_path, output_path = cp(input_path), cp(output_path)
+    root, ext = os.path.split(input_path)
     if not output_path:
-        output_path = splitext(input_path)[0] + ".xdw"
+        output_path = root + ".xdw"
     opt = XDW_CREATE_OPTION_EX2()
     opt.nFitImage = XDW_CREATE_FITIMAGE.normalize(fitimage)
     opt.nCompress = XDW_COMPRESS.normalize(compress)
@@ -79,23 +82,24 @@ def create_document_from_image(input_path, output_path=None,
     return output_path
 
 
-def create_document_from_pdf(input_path, output_path=None):
+def create_from_pdf(input_path, output_path=None):
     """XDW generator from image PDF file."""
     input_path, output_path = cp(input_path), cp(output_path)
+    root, ext = os.path.split(input_path)
     if not output_path:
-        output_path = splitext(input_path)[0] + ".xdw"
+        output_path = root + ".xdw"
     try:
         XDW_CreateXdwFromImagePdfFile(input_path, output_path)
     except Exception as e:
-        create_document_from_app(input_path, output_path, timeout=3600)
+        create_from_app(input_path, output_path, timeout=3600)
     return output_path
 
 
-def create_document_from_app(input_path, output_path=None,
+def create_from_app(input_path, output_path=None,
         attachment=False, timeout=0):
     """Create document through other app with optional attachment.
 
-    create_document_from_app(input_path, output_path=None,
+    create_from_app(input_path, output_path=None,
             attachment=False, timeout=0) --> generated_pages or None
 
     attachment: (bool) attach original data file (given by input_path) or not
@@ -103,10 +107,11 @@ def create_document_from_app(input_path, output_path=None,
     """
     import time
     input_path, output_path = cp(input_path), cp(output_path)
+    root, ext = os.path.split(input_path)
     if not output_path:
-        output_path = splitext(input_path)[0] + ".xdw"
-    handle = XDW_BeginCreationFromAppFile(input_path, output_path,
-            bool(attachment))
+        output_path = root + ".xdw"
+    handle = XDW_BeginCreationFromAppFile(
+            input_path, output_path, bool(attachment))
     st = time.time()
     try:
         while True:
@@ -122,6 +127,30 @@ def create_document_from_app(input_path, output_path=None,
     finally:
         XDW_EndCreationFromAppFile(handle)
     return status.nTotalPage if status.phase == XDW_CRTP_FINISHED else None
+
+
+def merge(input_paths, output_path=None):
+    """Merge XDW's into a new XDW.
+
+    Returns pathname of merged document file.
+    """
+    input_paths = [cp(path) for path in input_paths]
+    if output_path:
+        root, ext = os.path.splitext(output_path)
+    else:
+        root, ext = os.path.splitext(input_paths[0])
+        root += "-Merged"
+        output_path = root + ext
+    n = 1  # not 0
+    while n < 100:
+        if not os.path.exists(output_path):
+            break
+        n += 1
+        output_path = "%s-%d%s" % (root, n, ext)
+    else:
+        raise FileExistsError()
+    XDW_MergeXdwFiles(input_paths, output_path)
+    return output_path
 
 
 class Document(BaseDocument, XDWFile):

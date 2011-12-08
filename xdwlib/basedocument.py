@@ -116,16 +116,17 @@ class BaseDocument(Subject):
         self.pages += len(pc)
 
     def insert_image(self, pos, input_path,
-            fitimage=XDW_CREATE_FITDEF,
-            compress=XDW_COMPRESS_NORMAL,
+            fitimage="FITDEF",
+            compress="NORMAL",
             zoom=0,  # %; 0=100%
             size=Point(0, 0),  # Point(width, height); 0=A4R
             align=("center", "center"),  # left/center/right, top/center/bottom
-            maxpapersize=XDW_CREATE_DEFAULT_SIZE,
+            maxpapersize="DEFAULT",
             ):
         """Insert a page created from image files."""
         if pos < 0:
             pos += self.pages
+        input_path = adjust_path(input_path, coding=CODEPAGE)
         opt = XDW_CREATE_OPTION_EX2()
         opt.nFitImage = XDW_CREATE_FITIMAGE.normalize(fitimage)
         opt.nCompress = XDW_COMPRESS.normalize(compress)
@@ -174,8 +175,7 @@ class BaseDocument(Subject):
             raise TypeError("image type must be BMP, TIFF, JPEG or PDF.")
         if not path:
             path = "%s_P%d" % (self.name, pos + 1)
-            path = adjust_path(path,
-                    default_dir=self.dirname(), coding=CODEPAGE)
+            path = adjust_path(path, dir=self.dirname(), coding=CODEPAGE)
             if 1 < pages:
                 path += "-%d" % (pos + 1) + (pages - 1)
             path += "." + format

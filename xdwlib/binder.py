@@ -24,13 +24,13 @@ from page import Page, PageCollection
 __all__ = ("Binder", "create_binder")
 
 
-def create_binder(path, color=XDW_BINDER_COLOR_0, size=XDW_SIZE_FREE,
-        coding=CODEPAGE):
+def create_binder(path, color="RED", size="FREE", coding=CODEPAGE):
     """The XBD generator."""
+    path = cp(path)
     data = XDW_BINDER_INITIAL_DATA()
-    data.nBinderColor = color
-    data.nBinderSize = size
-    XDW_CreateBinder(path.encode(coding), data)
+    data.nBinderColor = XDW_BINDER_COLOR.normalize(color)
+    data.nBinderSize = XDW_BINDER_SIZE.normalize(size)
+    XDW_CreateBinder(path, data)
 
 
 class Binder(Subject, XDWFile):

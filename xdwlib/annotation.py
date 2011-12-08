@@ -108,8 +108,7 @@ class Annotation(Annotatable, Observer):
 
     def __str__(self):
         return u"Annotation(%s[%d]:%s)" % (
-                self.page.doc.name, self.page.pos,
-                XDW_ANNOTATION_TYPE[self.type])
+                self.page.doc.name, self.page.pos, self.type)
 
     def __getattr__(self, name):
         attrname = inner_attribute_name(name)
@@ -207,10 +206,6 @@ class Annotation(Annotatable, Observer):
         else:
             raise ValueError("Illegal event type: %d" % event.type)
 
-    def typename(self):
-        """Returns annotation type name for convenience."""
-        return XDW_ANNOTATION_TYPE[self.type]
-
     def attributes(self):
         """Returns annotation attribute names for covenience."""
         return [outer_attribute_name(k) for (k, v)
@@ -226,6 +221,7 @@ class Annotation(Annotatable, Observer):
 
     def _add_annotation(self, ann_type, position, init_dat):
         """Concrete method over _add_annotation() for add_annotation()."""
+        ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
         return XDW_AddAnnotationOnParentAnnotation(
                 self.page.doc.handle, self.handle, ann_type,
                 int(position.x * 100), int(position.y * 100), init_dat)
@@ -241,17 +237,17 @@ class Annotation(Annotatable, Observer):
         Link annotation --> caption
         Stamp annotation --> [TopField] <DATE> [BottomField]
         """
-        if self.type == XDW_AID_TEXT:
+        if self.type == "TEXT":
             return getattr(self, XDW_ATN_Text)
-        elif self.type == XDW_AID_LINK:
+        elif self.type == "LINK":
             return getattr(self, XDW_ATN_Caption)
-        elif self.type == XDW_AID_STAMP:
+        elif self.type == "STAMP":
             return "%s <DATE> %s" % (
                     getattr(self, XDW_ATN_TopField),
                     getattr(self, XDW_ATN_BottomField))
         return None
 
-    def peg(self, action):
+    def peg(self, action="ON"):
         """Peg current annotation on current position."""
         action = XDW_STARCH_ACTION.normalize(action)
         XDW_StarchAnnotation(self.page.doc.handle, self.handle, action)
