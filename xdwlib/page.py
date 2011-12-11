@@ -31,7 +31,7 @@ class PageCollection(list):
     """Page collection ie. container for pages."""
 
     def __repr__(self):
-        return "PageCollection(%s)" % ", ".join(
+        return u"PageCollection(%s)" % ", ".join(
                 "%s[%d]" % (page.doc.name, page.pos) for page in self)
 
     def __add__(self, y):
@@ -185,16 +185,16 @@ class Page(Annotatable, Observer):
         else:
             raise ValueError("illegal event type: %d" % event.type)
 
-    def _add_annotation(self, ann_type, position, init_dat):
-        """Concrete method over _add_annotation() for add_annotation()."""
+    def _add(self, ann_type, position, init_dat):
+        """Concrete method over _add() for add()."""
         ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
         return XDW_AddAnnotation(self.doc.handle,
                 ann_type, self.absolute_page() + 1,
                 int(position.x * 100), int(position.y * 100),
                 init_dat)
 
-    def _delete_annotation(self, ann):
-        """Concrete method over _delete_annotation() for delete_annotation()."""
+    def _delete(self, ann):
+        """Concrete method over _delete() for delete()."""
         XDW_RemoveAnnotation(self.doc.handle, ann.handle)
 
     def content_text(self):

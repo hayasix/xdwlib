@@ -157,6 +157,14 @@ class Document(BaseDocument, XDWFile):
 
     """DocuWorks document (XDW)."""
 
+    def _pos(self, pos):
+        if not (-self.pages <= pos < self.pages):
+            raise IndexError("Page number must be in [%d, %d), %d given" % (
+                    -self.pages, self.pages, pos))
+        if pos < 0:
+            pos += self.pages
+        return pos
+
     def __init__(self, path, readonly=False, authenticate=True):
         BaseDocument.__init__(self)
         XDWFile.__init__(self, path,
@@ -171,6 +179,7 @@ class Document(BaseDocument, XDWFile):
 
     def absolute_page(self, pos):
         """Concrete method over absolute_page()."""
+        pos = self._pos(pos)
         return pos
 
     def dirname(self):

@@ -29,6 +29,14 @@ class DocumentInBinder(BaseDocument, Observer):
     def typename(self):
         return "DOCUMENT_IN_BINDER"
 
+    def _pos(self, pos):
+        if not (-self.pages <= pos < self.pages):
+            raise IndexError("Page number must be in [%d, %d), %d given" % (
+                    -self.pages, self.pages, pos))
+        if pos < 0:
+            pos += self.pages
+        return pos
+
     def __init__(self, binder, pos):
         BaseDocument.__init__(self)
         self.pos = pos
@@ -72,6 +80,7 @@ class DocumentInBinder(BaseDocument, Observer):
 
     def absolute_page(self, pos):
         """Concrete method over dirname()."""
+        pos = self._pos(pos)
         return self.page_offset + pos
 
     def dirname(self):

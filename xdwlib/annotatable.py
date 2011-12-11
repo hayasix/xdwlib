@@ -40,16 +40,35 @@ class Annotatable(Subject):
 
     """Annotatable objects ie. page or annotation."""
 
+    def _pos(self, pos):
+        if not (-self.annotations <= pos < self.annotations):
+            raise IndexError("Annotation number must be in [%d, %d), %d given" % (
+                    -self.annotations, self.annotations, pos))
+        if pos < 0:
+            pos += self.annotations
+        return pos
+
+    def _slice(self, pos):
+        return slice(self._pos(pos.start), self._pos(pos.stop), pos.step)
+
     def __len__(self):
         return self.annotations
 
     def __getitem__(self, pos):
-        if pos < 0:
-            pos += self.annotations
+        if isinstance(pos, slice):
+            pos = self._slice(pos)
+            return tuple(self.annotation(p)
+                    for p in range(pos.start, pos.stop, pos.step or 1))
         return self.annotation(pos)
 
     def __setitem__(self, pos, val):
         raise NotImplementedError()
+
+    def __delitem__(self, pos):
+        if isinstance(pos, slice):
+            for p in range(pos.start, pos.stop, pos.step or 1):
+                self.delete(p)
+        return self.delete(pos)
 
     def __iter__(self):
         for pos in xrange(self.annotations):
@@ -58,10 +77,7 @@ class Annotatable(Subject):
     def annotation(self, pos):
         """Get an annotation by position."""
         from annotation import Annotation
-        if self.annotations <= pos:
-            raise IndexError(
-                    "Annotation number must be < %d, %d given" % (
-                    self.annotations, pos))
+        pos = self._pos(pos)
         if pos not in self.observers:
             self.observers[pos] = Annotation(self, pos, parent=self)
         return self.observers[pos]
@@ -88,14 +104,14 @@ class Annotatable(Subject):
             setattr(init_dat, k, v)
         return init_dat
 
-    def _add_annotation(self, ann_type, position, init_dat):
-        """Abstract method as a stub for add_annotation()."""
+    def _add(self, ann_type, position, init_dat):
+        """Abstract method as a stub for add()."""
         raise NotImplementedError()
 
-    def add_annotation(self, ann_type, position, **kw):
+    def add(self, ann_type, position, **kw):
         """Paste an annotation.
 
-        add_annotation(ann_type, position, **kw)
+        add(ann_type, position, **kw)
             ann_type    annotation type
             position    Point; float, unit:mm
         """
@@ -103,15 +119,15 @@ class Annotatable(Subject):
         if isinstance(position, (tuple, list)):
             position = Point(*position)
         init_dat = Annotatable.initial_data(ann_type, **kw)
-        ann_handle = self._add_annotation(ann_type, position, init_dat)
+        ann_handle = self._add(ann_type, position, init_dat)
         pos = self.annotations  # TODO: Ensure this is correct.
         self.annotations += 1
         ann = self.annotation(pos)
         return ann
 
-    def add_text_annotation(self, text, position=DEFAULT_POSITION, **kw):
+    def add_text(self, text, position=DEFAULT_POSITION, **kw):
         """Paste a text annotation."""
-        ann = self.add_annotation(XDW_AID_TEXT, position)
+        ann = self.add(XDW_AID_TEXT, position)
         ann.Text = text
         for k, v in kw.items():
             if k in ("ForeColor", "fore_color", "BackColor", "back_color"):
@@ -126,80 +142,81 @@ class Annotatable(Subject):
             raise ValueError("FontName must be specified with FontCharSet")
         return ann
 
-    def add_fusen_annotation(self, position=DEFAULT_POSITION, size=DEFAULT_SIZE):
+    def add_fusen(self, position=DEFAULT_POSITION, size=DEFAULT_SIZE):
         """Paste a fusen annotation."""
         if size.x < 5 or size.y < 5:
             raise ValueError("Fusen annotation must be >= 5mm square")
-        return self.add_annotation(XDW_AID_FUSEN, position,
+        return self.add(XDW_AID_FUSEN, position,
                 nWidth=int(size.x * 100), nHeight=int(size.y * 100))
 
-    def add_line_annotation(self, points=(DEFAULT_POSITION, DEFAULT_SIZE)):
+    def add_line(self, points=(DEFAULT_POSITION, DEFAULT_SIZE)):
         """Paste a straight line annotation."""
-        return self.add_annotation(XDW_AID_STRAIGHTLINE, int(points[0] * 100),
+        return self.add(XDW_AID_STRAIGHTLINE, int(points[0] * 100),
                 nWidth=int(points[1].x * 100), nHeight=int(point[1].y * 100))
 
-    add_straightline_annotation = add_line_annotation
+    add_straightline = add_line
 
-    def add_rectangle_annotation(self, rect=DEFAULT_RECT):
+    def add_rectangle(self, rect=DEFAULT_RECT):
         """Paste a rectangular annotation."""
         position, size = rect.position_and_size()
         if size.x < 3 or size.y < 3:
             raise ValueError("Rectangle annotation must be >= 3mm square")
-        return self.add_annotation(XDW_AID_RECTANGLE, position,
+        return self.add(XDW_AID_RECTANGLE, position,
                 nWidth=int(size.x * 100), nHeight=int(size.y * 100))
 
-    add_rect_annotation = add_rectangle_annotation
+    add_rect = add_rectangle
 
-    def add_arc_annotation(self, rect=DEFAULT_RECT):
+    def add_arc(self, rect=DEFAULT_RECT):
         """Paste an ellipse annotation."""
         position, size = rect.position_and_size()
         if size.x < 3 or size.y < 3:
             raise ValueError("Arc/ellipse annotation must be >= 3mm in diameter")
-        return self.add_annotation(XDW_AID_ARC, position,
+        return self.add(XDW_AID_ARC, position,
                 nWidth=int(size.x * 100), nHeight=int(size.y * 100))
 
-    def add_bitmap_annotation(self, position=DEFAULT_POSITION, path=None):
+    def add_bitmap(self, position=DEFAULT_POSITION, path=None):
         """Paste an image annotation."""
-        return self.add_annotation(XDW_AID_BITMAP, position,
+        return self.add(XDW_AID_BITMAP, position,
                 szImagePath=byref(path))
 
-    def add_stamp_annotation(self, position=DEFAULT_POSITION, width=DEFAULT_WIDTH):
+    def add_stamp(self, position=DEFAULT_POSITION, width=DEFAULT_WIDTH):
         """Paste a (date) stamp annotation."""
-        return self.add_annotation(XDW_AID_STAMP, position,
+        return self.add(XDW_AID_STAMP, position,
                 nWidth=int(width * 100))
 
-    def add_receivedstamp_annotation(self, position=DEFAULT_POSITION, width=DEFAULT_WIDTH):
+    def add_receivedstamp(self, position=DEFAULT_POSITION, width=DEFAULT_WIDTH):
         """Paste a received (datetime) stamp annotation."""
-        return self.add_annotation(XDW_AID_RECEIVEDSTAMP, position,
+        return self.add(XDW_AID_RECEIVEDSTAMP, position,
                 nWidth=int(width * 100))
 
-    def add_custom_annotation(self, position=DEFAULT_POSITION,
+    def add_custom(self, position=DEFAULT_POSITION,
                 size=DEFAULT_SIZE, guid="???", data="???"):
         """Paste a custom specification annotation."""
-        return self.add_annotation(XDW_AID_CUSTOM, position,
+        return self.add(XDW_AID_CUSTOM, position,
                 nWidth=int(size.x * 100), nHeight=int(size.y * 100), lpszGuid=byref(guid),
                 nCustomDataSize=len(data), pCustomData=byref(data))
 
-    def add_marker_annotation(self, position=DEFAULT_POSITION, points=DEFAULT_POINTS):
+    def add_marker(self, position=DEFAULT_POSITION, points=DEFAULT_POINTS):
         """Paste a marker annotation."""
         points = [p * 100 for p in points]  # Assuming isinstance(p, Point).
-        return self.add_annotation(XDW_AID_MARKER, position,
+        return self.add(XDW_AID_MARKER, position,
                 nCounts=len(points), pPoints=byref(points))
 
-    def add_polygon_annotation(self, position=DEFAULT_POSITION, points=DEFAULT_POINTS):
+    def add_polygon(self, position=DEFAULT_POSITION, points=DEFAULT_POINTS):
         """Paste a polygon annotation."""
         points = [p * 100 for p in points]  # Assuming isinstance(p, Point).
-        return self.add_annotation(XDW_AID_POLYGON, position,
+        return self.add(XDW_AID_POLYGON, position,
                 nCounts=len(points), pPoints=byref(points))
 
-    def _delete_annotation(self, pos):
-        """Abstract method as a stub for delete_annotation()."""
+    def _delete(self, pos):
+        """Abstract method as a stub for delete()."""
         raise NotImplementedError()
 
-    def delete_annotation(self, pos):
+    def delete(self, pos):
         """Remove an annotation."""
+        pos = self._pos(pos)
         ann = self.annotation(pos)
-        self._delete_annotation(ann)
+        self._delete(ann)
         self.detach(ann, EV_ANN_REMOVED)
         self.annotations -= 1
 
@@ -230,7 +247,7 @@ class Annotatable(Subject):
                          recursive=False)
             handles     sequence of annotation handles.  None means all.
             types       sequence of types.  None means all.
-            rect        XDWRect which includes annotations,
+            rect        Rect which includes annotations.
                         Note that right and bottom values are innermost of
                         outside unless half_open==False.  None means all.
             recursive   also return descendant (child) annotations.
@@ -241,8 +258,8 @@ class Annotatable(Subject):
             if not isinstance(types, (list, tuple)):
                 types = [types]
         if rect and not half_open:
-            rect.right += 1
-            rect.bottom += 1
+            rect.right += 0.01  # minimal gap for xdwapi
+            rect.bottom += 0.01  # minimal gap for xdwapi
         annotation_list = []
         for i in range(self.annotations):
             annotation = self.annotation(i)

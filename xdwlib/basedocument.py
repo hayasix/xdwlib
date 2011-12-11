@@ -39,6 +39,17 @@ class BaseDocument(Subject):
     its memorized page number.
     """
 
+    def _pos(self, pos):
+        if not (-self.pages <= pos < self.pages):
+            raise IndexError("Page number must be in [%d, %d), %d given" % (
+                    -self.pages, self.pages, pos))
+        if pos < 0:
+            pos += self.pages
+        return pos
+
+    def _slice(self, pos):
+        return slice(self._pos(pos.start), self._pos(pos.stop), pos.step)
+
     def __init__(self):
         Subject.__init__(self)
 
@@ -52,10 +63,20 @@ class BaseDocument(Subject):
         return self.pages
 
     def __getitem__(self, pos):
+        if isinstance(pos, slice):
+            pos = self._slice(pos)
+            return tuple(self.page(p)
+                    for p in range(pos.start, pos.stop, pos.step or 1))
         return self.page(pos)
 
     def __setitem__(self, pos, val):
         raise NotImplementedError()
+
+    def __delitem__(self, pos):
+        if isinstance(pos, slice):
+            for p in range(pos.start, pos.stop, pos.step or 1):
+                self.delete(p)
+        return self.delete(pos)
 
     def __iter__(self):
         for pos in xrange(self.pages):
@@ -67,15 +88,10 @@ class BaseDocument(Subject):
 
     def page(self, pos):
         """Get a Page."""
-        if self.pages <= pos:
-            raise IndexError("Page number must be < %d, %d given" % (
-                    self.pages, pos))
+        pos = self._pos(pos)
         if pos not in self.observers:
             self.observers[pos] = Page(self, pos)
         return self.observers[pos]
-
-    def range(self, start, end):
-        return PageCollection(self.page(i) for i in xrange(start, end))
 
     def append(self, obj):
         """Append a Page/PageCollection/Document at the end of document."""
@@ -89,6 +105,7 @@ class BaseDocument(Subject):
         pos: position to insert; starts with 0
         obj: Page/PageCollection/BaseDocument
         """
+        pos = self._pos(pos)
         doc = None
         if isinstance(obj, Page): pc = PageCollection([obj])
         elif isinstance(obj, PageCollection):
@@ -101,7 +118,7 @@ class BaseDocument(Subject):
             pc = PageCollection(doc)
         else:
             raise ValueError("can't insert %s object" % (obj.__class__))
-        if pos < 0:
+        if -self.pages <= pos < 0:
             pos += self.pages
         temp = os.path.join(self.dirname(), "$$%s.xdw" % (self.name,))
         temp = pc.combine(temp)
@@ -124,8 +141,7 @@ class BaseDocument(Subject):
             maxpapersize="DEFAULT",
             ):
         """Insert a page created from image files."""
-        if pos < 0:
-            pos += self.pages
+        pos = self._pos(pos)
         input_path = adjust_path(input_path, coding=CODEPAGE)
         opt = XDW_CREATE_OPTION_EX2()
         opt.nFitImage = XDW_CREATE_FITIMAGE.normalize(fitimage)
@@ -166,6 +182,7 @@ class BaseDocument(Subject):
         if isinstance(pos, (list, tuple)):
             pos, pages = pos
             pages -= pos
+        pos = self._pos(pos)
         if not format:
             _, ext = os.path.splitext(path)
             ext = ((ext or "").lstrip(".") or "bmp").lower()
@@ -230,6 +247,7 @@ class BaseDocument(Subject):
 
     def delete(self, pos):
         """Delete a page."""
+        pos = self._pos(pos)
         page = self.page(pos)
         XDW_DeletePage(self.handle, self.absolute_page(pos) + 1)
         self.detach(page, EV_PAGE_REMOVED)
@@ -238,6 +256,7 @@ class BaseDocument(Subject):
     def rasterize(self, pos, dpi=600, color="COLOR"):
         """Rasterize; convert an application page into DocuWorks image page."""
         import tempfile
+        pos = self._pos(pos)
         dpi = int(dpi)
         if not (10 <= dpi <= 600):
             raise ValueError("specify resolution between 10 and 600")
@@ -298,5 +317,3 @@ class BaseDocument(Subject):
     def dirname(self):
         """Abstract method for concrete dirname()."""
         raise NotImplementedError()
-
-

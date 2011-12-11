@@ -37,6 +37,17 @@ class Binder(Subject, XDWFile):
 
     """DocuWorks Binder."""
 
+    def _pos(self, pos):
+        if not (-self.documents <= pos < self.documents):
+            raise IndexError("Document number must be in [%d, %d), %d given" % (
+                    -self.documents, self.documents, pos))
+        if pos < 0:
+            pos += self.documents
+        return pos
+
+    def _slice(self, pos):
+        return slice(self._pos(pos.start), self._pos(pos.stop), pos.step)
+
     def __init__(self, path, readonly=False, authenticate=True):
         Subject.__init__(self)
         XDWFile.__init__(self, path,
@@ -52,10 +63,20 @@ class Binder(Subject, XDWFile):
         return self.documents
 
     def __getitem__(self, pos):
+        if isinstance(pos, slice):
+            pos = self._slice(pos)
+            return tuple(self.document(p)
+                    for p in range(pos.start, pos.stop, pos.step or 1))
         return self.document(pos)
 
     def __setitem__(self, pos):
         raise NotImplementError()
+
+    def __delitem__(self, pos):
+        if isinstance(pos, slice):
+            for p in range(pos.start, pos.stop, pos,step or 1):
+                self.delete(p)
+        return self.delete(pos)
 
     def __iter__(self):
         for pos in xrange(self.documents):
@@ -63,14 +84,12 @@ class Binder(Subject, XDWFile):
 
     def document(self, pos):
         """Get a DocumentInBinder."""
-        if self.documents <= pos:
-            raise IndexError(
-                    "Document number must be < %d, %d given" % (
-                    self.documents, pos))
+        pos = self._pos(pos)
         return DocumentInBinder(self, pos)
 
     def page(self, pos):
         """Get a Page for absolute page number."""
+        pos = self._pos(pos)
         return self.document_and_page(pos)[1]
 
     def document_pages(self):
@@ -80,9 +99,7 @@ class Binder(Subject, XDWFile):
 
     def document_and_page(self, pos):
         """Get (DocumentInBinder, Page) for absolute page number."""
-        if self.pages <= pos:
-            raise IndexError("Page number must be < %d, %d given" % (
-                    self.pages, pos))
+        pos = self._pos(pos)
         acc = 0
         for docpos, pages in enumerate(self.document_pages()):
             acc += pages
@@ -91,18 +108,20 @@ class Binder(Subject, XDWFile):
                 page = doc.page(pos - (acc - pages))
                 return (doc, page)
 
-    def append_document(self, path):
+    def append(self, path):
         """Append a document by path at the end of binder."""
-        self.insert_document(self.documents, path)
+        self.insert(self.documents, path)
 
-    def insert_document(self, pos, path):
+    def insert(self, pos, path):
         """Insert a document by path ."""
+        pos = self._pos(pos)
         XDW_InsertDocumentToBinder(self.handle, pos + 1, path)
         self.attach(doc, EV_DOC_INSERTED)
         self.documents += 1
 
-    def delete_document(self, pos):
+    def delete(self, pos):
         """Delete a document."""
+        pos = self._pos(pos)
         doc = self.document(pos)
         XDW_DeleteDocumentInBinder(self.handle, doc.pos + 1)
         self.detach(doc, EV_DOC_REMOVED)

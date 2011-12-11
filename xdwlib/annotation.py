@@ -219,15 +219,15 @@ class Annotation(Annotatable, Observer):
         return rect.left <= self.position.x <= rect.right - self.size.x and \
                rect.top <= self.position.y <= rect.bottom - self.size.y
 
-    def _add_annotation(self, ann_type, position, init_dat):
-        """Concrete method over _add_annotation() for add_annotation()."""
+    def _add(self, ann_type, position, init_dat):
+        """Concrete method over _add() for add()."""
         ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
         return XDW_AddAnnotationOnParentAnnotation(
                 self.page.doc.handle, self.handle, ann_type,
                 int(position.x * 100), int(position.y * 100), init_dat)
 
-    def _delete_annotation(self, ann):
-        """Concrete method over delete_annotation()."""
+    def _delete(self, ann):
+        """Concrete method over delete()."""
         XDW_RemoveAnnotation(self.page.doc.handle, ann.handle)
 
     def content_text(self):
