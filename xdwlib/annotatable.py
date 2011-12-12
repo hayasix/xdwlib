@@ -49,7 +49,13 @@ class Annotatable(Subject):
         return pos
 
     def _slice(self, pos):
-        return slice(self._pos(pos.start), self._pos(pos.stop), pos.step)
+        if pos.step == 0 and pos.start != pos.stop:
+            raise ValueError("slice.step must not be 0")
+        return slice(
+                self._pos(pos.start or 0),
+                self.annotations if pos.stop is None else pos.stop,
+                1 if pos.step is None else pos.step,
+                )
 
     def __len__(self):
         return self.annotations
