@@ -43,12 +43,12 @@ class Point(object):
     >>> p.shift(20)
     Point(20.00, 10.00)
     >>> list(p)
-    [0, 10]
+    [0.0, 10.0]
     """
 
     def __init__(self, x=0, y=0):
-        self.x = x
-        self.y = y
+        self.x = float(x)
+        self.y = float(y)
 
     def __str__(self):
         return "(%.2f, %.2f)" % (self.x, self.y)
@@ -125,7 +125,7 @@ class Rect(object):
     >>> r / 2
     Rect((0.00, 10.00)-(10.00, 20.00))
     >>> list(r)
-    [0, 10, 20, 30]
+    [0.0, 10.0, 20.0, 30.0]
     """
 
     def __init__(self, *args, **kw):
@@ -157,10 +157,10 @@ class Rect(object):
             left, right = right, left
         if bottom < top:
             top, bottom = bottom, top
-        self.left = left
-        self.top = top
-        self.right = right
-        self.bottom = bottom
+        self.left = float(left)
+        self.top = float(top)
+        self.right = float(right)
+        self.bottom = float(bottom)
 
     def __str__(self):
         return "((%.2f, %.2f)-(%.2f, %.2f))" % (
@@ -186,15 +186,15 @@ class Rect(object):
         if not isinstance(n, (int, float)):
             raise NotImplementedError
         return Rect(self.left, self.top,
-                self.left + float(self.right - self.left) * n,
-                self.top + float(self.bottom - self.top) * n)
+                self.left + (self.right - self.left) * n,
+                self.top + (self.bottom - self.top) * n)
 
     def __div__(self, n):
         if not isinstance(n, (int, float)):
             raise NotImplementedError
         return Rect(self.left, self.top,
-                self.left + float(self.right - self.left) / n,
-                self.top + float(self.bottom - self.top) / n)
+                self.left + (self.right - self.left) / n,
+                self.top + (self.bottom - self.top) / n)
 
     def shift(self, pnt, _y=0):
         if isinstance(pnt, Point):

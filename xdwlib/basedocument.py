@@ -103,11 +103,12 @@ class BaseDocument(Subject):
         insert(pos, obj) --> None
 
         pos: position to insert; starts with 0
-        obj: Page/PageCollection/BaseDocument
+        obj: Page/PageCollection/BaseDocument or path
         """
         pos = self._pos(pos)
         doc = None
-        if isinstance(obj, Page): pc = PageCollection([obj])
+        if isinstance(obj, Page):
+            pc = PageCollection([obj])
         elif isinstance(obj, PageCollection):
             pc = obj
         elif isinstance(obj, BaseDocument):
@@ -118,8 +119,6 @@ class BaseDocument(Subject):
             pc = PageCollection(doc)
         else:
             raise ValueError("can't insert %s object" % (obj.__class__))
-        if -self.pages <= pos < 0:
-            pos += self.pages
         temp = os.path.join(self.dirname(), "$$%s.xdw" % (self.name,))
         temp = pc.combine(temp)
         XDW_InsertDocument(self.handle, self.absolute_page(pos) + 1, temp)
@@ -128,9 +127,9 @@ class BaseDocument(Subject):
             doc.close()
         # Check inserted pages in order to attach them to this document and
         # shift observer entries appropriately.
+        self.pages += len(pc)
         for p in xrange(pos, pos + len(pc)):
             page = Page(self, p)
-        self.pages += len(pc)
 
     def insert_image(self, pos, input_path,
             fitimage="FITDEF",

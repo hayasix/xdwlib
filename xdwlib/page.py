@@ -75,9 +75,9 @@ class PageCollection(list):
         """
         from document import Document
         path = path or tempfile.mkstemp(".xdw")
-        path = self.pop(0).copy(path)
+        path = self[0].copy(path)
         doc = Document(path)
-        for pos, page in enumerate(self):
+        for pos, page in enumerate(self[1:]):
             temp = page.copy()
             XDW_InsertDocument(doc.handle, pos + 1 + 1, temp)
             os.remove(temp)
@@ -140,9 +140,7 @@ class Page(Annotatable, Observer):
 
     def __str__(self):
         return u"Page(page %d: %.2f*%.2fmm, %s, %d annotations)" % (
-                self.pos,
-                self.size.x, self.size.y,
-                XDW_PAGE_TYPE[self.page_type],
+                self.pos, self.size.x, self.size.y, self.page_type,
                 self.annotations)
 
     @staticmethod
@@ -260,10 +258,7 @@ class Page(Annotatable, Observer):
             opt.nAreaNum = len(rects)
             rectlist = XDW_RECT() * len(rects)
             for r, rect in zip(rectlist, rects):
-                r.left = rect.left
-                r.top = rect.top
-                r.right = rect.right
-                r.bottom = rect.bottom
+                r.left, r.top, r.right, r.bottom = rect.left
             opt.pAreaRects = byref(rectlist)
         else:
             opt.pAreaRects = NULL
