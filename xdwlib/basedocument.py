@@ -148,7 +148,7 @@ class BaseDocument(Subject):
             ):
         """Insert a page created from image files."""
         pos = self._pos(pos)
-        input_path = adjust_path(input_path, coding=CODEPAGE)
+        input_path = cp(input_path)
         opt = XDW_CREATE_OPTION_EX2()
         opt.nFitImage = XDW_CREATE_FITIMAGE.normalize(fitimage)
         opt.nCompress = XDW_COMPRESS.normalize(compress)
@@ -198,7 +198,7 @@ class BaseDocument(Subject):
             raise TypeError("image type must be BMP, TIFF, JPEG or PDF.")
         if not path:
             path = "%s_P%d" % (self.name, pos + 1)
-            path = adjust_path(path, dir=self.dirname(), coding=CODEPAGE)
+            path = cp(path, dir=self.dirname())
             if 1 < pages:
                 path += "-%d" % (pos + 1) + (pages - 1)
             path += "." + format

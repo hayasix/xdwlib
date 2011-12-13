@@ -279,7 +279,7 @@ class Page(Annotatable, Observer):
             path = cp(path)
         else:
             path = "%s_P%d.xdw" % (self.doc.name, self.pos + 1)
-            path = adjust_path(path, dir=self.doc.dirname())
+            path = cp(path, dir=self.doc.dirname())
         # Append _2, _3, _4,...  for filename collision.
         n = 1
         root, ext = os.path.splitext(path)
