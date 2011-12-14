@@ -45,6 +45,14 @@ class Binder(Subject, XDWFile):
             pos += self.documents
         return pos
 
+    def _pagepos(self, pos):
+        if not (-self.pages <= pos < self.pages):
+            raise IndexError("Page number must be in [%d, %d), %d given" % (
+                    -self.pages, self.pages, pos))
+        if pos < 0:
+            pos += self.pages
+        return pos
+
     def _slice(self, pos):
         if pos.step == 0 and pos.start != pos.stop:
             raise ValueError("slice.step must not be 0")
@@ -95,7 +103,7 @@ class Binder(Subject, XDWFile):
 
     def page(self, pos):
         """Get a Page for absolute page number."""
-        pos = self._pos(pos)
+        pos = self._pagepos(pos)
         return self.document_and_page(pos)[1]
 
     def document_pages(self):
@@ -105,7 +113,7 @@ class Binder(Subject, XDWFile):
 
     def document_and_page(self, pos):
         """Get (DocumentInBinder, Page) for absolute page number."""
-        pos = self._pos(pos)
+        pos = self._pagepos(pos)
         acc = 0
         for docpos, pages in enumerate(self.document_pages()):
             acc += pages
