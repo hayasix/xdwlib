@@ -14,6 +14,7 @@ FOR A PARTICULAR PURPOSE.
 """
 
 import sys
+import codecs
 
 from xdwlib import xdwopen
 from xdwlib.xdwapi import XDWError, XDW_E_INVALIDARG
@@ -27,7 +28,7 @@ def parse():
 
     from optparse import OptionParser
 
-    parser = OptionParser()
+    parser = OptionParser(usage="Usage: %prog [options] input_path output_path")
     parser.add_option("-a", "--all",
             action="store_const", dest="spec",
             const="Title,Subject,Author,Keywords,Comments,fulltext",
@@ -60,8 +61,8 @@ def parse():
     parser.add_option("--comment",
             action="store_const", dest="spec", const="Comments",
             help="document comments")
-    parser.add_option("-u", action="store_true", dest="unicode",
-            help="Unicode ie. UTF-16, not multibyte (MBCS)")
+    parser.add_option("--encoding", dest="encoding", default="mbcs",
+            help="output encoding: mbcs, utf-8, etc. (default=mbcs)")
     parser.add_option("-d", action="store_true", dest="ask",
             help="ask if input is DocuWorks file or not; returns error code")
     parser.add_option("-v", action="store_true", dest="showversion",
@@ -111,9 +112,11 @@ if __name__ == "__main__":
             out.append("%s=%s" % (name, text))
         except KeyError:
             pass
-    out = "".join(out)
+    out = "\n".join(out)
     if options.pipe:
         print out
     else:
-        with open(arg[1], "w") as of:
+        if options.encoding.lower() in ("utf8n", "utf-8n"):
+            options.encoding = "utf-8-sig"
+        with codecs.open(args[1], "w", options.encoding) as of:
             of.writelines(out)
