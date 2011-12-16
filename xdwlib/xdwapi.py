@@ -1849,21 +1849,21 @@ class XDW_AA_POLYGON_INITIAL_DATA(ResizedStructure):
 
 XDW_AID_INITIAL_DATA = {
         XDW_AID_FUSEN           : XDW_AA_FUSEN_INITIAL_DATA,
-        #XDW_AID_TEXT            : XDW_AA_TEXT_INITIAL_DATA,
+        XDW_AID_TEXT            : None,
         XDW_AID_STAMP           : XDW_AA_STAMP_INITIAL_DATA,
         XDW_AID_STRAIGHTLINE    : XDW_AA_STRAIGHTLINE_INITIAL_DATA,
         XDW_AID_RECTANGLE       : XDW_AA_RECT_INITIAL_DATA,
         XDW_AID_ARC             : XDW_AA_ARC_INITIAL_DATA,
         XDW_AID_POLYGON         : XDW_AA_POLYGON_INITIAL_DATA,
         XDW_AID_MARKER          : XDW_AA_MARKER_INITIAL_DATA,
-        #XDW_AID_LINK            : XDW_AA_LINK_INITIAL_DATA,
-        #XDW_AID_PAGEFORM        : XDW_AA_PAGEFORM_INITIAL_DATA,
-        #XDW_AID_OLE             : XDW_AA_OLE_INITIAL_DATA,
+        XDW_AID_LINK            : None,
+        XDW_AID_PAGEFORM        : None,
+        XDW_AID_OLE             : None,
         XDW_AID_BITMAP          : XDW_AA_BITMAP_INITIAL_DATA,
-        #XDW_AID_RECEIVEDSTAMP   : XDW_AA_RECEIVEDSTAMP_INITIAL_DATA,
-        #XDW_AID_CUSTOM          : XDW_AA_CUSTOM_INITIAL_DATA,
-        # XDW_AID_TITLE           : XDW_AA_TITLE_INITIAL_DATA,
-        # XDW_AID_GROUP           : XDW_AA_GROUP_INITIAL_DATA,
+        XDW_AID_RECEIVEDSTAMP   : None,
+        XDW_AID_CUSTOM          : None,
+        XDW_AID_TITLE           : None,
+        XDW_AID_GROUP           : None,
         }
 
 

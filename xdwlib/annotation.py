@@ -154,8 +154,9 @@ class Annotation(Annotatable, Observer):
                     value = XDW_COLOR.normalize(value)
             elif attrname.endswith("FontStyle"):
                 from operator import or_
-                value = reduce(or_, [XDW_FONT_STYLE.normalize(style) for style
-                        in value.split(",")])
+                value = reduce(or_, [
+                        XDW_FONT_STYLE.normalize(style.strip())
+                        for style in value.split(",")])
             else:
                 for typename, table in Annotation.attrs.items():
                     if attrname.endswith(typename):
@@ -177,7 +178,7 @@ class Annotation(Annotatable, Observer):
                             attrname, XDW_ATYPE_STRING, value,
                             texttype, codepage=CP)
             elif isinstance(value, (int, float)):
-                value = c_int(Annotation.scale(attrname, value, store=True))
+                value = c_int(int(Annotation.scale(attrname, value, store=True)))
                 XDW_SetAnnotationAttributeW(
                         self.page.doc.handle, self.handle,
                         attrname, XDW_ATYPE_INT, byref(value), 0, 0)

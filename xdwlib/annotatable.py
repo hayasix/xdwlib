@@ -95,6 +95,8 @@ class Annotatable(Subject):
             cls = XDW_AID_INITIAL_DATA[ann_type]
         except KeyError:
             raise ValueError("illegal annotation type %d" % ann_type)
+        if cls is None:
+            return None
         init_dat = cls()
         init_dat.common.nAnnotationType = \
                 XDW_ANNOTATION_TYPE.normalize(ann_type)
