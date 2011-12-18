@@ -362,7 +362,8 @@ class Page(Annotatable, Observer):
     def re_regions(self, pattern):
         if isinstance(pattern, basestring):
             import re
-            pattern = re.compile(pattern)
+            opt = re.LOCALE if isinstance(pattern, str) else re.UNICODE
+            pattern = re.compile(pattern, opt)
         result = []
         for text in set(pattern.findall(self.fulltext())):
             result.extend(self.text_regions(text))
