@@ -76,6 +76,12 @@ class Annotation(Annotatable, Observer):
         return [outer_attribute_name(k) for k in XDW_ANNOTATION_ATTRIBUTE]
 
     @staticmethod
+    def all_colors(fusen=False):
+        """Returns all colors available."""
+        return tuple(sorted(c.lower() for c
+                in (XDW_COLOR_FUSEN if fusen else XDW_COLOR).values()))
+
+    @staticmethod
     def scale(attrname, value, store=False):
         """Scale actual size (length) to stored value and vice versa."""
         unit = XDW_ANNOTATION_ATTRIBUTE[attrname][1]

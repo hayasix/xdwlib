@@ -674,10 +674,10 @@ XDW_OCR_COLUMN_VERTICAL_MULTI                   = 4
 
 XDW_OCR_COLUMN = XDWConst({
         XDW_OCR_COLUMN_AUTO                     : "AUTO",
-        XDW_OCR_COLUMN_HORIZONTAL_SINGLE        : "HORIZONTAL SINGLE",
-        XDW_OCR_COLUMN_HORIZONTAL_MULTI         : "HORIZONTAL MULTI",
-        XDW_OCR_COLUMN_VERTICAL_SINGLE          : "VERTICAL SINGLE",
-        XDW_OCR_COLUMN_VERTICAL_MULTI           : "VERTICAL MULTI",
+        XDW_OCR_COLUMN_HORIZONTAL_SINGLE        : "HORIZONTAL_SINGLE",
+        XDW_OCR_COLUMN_HORIZONTAL_MULTI         : "HORIZONTAL_MULTI",
+        XDW_OCR_COLUMN_VERTICAL_SINGLE          : "VERTICAL_SINGLE",
+        XDW_OCR_COLUMN_VERTICAL_MULTI           : "VERTICAL_MULTI",
         }, default=XDW_OCR_COLUMN_AUTO)
 
 XDW_OCR_DOCTYPE_AUTO                            = 0
@@ -955,7 +955,7 @@ XDW_COLOR_RED                       = 0x0000FF
 XDW_COLOR_LIME                      = 0x00FF00
 XDW_COLOR_YELLOW                    = 0x00FFFF
 XDW_COLOR_BLUE                      = 0xFF0000
-XDW_COLOR_FUCHIA                    = 0xFF00FF
+XDW_COLOR_FUCHSIA                   = 0xFF00FF
 XDW_COLOR_AQUA                      = 0xFFFF00
 XDW_COLOR_WHITE                     = 0xFFFFFF
 XDW_COLOR_FUSEN_RED                 = 0xFFC2FF
@@ -982,12 +982,13 @@ XDW_COLOR = XDWConst({
         XDW_COLOR_LIME              : "LIME",
         XDW_COLOR_YELLOW            : "YELLOW",
         XDW_COLOR_BLUE              : "BLUE",
-        XDW_COLOR_FUCHIA            : "FUCHIA",
+        XDW_COLOR_FUCHSIA           : "FUCHSIA",
         XDW_COLOR_AQUA              : "AQUA",
         XDW_COLOR_WHITE             : "WHITE",
         }, default=XDW_COLOR_BLACK)
 
 XDW_COLOR_FUSEN = XDWConst({
+        XDW_COLOR_WHITE             : "WHITE",
         XDW_COLOR_FUSEN_RED         : "RED",
         XDW_COLOR_FUSEN_BLUE        : "BLUE",
         XDW_COLOR_FUSEN_YELLOW      : "YELLOW",

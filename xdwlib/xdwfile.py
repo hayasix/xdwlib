@@ -153,7 +153,7 @@ class XDWFile(object):
             open_mode.nAuthMode = XDW_AUTH_NONE
         if isinstance(path, str):
             path = unicode(path, CODEPAGE)
-        path = os.path.abspath(path)
+        path = cp(path)
         self.handle = XDW_OpenDocumentHandle(path, open_mode)
         self.register()
         self.dir, self.name = os.path.split(path)
@@ -196,6 +196,9 @@ class XDWFile(object):
         return self.__dict__[name]
 
     def __setattr__(self, name, value):
+        if name == "show_annotations":
+            XDW_ShowOrHideAnnotations(self.handle, bool(value))
+            return
         name = unicode(name)
         attribute_name = inner_attribute_name(name)
         if isinstance(value, basestring):
@@ -216,9 +219,3 @@ class XDWFile(object):
                     XDW_TEXT_MULTIBYTE, codepage=CP)
             return
         self.__dict__[name] = value
-
-    def show_annotations(self, show=True):
-        XDW_ShowOrHideAnnotations(self.handle, bool(show))
-
-    def hide_annotations(self):
-        XDW_ShowOrHideAnnotations(self.handle, 0)
