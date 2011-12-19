@@ -160,6 +160,7 @@ class Annotation(Annotatable, Observer):
                     value = XDW_COLOR.normalize(value)
             elif attrname.endswith("FontStyle"):
                 from operator import or_
+                value = value or ""
                 value = reduce(or_, [
                         XDW_FONT_STYLE.normalize(style.strip())
                         for style in value.split(",") if style] or [0])

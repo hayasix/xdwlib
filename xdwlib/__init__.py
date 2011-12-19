@@ -18,6 +18,6 @@ from xdwfile import environ, xdwopen, create_sfx, extract_sfx
 __author__ = "HAYASI Hideki"
 __copyright__ = "Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>  All rights reserved."
 __license__ = "ZPL 2.1"
-__version__ = "2.8.15"
+__version__ = "2.8.16"
 __email__ = "linxs@linxs.org"
 __status__ = "Development"
