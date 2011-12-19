@@ -162,7 +162,7 @@ class Annotation(Annotatable, Observer):
                 from operator import or_
                 value = reduce(or_, [
                         XDW_FONT_STYLE.normalize(style.strip())
-                        for style in value.split(",")])
+                        for style in value.split(",") if style] or [0])
             else:
                 for typename, table in Annotation.attrs.items():
                     if attrname.endswith(typename):
