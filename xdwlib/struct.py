@@ -129,13 +129,14 @@ class Rect(object):
     """
 
     def __init__(self, *args, **kw):
+        half_open = True
         if args:
             if len(args) == 2:
                 ((left, top), (right, bottom)) = args
             elif len(args) == 4:
                 left, top, right, bottom = args
             else:
-                raise TypeError("argument should be 4 numerics or 2 Points")
+                raise TypeError("argument must be 4 numerics or 2 Points")
         else:
             for k, v in kw.items():
                 k = k.upper()
@@ -151,6 +152,8 @@ class Rect(object):
                     left, top = v
                 elif k in ("RIGHTBOTTOM", "RB"):
                     right, bottom = v
+                elif k == "HALF_OPEN":
+                    half_open = v
                 else:
                     raise TypeError("unexpected keyword '%s'", k)
         if right < left:
@@ -161,6 +164,9 @@ class Rect(object):
         self.top = float(top)
         self.right = float(right)
         self.bottom = float(bottom)
+        if not half_open:  # Enforce half open.
+            self.right += 0.01
+            self.bottom += 0.01
 
     def __str__(self):
         return "((%.2f, %.2f)-(%.2f, %.2f))" % (

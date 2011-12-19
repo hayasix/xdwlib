@@ -55,15 +55,15 @@ class Annotation(Annotatable, Observer):
     """Annotation on DocuWorks document page."""
 
     attrs = {
-        "PageForm"          : XDW_PAGE_FORM,
-        "LinkType"          : XDW_LINK_TYPE,
-        "ArrowheadType"     : XDW_ARROWHEAD_TYPE,
-        "ArrowheadStyle"    : XDW_ARROWHEAD_STYLE,
-        "BorderType"        : XDW_BORDER_TYPE,
-        "DateStyle"         : XDW_STAMP_DATE_STYLE,
-        "BasisYearStyle"    : XDW_STAMP_BASISYEAR_STYLE,
-        "DateOrder"         : XDW_STAMP_DATE_FORMAT,
-        }
+            "PageForm"          : XDW_PAGE_FORM,
+            "LinkType"          : XDW_LINK_TYPE,
+            "ArrowheadType"     : XDW_ARROWHEAD_TYPE,
+            "ArrowheadStyle"    : XDW_ARROWHEAD_STYLE,
+            "BorderType"        : XDW_BORDER_TYPE,
+            "DateStyle"         : XDW_STAMP_DATE_STYLE,
+            "BasisYearStyle"    : XDW_STAMP_BASISYEAR_STYLE,
+            "DateOrder"         : XDW_STAMP_DATE_FORMAT,
+            }
 
     @staticmethod
     def all_types():

@@ -335,6 +335,8 @@ class Page(Annotatable, Observer):
         """
         if isinstance(text, unicode):
             text = text.encode(CODEPAGE)  # TODO: how can we take all unicodes?
+        if 255 < len(text):
+            raise ValueError("text length must be <= 255")
         fh = XDW_FindTextInPage(
                 self.doc.handle, self.absolute_page() + 1, text, opt)
         try:

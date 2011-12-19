@@ -137,28 +137,28 @@ class Annotatable(Subject):
         """Paste a text annotation."""
         ann = self.add(XDW_AID_TEXT, position)
         ann.Text = text
-        if "text_margin" in kw:  # Abbreviation support like CSS.
-            v = kw["text_margin"]
+        if "margin" in kw:  # Abbreviation support like CSS.
+            v = kw["margin"]
             if not isinstance(v, (list, tuple)):
                 v = [v]
             if len(v) == 1:
-                kw["text_top_margin"] = v[0]
-                kw["text_right_margin"] = v[0]
-                kw["text_bottom_margin"] = v[0]
-                kw["text_left_margin"] = v[0]
+                kw["top_margin"] = v[0]
+                kw["right_margin"] = v[0]
+                kw["bottom_margin"] = v[0]
+                kw["left_margin"] = v[0]
             elif len(v) == 2:
-                kw["text_top_margin"] = kw["text_bottom_margin"] = v[0]
-                kw["text_right_margin"] = kw["text_left_margin"] = v[1]
+                kw["top_margin"] = kw["bottom_margin"] = v[0]
+                kw["right_margin"] = kw["left_margin"] = v[1]
             elif len(v) == 3:
-                kw["text_top_margin"] = v[0]
-                kw["text_right_margin"] = kw["text_left_margin"] = v[1]
-                kw["text_bottom_margin"] = v[2]
+                kw["top_margin"] = v[0]
+                kw["right_margin"] = kw["left_margin"] = v[1]
+                kw["bottom_margin"] = v[2]
             else:  #if len(v) == 4:
-                kw["text_top_margin"] = v[0]
-                kw["text_right_margin"] = v[1]
-                kw["text_bottom_margin"] = v[2]
-                kw["text_left_margin"] = v[3]
-            del kw["text_margin"]
+                kw["top_margin"] = v[0]
+                kw["right_margin"] = v[1]
+                kw["bottom_margin"] = v[2]
+                kw["left_margin"] = v[3]
+            del kw["margin"]
         for k, v in kw.items():
             k = inner_attribute_name(k)
             if k == "%FontPitchAndFamily":
@@ -178,7 +178,7 @@ class Annotatable(Subject):
         return self.add(XDW_AID_FUSEN, position,
                 nWidth=int(size.x * 100), nHeight=int(size.y * 100))
 
-    def add_line(self, points=(DEFAULT_POSITION, DEFAULT_SIZE)):
+    def add_line(self, points=(DEFAULT_POSITION, DEFAULT_POSITION + DEFAULT_SIZE)):
         """Paste a straight line annotation."""
         return self.add(XDW_AID_STRAIGHTLINE, int(points[0] * 100),
                 nWidth=int(points[1].x * 100), nHeight=int(point[1].y * 100))
