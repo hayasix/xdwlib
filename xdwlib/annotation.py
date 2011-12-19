@@ -50,6 +50,15 @@ def encode_fake_unicode(ustring):
     return "".join(result)
 
 
+def flagvalue(table, flags):
+    """Sum up flag values according to XDWConst table."""
+    from operator import or_
+    if not flags:
+        return 0
+    values = [table.normalize(f.strip()) for f in flags.split(",") if f]
+    return reduce(or_, values) if values else 0
+
+
 class Annotation(Annotatable, Observer):
 
     """Annotation on DocuWorks document page."""
@@ -63,6 +72,7 @@ class Annotation(Annotatable, Observer):
             "DateStyle"         : XDW_STAMP_DATE_STYLE,
             "BasisYearStyle"    : XDW_STAMP_BASISYEAR_STYLE,
             "DateOrder"         : XDW_STAMP_DATE_FORMAT,
+            "FontCharSet"       : XDW_FONT_CHARSET,
             }
 
     @staticmethod
@@ -132,6 +142,15 @@ class Annotation(Annotatable, Observer):
                         return XDW_COLOR[v]
                 if attrname.endswith("FontStyle"):
                     return ",".join(XDW_FONT_STYLE[b] for b in (1, 2, 4, 8) if b & v)
+                elif attrname.endswith("FontPitchAndFamily"):
+                    result = []
+                    pitch = XDW_PITCH_AND_FAMILY.get(v & 0x0f, "UNKNOWN")
+                    if pitch != "DEFAULT":
+                        result.append(pitch)
+                    family = XDW_PITCH_AND_FAMILY.get(v & 0xf0, "UNKNOWN")
+                    if family != "DEFAULT":
+                        result.append(family)
+                    return ",".join(result)
                 for typename, table in Annotation.attrs.items():
                     if attrname.endswith(typename):
                         return table[v]  # Convert to symbol string.
@@ -141,7 +160,13 @@ class Annotation(Annotatable, Observer):
                 return v
             else:  # t == XDW_ATYPE_OTHER:  # Quick hack for points.
                 return [Point(p.x, p.y) for p in v]
-        if name in ("position", "size"):
+        elif name == "margin":  # Abbreviation support like CSS.
+            result = []
+            for d in ("Top", "Right", "Bottom", "Left"):
+                _, v, _ = XDW_GetAnnotationAttributeW(self.handle, "%{0}Margin".format(d))
+                result.append(v / 100.0)
+            return tuple(result)
+        elif name in ("position", "size"):
             info = XDW_GetAnnotationInformation(
                     self.page.doc.handle, self.page.absolute_page() + 1,
                     self.parent.handle if self.parent else NULL, self.pos + 1)
@@ -159,11 +184,11 @@ class Annotation(Annotatable, Observer):
                 else:
                     value = XDW_COLOR.normalize(value)
             elif attrname.endswith("FontStyle"):
-                from operator import or_
-                value = value or ""
-                value = reduce(or_, [
-                        XDW_FONT_STYLE.normalize(style.strip())
-                        for style in value.split(",") if style] or [0])
+                value = flagvalue(XDW_FONT_STYLE, value)
+            elif attrname.endswith("FontPitchAndFamily"):
+                value = flagvalue(XDW_PITCH_AND_FAMILY, value)
+            elif attrname.endswith("FontCharSet"):
+                value = XDW_FONT_CHARSET.normalize(value)
             else:
                 for typename, table in Annotation.attrs.items():
                     if attrname.endswith(typename):
@@ -192,14 +217,27 @@ class Annotation(Annotatable, Observer):
             else:
                 raise TypeError("Invalid type to set attribute value: " + \
                                 str(value))
-            return
-        if name == "position":
+        elif name == "margin":  # Abbreviation support like CSS.
+            if not isinstance(value, (list, tuple)):  # Assuming a scalar.
+                value = [value] * 4
+            elif len(value) == 1:
+                value = value * 4
+            elif len(value) == 2:
+                value = [value[0], value[1]] * 2
+            elif len(value) == 3:
+                value = [value[0], value[1], value[2], value[1]]
+            else:
+                value = value[:4]
+            for i, d in enumerate("Top Right Bottom Left".split()):
+                setattr(self, "%{0}Margin".format(d), value[i])
+        elif name == "position":
             XDW_SetAnnotationPosition(self.page.doc.handle, self.handle,
                     int(value.x * 100), int(value.y * 100))
         elif name == "size":
             XDW_SetAnnotationSize(self.page.doc.handle, self.handle,
                     int(value.x * 100), int(value.y * 100))
-        self.__dict__[name] = value
+        else:
+            self.__dict__[name] = value
 
     def update(self, event):
         """Update self as an observer."""

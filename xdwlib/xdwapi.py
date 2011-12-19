@@ -154,13 +154,6 @@ def XDWErrorFactory(errorcode, message=""):
 
 NULL = None
 
-ANSI_CHARSET = 0
-DEFAULT_CHARSET = 1
-MAC_CHARSET = 77
-OEM_CHARSET = 255
-SHIFTJIS_CHARSET = 128
-SYMBOL_CHARSET = 2
-
 
 class XDWConst(dict):
 
@@ -1157,33 +1150,65 @@ XDW_ANNOTATION_ATTRIBUTE = {
         XDW_ATN_Zoom                : (0, None, ()),
         }
 
-XDW_FONT_CHARSET = {
-        "ANSI_CHARSET"              : 0,
-        "DEFAULT_CHARSET"           : 1,
-        "SYMBOL_CHARSET"            : 2,
-        "MAC_CHARSET"               : 77,
-        "SHIFTJIS_CHARSET"          : 128,
-        "HANGEUL_CHARSET"           : 129,
-        "CHINESEBIG5_CHARSET"       : 136,
-        "GREEK_CHARSET"             : 161,
-        "TURKISH_CHARSET"           : 162,
-        "BALTIC_CHARSET"            : 186,
-        "RUSSIAN_CHARSET"           : 204,
-        "EASTEUROPE_CHARSET"        : 238,
-        "OEM_CHARSET"               : 255,
-        }
 
-XDW_PITCH_AND_FAMILY = {
-        "DEFAULT_PITCH"             : 0,
-        "FIXED_PITCH"               : 1,
-        "VARIABLE_PITCH"            : 2,
-        "FF_DONTCARE"               : 0,
-        "FF_ROMAN"                  : 16,
-        "FF_SWISS"                  : 32,
-        "FF_MODERN"                 : 48,
-        "FF_SCRIPT"                 : 64,
-        "FF_DECORATIVE"             : 80,
-        }
+ANSI_CHARSET            = 0
+DEFAULT_CHARSET         = 1
+SYMBOL_CHARSET          = 2
+MAC_CHARSET             = 77
+SHIFTJIS_CHARSET        = 128
+HANGEUL_CHARSET         = 129
+CHINESEBIG5_CHARSET     = 136
+GREEK_CHARSET           = 161
+TURKISH_CHARSET         = 162
+BALTIC_CHARSET          = 186
+RUSSIAN_CHARSET         = 204
+EASTEUROPE_CHARSET      = 238
+OEM_CHARSET             = 255
+
+XDW_FONT_CHARSET = XDWConst({
+        ANSI_CHARSET            : "ANSI",
+        DEFAULT_CHARSET         : "DEFAULT",
+        SYMBOL_CHARSET          : "SYMBOL",
+        MAC_CHARSET             : "MAC",
+        SHIFTJIS_CHARSET        : "SHIFTJIS",
+        HANGEUL_CHARSET         : "HANGEUL",
+        CHINESEBIG5_CHARSET     : "CHINESEBIG5",
+        GREEK_CHARSET           : "GREEK",
+        TURKISH_CHARSET         : "TURKISH",
+        BALTIC_CHARSET          : "BALTIC",
+        RUSSIAN_CHARSET         : "RUSSIAN",
+        EASTEUROPE_CHARSET      : "EASTEUROPE",
+        OEM_CHARSET             : "OEM",
+        }, default=DEFAULT_CHARSET)
+
+
+### Windows LOGFONT constants
+
+DEFAULT_PITCH           = 0
+FIXED_PITCH             = 1
+VARIABLE_PITCH          = 2
+MONO_FONT               = 8
+FF_DONTCARE             = 0
+FF_ROMAN                = 16
+FF_SWISS                = 32
+FF_MODERN               = 48
+FF_SCRIPT               = 64
+FF_DECORATIVE           = 80
+
+XDW_PITCH_AND_FAMILY = XDWConst({
+        0                       : "DEFAULT",
+        #DEFAULT_PITCH           : "DEFAULT_PITCH",
+        FIXED_PITCH             : "FIXED_PITCH",
+        VARIABLE_PITCH          : "VARIABLE_PITCH",
+        MONO_FONT               : "MONO_FONT",
+        #FF_DONTCARE             : "DONTCARE",
+        FF_ROMAN                : "ROMAN",
+        FF_SWISS                : "SWISS",
+        FF_MODERN               : "MODERN",
+        FF_SCRIPT               : "SCRIPT",
+        FF_DECORATIVE           : "DECORATIVE",
+        }, default=FF_DONTCARE)
+
 
 ######################################################################
 ### STRUCTURES #######################################################

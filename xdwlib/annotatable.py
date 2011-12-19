@@ -137,38 +137,8 @@ class Annotatable(Subject):
         """Paste a text annotation."""
         ann = self.add(XDW_AID_TEXT, position)
         ann.Text = text
-        if "margin" in kw:  # Abbreviation support like CSS.
-            v = kw["margin"]
-            if not isinstance(v, (list, tuple)):
-                v = [v]
-            if len(v) == 1:
-                kw["top_margin"] = v[0]
-                kw["right_margin"] = v[0]
-                kw["bottom_margin"] = v[0]
-                kw["left_margin"] = v[0]
-            elif len(v) == 2:
-                kw["top_margin"] = kw["bottom_margin"] = v[0]
-                kw["right_margin"] = kw["left_margin"] = v[1]
-            elif len(v) == 3:
-                kw["top_margin"] = v[0]
-                kw["right_margin"] = kw["left_margin"] = v[1]
-                kw["bottom_margin"] = v[2]
-            else:  #if len(v) == 4:
-                kw["top_margin"] = v[0]
-                kw["right_margin"] = v[1]
-                kw["bottom_margin"] = v[2]
-                kw["left_margin"] = v[3]
-            del kw["margin"]
         for k, v in kw.items():
-            k = inner_attribute_name(k)
-            if k == "%FontPitchAndFamily":
-                ann.FontPitchAndFamily = XDW_PITCH_AND_FAMILY.get(k, 0)
-            elif k == "%FontCharSet":
-                ann.FontCharSet = XDW_FONT_CHARSET.get("DEFAULT_CHARSET", 0)
-            else:
-                setattr(ann, k, v)
-        if hasattr(ann, "FontName") and not hasattr(ann, "FontCharSet"):
-            raise ValueError("FontName must be specified with FontCharSet")
+            setattr(ann, k, v)
         return ann
 
     def add_fusen(self, position=DEFAULT_POSITION, size=DEFAULT_SIZE):
