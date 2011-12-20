@@ -40,10 +40,11 @@ class BaseDocument(Subject):
     its memorized page number.
     """
 
-    def _pos(self, pos):
-        if not (-self.pages <= pos < self.pages):
+    def _pos(self, pos, append=False):
+        append = 1 if append else 0
+        if not (-self.pages <= pos < self.pages + append):
             raise IndexError("Page number must be in [%d, %d), %d given" % (
-                    -self.pages, self.pages, pos))
+                    -self.pages, self.pages + append, pos))
         if pos < 0:
             pos += self.pages
         return pos
@@ -89,7 +90,7 @@ class BaseDocument(Subject):
         for pos in xrange(self.pages):
             yield self.page(pos)
 
-    def absolute_page(self, pos):
+    def absolute_page(self, pos, append=False):
         """Abstract method to get absolute page number in binder/document."""
         raise NotImplementedError()
 
@@ -107,12 +108,10 @@ class BaseDocument(Subject):
     def insert(self, pos, obj):
         """Insert a Page/PageCollection/Document.
 
-        insert(pos, obj) --> None
-
         pos: position to insert; starts with 0
         obj: Page/PageCollection/BaseDocument or path
         """
-        pos = self._pos(pos)
+        pos = self._pos(pos, append=True)
         doc = None
         if isinstance(obj, Page):
             pc = PageCollection([obj])
@@ -122,13 +121,13 @@ class BaseDocument(Subject):
             pc = PageCollection(obj)
         elif isinstance(obj, basestring):  # XDW path
             assert obj.lower().endswith(".xdw")  # binder is not acceptable
-            doc = xdwopen(obj)
+            doc = xdwopen(cp(obj))
             pc = PageCollection(doc)
         else:
             raise ValueError("can't insert %s object" % (obj.__class__))
         temp = os.path.join(self.dirname(), "$$%s.xdw" % (self.name,))
         temp = pc.combine(temp)
-        XDW_InsertDocument(self.handle, self.absolute_page(pos) + 1, temp)
+        XDW_InsertDocument(self.handle, self.absolute_page(pos, append=True) + 1, temp)
         os.remove(temp)
         if doc:
             doc.close()
@@ -138,6 +137,10 @@ class BaseDocument(Subject):
         for p in xrange(pos, pos + len(pc)):
             page = Page(self, p)
 
+    def append_image(self, *args, **kw):
+        """Append a page created from image file(s)."""
+        self.insert_image(self.pages, *args, **kw)
+
     def insert_image(self, pos, input_path,
             fitimage="FITDEF",
             compress="NORMAL",
@@ -146,8 +149,8 @@ class BaseDocument(Subject):
             align=("center", "center"),  # left/center/right, top/center/bottom
             maxpapersize="DEFAULT",
             ):
-        """Insert a page created from image files."""
-        pos = self._pos(pos)
+        """Insert a page created from image file(s)."""
+        pos = self._pos(pos, append=True)
         input_path = cp(input_path)
         opt = XDW_CREATE_OPTION_EX2()
         opt.nFitImage = XDW_CREATE_FITIMAGE.normalize(fitimage)
@@ -160,25 +163,24 @@ class BaseDocument(Subject):
         opt.nVerPos = XDW_CREATE_VPOS.normalize(align[1])
         opt.nMaxPaperSize = XDW_CREATE_MAXPAPERSIZE.normalize(maxpapersize)
         XDW_CreateXdwFromImageFileAndInsertDocument(
-                self.handle, self.absolute_page(pos) + 1, input_path, opt)
+                self.handle, self.absolute_page(pos, append=True) + 1, input_path, opt)
         # Check inserted pages in order to attach them to this document and
         # shift observer entries appropriately.
         page = Page(self, pos)
         self.pages += 1
         ## TODO: recalc page data if image has been divided into pages.
 
-    def export_image(self, pos, pages=1, path=None,
+    def export_image(self, pos, path, pages=1,
             dpi=600, color="COLOR", format=None, compress="NORMAL"):
         """Export page(s) to image file.
 
-        export_image(pos, pages=1, path=None, dpi=600, color="COLOR",
-                     format=None, compress="NORMAL")
-
-        pos:        (int) or (tuple like slice)
+        pos:        (int or tuple (start:stop) in half-open style like slice)
+        path:       (basestring) pathname to output
+        pages:      (int)
         dpi:        (int) 10..600
-        color:      COLOR | MONO | MONO_HIGHQUALITY
-        format:     BMP | TIFF | JPEG | PDF
-        compress:   for BMP, not available
+        color:      (str) COLOR | MONO | MONO_HIGHQUALITY
+        format:     (str) BMP | TIFF | JPEG | PDF
+        compress:   (str) for BMP, not available
                     for TIFF, NOCOMPRESS | PACKBITS | JPEG | JPEG_TTN2 | G4
                     for JPEG, NORMAL | HIGHQUALITY | HIGHCOMPRESS
                     for PDF,  NORMAL | HIGHQUALITY | HIGHCOMPRESS |
@@ -247,7 +249,7 @@ class BaseDocument(Subject):
             dopt.nEndOfMultiPages = (pos + 1) + (pages - 1)
             # Compression method option is deprecated.
             dopt.nConvertMethod = XDW_CONVERT_MRC_OS
-        opt.pDetailOption = cast(pointer(dopt), c_void_p)
+        opt.pDetailOption = dopt
         XDW_ConvertPageToImageFile(
                 self.handle, self.absolute_page(pos) + 1, path, opt)
 

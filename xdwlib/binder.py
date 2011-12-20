@@ -37,18 +37,22 @@ class Binder(Subject, XDWFile):
 
     """DocuWorks Binder."""
 
-    def _pos(self, pos):
-        if not (-self.documents <= pos < self.documents):
+    __type__ = "BINDER"
+
+    def _pos(self, pos, append=False):
+        append = 1 if append else 0
+        if not (-self.documents <= pos < self.documents + append):
             raise IndexError("Document number must be in [%d, %d), %d given" % (
-                    -self.documents, self.documents, pos))
+                    -self.documents, self.documents + append, pos))
         if pos < 0:
             pos += self.documents
         return pos
 
-    def _pagepos(self, pos):
-        if not (-self.pages <= pos < self.pages):
+    def _pagepos(self, pos, append=False):
+        append = 1 if append else 0
+        if not (-self.pages <= pos < self.pages + append):
             raise IndexError("Page number must be in [%d, %d), %d given" % (
-                    -self.pages, self.pages, pos))
+                    -self.pages, self.pages + append, pos))
         if pos < 0:
             pos += self.pages
         return pos

@@ -13,7 +13,7 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE.
 """
 
-from os.path import abspath, dirname, join, splitext
+import os
 
 from xdwapi import *
 from common import *
@@ -59,11 +59,15 @@ def create_from_image(input_path, output_path=None,
         fitimage=XDW_CREATE_FITDEF,
         compress=XDW_COMPRESS_NORMAL,
         zoom=0,  # %; 0=100%
-        size=Point(0, 0),  # Point(width, height); 0=A4R
+        size=Point(0, 0),  # Point (in mm), int or str; 1,2..10=A3R,A3..B5
         align=("center", "center"),  # left/center/right, top/center/bottom
         maxpapersize=XDW_CREATE_DEFAULT_SIZE,
         ):
-    """XDW generator from image file."""
+    """XDW generator from image file.
+
+    size: (Point/str/int) valid if fitimage in ("userdef", "userdef_fit")
+          1=A3R, 2=A3, 3=A4R, 4=A4, 5=A5R, 6=A5, 7=B4R, 8=B4, 9=B5R, 10=B5
+    """
     input_path, output_path = cp(input_path), cp(output_path)
     root, ext = os.path.split(input_path)
     if not output_path:
@@ -74,7 +78,12 @@ def create_from_image(input_path, output_path=None,
     #opt.nZoom = int(zoom)
     opt.nZoomDetail = int(zoom * 1000)  # .3f
     # NB. Width and height are valid only for XDW_CREATE_USERDEF(_FIT).
-    opt.nWidth, opt.nHeight = int(size * 100)  # .2f;
+    if not isinstance(size, Point):
+        size = XDW_SIZE.normalize(size)
+        size = XDW_SIZE_MM[size or 3]  # default=A4R
+        size = Point(*size)
+    opt.nWidth = int(size.x * 100)  # .2f
+    opt.nHeight = int(size.y * 100)  # .2f;
     opt.nHorPos = XDW_CREATE_HPOS.normalize(align[0])
     opt.nVerPos = XDW_CREATE_VPOS.normalize(align[1])
     opt.nMaxPaperSize = XDW_CREATE_MAXPAPERSIZE.normalize(maxpapersize)
@@ -157,13 +166,7 @@ class Document(BaseDocument, XDWFile):
 
     """DocuWorks document (XDW)."""
 
-    def _pos(self, pos):
-        if not (-self.pages <= pos < self.pages):
-            raise IndexError("Page number must be in [%d, %d), %d given" % (
-                    -self.pages, self.pages, pos))
-        if pos < 0:
-            pos += self.pages
-        return pos
+    __type__ = "DOCUMENT"
 
     def __init__(self, path, readonly=False, authenticate=True):
         BaseDocument.__init__(self)
@@ -177,9 +180,9 @@ class Document(BaseDocument, XDWFile):
         return u"Document(%s: %d pages, %d attachments)" % (
                 self.name, self.pages, self.original_data)
 
-    def absolute_page(self, pos):
+    def absolute_page(self, pos, append=False):
         """Concrete method over absolute_page()."""
-        pos = self._pos(pos)
+        pos = self._pos(pos, append=append)
         return pos
 
     def dirname(self):

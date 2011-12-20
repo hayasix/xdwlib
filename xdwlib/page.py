@@ -104,7 +104,7 @@ class Page(Annotatable, Observer):
                 page_info.nWidth / 100.0,
                 page_info.nHeight / 100.0)  # float, in mm
         # XDW_PGT_FROMIMAGE/FROMAPPL/NULL
-        self.page_type = XDW_PAGE_TYPE[page_info.nPageType]
+        self.type = XDW_PAGE_TYPE[page_info.nPageType]
         self.resolution = Point(
                 Page.norm_res(page_info.nHorRes),
                 Page.norm_res(page_info.nVerRes))  # dpi
@@ -132,15 +132,15 @@ class Page(Annotatable, Observer):
         self.doc = doc
         self.reset_attr()
 
-    def absolute_page(self):
-        return self.doc.absolute_page(self.pos)
+    def absolute_page(self, append=False):
+        return self.doc.absolute_page(self.pos, append=append)
 
     def __repr__(self):
         return u"Page(%s[%d])" % (self.doc.name, self.pos)
 
     def __str__(self):
         return u"Page(page %d: %.2f*%.2fmm, %s, %d annotations)" % (
-                self.pos, self.size.x, self.size.y, self.page_type,
+                self.pos, self.size.x, self.size.y, self.type,
                 self.annotations)
 
     @staticmethod

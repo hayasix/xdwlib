@@ -388,6 +388,20 @@ XDW_SIZE = XDWConst({
         XDW_SIZE_B5_LANDSCAPE       : "B5",
         }, default=XDW_SIZE_A4_PORTRAIT)
 
+XDW_SIZE_MM = {
+        XDW_SIZE_FREE               : (0, 0),
+        XDW_SIZE_A3_PORTRAIT        : (297, 420),
+        XDW_SIZE_A3_LANDSCAPE       : (420, 297),
+        XDW_SIZE_A4_PORTRAIT        : (210, 297),
+        XDW_SIZE_A4_LANDSCAPE       : (297, 210),
+        XDW_SIZE_A5_PORTRAIT        : (148, 210),
+        XDW_SIZE_A5_LANDSCAPE       : (210, 148),
+        XDW_SIZE_B4_PORTRAIT        : (257, 364),
+        XDW_SIZE_B4_LANDSCAPE       : (364, 257),
+        XDW_SIZE_B5_PORTRAIT        : (182, 257),
+        XDW_SIZE_B5_LANDSCAPE       : (257, 182),
+        }
+
 # binder color
 
 XDW_BINDER_COLOR_0                  = 0

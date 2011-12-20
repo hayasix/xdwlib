@@ -40,10 +40,11 @@ class Annotatable(Subject):
 
     """Annotatable objects ie. page or annotation."""
 
-    def _pos(self, pos):
-        if not (-self.annotations <= pos < self.annotations):
+    def _pos(self, pos, append=False):
+        append = 1 if append else 0
+        if not (-self.annotations <= pos < self.annotations + append):
             raise IndexError("Annotation number must be in [%d, %d), %d given" % (
-                    -self.annotations, self.annotations, pos))
+                    -self.annotations, self.annotations + append, pos))
         if pos < 0:
             pos += self.annotations
         return pos

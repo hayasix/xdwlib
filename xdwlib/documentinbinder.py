@@ -26,16 +26,7 @@ class DocumentInBinder(BaseDocument, Observer):
 
     """Document part of DocuWorks binder."""
 
-    def typename(self):
-        return "DOCUMENT_IN_BINDER"
-
-    def _pos(self, pos):
-        if not (-self.pages <= pos < self.pages):
-            raise IndexError("Page number must be in [%d, %d), %d given" % (
-                    -self.pages, self.pages, pos))
-        if pos < 0:
-            pos += self.pages
-        return pos
+    __type__ = "DOCUMENT_IN_BINDER"
 
     def __init__(self, binder, pos):
         BaseDocument.__init__(self)
@@ -50,6 +41,7 @@ class DocumentInBinder(BaseDocument, Observer):
                 self.handle, pos + 1)
         self.pages = document_info.nPages
         self.original_data = document_info.nOriginalData
+        self.type = DocumentInBinder.__type__
 
     def __repr__(self):
         return u"DocumentInBinder(%s(%s[%d]))" % (
@@ -78,9 +70,9 @@ class DocumentInBinder(BaseDocument, Observer):
         """Private method to renew the page offset for DocumentInBinder."""
         self.page_offset = sum(self.binder.document_pages()[:self.pos])
 
-    def absolute_page(self, pos):
+    def absolute_page(self, pos, append=False):
         """Concrete method over dirname()."""
-        pos = self._pos(pos)
+        pos = self._pos(pos, append=append)
         return self.page_offset + pos
 
     def dirname(self):
