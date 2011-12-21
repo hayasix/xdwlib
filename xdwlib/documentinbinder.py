@@ -43,6 +43,12 @@ class DocumentInBinder(BaseDocument, Observer):
         self.original_data = document_info.nOriginalData
         self.type = DocumentInBinder.__type__
 
+    def update_pages(self):
+        """Concrete method over update_pages()."""
+        document_info = XDW_GetDocumentInformationInBinder(
+                self.handle, pos + 1)
+        self.pages = document_info.nPages
+
     def __repr__(self):
         return u"DocumentInBinder(%s(%s[%d]))" % (
                 self.name, self.binder.name, self.pos)

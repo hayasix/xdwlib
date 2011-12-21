@@ -94,6 +94,10 @@ class BaseDocument(Subject):
         """Abstract method to get absolute page number in binder/document."""
         raise NotImplementedError()
 
+    def update_pages(self):
+        """Abstract method to update number of pages."""
+        raise NotImplementedError()
+
     def page(self, pos):
         """Get a Page."""
         pos = self._pos(pos)
@@ -129,9 +133,9 @@ class BaseDocument(Subject):
         temp = pc.combine(temp)
         XDW_InsertDocument(self.handle, self.absolute_page(pos, append=True) + 1, temp)
         self.pages += len(pc)
-        os.remove(temp)
         if doc:
             doc.close()
+        os.remove(temp)
         # Check inserted pages in order to attach them to this document and
         # shift observer entries appropriately.
         for p in xrange(pos, pos + len(pc)):
@@ -164,7 +168,7 @@ class BaseDocument(Subject):
         opt.nMaxPaperSize = XDW_CREATE_MAXPAPERSIZE.normalize(maxpapersize)
         XDW_CreateXdwFromImageFileAndInsertDocument(
                 self.handle, self.absolute_page(pos, append=True) + 1, input_path, opt)
-        self.pages += 1
+        self.update_pages()
         # Check inserted pages in order to attach them to this document and
         # shift observer entries appropriately.
         page = Page(self, pos)

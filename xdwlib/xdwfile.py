@@ -176,6 +176,11 @@ class XDWFile(object):
         # Document attributes.
         self.attributes = XDW_GetDocumentAttributeNumber(self.handle)
 
+    def update_pages(self):
+        """Update number of pages; used after insert multiple pages in."""
+        document_info = XDW_GetDocumentInformation(self.handle)
+        self.pages = document_info.nPages
+
     def save(self):
         """Save document regardless of whether it is modified or not."""
         XDW_SaveDocument(self.handle)

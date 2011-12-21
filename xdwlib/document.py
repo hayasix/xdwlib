@@ -185,6 +185,10 @@ class Document(BaseDocument, XDWFile):
         pos = self._pos(pos, append=append)
         return pos
 
+    def update_pages(self):
+        """Concrete method over update_pages()."""
+        XDWFile.update_pages(self)
+
     def dirname(self):
         """Concrete method over dirname()."""
         return self.dir
