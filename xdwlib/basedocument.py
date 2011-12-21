@@ -73,7 +73,7 @@ class BaseDocument(Subject):
     def __getitem__(self, pos):
         if isinstance(pos, slice):
             pos = self._slice(pos)
-            return tuple(self.page(p)
+            return PageCollection(self.page(p)
                     for p in range(pos.start, pos.stop, pos.step or 1))
         return self.page(pos)
 
@@ -128,12 +128,12 @@ class BaseDocument(Subject):
         temp = os.path.join(self.dirname(), "$$%s.xdw" % (self.name,))
         temp = pc.combine(temp)
         XDW_InsertDocument(self.handle, self.absolute_page(pos, append=True) + 1, temp)
+        self.pages += len(pc)
         os.remove(temp)
         if doc:
             doc.close()
         # Check inserted pages in order to attach them to this document and
         # shift observer entries appropriately.
-        self.pages += len(pc)
         for p in xrange(pos, pos + len(pc)):
             page = Page(self, p)
 
@@ -158,16 +158,16 @@ class BaseDocument(Subject):
         #opt.nZoom = 0
         opt.nZoomDetail = int(zoom * 1000)  # .3f
         # NB. Width and height are valid only for XDW_CREATE_USERDEF(_FIT).
-        opt.nWidth, opt.nHeight = size.int() * 100  # .2f;
+        opt.nWidth, opt.nHeight = map(int, size * 100)  # .2f;
         opt.nHorPos = XDW_CREATE_HPOS.normalize(align[0])
         opt.nVerPos = XDW_CREATE_VPOS.normalize(align[1])
         opt.nMaxPaperSize = XDW_CREATE_MAXPAPERSIZE.normalize(maxpapersize)
         XDW_CreateXdwFromImageFileAndInsertDocument(
                 self.handle, self.absolute_page(pos, append=True) + 1, input_path, opt)
+        self.pages += 1
         # Check inserted pages in order to attach them to this document and
         # shift observer entries appropriately.
         page = Page(self, pos)
-        self.pages += 1
         ## TODO: recalc page data if image has been divided into pages.
 
     def export_image(self, pos, path, pages=1,
@@ -212,7 +212,7 @@ class BaseDocument(Subject):
         opt.nColor = XDW_IMAGE_COLORSCHEME.normalize(color)
         opt.nImageType = XDW_IMAGE_FORMAT.normalize(format)
         if opt.nImageType == XDW_IMAGE_DIB:
-            dopt = None
+            opt.pDetailOption = NULL
         elif opt.nImageType == XDW_IMAGE_TIFF:
             dopt = XDW_IMAGE_OPTION_TIFF()
             dopt.nCompress = XDW_COMPRESS.normalize(compress)
@@ -225,6 +225,7 @@ class BaseDocument(Subject):
                     ):
                 dopt.nCompress = XDW_COMPRESS_NOCOMPRESS
             dopt.nEndOfMultiPages = (pos + 1) + (pages - 1)
+            opt.pDetailOption = cast(pointer(dopt), c_void_p)
         elif opt.nImageType == XDW_IMAGE_JPEG:
             dopt = XDW_IMAGE_OPTION_JPEG()
             dopt.nCompress = XDW_COMPRESS.normalize(compress)
@@ -234,6 +235,7 @@ class BaseDocument(Subject):
                     XDW_COMPRESS_HIGHCOMPRESS,
                     ):
                 dopt.nCompress = XDW_COMPRESS_NORMAL
+            opt.pDetailOption = cast(pointer(dopt), c_void_p)
         elif opt.nImageType == XDW_IMAGE_PDF:
             dopt = XDW_IMAGE_OPTION_PDF()
             dopt.nCompress = XDW_COMPRESS.normalize(compress)
@@ -249,7 +251,7 @@ class BaseDocument(Subject):
             dopt.nEndOfMultiPages = (pos + 1) + (pages - 1)
             # Compression method option is deprecated.
             dopt.nConvertMethod = XDW_CONVERT_MRC_OS
-        opt.pDetailOption = dopt
+            opt.pDetailOption = cast(pointer(dopt), c_void_p)
         XDW_ConvertPageToImageFile(
                 self.handle, self.absolute_page(pos) + 1, path, opt)
 
