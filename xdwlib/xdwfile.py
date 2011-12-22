@@ -15,6 +15,7 @@ FOR A PARTICULAR PURPOSE.
 
 import os
 import datetime
+import shutil
 
 from xdwapi import *
 from common import *
@@ -84,20 +85,7 @@ def optimize(input_path, output_path=None):
     Returns pathname of optimized document/binder file.
     """
     input_path, output_path = cp(input_path), cp(output_path)
-    if output_path:
-        root, ext = os.path.splitext(output_path)
-    else:
-        root, ext = os.path.splitext(input_path)
-        root += "-Optimized"
-        output_path = root + ext
-    n = 1  # not 0
-    while n < 100:
-        if not os.path.exists(output_path):
-            break
-        n += 1
-        output_path = "%s-%d%s" % (root, n, ext)
-    else:
-        raise FileExistsError()
+    output_path = derivative_path(output_path or input_path)
     XDW_OptimizeDocument(input_path, output_path)
     return output_path
 
@@ -107,22 +95,8 @@ def copy(input_path, output_path=None):
 
     Returns pathname of copied file.
     """
-    import shutil
     input_path, output_path = cp(input_path), cp(output_path)
-    if output_path:
-        root, ext = os.path.splitext(output_path)
-    else:
-        root, ext = os.path.splitext(input_path)
-        root += "-Copied"
-        output_path = root + ext
-    n = 1  # not 0
-    while n < 100:
-        if not os.path.exists(output_path):
-            break
-        n += 1
-        output_path = "%s-%d%s" % (root, n, ext)
-    else:
-        raise FileExistsError()
+    output_path = derivative_path(output_path or input_path)
     shutil.copyfile(input_path, output_path)
     return output_path
 

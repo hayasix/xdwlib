@@ -24,16 +24,16 @@ from struct import Point, Rect
 __all__ = ("Annotatable",)
 
 
-DEFAULT_WIDTH = 75
-DEFAULT_HEIGHT = 25
-DEFAULT_POSITION = Point(DEFAULT_HEIGHT, DEFAULT_HEIGHT)
-DEFAULT_SIZE = Point(DEFAULT_WIDTH, DEFAULT_HEIGHT)
-DEFAULT_RECT = Rect(DEFAULT_POSITION, DEFAULT_POSITION + DEFAULT_SIZE)
-DEFAULT_POINTS = (
-        DEFAULT_POSITION,
-        DEFAULT_POSITION + Point(DEFAULT_WIDTH, 0),
-        DEFAULT_POSITION + DEFAULT_SIZE,
-        DEFAULT_POSITION + Point(0, DEFAULT_HEIGHT))
+_WIDTH = 75
+_HEIGHT = 25
+_POSITION = Point(_HEIGHT, _HEIGHT)
+_SIZE = Point(_WIDTH, _HEIGHT)
+_RECT = Rect(_POSITION, _POSITION + _SIZE)
+_POINTS = (
+        _POSITION,
+        _POSITION + Point(_WIDTH, 0),
+        _POSITION + _SIZE,
+        _POSITION + Point(0, _HEIGHT))
 
 
 class Annotatable(Subject):
@@ -43,7 +43,8 @@ class Annotatable(Subject):
     def _pos(self, pos, append=False):
         append = 1 if append else 0
         if not (-self.annotations <= pos < self.annotations + append):
-            raise IndexError("Annotation number must be in [%d, %d), %d given" % (
+            raise IndexError(
+                    "Annotation number must be in [%d, %d), %d given" % (
                     -self.annotations, self.annotations + append, pos))
         if pos < 0:
             pos += self.annotations
@@ -134,7 +135,7 @@ class Annotatable(Subject):
         ann = self.annotation(pos)
         return ann
 
-    def add_text(self, text, position=DEFAULT_POSITION, **kw):
+    def add_text(self, text, position=_POSITION, **kw):
         """Paste a text annotation."""
         ann = self.add(XDW_AID_TEXT, position)
         ann.Text = text
@@ -142,67 +143,68 @@ class Annotatable(Subject):
             setattr(ann, k, v)
         return ann
 
-    def add_fusen(self, position=DEFAULT_POSITION, size=DEFAULT_SIZE):
+    def add_fusen(self, position=_POSITION, size=_SIZE):
         """Paste a fusen annotation."""
         if size.x < 5 or size.y < 5:
-            raise ValueError("Fusen annotation must be >= 5mm square")
+            raise ValueError("Annotation size must be >= 5mm square")
         return self.add(XDW_AID_FUSEN, position,
                 nWidth=int(size.x * 100), nHeight=int(size.y * 100))
 
-    def add_line(self, points=(DEFAULT_POSITION, DEFAULT_POSITION + DEFAULT_SIZE)):
+    def add_line(self, points=(_POSITION, _POSITION + _SIZE)):
         """Paste a straight line annotation."""
         return self.add(XDW_AID_STRAIGHTLINE, int(points[0] * 100),
                 nWidth=int(points[1].x * 100), nHeight=int(point[1].y * 100))
 
     add_straightline = add_line
 
-    def add_rectangle(self, rect=DEFAULT_RECT):
+    def add_rectangle(self, rect=_RECT):
         """Paste a rectangular annotation."""
         position, size = rect.position_and_size()
         if size.x < 3 or size.y < 3:
-            raise ValueError("Rectangle annotation must be >= 3mm square")
+            raise ValueError("Annotation size must be >= 3mm square")
         return self.add(XDW_AID_RECTANGLE, position,
                 nWidth=int(size.x * 100), nHeight=int(size.y * 100))
 
     add_rect = add_rectangle
 
-    def add_arc(self, rect=DEFAULT_RECT):
+    def add_arc(self, rect=_RECT):
         """Paste an ellipse annotation."""
         position, size = rect.position_and_size()
         if size.x < 3 or size.y < 3:
-            raise ValueError("Arc/ellipse annotation must be >= 3mm in diameter")
+            raise ValueError("Annotation size must be >= 3mm square")
         return self.add(XDW_AID_ARC, position,
                 nWidth=int(size.x * 100), nHeight=int(size.y * 100))
 
-    def add_bitmap(self, position=DEFAULT_POSITION, path=None):
+    def add_bitmap(self, position=_POSITION, path=None):
         """Paste an image annotation."""
         return self.add(XDW_AID_BITMAP, position,
                 szImagePath=byref(path))
 
-    def add_stamp(self, position=DEFAULT_POSITION, width=DEFAULT_WIDTH):
+    def add_stamp(self, position=_POSITION, width=_WIDTH):
         """Paste a (date) stamp annotation."""
         return self.add(XDW_AID_STAMP, position,
                 nWidth=int(width * 100))
 
-    def add_receivedstamp(self, position=DEFAULT_POSITION, width=DEFAULT_WIDTH):
+    def add_receivedstamp(self, position=_POSITION, width=_WIDTH):
         """Paste a received (datetime) stamp annotation."""
         return self.add(XDW_AID_RECEIVEDSTAMP, position,
                 nWidth=int(width * 100))
 
-    def add_custom(self, position=DEFAULT_POSITION,
-                size=DEFAULT_SIZE, guid="???", data="???"):
+    def add_custom(self, position=_POSITION,
+                size=_SIZE, guid="???", data="???"):
         """Paste a custom specification annotation."""
         return self.add(XDW_AID_CUSTOM, position,
-                nWidth=int(size.x * 100), nHeight=int(size.y * 100), lpszGuid=byref(guid),
+                nWidth=int(size.x * 100), nHeight=int(size.y * 100),
+                lpszGuid=byref(guid),
                 nCustomDataSize=len(data), pCustomData=byref(data))
 
-    def add_marker(self, position=DEFAULT_POSITION, points=DEFAULT_POINTS):
+    def add_marker(self, position=_POSITION, points=_POINTS):
         """Paste a marker annotation."""
         points = [p * 100 for p in points]  # Assuming isinstance(p, Point).
         return self.add(XDW_AID_MARKER, position,
                 nCounts=len(points), pPoints=byref(points))
 
-    def add_polygon(self, position=DEFAULT_POSITION, points=DEFAULT_POINTS):
+    def add_polygon(self, position=_POSITION, points=_POINTS):
         """Paste a polygon annotation."""
         points = [p * 100 for p in points]  # Assuming isinstance(p, Point).
         return self.add(XDW_AID_POLYGON, position,

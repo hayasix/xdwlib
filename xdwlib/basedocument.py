@@ -129,9 +129,9 @@ class BaseDocument(Subject):
             pc = PageCollection(doc)
         else:
             raise ValueError("can't insert %s object" % (obj.__class__))
-        temp = os.path.join(self.dirname(), "$$%s.xdw" % (self.name,))
-        temp = pc.combine(temp)
-        XDW_InsertDocument(self.handle, self.absolute_page(pos, append=True) + 1, temp)
+        temp = pc.combine("temp.xdw")
+        XDW_InsertDocument(
+                self.handle, self.absolute_page(pos, append=True) + 1, temp)
         self.pages += len(pc)
         if doc:
             doc.close()
@@ -139,7 +139,7 @@ class BaseDocument(Subject):
         # Check inserted pages in order to attach them to this document and
         # shift observer entries appropriately.
         for p in xrange(pos, pos + len(pc)):
-            page = Page(self, p)
+            Page(self, p)
 
     def append_image(self, *args, **kw):
         """Append a page created from image file(s)."""
@@ -167,7 +167,8 @@ class BaseDocument(Subject):
         opt.nVerPos = XDW_CREATE_VPOS.normalize(align[1])
         opt.nMaxPaperSize = XDW_CREATE_MAXPAPERSIZE.normalize(maxpapersize)
         XDW_CreateXdwFromImageFileAndInsertDocument(
-                self.handle, self.absolute_page(pos, append=True) + 1, input_path, opt)
+                self.handle, self.absolute_page(pos, append=True) + 1,
+                input_path, opt)
         self.update_pages()
         # Check inserted pages in order to attach them to this document and
         # shift observer entries appropriately.
@@ -198,7 +199,7 @@ class BaseDocument(Subject):
         if not format:
             _, ext = os.path.splitext(path)
             ext = ((ext or "").lstrip(".") or "bmp").lower()
-            table = {"dib":"bmp", "tif":"tiff", "jpg":"jpeg"}
+            table = {"dib": "bmp", "tif": "tiff", "jpg": "jpeg"}
             format = table.get(ext, ext)
         if format.lower() not in ("bmp", "tiff", "jpeg", "pdf"):
             raise TypeError("image type must be BMP, TIFF, JPEG or PDF.")

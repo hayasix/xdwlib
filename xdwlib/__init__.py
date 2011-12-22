@@ -13,11 +13,18 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE.
 """
 
-from xdwfile import environ, xdwopen, create_sfx, extract_sfx
+from struct import Point, Rect
+from common import environ
+from xdwfile import xdwopen, optimize, copy, create_sfx, extract_sfx
+from document import Document, create, merge
+from binder import Binder, create_binder
+from documentinbinder import DocumentInBinder
+from page import Page, PageCollection
+from annotation import Annotation
 
 __author__ = "HAYASI Hideki"
-__copyright__ = "Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>  All rights reserved."
+__copyright__ = "Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>"
 __license__ = "ZPL 2.1"
-__version__ = "2.8.21"
+__version__ = "2.8.22"
 __email__ = "linxs@linxs.org"
 __status__ = "Development"

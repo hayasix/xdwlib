@@ -31,6 +31,7 @@ __all__ = (
         "PSEP", "ASEP", "BLANKPAGE",
         "environ", "inner_attribute_name", "outer_attribute_name",
         "adjust_path", "cp", "joinf",
+        "derivative_path",
         "XDWTemp",
         )
 
@@ -156,6 +157,23 @@ def cp(path, dir="", ext=".xdw"):
     return adjust_path(path, dir=dir, ext=ext, coding=CODEPAGE)
 
 
+def derivative_path(path):
+    """Convert pathname to n-th derivative eg. somedocument-2.xdw or so.
+
+    Addtional number (2, 3, ...) is determined automatically.
+    If pathname given does not exist, original pathname is returned.
+    """
+    if not os.path.exists(path):
+        return path
+    root, ext = os.path.splitext(path)
+    n = 2
+    derivative = "%s-%d%s" % (root, n, ext)
+    while os.path.exists(derivative):
+        n += 1
+        derivative = "%s-%d%s" % (root, n, ext)
+    return derivative
+
+
 class XDWTemp(object):
 
     """Temporary XDW file with optional single blank page."""
@@ -172,6 +190,13 @@ class XDWTemp(object):
 
     def __exit__(self):
         self.close()
+
+    def __del__(self):
+        try:
+            os.fdopen(self.fd).close()
+        except:
+            pass
+        os.remove(self.path)
 
     def close(self):
         os.fdopen(self.fd).close()

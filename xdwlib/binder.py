@@ -42,7 +42,8 @@ class Binder(Subject, XDWFile):
     def _pos(self, pos, append=False):
         append = 1 if append else 0
         if not (-self.documents <= pos < self.documents + append):
-            raise IndexError("Document number must be in [%d, %d), %d given" % (
+            raise IndexError(
+                    "Document number must be in [%d, %d), %d given" % (
                     -self.documents, self.documents + append, pos))
         if pos < 0:
             pos += self.documents
@@ -51,7 +52,8 @@ class Binder(Subject, XDWFile):
     def _pagepos(self, pos, append=False):
         append = 1 if append else 0
         if not (-self.pages <= pos < self.pages + append):
-            raise IndexError("Page number must be in [%d, %d), %d given" % (
+            raise IndexError(
+                    "Page number must be in [%d, %d), %d given" % (
                     -self.pages, self.pages + append, pos))
         if pos < 0:
             pos += self.pages
@@ -92,7 +94,7 @@ class Binder(Subject, XDWFile):
 
     def __delitem__(self, pos):
         if isinstance(pos, slice):
-            for p in range(pos.start, pos.stop, pos,step or 1):
+            for p in range(pos.start, pos.stop, pos, step or 1):
                 self.delete(p)
         return self.delete(pos)
 

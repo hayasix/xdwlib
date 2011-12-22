@@ -176,7 +176,7 @@ class Rect(object):
         return "%s%s" % (self.__class__.__name__, str(self))
 
     def __iter__(self):
-       for pos in range(4):
+        for pos in range(4):
             yield (self.left, self.top, self.right, self.bottom)[pos]
 
     def position(self):

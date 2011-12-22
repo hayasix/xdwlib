@@ -52,9 +52,10 @@ class PageCollection(list):
                       "to PageCollection")
         return self
 
-    def save(self, path):
+    def save(self, path=None):
         """Create a binder (XBD file) as a container for page collection."""
         from binder import Binder, create_binder
+        path = derivative_path(cp(path or self[0].doc.name))
         create_binder(path)
         binder = Binder(path)
         for pos, page in enumerate(self):
@@ -69,12 +70,10 @@ class PageCollection(list):
     def combine(self, path=None):
         """Create a document (XDW file) as a container for page collection.
 
-        Returns path;  if no path is given, this method creates a temporary
-        file somewhere and returns its path.  You have to remove the temporary
-        file after use.
+        Returns path;  if no path is given, a derivative path is used.
         """
         from document import Document
-        path = path or tempfile.mkstemp(".xdw")
+        path = derivative_path(cp(path or self[0].doc.name))
         path = self[0].copy(path)
         doc = Document(path)
         for pos, page in enumerate(self[1:]):
@@ -280,12 +279,7 @@ class Page(Annotatable, Observer):
         else:
             path = "%s_P%d.xdw" % (self.doc.name, self.pos + 1)
             path = cp(path, dir=self.doc.dirname())
-        # Append _2, _3, _4,...  for filename collision.
-        n = 1
-        root, ext = os.path.splitext(path)
-        while os.path.exists(path):
-            n += 1
-            path = "%s_%d" % (root, n) + ext
+        path = derivative_path(path)
         XDW_GetPage(self.doc.handle, self.absolute_page() + 1, path)
         return path
 
@@ -314,16 +308,17 @@ class Page(Annotatable, Observer):
             ignore_case=False, ignore_width=False, ignore_hirakata=False):
         """Search text in current page and get regions occupied by them.
 
-        text_regions(self, text, ignore_case=False, ignore_width=False, ignore_hirakata=False):
-
         Returns a list of Rect or None (when rect is unavailable).
         """
         result = []
         opt = XDW_FIND_TEXT_OPTION()
         opt.nIgnoreMode = 0
-        if ignore_case: opt.nIgnoreMode |= XDW_IGNORE_CASE
-        if ignore_width: opt.nIgnoreMode |= XDW_IGNORE_WIDTH
-        if ignore_hirakata: opt.nIgnoreMode |= XDW_IGNORE_HIRAKATA
+        if ignore_case:
+            opt.nIgnoreMode |= XDW_IGNORE_CASE
+        if ignore_width:
+            opt.nIgnoreMode |= XDW_IGNORE_WIDTH
+        if ignore_hirakata:
+            opt.nIgnoreMode |= XDW_IGNORE_HIRAKATA
         opt.nReserved = opt.nReserved2 = 0
         """TODO: unicode handling.
         Currently Author has no idea to take unicode with ord < 256.
@@ -349,7 +344,7 @@ class Page(Annotatable, Observer):
                     r, s = XDW_GetRectInFoundObject(fh, i + 1)
                     if s == XDW_FOUND_RECT_STATUS_HIT:
                         # Rect is half open.
-                        r.right +=1
+                        r.right += 1
                         r.bottom += 1
                         r = Rect(r.left / 100.0, r.top / 100.0,
                                 r.right / 100.0, r.bottom / 100.0)
@@ -362,6 +357,10 @@ class Page(Annotatable, Observer):
         return result
 
     def re_regions(self, pattern):
+        """Search regular expression in current page and get regions occupied.
+
+        Returns a list of Rect or None (when rect is unavailable).
+        """
         if isinstance(pattern, basestring):
             import re
             opt = re.LOCALE if isinstance(pattern, str) else re.UNICODE

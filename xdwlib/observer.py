@@ -24,7 +24,8 @@ class Subject(object):
     def shift_keys(self, border, delete=False, count=1):
         for pos in sorted(filter(lambda p: border < p, self.observers.keys()),
                 reverse=(not delete)):
-            self.observers[pos + (-count if delete else count)] = self.observers[pos]
+            gap = -count if delete else count
+            self.observers[pos + gap] = self.observers[pos]
             del self.observers[pos]
 
     def attach(self, observer, event):

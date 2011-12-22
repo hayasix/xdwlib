@@ -95,9 +95,13 @@ class Annotation(Annotatable, Observer):
     def scale(attrname, value, store=False):
         """Scale actual size (length) to stored value and vice versa."""
         unit = XDW_ANNOTATION_ATTRIBUTE[attrname][1]
-        if not unit: return value
+        if not unit:
+            return value
         inv, unit = re.match(r"(1/)?([\d.]+)", unit).groups()
-        return value / float(unit) if bool(inv) ^ store else value * float(unit)
+        if bool(inv) ^ store:
+            return value / float(unit)
+        else:
+            return value * float(unit)
 
     def __init__(self, page, pos, parent=None):
         self.pos = pos
@@ -141,7 +145,8 @@ class Annotation(Annotatable, Observer):
                     else:
                         return XDW_COLOR[v]
                 if attrname.endswith("FontStyle"):
-                    return ",".join(XDW_FONT_STYLE[b] for b in (1, 2, 4, 8) if b & v)
+                    return ",".join(XDW_FONT_STYLE[b]
+                            for b in (1, 2, 4, 8) if b & v)
                 elif attrname.endswith("FontPitchAndFamily"):
                     result = []
                     pitch = XDW_PITCH_AND_FAMILY.get(v & 0x0f, "UNKNOWN")
@@ -163,7 +168,8 @@ class Annotation(Annotatable, Observer):
         elif name == "margin":  # Abbreviation support like CSS.
             result = []
             for d in ("Top", "Right", "Bottom", "Left"):
-                _, v, _ = XDW_GetAnnotationAttributeW(self.handle, "%{0}Margin".format(d))
+                _, v, _ = XDW_GetAnnotationAttributeW(
+                        self.handle, "%{0}Margin".format(d))
                 result.append(v / 100.0)
             return tuple(result)
         elif name in ("position", "size"):
@@ -210,7 +216,8 @@ class Annotation(Annotatable, Observer):
                             attrname, XDW_ATYPE_STRING, value,
                             texttype, codepage=CP)
             elif isinstance(value, (int, float)):
-                value = c_int(int(Annotation.scale(attrname, value, store=True)))
+                value = c_int(int(
+                        Annotation.scale(attrname, value, store=True)))
                 XDW_SetAnnotationAttributeW(
                         self.page.doc.handle, self.handle,
                         attrname, XDW_ATYPE_INT, byref(value), 0, 0)
