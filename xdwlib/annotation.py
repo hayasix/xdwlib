@@ -25,31 +25,6 @@ from annotatable import Annotatable
 __all__ = ("Annotation",)
 
 
-def decode_fake_unicode(ustring):
-    """Unpack a 16bit-data sequence and decode it by CODEPAGE."""
-    result = []
-    for c in ustring:
-        c = ord(c)
-        if c < 256:
-            result.append(c)
-        else:
-            result.append(c & 0xff)
-            result.append(c >> 8)
-    result = "".join(map(chr, result))
-    result = unicode(result, CODEPAGE)
-    return result
-
-
-def encode_fake_unicode(ustring):
-    """Encode unicode in CODEPAGE and pack it in a 16bit-data sequence."""
-    s = ustring.encode(CODEPAGE)
-    ss = zip(s[::2], s[1::2])
-    result = [unichr(ord(x) | (ord(y) << 8)) for x, y in ss]
-    if len(s) % 2:
-        result.append(unichr(ord(s[-1])))
-    return "".join(result)
-
-
 def flagvalue(table, flags):
     """Sum up flag values according to XDWConst table."""
     from operator import or_
@@ -110,25 +85,28 @@ class Annotation(Annotatable, Observer):
         self.page = page.page if isinstance(page, Annotation) else page
         self.parent = parent if isinstance(parent, Annotation) else None
         info = XDW_GetAnnotationInformation(
-                self.page.doc.handle, self.page.absolute_page() + 1,
-                self.parent.handle if self.parent else NULL, pos + 1)
+                self.page.doc.handle,
+                self.page.absolute_page() + 1,
+                self.parent.handle if self.parent else NULL,
+                pos + 1)
         self.handle = info.handle
         self.type = XDW_ANNOTATION_TYPE[info.nAnnotationType]
         self.annotations = info.nChildAnnotations
         self.is_unicode = False
 
     def __repr__(self):
-        parent_pos = [self.pos]
+        parents = []
         ann = self
-        while ann.parent:
-            parent_pos.append(ann.pos)
+        while ann is not None:
+            parents.insert(0, ann.pos)
             ann = ann.parent
-        return u"Annotation(%s[%d]%s)" % (self.page.doc.name, self.page.pos,
-                "".join("[%d]" % pos for pos in reversed(parent_pos)))
+        return u"Annotation(%s[%d][%s])" % (
+                self.page.doc.name,
+                self.page.pos,
+                "][".join(map(str, parents)))
 
     def __str__(self):
-        return u"Annotation(%s[%d]:%s)" % (
-                self.page.doc.name, self.page.pos, self.type)
+        return u"%s:%s)" % (repr(self)[:-1], self.type)
 
     def __getattr__(self, name):
         attrname = inner_attribute_name(name)
@@ -164,7 +142,7 @@ class Annotation(Annotatable, Observer):
                 self.is_unicode = (tt == XDW_TEXT_UNICODE)
                 return v
             else:  # t == XDW_ATYPE_OTHER:  # Quick hack for points.
-                return [Point(p.x, p.y) for p in v]
+                return [Point(*p) for p in v]
         elif name == "margin":  # Abbreviation support like CSS.
             result = []
             for d in ("Top", "Right", "Bottom", "Left"):
@@ -174,10 +152,14 @@ class Annotation(Annotatable, Observer):
             return tuple(result)
         elif name in ("position", "size"):
             info = XDW_GetAnnotationInformation(
-                    self.page.doc.handle, self.page.absolute_page() + 1,
-                    self.parent.handle if self.parent else NULL, self.pos + 1)
-            v = Point(info.nHorPos, info.nVerPos) if name == "position" \
-                    else Point(info.nWidth, info.nHeight)
+                    self.page.doc.handle,
+                    self.page.absolute_page() + 1,
+                    self.parent.handle if self.parent else NULL,
+                    self.pos + 1)
+            if name == "position":
+                v = Point(info.nHorPos, info.nVerPos)
+            else:
+                v = Point(info.nWidth, info.nHeight)
             self.__dict__[name] = v / 100.0  # mm;  update this property
         return self.__dict__[name]
 
@@ -201,29 +183,43 @@ class Annotation(Annotatable, Observer):
                         value = table.normalize(value)
                         break
             if isinstance(value, basestring):
-                texttype = XDW_TEXT_UNICODE if self.is_unicode \
-                            else XDW_TEXT_MULTIBYTE
+                if self.is_unicode:
+                    texttype = XDW_TEXT_UNICODE
+                else:
+                    texttype = XDW_TEXT_MULTIBYTE
                 if isinstance(value, str):
                     value = unicode(value, CODEPAGE)
                 if name in ("FontName", "font_name"):  # TODO: investigate...
                     value = value.encode(CODEPAGE)
                     XDW_SetAnnotationAttribute(
-                            self.page.doc.handle, self.handle,
-                            attrname, XDW_ATYPE_STRING, value)
+                            self.page.doc.handle,
+                            self.handle,
+                            attrname,
+                            XDW_ATYPE_STRING,
+                            value)
                 else:
                     XDW_SetAnnotationAttributeW(
-                            self.page.doc.handle, self.handle,
-                            attrname, XDW_ATYPE_STRING, value,
-                            texttype, codepage=CP)
+                            self.page.doc.handle,
+                            self.handle,
+                            attrname,
+                            XDW_ATYPE_STRING,
+                            value,
+                            texttype,
+                            codepage=CP)
             elif isinstance(value, (int, float)):
-                value = c_int(int(
-                        Annotation.scale(attrname, value, store=True)))
+                value = int(Annotation.scale(attrname, value, store=True))
+                value = c_int(value)
                 XDW_SetAnnotationAttributeW(
-                        self.page.doc.handle, self.handle,
-                        attrname, XDW_ATYPE_INT, byref(value), 0, 0)
+                        self.page.doc.handle,
+                        self.handle,
+                        attrname,
+                        XDW_ATYPE_INT,
+                        byref(value),
+                        0,
+                        0)
             else:
-                raise TypeError("Invalid type to set attribute value: " + \
-                                str(value))
+                raise TypeError(
+                        "Invalid type to set attribute value: " + str(value))
         elif name == "margin":  # Abbreviation support like CSS.
             if not isinstance(value, (list, tuple)):  # Assuming a scalar.
                 value = [value] * 4
@@ -238,11 +234,17 @@ class Annotation(Annotatable, Observer):
             for i, d in enumerate("Top Right Bottom Left".split()):
                 setattr(self, "%{0}Margin".format(d), value[i])
         elif name == "position":
-            XDW_SetAnnotationPosition(self.page.doc.handle, self.handle,
-                    int(value.x * 100), int(value.y * 100))
+            XDW_SetAnnotationPosition(
+                    self.page.doc.handle,
+                    self.handle,
+                    int(value.x * 100),
+                    int(value.y * 100))
         elif name == "size":
-            XDW_SetAnnotationSize(self.page.doc.handle, self.handle,
-                    int(value.x * 100), int(value.y * 100))
+            XDW_SetAnnotationSize(
+                    self.page.doc.handle,
+                    self.handle,
+                    int(value.x * 100),
+                    int(value.y * 100))
         else:
             self.__dict__[name] = value
 
@@ -261,23 +263,27 @@ class Annotation(Annotatable, Observer):
 
     def attributes(self):
         """Returns annotation attribute names for covenience."""
-        return [outer_attribute_name(k) for (k, v)
-                in XDW_ANNOTATION_ATTRIBUTE.items()
+        return [outer_attribute_name(k)
+                for (k, v) in XDW_ANNOTATION_ATTRIBUTE.items()
                 if self.type in v[2]]
 
     def inside(self, rect):  # Assume rect is half-open.
         """Returns if annotation is placed inside rect."""
         if isinstance(rect, tuple):
             rect = Rect(rect.left, rect.top, rect.right, rect.bottom)
-        return rect.left <= self.position.x <= rect.right - self.size.x and \
-               rect.top <= self.position.y <= rect.bottom - self.size.y
+        return (rect.left <= self.position.x <= rect.right - self.size.x and
+                rect.top <= self.position.y <= rect.bottom - self.size.y)
 
     def _add(self, ann_type, position, init_dat):
         """Concrete method over _add() for add()."""
         ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
         return XDW_AddAnnotationOnParentAnnotation(
-                self.page.doc.handle, self.handle, ann_type,
-                int(position.x * 100), int(position.y * 100), init_dat)
+                self.page.doc.handle,
+                self.handle,
+                ann_type,
+                int(position.x * 100),
+                int(position.y * 100),
+                init_dat)
 
     def _delete(self, ann):
         """Concrete method over delete()."""

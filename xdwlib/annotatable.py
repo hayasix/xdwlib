@@ -24,6 +24,11 @@ from struct import Point, Rect
 __all__ = ("Annotatable",)
 
 
+MIN_ANN_SIZE = 3
+ANN_TOO_SMALL = "Annotation size must be >= {0}mm square".format(MIN_ANN_SIZE)
+MIN_FUSEN_SIZE = 5
+FUSEN_TOO_SMALL = "Fusen size must be >= {0}mm square".format(MIN_FUSEN_SIZE)
+
 _WIDTH = 75
 _HEIGHT = 25
 _POSITION = Point(_HEIGHT, _HEIGHT)
@@ -56,8 +61,7 @@ class Annotatable(Subject):
         return slice(
                 self._pos(pos.start or 0),
                 self.annotations if pos.stop is None else pos.stop,
-                1 if pos.step is None else pos.step,
-                )
+                1 if pos.step is None else pos.step)
 
     def __len__(self):
         return self.annotations
@@ -145,35 +149,37 @@ class Annotatable(Subject):
 
     def add_fusen(self, position=_POSITION, size=_SIZE):
         """Paste a fusen annotation."""
-        if size.x < 5 or size.y < 5:
-            raise ValueError("Annotation size must be >= 5mm square")
+        if size.x < MIN_FUSEN_SIZE or size.y < MIN_FUSEN_SIZE:
+            raise ValueError(FUSEN_TOO_SMALL)
         return self.add(XDW_AID_FUSEN, position,
-                nWidth=int(size.x * 100), nHeight=int(size.y * 100))
+                nWidth=(size.x * 100), nHeight=(size.y * 100))
 
     def add_line(self, points=(_POSITION, _POSITION + _SIZE)):
         """Paste a straight line annotation."""
-        return self.add(XDW_AID_STRAIGHTLINE, int(points[0] * 100),
-                nWidth=int(points[1].x * 100), nHeight=int(point[1].y * 100))
+        return self.add(XDW_AID_STRAIGHTLINE, (points[0] * 100),
+                nWidth=(points[1].x * 100), nHeight=(point[1].y * 100))
 
     add_straightline = add_line
 
     def add_rectangle(self, rect=_RECT):
         """Paste a rectangular annotation."""
         position, size = rect.position_and_size()
-        if size.x < 3 or size.y < 3:
-            raise ValueError("Annotation size must be >= 3mm square")
+        if size.x < MIN_ANN_SIZE or size.y < MIN_ANN_SIZE:
+            raise ValueError(ANN_TOO_SMALL)
         return self.add(XDW_AID_RECTANGLE, position,
-                nWidth=int(size.x * 100), nHeight=int(size.y * 100))
+                nWidth=(size.x * 100), nHeight=(size.y * 100))
 
     add_rect = add_rectangle
 
     def add_arc(self, rect=_RECT):
         """Paste an ellipse annotation."""
         position, size = rect.position_and_size()
-        if size.x < 3 or size.y < 3:
-            raise ValueError("Annotation size must be >= 3mm square")
+        if size.x < MIN_ANN_SIZE or size.y < MIN_ANN_SIZE:
+            raise ValueError(ANN_TOO_SMALL)
         return self.add(XDW_AID_ARC, position,
-                nWidth=int(size.x * 100), nHeight=int(size.y * 100))
+                nWidth=(size.x * 100), nHeight=(size.y * 100))
+
+    add_ellipse = add_arc
 
     def add_bitmap(self, position=_POSITION, path=None):
         """Paste an image annotation."""
@@ -183,30 +189,30 @@ class Annotatable(Subject):
     def add_stamp(self, position=_POSITION, width=_WIDTH):
         """Paste a (date) stamp annotation."""
         return self.add(XDW_AID_STAMP, position,
-                nWidth=int(width * 100))
+                nWidth=(width * 100))
 
     def add_receivedstamp(self, position=_POSITION, width=_WIDTH):
         """Paste a received (datetime) stamp annotation."""
         return self.add(XDW_AID_RECEIVEDSTAMP, position,
-                nWidth=int(width * 100))
+                nWidth=(width * 100))
 
     def add_custom(self, position=_POSITION,
                 size=_SIZE, guid="???", data="???"):
         """Paste a custom specification annotation."""
         return self.add(XDW_AID_CUSTOM, position,
-                nWidth=int(size.x * 100), nHeight=int(size.y * 100),
+                nWidth=(size.x * 100), nHeight=(size.y * 100),
                 lpszGuid=byref(guid),
                 nCustomDataSize=len(data), pCustomData=byref(data))
 
     def add_marker(self, position=_POSITION, points=_POINTS):
         """Paste a marker annotation."""
-        points = [p * 100 for p in points]  # Assuming isinstance(p, Point).
+        points = [(int(p.x * 100), int(p.y * 100)) for p in points]
         return self.add(XDW_AID_MARKER, position,
                 nCounts=len(points), pPoints=byref(points))
 
     def add_polygon(self, position=_POSITION, points=_POINTS):
         """Paste a polygon annotation."""
-        points = [p * 100 for p in points]  # Assuming isinstance(p, Point).
+        points = [(int(p.x * 100), int(p.y * 100)) for p in points]
         return self.add(XDW_AID_POLYGON, position,
                 nCounts=len(points), pPoints=byref(points))
 

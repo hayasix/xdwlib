@@ -15,6 +15,7 @@ FOR A PARTICULAR PURPOSE.
 
 import sys
 import os
+import tempfile
 
 from xdwapi import *
 from common import *
@@ -55,8 +56,7 @@ class BaseDocument(Subject):
         return slice(
                 self._pos(pos.start or 0),
                 self.pages if pos.stop is None else pos.stop,
-                1 if pos.step is None else pos.step,
-                )
+                1 if pos.step is None else pos.step)
 
     def __init__(self):
         Subject.__init__(self)
@@ -74,7 +74,7 @@ class BaseDocument(Subject):
         if isinstance(pos, slice):
             pos = self._slice(pos)
             return PageCollection(self.page(p)
-                    for p in range(pos.start, pos.stop, pos.step or 1))
+                    for p in range(pos.start, pos.stop, pos.step))
         return self.page(pos)
 
     def __setitem__(self, pos, val):
@@ -82,9 +82,11 @@ class BaseDocument(Subject):
 
     def __delitem__(self, pos):
         if isinstance(pos, slice):
-            for p in range(pos.start, pos.stop, pos.step or 1):
+            pos = self._slice(pos)
+            for p in range(pos.start, pos.stop, pos.step):
                 self.delete(p)
-        return self.delete(pos)
+        else:
+            self.delete(pos)
 
     def __iter__(self):
         for pos in xrange(self.pages):
@@ -131,7 +133,9 @@ class BaseDocument(Subject):
             raise ValueError("can't insert %s object" % (obj.__class__))
         temp = pc.combine("temp.xdw")
         XDW_InsertDocument(
-                self.handle, self.absolute_page(pos, append=True) + 1, temp)
+                self.handle,
+                self.absolute_page(pos, append=True) + 1,
+                temp)
         self.pages += len(pc)
         if doc:
             doc.close()
@@ -154,6 +158,7 @@ class BaseDocument(Subject):
             maxpapersize="DEFAULT",
             ):
         """Insert a page created from image file(s)."""
+        prev_pages = self.pages
         pos = self._pos(pos, append=True)
         input_path = cp(input_path)
         opt = XDW_CREATE_OPTION_EX2()
@@ -167,13 +172,15 @@ class BaseDocument(Subject):
         opt.nVerPos = XDW_CREATE_VPOS.normalize(align[1])
         opt.nMaxPaperSize = XDW_CREATE_MAXPAPERSIZE.normalize(maxpapersize)
         XDW_CreateXdwFromImageFileAndInsertDocument(
-                self.handle, self.absolute_page(pos, append=True) + 1,
-                input_path, opt)
+                self.handle,
+                self.absolute_page(pos, append=True) + 1,
+                input_path,
+                opt)
         self.update_pages()
         # Check inserted pages in order to attach them to this document and
         # shift observer entries appropriately.
-        page = Page(self, pos)
-        ## TODO: recalc page data if image has been divided into pages.
+        for p in range(pos, pos + (self.pages - prev_pages)):
+            Page(self, p)
 
     def export_image(self, pos, path, pages=1,
             dpi=600, color="COLOR", format=None, compress="NORMAL"):
@@ -199,17 +206,15 @@ class BaseDocument(Subject):
         if not format:
             _, ext = os.path.splitext(path)
             ext = ((ext or "").lstrip(".") or "bmp").lower()
-            table = {"dib": "bmp", "tif": "tiff", "jpg": "jpeg"}
-            format = table.get(ext, ext)
+            format = {"dib": "bmp", "tif": "tiff", "jpg": "jpeg"}.get(ext, ext)
         if format.lower() not in ("bmp", "tiff", "jpeg", "pdf"):
             raise TypeError("image type must be BMP, TIFF, JPEG or PDF.")
         if not path:
             path = "%s_P%d" % (self.name, pos + 1)
             path = cp(path, dir=self.dirname())
             if 1 < pages:
-                path += "-%d" % (pos + 1) + (pages - 1)
+                path += "-%d" % ((pos + pages - 1) + 1)
             path += "." + format
-        dpi = int(dpi)
         if not (10 <= dpi <= 600):
             raise ValueError("specify resolution between 10 and 600")
         opt = XDW_IMAGE_OPTION_EX()
@@ -229,7 +234,7 @@ class BaseDocument(Subject):
                     XDW_COMPRESS_G4,
                     ):
                 dopt.nCompress = XDW_COMPRESS_NOCOMPRESS
-            dopt.nEndOfMultiPages = (pos + 1) + (pages - 1)
+            dopt.nEndOfMultiPages = (pos + pages - 1) + 1
             opt.pDetailOption = cast(pointer(dopt), c_void_p)
         elif opt.nImageType == XDW_IMAGE_JPEG:
             dopt = XDW_IMAGE_OPTION_JPEG()
@@ -253,7 +258,7 @@ class BaseDocument(Subject):
                     XDW_COMPRESS_MRC_HIGHCOMPRESS,
                     ):
                 dopt.nCompress = XDW_COMPRESS_MRC_NORMAL
-            dopt.nEndOfMultiPages = (pos + 1) + (pages - 1)
+            dopt.nEndOfMultiPages = (pos + pages - 1) + 1
             # Compression method option is deprecated.
             dopt.nConvertMethod = XDW_CONVERT_MRC_OS
             opt.pDetailOption = cast(pointer(dopt), c_void_p)
@@ -270,9 +275,7 @@ class BaseDocument(Subject):
 
     def rasterize(self, pos, dpi=600, color="COLOR"):
         """Rasterize; convert an application page into DocuWorks image page."""
-        import tempfile
         pos = self._pos(pos)
-        dpi = int(dpi)
         if not (10 <= dpi <= 600):
             raise ValueError("specify resolution between 10 and 600")
         opt = XDW_IMAGE_OPTION()
@@ -287,9 +290,13 @@ class BaseDocument(Subject):
         self.delete(pos + 1)  # Delete original application page.
         os.remove(temppath)
 
-    def content_text(self):
-        """Get all content text."""
-        return joinf(PSEP, [page.content_text() for page in self])
+    def content_text(self, type=None):
+        """Get all content text.
+
+        type: None | "image" | "application"
+              None means both.
+        """
+        return joinf(PSEP, [page.content_text(type=type) for page in self])
 
     def annotation_text(self):
         """Get all text in annotations."""
@@ -301,13 +308,19 @@ class BaseDocument(Subject):
                 joinf(ASEP, [page.content_text(), page.annotation_text()])
                 for page in self])
 
-    def find_content_text(self, pattern):
-        """Find given pattern (text or regex) in all content text."""
-        return self.find(pattern, func=lambda page: page.content_text())
+    def find_content_text(self, pattern, type=None):
+        """Find given pattern (text or regex) in all content text.
+
+        type: None | "image" | "application"
+              None means both.
+        """
+        func = lambda page: page.content_text(type=type)
+        return self.find(pattern, func=func)
 
     def find_annotation_text(self, pattern):
         """Find given pattern (text or regex) in all annotation text."""
-        return self.find(pattern, func=lambda page: page.annotation_text())
+        func = lambda page: page.annotation_text()
+        return self.find(pattern, func=func)
 
     def find_fulltext(self, pattern):
         """Find given pattern in all content and annotation text."""

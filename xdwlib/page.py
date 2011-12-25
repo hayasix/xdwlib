@@ -14,7 +14,9 @@ FOR A PARTICULAR PURPOSE.
 """
 
 import os
+import re
 import tempfile
+import subprocess
 
 from xdwapi import *
 from common import *
@@ -39,8 +41,8 @@ class PageCollection(list):
             return PageCollection(list.__add__(self, [y]))
         elif isinstance(y, PageCollection):
             return PageCollection(list.__add__(self, y))
-        raise TypeError("can only concatenate Page or PageCollection "
-                        "to PageCollection")
+        raise TypeError(
+                "Page or PageCollection can be added to PageCollection")
 
     def __iadd__(self, y):
         if isinstance(y, Page):
@@ -48,12 +50,16 @@ class PageCollection(list):
         elif isinstance(y, PageCollection):
             self.extend(y)
         else:
-            TypeError("can only concatenate Page or PageCollection "
-                      "to PageCollection")
+            raise TypeError(
+                    "Page or PageCollection can be added to PageCollection")
         return self
 
     def save(self, path=None):
-        """Create a binder (XBD file) as a container for page collection."""
+        """Create a binder (XBD file) as a container for page collection.
+
+        Returns actual pathname of generated binder, which may be different
+        from `path' argument.
+        """
         from binder import Binder, create_binder
         path = derivative_path(cp(path or self[0].doc.name))
         create_binder(path)
@@ -70,7 +76,8 @@ class PageCollection(list):
     def combine(self, path=None):
         """Create a document (XDW file) as a container for page collection.
 
-        Returns path;  if no path is given, a derivative path is used.
+        Returns actual pathname of generated document, which may be different
+        from `path' argument.
         """
         from document import Document
         path = derivative_path(cp(path or self[0].doc.name))
@@ -194,17 +201,22 @@ class Page(Annotatable, Observer):
         """Concrete method over _delete() for delete()."""
         XDW_RemoveAnnotation(self.doc.handle, ann.handle)
 
-    def content_text(self):
-        """Returns content text of page."""
+    def content_text(self, type=None):
+        """Returns content text of page.
+
+        type: None | "image" | "application"
+              None means both.
+        """
+        if type and type.upper() != self.type:
+            return None
         return XDW_GetPageTextToMemoryW(
                 self.doc.handle, self.absolute_page() + 1)
 
     def rotate(self, degree=0, auto=False):
         """Rotate a page.
 
-        rotate(degree=0, auto=False)
-            degree  90, 180 or 270
-            auto    True/False
+        degree: 90, 180 or 270
+        auto:   True/False
         """
         abspos = self.absolute_page()
         if auto:
@@ -216,10 +228,7 @@ class Page(Annotatable, Observer):
     def reduce_noise(self, level=XDW_REDUCENOISE_NORMAL):
         """Process a page by noise reduction engine.
 
-        reduce_noise(self, level=XDW_REDUCENOISE_NORMAL)
-            level   XDW_REDUCENOISE_NORMAL
-                    XDW_REDUCENOISE_WEAK
-                    XDW_REDUCENOISE_STRONG
+        level: "normal" | "weak" | "strong"
         """
         level = XDW_OCR_NOISEREDUCTION.normalize(level)
         XDW_ReducePageNoise(self.doc.handle, self.absolute_page() + 1, level)
@@ -239,7 +248,23 @@ class Page(Annotatable, Observer):
             insert_space=False,
             verbose=False,
             ):
-        """Process a page by OCR engine."""
+        """Process a page by OCR engine.
+
+        engine:             "default" | "winreader pro"
+        strategy:           "standard" | "speed" | "accuracy"
+        proprocessing:      "none" | "speed" | "accuracy"
+        noise_reduction:    "none" | "normal" | "weak" | "strong"
+        deskew:             (bool)
+        form:               "auto" | "table" | "writing"
+        column:             "auto" | "horizontal_single" | "horizontal_multi"
+                                   | "vertical_single"   | "vertical_multi"
+        rects:              (list of Rect)
+        language:           "auto" | "japanese" | "english"
+        main_language:      "balanced" | "japanese" | "english"
+        use_ascii:          (bool)
+        insert_space        (bool)
+        verbose             (bool)
+        """
         opt = XDW_OCR_OPTION_V7()
         engine = XDW_OCR_ENGINE.normalize(engine)
         opt.nEngineLevel = XDW_OCR_STRATEGY.normalize(strategy)
@@ -271,8 +296,9 @@ class Page(Annotatable, Observer):
     def copy(self, path=None):
         """Copy current page and create another document.
 
-        Returns the path name of created XDW file.
-        Default path name is "DOCUMENTNAME_Pxx.xdw".
+        Returns the actual pathname of generated XDW file, which may be
+        different from `path' argument.  If path is not available,
+        default name "DOCUMENTNAME_Pxx.xdw" will be used.
         """
         if path:
             path = cp(path)
@@ -283,9 +309,15 @@ class Page(Annotatable, Observer):
         XDW_GetPage(self.doc.handle, self.absolute_page() + 1, path)
         return path
 
-    def view(self, wait=True, light=False):
-        """View current page with DocuWorks Viewer (Light)."""
-        import subprocess
+    def view(self, light=False, wait=True, edit=False):
+        """View current page with DocuWorks Viewer (Light).
+
+        light:  (bool) force to use DocuWorks Viewer Light.  Note that it will
+                use DocuWorks Viewer if Light version is not avaiable.
+        wait:   (bool) wait until viewer stops.  For False, (Popen, path) is
+                returned.  Users should remove the file of path after the Popen
+                object ends.
+        """
         env = environ()
         viewer = env.get("DWVIEWERPATH")
         if light or not viewer:
@@ -362,7 +394,6 @@ class Page(Annotatable, Observer):
         Returns a list of Rect or None (when rect is unavailable).
         """
         if isinstance(pattern, basestring):
-            import re
             opt = re.LOCALE if isinstance(pattern, str) else re.UNICODE
             pattern = re.compile(pattern, opt)
         result = []

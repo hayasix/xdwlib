@@ -61,7 +61,20 @@ class Point(object):
             yield (self.x, self.y)[pos]
 
     def int(self):
-        return Point(int(self.x), int(self.y))
+        """Special method to adapt to XDW_POINT."""
+        result = Point()
+        result.x = int(self.x)
+        result.y = int(self.y)
+        return result
+
+    def floor(self):
+        return Point(math.floor(self.x), math.floor(self.y))
+
+    def ceil(self):
+        return Point(math.ceil(self.x), math.ceil(self.y))
+
+    def fix(self):
+        return Point(int(self.x), int(self,y))
 
     @staticmethod
     def _round(f, places=0):
@@ -83,6 +96,8 @@ class Point(object):
         if not isinstance(n, (int, float)):
             raise NotImplementedError
         return Point(self.x * n, self.y * n)
+
+    __rmul__ = __mul__
 
     def __div__(self, n):
         if not isinstance(n, (int, float)):
@@ -129,6 +144,7 @@ class Rect(object):
     """
 
     def __init__(self, *args, **kw):
+        left = top = right = bottom = 0
         half_open = True
         if args:
             if len(args) == 2:
@@ -179,6 +195,15 @@ class Rect(object):
         for pos in range(4):
             yield (self.left, self.top, self.right, self.bottom)[pos]
 
+    def int(self):
+        """Special method to adapt to XDW_RECT."""
+        result = Rect()
+        result.left = int(self.left)
+        result.top = int(self.top)
+        result.right = int(self.right)
+        result.bottom = int(self.bottom)
+        return result
+
     def position(self):
         return Point(self.left, self.top)
 
@@ -194,6 +219,8 @@ class Rect(object):
         return Rect(self.left, self.top,
                 self.left + (self.right - self.left) * n,
                 self.top + (self.bottom - self.top) * n)
+
+    __rmul__ = __mul__
 
     def __div__(self, n):
         if not isinstance(n, (int, float)):

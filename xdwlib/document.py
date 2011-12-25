@@ -14,6 +14,7 @@ FOR A PARTICULAR PURPOSE.
 """
 
 import os
+import time
 
 from xdwapi import *
 from common import *
@@ -22,7 +23,8 @@ from xdwfile import XDWFile
 from basedocument import BaseDocument
 
 
-__all__ = ("Document",
+__all__ = (
+        "Document",
         "create",
         "create_from_image",
         "create_from_pdf",
@@ -31,25 +33,26 @@ __all__ = ("Document",
 
 
 def create(input_path=None, output_path=None, **kw):
-    """The XDW generator."""
+    """The XDW generator.
+
+    Returns actual pathname of generated document, which may be different
+    from `output_path' argument.
+    """
     output_path = cp(output_path)
     if isinstance(input_path, basestring):
         input_path = cp(input_path)
         root, ext = os.path.splitext(input_path)
-        if not output_path:
-            output_path = root + ".xdw"
+        output_path = derivative_path(output_path or root + ".xdw")
         if ext.upper() == "PDF":
-            create_from_pdf(input_path, output_path, **kw)  # no fallthru
-            return output_path
+            return create_from_pdf(input_path, output_path, **kw)
         if ext.upper() in ("BMP", "JPG", "JPEG", "TIF", "TIFF"):
             try:
-                create_from_image(input_path, output_path, **kw)
-                return output_path
+                return create_from_image(input_path, output_path, **kw)
             except Exception as e:
                 pass  # fall through; processed by respective apps.
-        create_from_app(input_path, output_path, **kw)
-        return output_path
+        return create_from_app(input_path, output_path, **kw)
     # input_path==None means generating single blank page.
+    output_path = derivative_path(output_path or cp("blank.xdw"))
     with open(output_path, "wb") as f:
         f.write(BLANKPAGE)
     return output_path
@@ -65,13 +68,16 @@ def create_from_image(input_path, output_path=None,
         ):
     """XDW generator from image file.
 
-    size: (Point/str/int) valid if fitimage in ("userdef", "userdef_fit")
+    size: (Point/str/int) valid if fitimage is "userdef" or "userdef_fit".
           1=A3R, 2=A3, 3=A4R, 4=A4, 5=A5R, 6=A5, 7=B4R, 8=B4, 9=B5R, 10=B5
+
+    Returns actual pathname of generated document, which may be different
+    from `output_path' argument.
     """
     input_path, output_path = cp(input_path), cp(output_path)
-    root, ext = os.path.split(input_path)
     if not output_path:
-        output_path = root + ".xdw"
+        output_path = os.path.split(input_path)[0] + ".xdw"
+    output_path = derivative_path(output_path)
     opt = XDW_CREATE_OPTION_EX2()
     opt.nFitImage = XDW_CREATE_FITIMAGE.normalize(fitimage)
     opt.nCompress = XDW_COMPRESS.normalize(compress)
@@ -92,14 +98,20 @@ def create_from_image(input_path, output_path=None,
 
 
 def create_from_pdf(input_path, output_path=None):
-    """XDW generator from image PDF file."""
+    """XDW generator from image PDF file.
+
+    Returns actual pathname of generated document, which may be different
+    from `output_path' argument.
+    """
     input_path, output_path = cp(input_path), cp(output_path)
-    root, ext = os.path.split(input_path)
     if not output_path:
-        output_path = root + ".xdw"
+        output_path = os.path.split(input_path)[0] + ".xdw"
+    output_path = derivative_path(output_path)
     try:
         XDW_CreateXdwFromImagePdfFile(input_path, output_path)
     except Exception as e:
+        # If PDF is not compatible with DocuWorks, try to handle it
+        # with the system-defined application program.
         create_from_app(input_path, output_path, timeout=3600)
     return output_path
 
@@ -113,8 +125,10 @@ def create_from_app(input_path, output_path=None,
 
     attachment: (bool) attach original data file (given by input_path) or not
     timeout: (int) max seconds to wait until application printing is done
+
+    Returns actual pathname of generated document, which may be different
+    from `output_path' argument.
     """
-    import time
     input_path, output_path = cp(input_path), cp(output_path)
     if not output_path:
         output_path = os.path.split(input_path)[0] + ".xdw"
@@ -141,7 +155,8 @@ def create_from_app(input_path, output_path=None,
 def merge(input_paths, output_path=None):
     """Merge XDW's into a new XDW.
 
-    Returns pathname of merged document file.
+    Returns actual pathname of generated document, which may be different
+    from `output_path' argument.
     """
     input_paths = [cp(path) for path in input_paths]
     if not output_path:

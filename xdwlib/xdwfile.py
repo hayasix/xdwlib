@@ -16,6 +16,7 @@ FOR A PARTICULAR PURPOSE.
 import os
 import datetime
 import shutil
+import atexit
 
 from xdwapi import *
 from common import *
@@ -25,7 +26,7 @@ from struct import Point
 __all__ = (
         "XDWFile",
         "xdwopen", "create_sfx", "extract_sfx", "optimize", "copy",
-        "VALID_DOCUMENT_HANDLES",
+        "VALID_DOCUMENT_HANDLES", "close_all",
         )
 
 
@@ -34,6 +35,18 @@ try:
     VALID_DOCUMENT_HANDLES
 except NameError:
     VALID_DOCUMENT_HANDLES = []
+
+
+@atexit.register
+def atexithandler():
+    """Close all files and perform finalization before finishing process."""
+    for handle in VALID_DOCUMENT_HANDLES:
+        try:
+            XDW_CloseDocumentHandle(handle)
+        except:
+            continue
+        VALID_DOCUMENT_HANDLES.remove(handle)
+    XDW_Finalize()
 
 
 def xdwopen(path, readonly=False, authenticate=True):

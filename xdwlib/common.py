@@ -14,7 +14,7 @@ FOR A PARTICULAR PURPOSE.
 """
 
 import os
-import atexit
+import re
 import tempfile
 import base64
 
@@ -103,12 +103,6 @@ def environ(name=None):
     return values
 
 
-@atexit.register
-def atexithandler():
-    """Perform finalization before finishing this process."""
-    XDW_Finalize()
-
-
 def joinf(sep, seq):
     """sep.join(seq), omitting None, null or so."""
     return sep.join([s for s in filter(bool, seq)]) or None
@@ -125,7 +119,6 @@ def inner_attribute_name(name):
 
 def outer_attribute_name(name):
     """Get xdwlib style attribute name eg. %FontName --> font_name"""
-    import re
     if not name.startswith("%"):
         return name
     return re.sub("([A-Z])", r"_\1", name[1:])[1:].lower()

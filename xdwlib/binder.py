@@ -86,7 +86,7 @@ class Binder(Subject, XDWFile):
         if isinstance(pos, slice):
             pos = self._slice(pos)
             return tuple(self.document(p)
-                    for p in range(pos.start, pos.stop, pos.step or 1))
+                    for p in range(pos.start, pos.stop, pos.step))
         return self.document(pos)
 
     def __setitem__(self, pos):
@@ -94,9 +94,10 @@ class Binder(Subject, XDWFile):
 
     def __delitem__(self, pos):
         if isinstance(pos, slice):
-            for p in range(pos.start, pos.stop, pos, step or 1):
+            for p in range(pos.start, pos.stop, pos.step):
                 self.delete(p)
-        return self.delete(pos)
+        else:
+            self.delete(pos)
 
     def __iter__(self):
         for pos in xrange(self.documents):
@@ -147,9 +148,13 @@ class Binder(Subject, XDWFile):
         self.detach(doc, EV_DOC_REMOVED)
         self.documents -= 1
 
-    def content_text(self):
-        """Get all content text."""
-        return joinf(PSEP, [doc.content_text() for doc in self])
+    def content_text(self, type=None):
+        """Get all content text.
+
+        type: None | "image" | "application"
+              None means both.
+        """
+        return joinf(PSEP, [doc.content_text(type=type) for doc in self])
 
     def annotation_text(self):
         """Get all text in annotations."""
@@ -166,4 +171,4 @@ class Binder(Subject, XDWFile):
         pattern in its content text or annotations.
         """
         from operator import add
-        return reduce(add, [doc.find_fulltext(pattern) for doc in self])
+        return joinf("", [doc.find_fulltext(pattern) for doc in self])
