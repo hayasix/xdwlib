@@ -151,8 +151,8 @@ class Binder(Subject, XDWFile):
     def content_text(self, type=None):
         """Get all content text.
 
-        type: None | "image" | "application"
-              None means both.
+        type    None | "image" | "application"
+                None means both.
         """
         return joinf(PSEP, [doc.content_text(type=type) for doc in self])
 
@@ -170,5 +170,4 @@ class Binder(Subject, XDWFile):
         Returns a PageCollection object, each of which contains the given
         pattern in its content text or annotations.
         """
-        from operator import add
         return joinf("", [doc.find_fulltext(pattern) for doc in self])

@@ -125,9 +125,8 @@ class Annotatable(Subject):
     def add(self, ann_type, position, **kw):
         """Paste an annotation.
 
-        add(ann_type, position, **kw)
-            ann_type    annotation type
-            position    Point; float, unit:mm
+        ann_type    annotation type
+        position    Point; float, unit:mm
         """
         from annotation import Annotation
         if isinstance(position, (tuple, list)):
@@ -251,14 +250,12 @@ class Annotatable(Subject):
             half_open=True, recursive=False):
         """Find annotations on page or annotation by criteria.
 
-        find_annotations(handles=None, types=None, rect=None, half_open=True,
-                         recursive=False)
-            handles     sequence of annotation handles.  None means all.
-            types       sequence of types.  None means all.
-            rect        Rect which includes annotations.
-                        Note that right and bottom values are innermost of
-                        outside unless half_open==False.  None means all.
-            recursive   also return descendant (child) annotations.
+        handles     sequence of annotation handles.  None means all.
+        types       sequence of types.  None means all.
+        rect        Rect which includes annotations.
+                    Note that right and bottom values are innermost of
+                    outside unless half_open==False.  None means all.
+        recursive   also return descendant (child) annotations.
         """
         if handles and not isinstance(handles, (tuple, list)):
             handles = list(handles)

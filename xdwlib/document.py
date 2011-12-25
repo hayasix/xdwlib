@@ -120,11 +120,8 @@ def create_from_app(input_path, output_path=None,
         attachment=False, timeout=0):
     """Create document through other app with optional attachment.
 
-    create_from_app(input_path, output_path=None,
-            attachment=False, timeout=0) --> generated_pages or None
-
-    attachment: (bool) attach original data file (given by input_path) or not
-    timeout: (int) max seconds to wait until application printing is done
+    attachment  (bool) attach original data file (given by input_path) or not
+    timeout     (int) max seconds to wait until application printing is done
 
     Returns actual pathname of generated document, which may be different
     from `output_path' argument.

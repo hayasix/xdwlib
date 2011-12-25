@@ -127,12 +127,10 @@ def outer_attribute_name(name):
 def adjust_path(path, dir="", ext=".xdw", coding=None):
     """Build a new pathname with filename and directory name.
 
-    adjust_path(path, dir="", ext="", coding=None)
-
-    path: pathname.  Only a filename is also acceptable.
-    dir: directory pathname.  Given dir, directory chain of path is ignored.
-    ext: extension.  Added if original path has no one.
-    coding: coding name.  Returned pathname is encoded by this.
+    path    pathname.  Bare filename is acceptable as well as full pathname.
+    dir     directory.  If dir is given, directory part of path is ignored.
+    ext     Default extension to append if original path has no one.
+    coding  coding name.  Returned pathname is encoded by this.
             For None, unicode pathname is returned.
     """
     directory, basename = os.path.split(path)

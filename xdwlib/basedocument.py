@@ -114,8 +114,8 @@ class BaseDocument(Subject):
     def insert(self, pos, obj):
         """Insert a Page/PageCollection/Document.
 
-        pos: position to insert; starts with 0
-        obj: Page/PageCollection/BaseDocument or path
+        pos     position to insert; starts with 0
+        obj     Page/PageCollection/BaseDocument or path
         """
         pos = self._pos(pos, append=True)
         doc = None
@@ -157,7 +157,20 @@ class BaseDocument(Subject):
             align=("center", "center"),  # left/center/right, top/center/bottom
             maxpapersize="DEFAULT",
             ):
-        """Insert a page created from image file(s)."""
+        """Insert a page created from image file(s).
+
+        fitimage    "fitdef" | "fit" | "fitdef_dividebmp" |
+                    "userdef" | "userdef_fit"
+        compress    "normal" | "lossless" | "highquality" | "highcompress" |
+                    "nocompress" | "jpeg" | "jpeg_ttn2" | "packbits" | "g4" |
+                    "mrc_normal" | "mrc_highquality" | "mrc_highcompress"
+        zoom        (float) in percent; 0 means 100%.  < 1/1000 is ignored.
+        size        (Point) in mm; for fitimange "userdef" or "userdef_fit".
+        align       (horiz, vert) where:
+                        horiz   "center" | "left" | "right"
+                        vert    "center" | "top" | "bottom"
+        maxpapersize    "default" | "a3" "2a0"
+        """
         prev_pages = self.pages
         pos = self._pos(pos, append=True)
         input_path = cp(input_path)
@@ -186,13 +199,13 @@ class BaseDocument(Subject):
             dpi=600, color="COLOR", format=None, compress="NORMAL"):
         """Export page(s) to image file.
 
-        pos:        (int or tuple (start:stop) in half-open style like slice)
-        path:       (basestring) pathname to output
-        pages:      (int)
-        dpi:        (int) 10..600
-        color:      (str) COLOR | MONO | MONO_HIGHQUALITY
-        format:     (str) BMP | TIFF | JPEG | PDF
-        compress:   (str) for BMP, not available
+        pos         (int or tuple (start stop) in half-open style like slice)
+        path        (basestring) pathname to output
+        pages       (int)
+        dpi         (int) 10..600
+        color       (str) COLOR | MONO | MONO_HIGHQUALITY
+        format      (str) BMP | TIFF | JPEG | PDF
+        compress    (str) for BMP, not available
                     for TIFF, NOCOMPRESS | PACKBITS | JPEG | JPEG_TTN2 | G4
                     for JPEG, NORMAL | HIGHQUALITY | HIGHCOMPRESS
                     for PDF,  NORMAL | HIGHQUALITY | HIGHCOMPRESS |
@@ -293,8 +306,8 @@ class BaseDocument(Subject):
     def content_text(self, type=None):
         """Get all content text.
 
-        type: None | "image" | "application"
-              None means both.
+        type    None | "image" | "application"
+                None means both.
         """
         return joinf(PSEP, [page.content_text(type=type) for page in self])
 
@@ -311,8 +324,8 @@ class BaseDocument(Subject):
     def find_content_text(self, pattern, type=None):
         """Find given pattern (text or regex) in all content text.
 
-        type: None | "image" | "application"
-              None means both.
+        type    None | "image" | "application"
+                None means both.
         """
         func = lambda page: page.content_text(type=type)
         return self.find(pattern, func=func)
@@ -331,9 +344,9 @@ class BaseDocument(Subject):
 
         find(pattern, func) --> PageCollection
 
-        pattern:  a string/unicode or regexp (by re module)
-        func:  a function which takes a page and returns text in it
-               (default) lambda page: page.fulltext()
+        pattern     a string/unicode or regexp (by re module)
+        func        a function which takes a page and returns text in it
+                   (default) lambda page: page.fulltext()
         """
         func = func or (lambda page: page.fulltext())
         if isinstance(pattern, (str, unicode)):

@@ -204,8 +204,8 @@ class Page(Annotatable, Observer):
     def content_text(self, type=None):
         """Returns content text of page.
 
-        type: None | "image" | "application"
-              None means both.
+        type    None | "image" | "application"
+                None means both.
         """
         if type and type.upper() != self.type:
             return None
@@ -215,8 +215,8 @@ class Page(Annotatable, Observer):
     def rotate(self, degree=0, auto=False):
         """Rotate a page.
 
-        degree: 90, 180 or 270
-        auto:   True/False
+        degree  90, 180 or 270
+        auto    True/False
         """
         abspos = self.absolute_page()
         if auto:
@@ -228,7 +228,7 @@ class Page(Annotatable, Observer):
     def reduce_noise(self, level=XDW_REDUCENOISE_NORMAL):
         """Process a page by noise reduction engine.
 
-        level: "normal" | "weak" | "strong"
+        level   "normal" | "weak" | "strong"
         """
         level = XDW_OCR_NOISEREDUCTION.normalize(level)
         XDW_ReducePageNoise(self.doc.handle, self.absolute_page() + 1, level)
@@ -250,20 +250,20 @@ class Page(Annotatable, Observer):
             ):
         """Process a page by OCR engine.
 
-        engine:             "default" | "winreader pro"
-        strategy:           "standard" | "speed" | "accuracy"
-        proprocessing:      "none" | "speed" | "accuracy"
-        noise_reduction:    "none" | "normal" | "weak" | "strong"
-        deskew:             (bool)
-        form:               "auto" | "table" | "writing"
-        column:             "auto" | "horizontal_single" | "horizontal_multi"
-                                   | "vertical_single"   | "vertical_multi"
-        rects:              (list of Rect)
-        language:           "auto" | "japanese" | "english"
-        main_language:      "balanced" | "japanese" | "english"
-        use_ascii:          (bool)
-        insert_space        (bool)
-        verbose             (bool)
+        engine          "default" | "winreader pro"
+        strategy        "standard" | "speed" | "accuracy"
+        proprocessing   "none" | "speed" | "accuracy"
+        noise_reduction "none" | "normal" | "weak" | "strong"
+        deskew          (bool)
+        form            "auto" | "table" | "writing"
+        column          "auto" | "horizontal_single" | "horizontal_multi"
+                               | "vertical_single"   | "vertical_multi"
+        rects           (list of Rect)
+        language        "auto" | "japanese" | "english"
+        main_language   "balanced" | "japanese" | "english"
+        use_ascii       (bool)
+        insert_space    (bool)
+        verbose         (bool)
         """
         opt = XDW_OCR_OPTION_V7()
         engine = XDW_OCR_ENGINE.normalize(engine)
@@ -312,9 +312,9 @@ class Page(Annotatable, Observer):
     def view(self, light=False, wait=True, edit=False):
         """View current page with DocuWorks Viewer (Light).
 
-        light:  (bool) force to use DocuWorks Viewer Light.  Note that it will
+        light   (bool) force to use DocuWorks Viewer Light.  Note that it will
                 use DocuWorks Viewer if Light version is not avaiable.
-        wait:   (bool) wait until viewer stops.  For False, (Popen, path) is
+        wait    (bool) wait until viewer stops.  For False, (Popen, path) is
                 returned.  Users should remove the file of path after the Popen
                 object ends.
         """
