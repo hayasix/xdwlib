@@ -169,7 +169,7 @@ class BaseDocument(Subject):
         align       (horiz, vert) where:
                         horiz   "center" | "left" | "right"
                         vert    "center" | "top" | "bottom"
-        maxpapersize    "default" | "a3" "2a0"
+        maxpapersize    "default" | "a3" | "2a0"
         """
         prev_pages = self.pages
         pos = self._pos(pos, append=True)
@@ -286,22 +286,42 @@ class BaseDocument(Subject):
         self.detach(page, EV_PAGE_REMOVED)
         self.pages -= 1
 
+    def _preprocess(self, pos, dpi=600, color="COLOR"):
+        temp = tempfile.NamedTemporaryFile(suffix=".tif")
+        imagepath = temp.name
+        temp.close()  # On Windows, you cannot reopen temp.  TODO: better code
+        self.export_image(pos, imagepath,
+                dpi=dpi, color=color, format="tiff", compress="nocompress")
+        return imagepath
+
+    def _postprocess(self, pos, imagepath):
+        self.insert_image(pos, imagepath)  # Insert image page.
+        self.delete(pos + 1)  # Delete original application page.
+        os.remove(imagepath)
+
     def rasterize(self, pos, dpi=600, color="COLOR"):
         """Rasterize; convert an application page into DocuWorks image page."""
         pos = self._pos(pos)
         if not (10 <= dpi <= 600):
             raise ValueError("specify resolution between 10 and 600")
-        opt = XDW_IMAGE_OPTION()
-        opt.nDpi = int(dpi)
-        opt.nColor = XDW_IMAGE_COLORSCHEME.normalize(color)
-        temp = tempfile.NamedTemporaryFile(suffix=".bmp")
-        temppath = temp.name
-        temp.close()  # On Windows, you cannot reopen temp.  TODO: better code
-        XDW_ConvertPageToImageFile(
-                self.handle, self.absolute_page(pos) + 1, temppath, opt)
-        self.insert_image(pos, temppath)  # Insert rasterized image page.
-        self.delete(pos + 1)  # Delete original application page.
-        os.remove(temppath)
+        imagepath = self._preprocess(pos, dpi=dpi, color=color)
+        self._postprocess(pos, imagepath)
+
+    def rotate(self, pos, degree):
+        """Rotate page by desired degree."""
+        import Image
+        pos = self._pos(pos)
+        pg = self.page(pos)
+        dpi = int(max(pg.resolution))
+        if pg.is_color:
+            color = "color"
+        elif 1 < pg.bpp:
+            color = "mono_highquality"
+        else:
+            color = "mono"
+        imagepath = self._preprocess(pos, dpi=dpi, color=color)
+        Image.open(imagepath).rotate(degree).save(imagepath, "TIFF", resolution=dpi)
+        self._postprocess(pos, imagepath)
 
     def content_text(self, type=None):
         """Get all content text.
