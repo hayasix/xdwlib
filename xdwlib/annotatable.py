@@ -246,12 +246,17 @@ class Annotatable(Subject):
                 self.content_text(),
                 self.annotation_text(recursive=True)])
 
-    def find_annotations(self, handles=None, types=None, rect=None,
+    def find_annotations(self, criteria=None,
+            handles=None, types=None, rect=None,
             half_open=True, recursive=False):
         """Find annotations on page or annotation by criteria.
 
-        handles     sequence of annotation handles.  None means all.
-        types       sequence of types.  None means all.
+        criteria    Function to determine if annotation is chosen.
+                    The function should take one argument as Annotation
+                    and return True (chosen) or False.
+                    None means all.
+        handles     Sequence of annotation handles.  None means all.
+        types       Sequence of types.  None means all.
         rect        Rect which includes annotations.
                     Note that right and bottom values are innermost of
                     outside unless half_open==False.  None means all.
@@ -265,25 +270,19 @@ class Annotatable(Subject):
         if rect and not half_open:
             rect.right += 0.01  # minimal gap for xdwapi
             rect.bottom += 0.01  # minimal gap for xdwapi
-        annotation_list = []
-        for i in range(self.annotations):
-            annotation = self.annotation(i)
-            sublist = []
-            if recursive and annotation.annotations:
-                sublist = find_annotations(annotation,
-                        handles=handles,
-                        types=types,
-                        rect=rect, half_open=half_open,
-                        recursive=recursive)
-            if (not rect or annotation.inside(rect)) and \
-                    (not types or annotation.type in types) and \
-                    (not handles or annotation.handle in handles):
-                if sublist:
-                    sublist.insert(0, annotation)
-                    annotation_list.append(sublist)
-                else:
-                    annotation_list.append(annotation)
-            elif sublist:
-                sublist.insert(0, None)
-                annotation_list.append(sublist)
-        return annotation_list
+        ann_list = []
+        for ann in self:
+            # TODO: test by rect is currently done in relative coordinate.
+            # Absolute coordinate would be preferable.
+            if not ((not rect or ann.inside(rect)) and
+                    (not types or ann.type in types) and
+                    (not handles or ann.handle in handles) and
+                    (not criteria or criteria(ann))):
+                continue
+            ann_list.append(ann)
+            if recursive and ann.annotations:
+                ann_list.extend(
+                        ann.find_annotations(criteria=criteria,
+                                handles=handles, types=types, rect=rect,
+                                half_open=half_open, recursive=recursive))
+        return ann_list

@@ -212,18 +212,37 @@ class Page(Annotatable, Observer):
         return XDW_GetPageTextToMemoryW(
                 self.doc.handle, self.absolute_page() + 1)
 
+    def rasterize(self):
+        """Rasterize; convert an application page into DocuWorks image page.
+
+        Resolution of converted page is <= 600 dpi even for more precise page.
+        """
+        doc, pos = self.doc, self.pos
+        doc.rasterize(pos)
+        self = doc.page(pos)
+
     def rotate(self, degree=0, auto=False):
         """Rotate a page.
 
         degree  90, 180 or 270
         auto    True/False
+
+        Resolution of converted page is <= 600 dpi even for more precise page,
+        as far as degree is neither 0, 90, 180 or 270.
         """
-        abspos = self.absolute_page()
-        if auto:
-            XDW_RotatePageAuto(self.doc.handle, abspos + 1)
+        if degree == 0:
+            return
+        elif degree in (90, 180, 270):
+            abspos = self.absolute_page()
+            if auto:
+                XDW_RotatePageAuto(self.doc.handle, abspos + 1)
+            else:
+                XDW_RotatePage(self.doc.handle, abspos + 1, degree)
+            self.reset_attr()
         else:
-            XDW_RotatePage(self.doc.handle, abspos + 1, degree)
-        self.reset_attr()
+            doc, pos = self.doc, self.pos
+            doc.rotate(pos, degree)
+            self = doc.page(pos)
 
     def reduce_noise(self, level=XDW_REDUCENOISE_NORMAL):
         """Process a page by noise reduction engine.
@@ -309,7 +328,7 @@ class Page(Annotatable, Observer):
         XDW_GetPage(self.doc.handle, self.absolute_page() + 1, path)
         return path
 
-    def view(self, light=False, wait=True, edit=False):
+    def view(self, light=False, wait=True):
         """View current page with DocuWorks Viewer (Light).
 
         light   (bool) force to use DocuWorks Viewer Light.  Note that it will

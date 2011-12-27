@@ -286,7 +286,17 @@ class BaseDocument(Subject):
         self.detach(page, EV_PAGE_REMOVED)
         self.pages -= 1
 
-    def _preprocess(self, pos, dpi=600, color="COLOR"):
+    def _preprocess(self, pos):
+        pos = self._pos(pos)
+        pg = self.page(pos)
+        dpi = int(max(self.page(pos).resolution))
+        dpi = max(10, min(600, dpi))  # Force 10 <= dpi <= 600.
+        if pg.is_color:
+            color = "color"
+        elif 1 < pg.bpp:
+            color = "mono_highquality"
+        else:
+            color = "mono"
         temp = tempfile.NamedTemporaryFile(suffix=".tif")
         imagepath = temp.name
         temp.close()  # On Windows, you cannot reopen temp.  TODO: better code
@@ -299,27 +309,19 @@ class BaseDocument(Subject):
         self.delete(pos + 1)  # Delete original application page.
         os.remove(imagepath)
 
-    def rasterize(self, pos, dpi=600, color="COLOR"):
+    def rasterize(self, pos):
         """Rasterize; convert an application page into DocuWorks image page."""
-        pos = self._pos(pos)
-        if not (10 <= dpi <= 600):
-            raise ValueError("specify resolution between 10 and 600")
-        imagepath = self._preprocess(pos, dpi=dpi, color=color)
+        imagepath = self._preprocess(pos)
         self._postprocess(pos, imagepath)
 
     def rotate(self, pos, degree):
         """Rotate page by desired degree."""
-        import Image
-        pos = self._pos(pos)
-        pg = self.page(pos)
-        dpi = int(max(pg.resolution))
-        if pg.is_color:
-            color = "color"
-        elif 1 < pg.bpp:
-            color = "mono_highquality"
-        else:
-            color = "mono"
-        imagepath = self._preprocess(pos, dpi=dpi, color=color)
+        try:
+            import Image
+        except ImportError:
+            raise NotImplementedError(
+                    "Install PIL (Python Imaging Library) package.")
+        imagepath = self._preprocess(pos)
         Image.open(imagepath).rotate(degree).save(imagepath, "TIFF", resolution=dpi)
         self._postprocess(pos, imagepath)
 
