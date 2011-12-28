@@ -1131,7 +1131,7 @@ XDW_ANNOTATION_ATTRIBUTE = {
         XDW_ATN_PageFrom            : (0, None, (XDW_AID_LINK,)),
         XDW_ATN_PageRange           : (0, None, ()),
         # TODO: TREAT Points SPECIALLY
-        XDW_ATN_Points              : (2, None, (XDW_AID_STRAIGHTLINE,
+        XDW_ATN_Points              : (2, "1/100mm", (XDW_AID_STRAIGHTLINE,
                                                  XDW_AID_MARKER,
                                                  XDW_AID_POLYGON,)),
         XDW_ATN_ShowIcon            : (0, None, (XDW_AID_LINK,)),

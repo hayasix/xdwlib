@@ -34,6 +34,14 @@ def flagvalue(table, flags):
     return reduce(or_, values) if values else 0
 
 
+def absolute_points(points):
+    """Convert xdwapi-style point sequence in absolute coordinates."""
+    if len(points) < 2:
+        return points
+    p0 = points[0]
+    return tuple([p0] + [p0 + p for p in points[1:]])
+
+
 class Annotation(Annotatable, Observer):
 
     """Annotation on DocuWorks document page."""
@@ -72,7 +80,10 @@ class Annotation(Annotatable, Observer):
         unit = XDW_ANNOTATION_ATTRIBUTE[attrname][1]
         if not unit:
             return value
-        inv, unit = re.match(r"(1/)?([\d.]+)", unit).groups()
+        mo = re.match(r"(1/)?([\d.]+)", unit)
+        if not mo:
+            return float(value)
+        inv, unit = mo.groups()
         if bool(inv) ^ store:
             return value / float(unit)
         else:
@@ -142,7 +153,10 @@ class Annotation(Annotatable, Observer):
                 self.is_unicode = (tt == XDW_TEXT_UNICODE)
                 return v
             else:  # t == XDW_ATYPE_OTHER:  # Quick hack for points.
-                return [Point(*p) for p in v]
+                points = [Point(
+                        Annotation.scale(attrname, p.x),
+                        Annotation.scale(attrname, p.y)) for p in v]
+                return absolute_points(points)
         elif name == "margin":  # Abbreviation support like CSS.
             result = []
             for d in ("Top", "Right", "Bottom", "Left"):
@@ -165,6 +179,9 @@ class Annotation(Annotatable, Observer):
 
     def __setattr__(self, name, value):
         attrname = inner_attribute_name(name)
+        if attrname == XDW_ATN_Points:
+            raise AttributeError(
+                    "Points of polygon or marker cannot be updated.")
         if attrname in XDW_ANNOTATION_ATTRIBUTE:
             if attrname.endswith("Color"):
                 if self.type == "FUSEN":
@@ -262,17 +279,29 @@ class Annotation(Annotatable, Observer):
             raise ValueError("Illegal event type: %d" % event.type)
 
     def attributes(self):
-        """Returns annotation attribute names for covenience."""
-        return [outer_attribute_name(k)
-                for (k, v) in XDW_ANNOTATION_ATTRIBUTE.items()
-                if self.type in v[2]]
+        """Returns dict of annotation attribute names and values."""
+        tv = XDW_ANNOTATION_TYPE.normalize(self.type)
+        return dict(
+                (outer_attribute_name(k), getattr(self, k))
+                for (k, v) in XDW_ANNOTATION_ATTRIBUTE.iteritems()
+                if tv in v[2])
 
     def inside(self, rect):  # Assume rect is half-open.
         """Returns if annotation is placed inside rect."""
-        if isinstance(rect, tuple):
-            rect = Rect(rect.left, rect.top, rect.right, rect.bottom)
-        return (rect.left <= self.position.x <= rect.right - self.size.x and
-                rect.top <= self.position.y <= rect.bottom - self.size.y)
+        if isinstance(rect, (list, tuple)):
+            rect = Rect(*rect[:4])
+        if hasattr(self, "points"):
+            xs = [p.x for p in self.points]
+            ys = [p.y for p in self.points]
+            l, t = min(xs), min(ys)
+            r, b = max(xs), max(ys)
+        elif hasattr(self, "size"):
+            l, t = self.position
+            r, b = self.position + self.size
+        rect = Rect(*(x * 100 for x  in rect))
+        l, t, r, b = l * 100, t * 100, r * 100, b * 100
+        return (rect.left <= l and r < rect.right and
+                rect.top <= t and b < rect.bottom)
 
     def _add(self, ann_type, position, init_dat):
         """Concrete method over _add() for add()."""

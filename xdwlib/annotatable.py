@@ -41,6 +41,14 @@ _POINTS = (
         _POSITION + Point(0, _HEIGHT))
 
 
+def relative_points(points):
+    """Convert point sequence in absolute coordinate to xdwapi-style."""
+    if len(points) < 2:
+        return points
+    p0 = points[0]
+    return tuple([p0] + [p - p0 for p in points])
+
+
 class Annotatable(Subject):
 
     """Annotatable objects ie. page or annotation."""
@@ -114,7 +122,9 @@ class Annotatable(Subject):
             elif k.startswith("lpsz"):
                 v = byref(v)
             elif k.startswith("p"):
-                v = byref(v)
+                v = pointer(v)
+            else:
+                raise TypeError("unknown type '%s'" % k)
             setattr(init_dat, k, v)
         return init_dat
 
@@ -182,8 +192,7 @@ class Annotatable(Subject):
 
     def add_bitmap(self, position=_POSITION, path=None):
         """Paste an image annotation."""
-        return self.add(XDW_AID_BITMAP, position,
-                szImagePath=byref(path))
+        return self.add(XDW_AID_BITMAP, position, szImagePath=path)
 
     def add_stamp(self, position=_POSITION, width=_WIDTH):
         """Paste a (date) stamp annotation."""
@@ -205,15 +214,57 @@ class Annotatable(Subject):
 
     def add_marker(self, position=_POSITION, points=_POINTS):
         """Paste a marker annotation."""
-        points = [(int(p.x * 100), int(p.y * 100)) for p in points]
+        points = relative_points(points)
+        c_points = (XDW_POINT * len(points))()
+        for i, p in enumerate(points):
+            c_points[i].x = int(p.x * 100)
+            c_points[i].y = int(p.y * 100)
         return self.add(XDW_AID_MARKER, position,
-                nCounts=len(points), pPoints=byref(points))
+                nCounts=len(points), pPoints=c_points)
 
     def add_polygon(self, position=_POSITION, points=_POINTS):
         """Paste a polygon annotation."""
-        points = [(int(p.x * 100), int(p.y * 100)) for p in points]
+        points = relative_points(points)
+        c_points = (XDW_POINT * len(points))()
+        for i, p in enumerate(points):
+            c_points[i].x = int(p.x * 100)
+            c_points[i].y = int(p.y * 100)
         return self.add(XDW_AID_POLYGON, position,
-                nCounts=len(points), pPoints=byref(points))
+                nCounts=len(points), pPoints=c_points)
+
+    def copy_annotation(self, ann):
+        """Copy an annotation."""
+        t = XDW_ANNOTATION_TYPE.normalize(ann.type)
+        if t == XDW_AID_TEXT:
+            copy = self.add(t, position=ann.position)
+        elif t in (XDW_AID_STAMP, XDW_AID_RECEIVEDSTAMP):
+            copy = self.add(t, position=ann.position, nWidth=(ann.size.x * 100))
+        elif t in (XDW_AID_FUSEN, XDW_AID_STRAIGHTLINE, XDW_AID_RECTANGLE, XDW_AID_ARC):
+            copy = self.add(t, position=ann.position,
+                    nWidth=(self.size.x * 100), nHeight=(self.size.y * 100))
+        elif t in (XDW_AID_MARKER, XDW_AID_POLYGON):
+            points = relative_points(ann.points)
+            c_points = (XDW_POINT * len(points))()
+            for i, p in enumerate(points):
+                c_points[i].x = int(p.x * 100)
+                c_points[i].y = int(p.y * 100)
+            copy = self.add(t, position=ann.position,
+                    nCounts=len(points), pPoints=c_points[0])
+        elif t == XDW_AID_BITMAP:  # TODO: ???
+            raise UserWarning("Copying bitmap annotation is not supported yet.")
+            copy = self.add(t, position=ann.position, szImagePath=ann.path)
+        elif t == XDW_AID_CUSTOM:  # TODO: ???
+            raise UserWarning("Copying custom annotation is not supported yet.")
+            copy = self.add(t, position=ann.position,
+                    nWidth=(ann.size.x * 100), nHeight=(ann.size.y * 100),
+                    lpszGuid=byref(ann.guid),
+                    nCustomDataSize=len(ann.data), pCustomData=byref(ann.data))
+        kw = ann.attributes()
+        for k, v in kw.items():
+            if k in ("points",):  # This attribute cannot be updated.
+                continue
+            setattr(copy, k, v)
+        return copy
 
     def _delete(self, pos):
         """Abstract method as a stub for delete()."""
