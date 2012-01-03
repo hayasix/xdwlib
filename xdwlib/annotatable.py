@@ -283,6 +283,7 @@ class Annotatable(Subject):
             self._fix_bmp_resolution(imagepath, dpi)
             copy = self.add(t, position=ann.position,
                     szImagePath=imagepath)
+            os.remove(imagepath)
         elif t in (XDW_AID_RECEIVEDSTAMP, XDW_AID_CUSTOM):
             warnings.warn(
                     "copying %s annotation is not supported" % ann.type,
