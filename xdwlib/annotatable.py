@@ -14,6 +14,8 @@ FOR A PARTICULAR PURPOSE.
 """
 
 import os
+import warnings
+import tempfile
 
 from xdwapi import *
 from common import *
@@ -199,8 +201,9 @@ class Annotatable(Subject):
         return self.add(XDW_AID_STAMP, position,
                 nWidth=(width * 100))
 
+    '''
     def add_receivedstamp(self, position=_POSITION, width=_WIDTH):
-        """Paste a received (datetime) stamp annotation."""
+        """Paste a received stamp annotation."""
         return self.add(XDW_AID_RECEIVEDSTAMP, position,
                 nWidth=(width * 100))
 
@@ -209,8 +212,9 @@ class Annotatable(Subject):
         """Paste a custom specification annotation."""
         return self.add(XDW_AID_CUSTOM, position,
                 nWidth=(size.x * 100), nHeight=(size.y * 100),
-                lpszGuid=byref(guid),
-                nCustomDataSize=len(data), pCustomData=byref(data))
+                lpszGuid=guid,
+                nCustomDataSize=len(data), pCustomData=data)
+    '''
 
     def add_marker(self, position=_POSITION, points=_POINTS):
         """Paste a marker annotation."""
@@ -237,9 +241,14 @@ class Annotatable(Subject):
         t = XDW_ANNOTATION_TYPE.normalize(ann.type)
         if t == XDW_AID_TEXT:
             copy = self.add(t, position=ann.position)
-        elif t in (XDW_AID_STAMP, XDW_AID_RECEIVEDSTAMP):
-            copy = self.add(t, position=ann.position, nWidth=(ann.size.x * 100))
-        elif t in (XDW_AID_FUSEN, XDW_AID_STRAIGHTLINE, XDW_AID_RECTANGLE, XDW_AID_ARC):
+        elif t == XDW_AID_STAMP:
+            copy = self.add_stamp(position=ann.position, width=ann.size.x)
+        elif t in (
+                XDW_AID_FUSEN,
+                XDW_AID_STRAIGHTLINE,
+                XDW_AID_RECTANGLE,
+                XDW_AID_ARC,
+                ):
             copy = self.add(t, position=ann.position,
                     nWidth=(self.size.x * 100), nHeight=(self.size.y * 100))
         elif t in (XDW_AID_MARKER, XDW_AID_POLYGON):
@@ -250,21 +259,59 @@ class Annotatable(Subject):
                 c_points[i].y = int(p.y * 100)
             copy = self.add(t, position=ann.position,
                     nCounts=len(points), pPoints=c_points[0])
-        elif t == XDW_AID_BITMAP:  # TODO: ???
-            raise UserWarning("Copying bitmap annotation is not supported yet.")
-            copy = self.add(t, position=ann.position, szImagePath=ann.path)
-        elif t == XDW_AID_CUSTOM:  # TODO: ???
-            raise UserWarning("Copying custom annotation is not supported yet.")
+        elif t == XDW_AID_BITMAP:
+            try:
+                import Image
+            except ImportError:
+                warnings.warn("copying bitmap annotation is not supported",
+                        UserWarning, stacklevel=2)
+                return None
+            a = ann
+            while a.parent is not None:
+                a = a.parent
+            pg = a.page
+            dpi = max(pg.resolution)
+            temp = tempfile.NamedTemporaryFile(suffix=".bmp")
+            imagepath = temp.name
+            temp.close()  # On Windows, you cannot reopen temp.  TODO: better code
+            pg.doc.export_image(pg.pos, imagepath,
+                    dpi=dpi, format="bmp", compress="nocompress")
+            lt, rb = ann.position, ann.position + ann.size
+            rect = map(lambda v: int(mm2px(v, dpi)), (lt.x, lt.y, rb.x, rb.y))
+            Image.open(imagepath).crop(rect).save(imagepath, "BMP")
+            # PIL BmpImagePlugin sets resolution to 1, so we have to fix it.
+            self._fix_bmp_resolution(imagepath, dpi)
             copy = self.add(t, position=ann.position,
-                    nWidth=(ann.size.x * 100), nHeight=(ann.size.y * 100),
-                    lpszGuid=byref(ann.guid),
-                    nCustomDataSize=len(ann.data), pCustomData=byref(ann.data))
+                    szImagePath=imagepath)
+        elif t in (XDW_AID_RECEIVEDSTAMP, XDW_AID_CUSTOM):
+            warnings.warn(
+                    "copying %s annotation is not supported" % ann.type,
+                    DeprecationWarning, stacklevel=2)
+            return None
         kw = ann.attributes()
         for k, v in kw.items():
             if k in ("points",):  # This attribute cannot be updated.
                 continue
             setattr(copy, k, v)
         return copy
+
+    @staticmethod
+    def _fix_bmp_resolution(path, dpi):
+        """Fix resolutions stored in BMP file.
+
+        path    (str) pathname of Windows Bitmap file
+        dpi     (int) resolution in DPI
+        """
+        ppm = int(dpi * mm2in(1000))
+        ppms = []
+        for _ in range(4):
+            ppms.append(chr(ppm & 0xff))
+            ppm >>= 8
+        ppm = "".join(ppms)
+        with open(path, "r+b") as im:
+            im.seek(0x26)
+            im.write(ppm)  # horizontal resolution
+            im.write(ppm)  # vertical resolution
 
     def _delete(self, pos):
         """Abstract method as a stub for delete()."""

@@ -29,6 +29,7 @@ __all__ = (
         "EV_PAGE_REMOVED", "EV_PAGE_INSERTED",
         "EV_ANN_REMOVED", "EV_ANN_INSERTED",
         "PSEP", "ASEP", "BLANKPAGE",
+        "mm2in", "in2mm", "mm2px", "px2mm",
         "environ", "inner_attribute_name", "outer_attribute_name",
         "adjust_path", "cp", "joinf",
         "derivative_path",
@@ -82,6 +83,15 @@ BLANKPAGE = base64.b64decode(
         "Iu15yzQVWGKYwqc/FqVIqdCNZ2GH78VOiq6O6Z6Kv4Ks7ukFTpKs9FTCp01V"
         "KeAO5OV1pR017/sBaYtCOxaHgGUagAEAggEAgwIHJ4QCBI2FBFLFTQqGBBoA"
         "AAA=")
+
+
+INCH = 25.4
+
+
+def mm2in(value): return value / INCH
+def in2mm(value): return value * INCH
+def mm2px(value, dpi): return value / INCH * dpi
+def px2mm(value, dpi): return value / dpi * INCH
 
 
 def environ(name=None):
