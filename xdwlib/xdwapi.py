@@ -16,6 +16,8 @@ FOR A PARTICULAR PURPOSE.
 
 from ctypes import *
 
+from bitmap import Bitmap
+
 
 ######################################################################
 ### ERROR DEFINITIONS ################################################
@@ -2265,17 +2267,27 @@ def XDW_ExtractFromSfxDocument(input_path, output_path):
 
 
 def XDW_ConvertPageToImageHandle(doc_handle, page, img_option):
-    """XDW_ConvertPageToImageHandle(doc_handle, page, img_option) --> dib"""
-    dib = XDW_HGLOBAL()
-    TRY(DLL.XDW_ConvertPageToImageHandle, doc_handle, page, byref(dib), byref(img_option))
-    return dib
+    """XDW_ConvertPageToImageHandle(doc_handle, page, img_option) --> Bitmap"""
+    handle = XDW_HGLOBAL()
+    TRY(DLL.XDW_ConvertPageToImageHandle, doc_handle, page, pointer(handle), byref(img_option))
+    windll.kernel32.GlobalLock.argtypes = [c_void_p]
+    windll.kernel32.GlobalLock.restype = c_void_p
+    bitmap = Bitmap(windll.kernel32.GlobalLock(handle))
+    windll.kernel32.GlobalFree(handle)
+    return bitmap
 
 
 def XDW_GetThumbnailImageHandle(doc_handle, page):
-    """XDW_GetThumbnailImageHandle(doc_handle, page) --> dib"""
-    dib = XDW_HGLOBAL()
-    TRY(DLL.XDW_GetThumbnailImageHandle, doc_handle, page, byref(dib), NULL)
-    return dib
+    """XDW_GetThumbnailImageHandle(doc_handle, page) --> Bitmap"""
+    handle = XDW_HGLOBAL()
+    TRY(DLL.XDW_GetThumbnailImageHandle, doc_handle, page, pointer(handle), NULL)
+    windll.kernel32.GlobalLock.argtypes = [c_void_p]
+    windll.kernel32.GlobalLock.restype = c_void_p
+    bitmap = Bitmap(windll.kernel32.GlobalLock(handle))
+    bitmap.header.biXPelsPerMeter = 492  # pixels/m = 12.5 dpi
+    bitmap.header.biYPelsPerMeter = 492  # pixels/m = 12.5 dpi
+    windll.kernel32.GlobalFree(handle)
+    return bitmap
 
 
 @STRING

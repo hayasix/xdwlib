@@ -16,6 +16,7 @@ FOR A PARTICULAR PURPOSE.
 import sys
 import os
 import tempfile
+from cStringIO import StringIO
 
 from xdwapi import *
 from common import *
@@ -25,7 +26,31 @@ from xdwfile import xdwopen
 from page import Page, PageCollection
 
 
+PIL_ENABLED = True
+try:
+    import Image
+except ImportError:
+    PIL_ENABLED = False
+
+
 __all__ = ("BaseDocument",)
+
+
+def check_PIL():
+    if PIL_ENABLED:
+        return
+    raise NotImplementedError("Install PIL (Python Imaging Library) package.")
+
+
+def mktemp(suffix=".tif"):
+    """Reinvention of wheel.
+
+    Be careful, this is not safe for multiprocessing.
+    """
+    temp = tempfile.NamedTemporaryFile(suffix=suffix)
+    path = temp.name
+    temp.close()  # On Windows, you cannot reopen temp.  TODO: better code
+    return path
 
 
 class BaseDocument(Subject):
@@ -278,6 +303,14 @@ class BaseDocument(Subject):
         XDW_ConvertPageToImageFile(
                 self.handle, self.absolute_page(pos) + 1, path, opt)
 
+    def page_image(self, pos):
+        """Returns page image with annotations in BMP/DIB format."""
+        pg = self.page(pos)
+        opt = XDW_IMAGE_OPTION()
+        opt.nDpi = int(max(10, min(600, max(pg.resolution))))
+        opt.nColor = XDW_IMAGE_COLORSCHEME.normalize(pg.color_scheme())
+        return XDW_ConvertPageToImageHandle(self.handle, pos + 1, opt)
+
     def delete(self, pos):
         """Delete a page."""
         pos = self._pos(pos)
@@ -287,19 +320,11 @@ class BaseDocument(Subject):
         self.pages -= 1
 
     def _preprocess(self, pos):
-        pos = self._pos(pos)
         pg = self.page(pos)
-        dpi = int(max(self.page(pos).resolution))
+        dpi = int(max(pg.resolution))
         dpi = max(10, min(600, dpi))  # Force 10 <= dpi <= 600.
-        if pg.is_color:
-            color = "color"
-        elif 1 < pg.bpp:
-            color = "mono_highquality"
-        else:
-            color = "mono"
-        temp = tempfile.NamedTemporaryFile(suffix=".tif")
-        imagepath = temp.name
-        temp.close()  # On Windows, you cannot reopen temp.  TODO: better code
+        color = pg.color_scheme()
+        imagepath = mktemp(suffix=".tif")
         self.export_image(pos, imagepath,
                 dpi=dpi, color=color, format="tiff", compress="nocompress")
         return imagepath
@@ -311,19 +336,48 @@ class BaseDocument(Subject):
 
     def rasterize(self, pos):
         """Rasterize; convert an application page into DocuWorks image page."""
+        pos = self._pos(pos)
         imagepath = self._preprocess(pos)
         self._postprocess(pos, imagepath)
 
-    def rotate(self, pos, degree):
-        """Rotate page by desired degree."""
-        try:
-            import Image
-        except ImportError:
-            raise NotImplementedError(
-                    "Install PIL (Python Imaging Library) package.")
-        imagepath = self._preprocess(pos)
-        Image.open(imagepath).rotate(degree).save(imagepath, "TIFF", resolution=dpi)
-        self._postprocess(pos, imagepath)
+    def rotate(self, pos, degree=0, auto=False, strategy=1):
+        """Rotate page.
+
+        degree  (int)
+        auto    (bool)
+
+        Resolution of converted page is <= 600 dpi even for more precise page,
+        as far as degree is neither 0, 90, 180 or 270.
+
+        CAUTION: If degree is not 0, 90, 180 or 270, Page will be replaced with
+        just an image.  Annotations are drawn as parts of image and cannot be
+        handled as effective annotations any more.  Application/OCR text will
+        be lost.
+        """
+        pos = self._pos(pos)
+        degree %= 360
+        if degree == 0:
+            return
+        abspos = self.absolute_page(pos)
+        if auto:
+            XDW_RotatePageAuto(self.doc.handle, abspos + 1)
+            return
+        if degree in (90, 180, 270):
+            XDW_RotatePage(self.doc.handle, abspos + 1, degree)
+            return
+        check_PIL()
+        dpi = int(max(10, min(600, max(self.page(pos).resolution))))
+        if strategy == 1:
+            out = in_ = self._preprocess(pos)
+        elif strategy == 2:
+            in_ = StringIO(self.page_image(pos).octet_stream())
+            out = mktemp(suffix=".tif")
+        else:
+            raise ValueError("illegal strategy id " + str(strategy))
+        im = Image.open(in_).rotate(degree).save(out, "TIFF", resolution=dpi)
+        if not isinstance(in_, basestring):
+            in_.close()
+        self._postprocess(pos, out)
 
     def content_text(self, type=None):
         """Get all content text.

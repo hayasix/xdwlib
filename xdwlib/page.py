@@ -141,6 +141,14 @@ class Page(Annotatable, Observer):
     def absolute_page(self, append=False):
         return self.doc.absolute_page(self.pos, append=append)
 
+    def color_scheme(self):
+        if self.is_color:
+            return "color"
+        elif 1 < self.bpp:
+            return "mono_highquality"
+        else:
+            return "mono"
+
     def __repr__(self):
         return u"Page(%s[%d])" % (self.doc.name, self.pos)
 
@@ -216,10 +224,14 @@ class Page(Annotatable, Observer):
         """Rasterize; convert an application page into DocuWorks image page.
 
         Resolution of converted page is <= 600 dpi even for more precise page.
+
+        CAUTION: Page will be replaced with just an image.  Annotations are
+        drawn as parts of image and cannot be handled as effective annotations
+        any more.  Application/OCR text will be lost.
         """
         doc, pos = self.doc, self.pos
         doc.rasterize(pos)
-        self = doc.page(pos)
+        self = doc.page(pos)  # reset
 
     def rotate(self, degree=0, auto=False):
         """Rotate a page.
@@ -229,20 +241,15 @@ class Page(Annotatable, Observer):
 
         Resolution of converted page is <= 600 dpi even for more precise page,
         as far as degree is neither 0, 90, 180 or 270.
+
+        CAUTION: If degree is not 0, 90, 180 or 270, Page will be replaced with
+        just an image.  Annotations are drawn as parts of image and cannot be
+        handled as effective annotations any more.  Application/OCR text will
+        be lost.
         """
-        if degree == 0:
-            return
-        elif degree in (90, 180, 270):
-            abspos = self.absolute_page()
-            if auto:
-                XDW_RotatePageAuto(self.doc.handle, abspos + 1)
-            else:
-                XDW_RotatePage(self.doc.handle, abspos + 1, degree)
-            self.reset_attr()
-        else:
-            doc, pos = self.doc, self.pos
-            doc.rotate(pos, degree)
-            self = doc.page(pos)
+        doc, pos = self.doc, self.pos
+        doc.rotate(pos, degree=degree, auto=auto)
+        self = doc.page(pos)  # reset
 
     def reduce_noise(self, level=XDW_REDUCENOISE_NORMAL):
         """Process a page by noise reduction engine.
