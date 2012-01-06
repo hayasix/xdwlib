@@ -137,7 +137,7 @@ class Annotatable(Subject):
     def add(self, ann_type, position, **kw):
         """Paste an annotation.
 
-        ann_type    annotation type
+        ann_type    annotation type by inner code
         position    Point; float, unit:mm
         """
         from annotation import Annotation

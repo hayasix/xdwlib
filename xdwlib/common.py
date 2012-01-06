@@ -30,9 +30,10 @@ __all__ = (
         "EV_ANN_REMOVED", "EV_ANN_INSERTED",
         "PSEP", "ASEP", "BLANKPAGE",
         "mm2in", "in2mm", "mm2px", "px2mm",
-        "environ", "inner_attribute_name", "outer_attribute_name",
-        "adjust_path", "cp", "joinf",
-        "derivative_path",
+        "environ", "get_viewer",
+        "inner_attribute_name", "outer_attribute_name",
+        "adjust_path", "cp", "derivative_path", "mktemp",
+        "joinf",
         "XDWTemp",
         )
 
@@ -113,6 +114,21 @@ def environ(name=None):
     return values
 
 
+def get_viewer(light=False):
+    """Get pathname of DocuWorks Viewer (Light).
+
+    light   (bool) force to use DocuWorks Viewer Light.  Note that it will
+            use DocuWorks Viewer if Light version is not avaiable.
+    """
+    env = environ()
+    viewer = env.get("DWVIEWERPATH")
+    if light or not viewer:
+        viewer = env.get("DWVLTPATH", viewer)
+    if not viewer:
+        raise NotInstalledError("DocuWorks Viewer (Light) is not installed")
+    return viewer
+
+
 def joinf(sep, seq):
     """sep.join(seq), omitting None, null or so."""
     return sep.join([s for s in filter(bool, seq)]) or None
@@ -173,6 +189,17 @@ def derivative_path(path):
         n += 1
         derivative = "%s-%d%s" % (root, n, ext)
     return derivative
+
+
+def mktemp(suffix=".xdw", prefix=""):
+    """Prepare path of temporary file.
+
+    Yes, reinvention of wheel.  Not safe for multiprocessing.
+    """
+    temp = tempfile.NamedTemporaryFile(suffix=suffix, prefix=prefix)
+    path = temp.name
+    temp.close()  # On Windows, you cannot reopen temp.  TODO: better code
+    return path
 
 
 class XDWTemp(object):

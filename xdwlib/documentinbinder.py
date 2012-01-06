@@ -28,12 +28,12 @@ class DocumentInBinder(BaseDocument, Observer):
 
     __type__ = "DOCUMENT_IN_BINDER"
 
-    def __init__(self, binder, pos):
+    def __init__(self, bdoc, pos):
         BaseDocument.__init__(self)
         self.pos = pos
         Observer.__init__(self, binder, EV_DOC_INSERTED)
-        self.binder = binder
-        self.handle = binder.handle
+        self.binder = bdoc
+        self.handle = bdoc.handle
         self._set_page_offset()  # self.page_offset
         self.name = XDW_GetDocumentNameInBinderW(
                 self.handle, pos + 1, codepage=CP)[0]

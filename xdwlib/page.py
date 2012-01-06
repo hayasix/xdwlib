@@ -34,7 +34,7 @@ class PageCollection(list):
 
     def __repr__(self):
         return u"PageCollection(%s)" % ", ".join(
-                "%s[%d]" % (page.doc.name, page.pos) for page in self)
+                "%s[%d]" % (pg.doc.name, pg.pos) for pg in self)
 
     def __add__(self, y):
         if isinstance(y, Page):
@@ -54,8 +54,55 @@ class PageCollection(list):
                     "Page or PageCollection can be added to PageCollection")
         return self
 
-    def save(self, path=None):
+    def view(self, combine=False, light=False, wait=True):
+        """View pages with DocuWorks Viewer (Light).
+
+        combine (bool) combine pages into a single document.
+        light   (bool) force to use DocuWorks Viewer Light.  Note that it will
+                use DocuWorks Viewer if Light version is not avaiable.
+        wait    (bool) wait until viewer stops.  For False, (Popen, path) is
+                returned.  Users should remove the file of path after the Popen
+                object ends.
+        """
+        viewer = get_viewer(light=light)
+        suffix = ".xdw" if combine else ".xbd"
+        write = self.combine if combine else self.save
+        tempdir = os.path.split(mktemp())[0]
+        temp = os.path.join(tempdir,
+                "%s_P%d.xdw" % (self[0].doc.name, self[0].pos + 1))
+        temp = derivative_path(cp(temp))
+        write(temp)
+        proc = subprocess.Popen([viewer, temp])
+        if wait:
+            proc.wait()
+            os.remove(temp)
+            return None
+        else:
+            return (proc, temp)
+
+    def group(self):
+        """Group continuous pages by original document."""
+        if len(self) < 2:
+            return [self]
+        s = [False] + [(x.doc is y.doc) for (x, y) in zip(self[:-1], self[1:])]
+        pc = list(self)
+        result = []
+        try:
+            while s:
+                p = s.index(False, 1)
+                result.append(PageCollection(pc[:p]))
+                del s[:p]
+                del pc[:p]
+        except ValueError:
+            result.append(PageCollection(pc))
+        return result
+
+    def save(self, path=None, group=True):
         """Create a binder (XBD file) as a container for page collection.
+
+        path    (str) pathname for output
+        group   (bool) group continuous pages by original document,
+                ie. create document-in-binder.
 
         Returns actual pathname of generated binder, which may be different
         from `path' argument.
@@ -63,14 +110,23 @@ class PageCollection(list):
         from binder import Binder, create_binder
         path = derivative_path(cp(path or self[0].doc.name))
         create_binder(path)
-        binder = Binder(path)
-        for pos, page in enumerate(self):
-            # Preserve original document name.
-            temp = page.copy()
-            XDW_InsertDocumentToBinder(binder.handle, pos + 1, temp)
-            os.remove(temp)
-        binder.save()
-        binder.close()
+        bdoc = Binder(path)
+        tempdir = os.path.split(mktemp())[0]
+        if group:
+            for pos, pc in enumerate(self.group()):
+                temp = os.path.join(tempdir, pc[0].doc.name + ".xdw")
+                temp = pc.combine(temp)
+                bdoc.append(temp)
+                os.remove(temp)
+        else:
+            for pos, pg in enumerate(self):
+                temp = os.path.join(tempdir,
+                        "%s_P%d.xdw" % (pg.doc.name, pg.pos + 1))
+                temp = pg.copy(temp)
+                bdoc.append(temp)
+                os.remove(temp)
+        bdoc.save()
+        bdoc.close()
         return path
 
     def combine(self, path=None):
@@ -83,9 +139,11 @@ class PageCollection(list):
         path = derivative_path(cp(path or self[0].doc.name))
         path = self[0].copy(path)
         doc = Document(path)
-        for pos, page in enumerate(self[1:]):
-            temp = page.copy()
-            XDW_InsertDocument(doc.handle, pos + 1 + 1, temp)
+        tempdir = os.path.split(mktemp())[0]
+        for pos, pg in enumerate(self[1:]):
+            temp = os.path.join(tempdir, pg.doc.name + ".xdw")
+            temp = pg.copy(temp)
+            doc.append(temp)
             os.remove(temp)
         doc.save()
         doc.close()
@@ -344,23 +402,7 @@ class Page(Annotatable, Observer):
                 returned.  Users should remove the file of path after the Popen
                 object ends.
         """
-        env = environ()
-        viewer = env.get("DWVIEWERPATH")
-        if light or not viewer:
-            viewer = env.get("DWVLTPATH", viewer)
-        if not viewer:
-            raise NotInstalledError("DocuWorks/Viewer is not installed")
-        temp = tempfile.NamedTemporaryFile(suffix=".xdw")
-        temppath = temp.name
-        temp.close()  # On Windows, you cannot reopen temp.  TODO: better code
-        self.copy(path=temppath)
-        proc = subprocess.Popen([viewer, temppath])
-        if wait:
-            proc.wait()
-            os.remove(temppath)
-            return None
-        else:
-            return (proc, temppath)
+        return (PageCollection() + self).view(combine=True, light=light, wait=wait)
 
     def text_regions(self, text,
             ignore_case=False, ignore_width=False, ignore_hirakata=False):

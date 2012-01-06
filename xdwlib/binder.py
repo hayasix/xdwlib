@@ -135,10 +135,11 @@ class Binder(Subject, XDWFile):
 
     def insert(self, pos, path):
         """Insert a document by path ."""
-        pos = self._pos(pos)
+        pos = self._pos(pos, append=True)
         XDW_InsertDocumentToBinder(self.handle, pos + 1, path)
-        self.attach(doc, EV_DOC_INSERTED)
         self.documents += 1
+        doc = self.document(pos)
+        self.attach(doc, EV_DOC_INSERTED)
 
     def delete(self, pos):
         """Delete a document."""

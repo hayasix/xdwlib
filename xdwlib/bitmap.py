@@ -20,6 +20,19 @@ from ctypes import *
 __all__ = ("Bitmap",)
 
 
+class BitmapFileHeader(Structure):
+
+    """BITMAPFILEHEADER for Windows Bitmap data body."""
+
+    _fields_ = [
+            ("bfType", c_char * 2),  # WORD
+            ("bfSize", c_uint32),  # DWORD
+            ("bfReserved1", c_uint16),  # WORD
+            ("bfReserved2", c_uint16),  # WORD
+            ("bfOffBits", c_uint32),  # DWORD
+            ]
+
+
 class BitmapInfoHeader(Structure):
 
     """BITMAPINFOHEADER for Windows Bitmap data body."""
@@ -76,17 +89,20 @@ class Bitmap(object):
         return "".join(s)
 
     def file_header(self):
+        fhs = sizeof(BitmapFileHeader)
+        ihs = sizeof(BitmapInfoHeader)
         s = []
         s.append("BM")
-        s.append(self._pack32(14 + 40 + self.data_size))
+        s.append(self._pack32(fhs + ihs + self.data_size))
         s.append(self._pack16(0))
         s.append(self._pack16(0))
-        s.append(self._pack32(14 + 40))
+        s.append(self._pack32(fhs + ihs))
         return "".join(s)
 
     def info_header(self):
-        header = create_string_buffer(40)
-        memmove(header, pointer(self.header), 40)
+        size = sizeof(BitmapInfoHeader)
+        header = create_string_buffer(size)
+        memmove(header, pointer(self.header), size)
         return header.raw
 
     def octet_stream(self):

@@ -59,17 +59,29 @@ def create(input_path=None, output_path=None, **kw):
 
 
 def create_from_image(input_path, output_path=None,
-        fitimage=XDW_CREATE_FITDEF,
-        compress=XDW_COMPRESS_NORMAL,
+        fitimage="FITDEF",
+        compress="NORMAL",
         zoom=0,  # %; 0=100%
         size=Point(0, 0),  # Point (in mm), int or str; 1,2..10=A3R,A3..B5
         align=("center", "center"),  # left/center/right, top/center/bottom
-        maxpapersize=XDW_CREATE_DEFAULT_SIZE,
+        maxpapersize="DEFAULT",
         ):
     """XDW generator from image file.
 
-    size: (Point/str/int) valid if fitimage is "userdef" or "userdef_fit".
-          1=A3R, 2=A3, 3=A4R, 4=A4, 5=A5R, 6=A5, 7=B4R, 8=B4, 9=B5R, 10=B5
+    fitimage        "fitdef" | "fit" | "fitdef_dividebmp" |
+                    "userdef" | "userdef_fit"
+    compress        "normal" | "lossless" | "nocompress" |
+                    "highquality" | "highcompress" |
+                    "jpeg" | "jpeg_ttn2" | "packbits" | "g4" |
+                    "mrc_normal" | "mrc_highquality" | "mrc_highcompress"
+    zoom            (float) in percent; 0 means 100%.  < 1/1000 is ignored.
+    size            (Point) in mm; for fitimange "userdef" or "userdef_fit"
+                    (int)   1=A3R, 2=A3, 3=A4R, 4=A4, 5=A5R, 6=A5,
+                            7=B4R, 8=B4, 9=B5R, 10=B5
+    align           (horiz, vert) where:
+                        horiz   "center" | "left" | "right"
+                        vert    "center" | "top" | "bottom"
+    maxpapersize    "default" | "a3" | "2a0"
 
     Returns actual pathname of generated document, which may be different
     from `output_path' argument.

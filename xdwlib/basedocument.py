@@ -42,17 +42,6 @@ def check_PIL():
     raise NotImplementedError("Install PIL (Python Imaging Library) package.")
 
 
-def mktemp(suffix=".tif"):
-    """Reinvention of wheel.
-
-    Be careful, this is not safe for multiprocessing.
-    """
-    temp = tempfile.NamedTemporaryFile(suffix=suffix)
-    path = temp.name
-    temp.close()  # On Windows, you cannot reopen temp.  TODO: better code
-    return path
-
-
 class BaseDocument(Subject):
 
     """DocuWorks document base class.
@@ -156,7 +145,7 @@ class BaseDocument(Subject):
             pc = PageCollection(doc)
         else:
             raise ValueError("can't insert %s object" % (obj.__class__))
-        temp = pc.combine("temp.xdw")
+        temp = pc.combine(mktemp())
         XDW_InsertDocument(
                 self.handle,
                 self.absolute_page(pos, append=True) + 1,
@@ -184,16 +173,19 @@ class BaseDocument(Subject):
             ):
         """Insert a page created from image file(s).
 
-        fitimage    "fitdef" | "fit" | "fitdef_dividebmp" |
-                    "userdef" | "userdef_fit"
-        compress    "normal" | "lossless" | "highquality" | "highcompress" |
-                    "nocompress" | "jpeg" | "jpeg_ttn2" | "packbits" | "g4" |
-                    "mrc_normal" | "mrc_highquality" | "mrc_highcompress"
-        zoom        (float) in percent; 0 means 100%.  < 1/1000 is ignored.
-        size        (Point) in mm; for fitimange "userdef" or "userdef_fit".
-        align       (horiz, vert) where:
-                        horiz   "center" | "left" | "right"
-                        vert    "center" | "top" | "bottom"
+        fitimage        "fitdef" | "fit" | "fitdef_dividebmp" |
+                        "userdef" | "userdef_fit"
+        compress        "normal" | "lossless" | "nocompress" |
+                        "highquality" | "highcompress" |
+                        "jpeg" | "jpeg_ttn2" | "packbits" | "g4" |
+                        "mrc_normal" | "mrc_highquality" | "mrc_highcompress"
+        zoom            (float) in percent; 0 means 100%.  < 1/1000 is ignored.
+        size            (Point) in mm; for fitimange "userdef" or "userdef_fit"
+                        (int)   1=A3R, 2=A3, 3=A4R, 4=A4, 5=A5R, 6=A5,
+                                7=B4R, 8=B4, 9=B5R, 10=B5
+        align           (horiz, vert) where:
+                            horiz   "center" | "left" | "right"
+                            vert    "center" | "top" | "bottom"
         maxpapersize    "default" | "a3" | "2a0"
         """
         prev_pages = self.pages
@@ -228,13 +220,15 @@ class BaseDocument(Subject):
         path        (basestring) pathname to output
         pages       (int)
         dpi         (int) 10..600
-        color       (str) COLOR | MONO | MONO_HIGHQUALITY
-        format      (str) BMP | TIFF | JPEG | PDF
-        compress    (str) for BMP, not available
-                    for TIFF, NOCOMPRESS | PACKBITS | JPEG | JPEG_TTN2 | G4
-                    for JPEG, NORMAL | HIGHQUALITY | HIGHCOMPRESS
-                    for PDF,  NORMAL | HIGHQUALITY | HIGHCOMPRESS |
-                              MRC_NORMAL | MRC_HIGHQUALITY | MRC_HIGHCOMPRESS
+        color       "color" | "mono" | "mono_highquality"
+        format      "bmp" | "tiff" | "jpeg" | "pdf"
+        compress    for BMP, not available
+                    for TIFF, "nocompress" | "packbits" |
+                              "jpeg | "jpeg_ttn2" | "g4"
+                    for JPEG, "normal" | "highquality" | "highcompress"
+                    for PDF,  "normal" | "highquality" | "highcompress" |
+                              "mrc_normal" | "mrc_highquality" |
+                              "mrc_highcompress"
         """
         path = cp(path)
         if isinstance(pos, (list, tuple)):
@@ -314,9 +308,9 @@ class BaseDocument(Subject):
     def delete(self, pos):
         """Delete a page."""
         pos = self._pos(pos)
-        page = self.page(pos)
+        pg = self.page(pos)
         XDW_DeletePage(self.handle, self.absolute_page(pos) + 1)
-        self.detach(page, EV_PAGE_REMOVED)
+        self.detach(pg, EV_PAGE_REMOVED)
         self.pages -= 1
 
     def _preprocess(self, pos):
@@ -379,23 +373,28 @@ class BaseDocument(Subject):
             in_.close()
         self._postprocess(pos, out)
 
+    def view(self, light=False, wait=True):
+        """View document with DocuWorks Viewer (Light)."""
+        pc = PageCollection(self)
+        return pc.view(combine=True, light=light, wait=wait)
+
     def content_text(self, type=None):
         """Get all content text.
 
         type    None | "image" | "application"
                 None means both.
         """
-        return joinf(PSEP, [page.content_text(type=type) for page in self])
+        return joinf(PSEP, [pg.content_text(type=type) for pg in self])
 
     def annotation_text(self):
         """Get all text in annotations."""
-        return joinf(PSEP, [page.annotation_text() for page in self])
+        return joinf(PSEP, [pg.annotation_text() for pg in self])
 
     def fulltext(self):
         """Get all content and annotation text."""
         return joinf(PSEP, [
-                joinf(ASEP, [page.content_text(), page.annotation_text()])
-                for page in self])
+                joinf(ASEP, [pg.content_text(), pg.annotation_text()])
+                for pg in self])
 
     def find_content_text(self, pattern, type=None):
         """Find given pattern (text or regex) in all content text.
@@ -403,12 +402,12 @@ class BaseDocument(Subject):
         type    None | "image" | "application"
                 None means both.
         """
-        func = lambda page: page.content_text(type=type)
+        func = lambda pg: pg.content_text(type=type)
         return self.find(pattern, func=func)
 
     def find_annotation_text(self, pattern):
         """Find given pattern (text or regex) in all annotation text."""
-        func = lambda page: page.annotation_text()
+        func = lambda pg: pg.annotation_text()
         return self.find(pattern, func=func)
 
     def find_fulltext(self, pattern):
@@ -418,17 +417,15 @@ class BaseDocument(Subject):
     def find(self, pattern, func=None):
         """Find given pattern (text or regex) through document.
 
-        find(pattern, func) --> PageCollection
-
-        pattern     a string/unicode or regexp (by re module)
+        pattern     (str/unicode or regexp supported by re module)
         func        a function which takes a page and returns text in it
-                   (default) lambda page: page.fulltext()
+                    (default) lambda pg: pg.fulltext()
         """
-        func = func or (lambda page: page.fulltext())
+        func = func or (lambda pg: pg.fulltext())
         if isinstance(pattern, (str, unicode)):
-            f = lambda page: pattern in func(page)
+            f = lambda pg: pattern in func(pg)
         else:
-            f = lambda page: pattern.search(func(page))
+            f = lambda pg: pattern.search(func(pg))
         return PageCollection(filter(f, self))
 
     def dirname(self):

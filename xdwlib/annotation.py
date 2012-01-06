@@ -89,11 +89,11 @@ class Annotation(Annotatable, Observer):
         else:
             return value * float(unit)
 
-    def __init__(self, page, pos, parent=None):
+    def __init__(self, pg, pos, parent=None):
         self.pos = pos
         Annotatable.__init__(self)
-        Observer.__init__(self, page, EV_ANN_INSERTED)
-        self.page = page.page if isinstance(page, Annotation) else page
+        Observer.__init__(self, pg, EV_ANN_INSERTED)
+        self.page = pg.page if isinstance(pg, Annotation) else pg
         self.parent = parent if isinstance(parent, Annotation) else None
         info = XDW_GetAnnotationInformation(
                 self.page.doc.handle,
