@@ -283,9 +283,9 @@ class Page(Annotatable, Observer):
 
         Resolution of converted page is <= 600 dpi even for more precise page.
 
-        CAUTION: Page will be replaced with just an image.  Annotations are
-        drawn as parts of image and cannot be handled as effective annotations
-        any more.  Application/OCR text will be lost.
+        CAUTION: Page will be replaced with just an image.  Visible annotations
+        are drawn as parts of image and cannot be handled as effective
+        annotations any more.  Application/OCR text will be lost.
         """
         doc, pos = self.doc, self.pos
         doc.rasterize(pos)
@@ -301,9 +301,9 @@ class Page(Annotatable, Observer):
         as far as degree is neither 0, 90, 180 or 270.
 
         CAUTION: If degree is not 0, 90, 180 or 270, Page will be replaced with
-        just an image.  Annotations are drawn as parts of image and cannot be
-        handled as effective annotations any more.  Application/OCR text will
-        be lost.
+        just an image.  Visible Annotations are drawn as parts of image and
+        cannot be handled as effective annotations any more.  Application/OCR
+        text will be lost.
         """
         doc, pos = self.doc, self.pos
         doc.rotate(pos, degree=degree, auto=auto)

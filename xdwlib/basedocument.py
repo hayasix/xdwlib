@@ -344,9 +344,9 @@ class BaseDocument(Subject):
         as far as degree is neither 0, 90, 180 or 270.
 
         CAUTION: If degree is not 0, 90, 180 or 270, Page will be replaced with
-        just an image.  Annotations are drawn as parts of image and cannot be
-        handled as effective annotations any more.  Application/OCR text will
-        be lost.
+        just an image.  Visible annotations are drawn as parts of image and
+        cannot be handled as effective annotations any more.  Application/OCR
+        text will be lost.
         """
         pos = self._pos(pos)
         degree %= 360

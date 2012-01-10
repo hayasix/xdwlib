@@ -847,15 +847,20 @@ XDW_PAGEFORM_BOTTOMIMAGE            = 3
 XDW_PAGEFORM_PAGENUMBER             = 4
 
 XDW_PAGEFORM = XDWConst({
-        XDW_PAGEFORM_HEADER         : "HEADER",
-        XDW_PAGEFORM_FOOTER         : "FOOTER",
-        XDW_PAGEFORM_TOPIMAGE       : "TOPIMAGE",
-        XDW_PAGEFORM_BOTTOMIMAGE    : "BOTTOMIMAGE",
-        XDW_PAGEFORM_PAGENUMBER     : "PAGENUMBER",
+        XDW_PAGEFORM_HEADER         : "%HEADER",
+        XDW_PAGEFORM_FOOTER         : "%FOOTER",
+        XDW_PAGEFORM_TOPIMAGE       : "%TOPIMAGE",
+        XDW_PAGEFORM_BOTTOMIMAGE    : "%BOTTOMIMAGE",
+        XDW_PAGEFORM_PAGENUMBER     : "%PAGENUMBER",
         }, default=XDW_PAGEFORM_PAGENUMBER)
 
 XDW_PAGEFORM_STAY                   = 0
 XDW_PAGEFORM_REMOVE                 = 1
+
+XDW_PAGEFORM_STAYREMOVE = XDWConst({
+        XDW_PAGEFORM_STAY           : "ISOLATED",
+        XDW_PAGEFORM_REMOVE         : "CONSOLIDATED",
+        }, default=XDW_PAGEFORM_STAY)
 
 XDW_ALIGN_LEFT                      = 0
 XDW_ALIGN_HCENTER                   = 1
@@ -864,8 +869,25 @@ XDW_ALIGN_TOP                       = 0
 XDW_ALIGN_BOTTOM                    = 1
 XDW_ALIGN_VCENTER                   = 2
 
+XDW_ALIGN_HPOS = XDWConst({
+        XDW_ALIGN_LEFT              : "LEFT",
+        XDW_ALIGN_HCENTER           : "CENTER",
+        XDW_ALIGN_RIGHT             : "RIGHT",
+        }, default=XDW_ALIGN_HCENTER)
+
+XDW_ALIGN_VPOS = XDWConst({
+        XDW_ALIGN_TOP               : "TOP",
+        XDW_ALIGN_VCENTER           : "CENTER",
+        XDW_ALIGN_BOTTOM            : "BOTTOM",
+        }, default=XDW_ALIGN_VCENTER)
+
 XDW_PAGERANGE_ALL                   = 0
 XDW_PAGERANGE_SPECIFIED             = 1
+
+XDW_PAGERANGE = XDWConst({
+        XDW_PAGERANGE_ALL           : "ALL",
+        XDW_PAGERANGE_SPECIFIED     : "SPECIFIED",
+        }, default=XDW_PAGERANGE_ALL)
 
 XDW_IGNORE_CASE                     = 0x02
 XDW_IGNORE_WIDTH                    = 0x04

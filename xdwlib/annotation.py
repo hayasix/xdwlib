@@ -18,20 +18,11 @@ import re
 from xdwapi import *
 from common import *
 from observer import *
-from struct import Point, Rect
+from struct import *
 from annotatable import Annotatable
 
 
 __all__ = ("Annotation",)
-
-
-def flagvalue(table, flags):
-    """Sum up flag values according to XDWConst table."""
-    from operator import or_
-    if not flags:
-        return 0
-    values = [table.normalize(f.strip()) for f in flags.split(",") if f]
-    return reduce(or_, values) if values else 0
 
 
 def absolute_points(points):
@@ -73,21 +64,6 @@ class Annotation(Annotatable, Observer):
         """Returns all colors available."""
         return tuple(sorted(c.lower() for c
                 in (XDW_COLOR_FUSEN if fusen else XDW_COLOR).values()))
-
-    @staticmethod
-    def scale(attrname, value, store=False):
-        """Scale actual size (length) to stored value and vice versa."""
-        unit = XDW_ANNOTATION_ATTRIBUTE[attrname][1]
-        if not unit:
-            return value
-        mo = re.match(r"(1/)?([\d.]+)", unit)
-        if not mo:
-            return float(value)
-        inv, unit = mo.groups()
-        if bool(inv) ^ store:
-            return value / float(unit)
-        else:
-            return value * float(unit)
 
     def __init__(self, pg, pos, parent=None):
         self.pos = pos
@@ -148,14 +124,14 @@ class Annotation(Annotatable, Observer):
                 for typename, table in Annotation.attrs.items():
                     if attrname.endswith(typename):
                         return table[v]  # Convert to symbol string.
-                return Annotation.scale(attrname, v)
+                return scale(attrname, v, store=False)
             elif t == XDW_ATYPE_STRING:
                 self.is_unicode = (tt == XDW_TEXT_UNICODE)
                 return v
             else:  # t == XDW_ATYPE_OTHER:  # Quick hack for points.
                 points = [Point(
-                        Annotation.scale(attrname, p.x),
-                        Annotation.scale(attrname, p.y)) for p in v]
+                        scale(attrname, p.x),
+                        scale(attrname, p.y)) for p in v]
                 return absolute_points(points)
         elif name == "margin":  # Abbreviation support like CSS.
             result = []
@@ -224,7 +200,7 @@ class Annotation(Annotatable, Observer):
                             texttype,
                             codepage=CP)
             elif isinstance(value, (int, float)):
-                value = int(Annotation.scale(attrname, value, store=True))
+                value = int(scale(attrname, value, store=True))
                 value = c_int(value)
                 XDW_SetAnnotationAttributeW(
                         self.page.doc.handle,
@@ -336,6 +312,71 @@ class Annotation(Annotatable, Observer):
         return None
 
     def peg(self, action="ON"):
-        """Peg current annotation on current position."""
+        """Peg annotation on current position."""
         action = XDW_STARCH_ACTION.normalize(action)
         XDW_StarchAnnotation(self.page.doc.handle, self.handle, action)
+
+    def rotate(self, degree, origin=None):
+        """Rotate annotation.
+
+        EXPERIMENTAL and WORK IN PROGROSS
+        """
+        if origin is None:
+            origin = self.position
+        t = XDW_ANNOTATION_TYPE.normalize(self.type)
+        if t in (XDW_AID_BITMAP, XDW_AID_STAMP):
+            self.position = self.position.rotate(degree, origin=origin)
+            # Copy attributes.
+            for k, v in kw.items():
+                if k in ("position", "size", "points"):
+                    continue
+                setattr(copy, k, v)
+            self = parent.annotation(pos)
+        elif t == XDW_AID_TEXT:
+            self.position = self.position.rotate(degree, origin=origin)
+            degree += self.text_orientation
+            self.text_orientation = int(degree) % 360
+            # Copy attributes.
+            for k, v in kw.items():
+                if k in ("position", "size", "points", "text_orientation"):
+                    continue
+                setattr(copy, k, v)
+            self = parent.annotation(pos)
+        elif t in (XDW_AID_STRAIGHTLINE, XDW_AID_RECTANGLE, XDW_AID_ARC):
+            """EXPERIMENTAL and WORK IN PROGROSS"""
+            self.position = self.position.rotate(degree, origin=origin)
+            self.size = self.size.rotate(degree)
+            # Copy attributes.
+            for k, v in kw.items():
+                if k in ("position", "size", "points"):
+                    continue
+                setattr(copy, k, v)
+            self = parent.annotation(pos)
+        elif t == XDW_AID_POLYGON:
+            """EXPERIMENTAL and WORK IN PROGROSS"""
+            points = [p.rotate(degree, origin=origin) for p in self.points]
+            parent = self.parent or self.page
+            pos = self.pos
+            copy = parent.add_polygon(position=self.position, points=points)
+            kw = self.attributes()
+            # Copy attributes.
+            for k, v in kw.items():
+                if k in ("position", "size", "points"):
+                    continue
+                setattr(copy, k, v)
+            parent.delete(pos)
+            self = copy
+        elif t == XDW_AID_MARKER:
+            """EXPERIMENTAL and WORK IN PROGROSS"""
+            points = [p.rotate(degree, origin=origin) for p in self.points]
+            parent = self.parent or self.page
+            pos = self.pos
+            copy = parent.add_marker(position=self.position, points=points)
+            self = parent.annotation(pos)
+            # Copy attributes.
+            for k, v in kw.items():
+                if k in ("position", "size", "points"):
+                    continue
+                setattr(copy, k, v)
+            parent.delete(pos)
+            self = copy

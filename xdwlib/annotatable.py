@@ -20,7 +20,7 @@ import tempfile
 from xdwapi import *
 from common import *
 from observer import *
-from struct import Point, Rect
+from struct import *
 
 
 __all__ = ("Annotatable",)
@@ -124,7 +124,7 @@ class Annotatable(Subject):
             elif k.startswith("lpsz"):
                 v = byref(v)
             elif k.startswith("p"):
-                v = pointer(v)
+                v = pointer(v[0])
             else:
                 raise TypeError("unknown type '%s'" % k)
             setattr(init_dat, k, v)
@@ -141,6 +141,7 @@ class Annotatable(Subject):
         position    Point; float, unit:mm
         """
         from annotation import Annotation
+        ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
         if isinstance(position, (tuple, list)):
             position = Point(*position)
         init_dat = Annotatable.initial_data(ann_type, **kw)
@@ -217,7 +218,7 @@ class Annotatable(Subject):
     '''
 
     def add_marker(self, position=_POSITION, points=_POINTS):
-        """Paste a marker annotation."""
+        """Paste a marker annotation.  Note that position is ignored."""
         points = relative_points(points)
         c_points = (XDW_POINT * len(points))()
         for i, p in enumerate(points):
@@ -227,7 +228,7 @@ class Annotatable(Subject):
                 nCounts=len(points), pPoints=c_points)
 
     def add_polygon(self, position=_POSITION, points=_POINTS):
-        """Paste a polygon annotation."""
+        """Paste a polygon annotation.  Note that position is ignored."""
         points = relative_points(points)
         c_points = (XDW_POINT * len(points))()
         for i, p in enumerate(points):
@@ -236,8 +237,12 @@ class Annotatable(Subject):
         return self.add(XDW_AID_POLYGON, position,
                 nCounts=len(points), pPoints=c_points)
 
-    def copy_annotation(self, ann):
-        """Copy an annotation."""
+    def copy_annotation(self, ann, strategy=1):
+        """Copy an annotation with the same position and attributes.
+
+        BITMAP can be copied, but it takes great time to process image.
+        CUSTOM and RECEIVEDSTAMP are not copyable.
+        """
         t = XDW_ANNOTATION_TYPE.normalize(ann.type)
         if t == XDW_AID_TEXT:
             copy = self.add(t, position=ann.position)
@@ -257,7 +262,7 @@ class Annotatable(Subject):
             for i, p in enumerate(points):
                 c_points[i].x = int(p.x * 100)
                 c_points[i].y = int(p.y * 100)
-            copy = self.add(t, position=ann.position,
+            copy = self.add(t, position=ann.position,  # position is ignored.
                     nCounts=len(points), pPoints=c_points[0])
         elif t == XDW_AID_BITMAP:
             try:
@@ -266,21 +271,24 @@ class Annotatable(Subject):
                 warnings.warn("copying bitmap annotation is not supported",
                         UserWarning, stacklevel=2)
                 return None
-            a = ann
-            while a.parent is not None:
-                a = a.parent
-            pg = a.page
+            pg = ann.page
             dpi = max(pg.resolution)
-            temp = tempfile.NamedTemporaryFile(suffix=".bmp")
-            imagepath = temp.name
-            temp.close()  # On Windows, you cannot reopen temp.  TODO: better code
-            pg.doc.export_image(pg.pos, imagepath,
-                    dpi=dpi, format="bmp", compress="nocompress")
-            lt, rb = ann.position, ann.position + ann.size
-            rect = map(lambda v: int(mm2px(v, dpi)), (lt.x, lt.y, rb.x, rb.y))
-            Image.open(imagepath).crop(rect).save(imagepath, "BMP")
-            # PIL BmpImagePlugin sets resolution to 1, so we have to fix it.
-            self._fix_bmp_resolution(imagepath, dpi)
+            if strategy == 1:
+                imagepath = mktemp(suffix=".bmp")
+                pg.doc.export_image(pg.pos, imagepath,
+                        dpi=dpi, format="bmp", compress="nocompress")
+                lt, rb = ann.position, ann.position + ann.size
+                rect = map(lambda v: int(mm2px(v, dpi)), (lt.x, lt.y, rb.x, rb.y))
+                Image.open(imagepath).crop(rect).save(imagepath, "BMP")
+                # PIL BmpImagePlugin sets resolution to 1, so we have to fix it.
+                self._fix_bmp_resolution(imagepath, dpi)
+            elif strategy == 2:
+                in_ = StringIO(pg.doc.page_image(pg.pos).octet_stream())
+                imagepath = mktemp(suffix=".tif")
+                Image.open(in_).crop(rect).save(imagepath, "TIFF", resolution=dpi)
+                in_.close()
+            else:
+                raise ValueError("illegal strategy")
             copy = self.add(t, position=ann.position,
                     szImagePath=imagepath)
             os.remove(imagepath)
@@ -367,8 +375,7 @@ class Annotatable(Subject):
             if not isinstance(types, (list, tuple)):
                 types = [types]
         if rect and not half_open:
-            rect.right += 0.01  # minimal gap for xdwapi
-            rect.bottom += 0.01  # minimal gap for xdwapi
+            rect = rect.half_open()
         ann_list = []
         for ann in self:
             # TODO: test by rect is currently done in relative coordinate.

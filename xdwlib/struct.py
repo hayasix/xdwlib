@@ -16,7 +16,10 @@ FOR A PARTICULAR PURPOSE.
 import math
 
 
-__all__ = ("Point", "Rect")
+__all__ = ("Point", "Rect", "EPSILON")
+
+PI = math.pi
+EPSILON = 0.01  # mm
 
 
 class Point(object):
@@ -115,6 +118,17 @@ class Point(object):
             raise NotImplementedError
         return Point(self.x + x, self.y + y)
 
+    def rotate(self, degree, origin=None):
+        p = Point(*self)
+        if origin is not None:
+            p -= origin
+        rad = PI * degree / 180.0
+        sin, cos = math.sin(rad), math.cos(rad)
+        p = Point(p.x * cos - p.y * sin, p.x * sin + p.y * cos)
+        if origin is not None:
+            p += origin
+        return p
+
 
 class Rect(object):
 
@@ -181,8 +195,8 @@ class Rect(object):
         self.right = float(right)
         self.bottom = float(bottom)
         if not half_open:  # Enforce half open.
-            self.right += 0.01
-            self.bottom += 0.01
+            self.right += EPSILON
+            self.bottom += EPSILON
 
     def __str__(self):
         return "((%.2f, %.2f)-(%.2f, %.2f))" % (
@@ -194,6 +208,11 @@ class Rect(object):
     def __iter__(self):
         for pos in range(4):
             yield (self.left, self.top, self.right, self.bottom)[pos]
+
+    def half_open(self):
+        """Make self half-open."""
+        self.right += EPSILON
+        self.bottom += EPSILON
 
     def int(self):
         """Special method to adapt to XDW_RECT."""
@@ -240,3 +259,6 @@ class Rect(object):
             raise NotImplementedError
         return Rect(self.left + x, self.top + y,
                        self.right + x, self.bottom + y)
+
+    def rotate(self, degree, origin=None):
+        return Rect(p.rotate(degree, origin=origin) for p in self)

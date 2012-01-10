@@ -33,7 +33,7 @@ __all__ = (
         "environ", "get_viewer",
         "inner_attribute_name", "outer_attribute_name",
         "adjust_path", "cp", "derivative_path", "mktemp",
-        "joinf",
+        "joinf", "flagvalue", "scale",
         "XDWTemp",
         )
 
@@ -200,6 +200,31 @@ def mktemp(suffix=".xdw", prefix=""):
     path = temp.name
     temp.close()  # On Windows, you cannot reopen temp.  TODO: better code
     return path
+
+
+def flagvalue(table, flags):
+    """Sum up flag values according to XDWConst table."""
+    from operator import or_
+    if not flags:
+        return 0
+    values = [table.normalize(f.strip()) for f in flags.split(",") if f]
+    return reduce(or_, values) if values else 0
+
+
+def scale(attrname, value, store=False):
+    """Scale actual size (length) to stored value and vice versa."""
+    unit = XDW_ANNOTATION_ATTRIBUTE[attrname][1]
+    if not unit:
+        return value
+    mo = re.match(r"(1/)?([\d.]+)", unit)
+    if not mo:
+        return float(value)
+    inv, unit = mo.groups()
+    if bool(inv) ^ store:
+        return value / float(unit)
+    else:
+        return value * float(unit)
+
 
 
 class XDWTemp(object):

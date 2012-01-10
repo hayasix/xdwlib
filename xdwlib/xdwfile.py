@@ -24,7 +24,7 @@ from struct import Point
 
 
 __all__ = (
-        "XDWFile",
+        "XDWFile", "PageForm",
         "xdwopen", "create_sfx", "extract_sfx", "optimize", "copy",
         "VALID_DOCUMENT_HANDLES", "close_all",
         )
@@ -83,9 +83,9 @@ def extract_sfx(input_path, output_path=None):
     XDW_ExtractFromSfxDocument(input_path, output_path)
     # Created file can be either document or binder.  We have to examine
     # which type of file was generated and rename if needed.
-    doc = xdwopen(output_path, readonly=True)
-    doctype = doc.type
-    doc.close()
+    xdwfile = xdwopen(output_path, readonly=True)
+    doctype = xdwfile.type
+    xdwfile.close()
     if doctype == XDW_DT_BINDER:
         orig, output_path = output_path, root + ".xbd"
         os.rename(orig, output_path)
@@ -211,3 +211,119 @@ class XDWFile(object):
                     XDW_TEXT_MULTIBYTE, codepage=CP)
             return
         self.__dict__[name] = value
+
+    def pageform(self, form):
+        return PageForm(self, form)
+
+
+class PageForm(object):
+
+    def __init__(self, xdwfile, form):
+        self.xdwfile = xdwfile
+        self.form = XDW_PAGEFORM.normalize(inner_attribute_name(form))
+
+    def __setattr__(self, name, value):
+        attrname = inner_attribute_name(name)
+        if name == "xdwfile":
+            self.__dict__[name] = value
+            return
+        elif name == "form":
+            self.__dict__[name] = XDW_PAGEFORM.normalize(value)
+            return
+        if attrname.endswith("Color"):
+            value = XDW_COLOR.normalize(value)
+        elif attrname.endswith("FontCharSet"):
+            value = XDW_FONT_CHARSET.normalize(value)
+        elif attrname.endswith("Alignment"):
+            value = XDW_ALIGN_HPOS.normalize(value)
+        elif attrname.endswith("PageRange"):
+            value = XDW_PAGERANGE.normalize(value)
+        elif attrname.endswith("FontStyle"):
+            value = flagvalue(XDW_FONT_STYLE, value)
+        elif attrname.endswith("FontPitchAndFamily"):
+            value = flagvalue(XDW_PITCH_AND_FAMILY, value)
+        if isinstance(value, basestring):
+            attribute_type = XDW_ATYPE_STRING
+            """TODO: unicode handling.
+            Currently Author has no idea to take unicode with ord < 256.
+            Python's unicode may have inner representation with 0x00,
+            eg.  0x41 0x00 0x42 0x00 0x43 0x00 for "ABC".  This results in
+            unexpected string termination eg. "ABC" -> "A".  So, if the next
+            if-block is not placed, you will get much more but inexact
+            elements in result for abbreviated search string.
+            """
+            if isinstance(value, unicode):
+                value = value.encode(CODEPAGE)  # TODO: how can we take all unicodes?
+            if 255 < len(value):
+                raise ValueError("text length must be <= 255")
+        #elif isinstance(value, bool):
+        #    attribute_type = XDW_ATYPE_BOOL
+        #elif isinstance(value, datetime.datetime):
+        #    attribute_type = XDW_ATYPE_DATE
+        #    if not value.tzinfo:
+        #        value = value.replace(tzinfo=DEFAULT_TZ)  # TODO: Care locale.
+        #    value = unixtime(value)
+        elif isinstance(value, (int, float)):
+            value = int(scale(attrname, value, store=True))
+            value = byref(c_int(value))
+            attribute_type = XDW_ATYPE_INT  # TODO: Scaling may be required.
+        # TODO: XDW_ATYPE_OTHER should also be valid.
+        else:
+            raise TypeError("illegal value " + repr(value))
+        XDW_SetPageFormAttribute(
+                self.__dict__["xdwfile"].handle,
+                self.__dict__["form"],
+                attrname, attribute_type, value)
+
+    def __getattr__(self, name):
+        if name in ("xdwfile", "form"):
+            return self.__dict__[name]
+        attrname = inner_attribute_name(name)
+        value = XDW_GetPageFormAttribute(
+                self.__dict__["xdwfile"].handle,
+                self.__dict__["form"], attrname)
+        attribute_type = XDW_ANNOTATION_ATTRIBUTE[attrname][0]
+        if attribute_type == 1:  # string
+            return unicode(value, CODEPAGE)
+        n = 0
+        for c in value:
+            n += ord(c)
+            n <<= 8
+        value = n
+        if attrname.endswith("Color"):
+            return XDW_COLOR[value]
+        elif attrname.endswith("FontStyle"):
+            return ",".join(XDW_FONT_STYLE[b]
+                    for b in (1, 2, 4, 8) if b & value)
+        elif attrname.endswith("FontPitchAndFamily"):
+            result = []
+            pitch = XDW_PITCH_AND_FAMILY.get(value & 0x0f, "UNKNOWN")
+            if pitch != "DEFAULT":
+                result.append(pitch)
+            family = XDW_PITCH_AND_FAMILY.get(value & 0xf0, "UNKNOWN")
+            if family != "DEFAULT":
+                result.append(family)
+            return ",".join(result)
+        elif attrname.endswith("FontCharSet"):
+            return XDW_FONT_CHARSET[value]
+        elif attrname.endswith("Alignment"):
+            return XDW_ALIGN_HPOS[value]
+        elif attrname.endswith("PageRange"):
+            return XDW_PAGERANGE[value]
+        return scale(attrname, value, store=False)
+
+    def update(self, effect="ISOLATED"):
+        """Update page form.
+
+        effect  (str) "ISOLATED" | "CONSOLIDATED"
+        """
+        XDW_UpdatePageForm(self.xdwfile.handle,
+                XDW_PAGEFORM_STAYREMOVE.normalize(effect))
+
+    def delete(self, effect="ISOLATED"):
+        """Remove page form.
+
+        effect  (str) "ISOLATED" | "CONSOLIDATED"
+        """
+        XDW_RemovePageForm(self.xdwfile.handle,
+                XDW_PAGEFORM_STAYREMOVE.normalize(effect))
