@@ -90,7 +90,7 @@ class XDWError(Exception):
         self.msg = XDW_ERROR_MESSAGES.get(self.code, "XDW_E_UNDEFINED")
 
     def __str__(self):
-        return "%s (%08X)" % (self.msg, _uint32(self.code))
+        return "{0} ({1:08X})".format(self.msg, _uint32(self.code))
 
     def __repr__(self):
         return self.msg

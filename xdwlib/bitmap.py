@@ -74,7 +74,8 @@ class Bitmap(object):
         if name == "resolution": return (self.header.biXPelsPerMeter, self.header.biYPelsPerMeter)
         if name == "color_used": return self.header.biClrUsed
         if name == "color_important": return self.header.biClrImportant
-        raise AttributeError("'Bitmap' object has no attribute '%s'" % name)
+        raise AttributeError(
+                "Bitmap object has no attribute '{0}'".format(name))
 
     @staticmethod
     def _pack16(n):

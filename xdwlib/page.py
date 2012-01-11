@@ -33,8 +33,8 @@ class PageCollection(list):
     """Page collection ie. container for pages."""
 
     def __repr__(self):
-        return u"PageCollection(%s)" % ", ".join(
-                "%s[%d]" % (pg.doc.name, pg.pos) for pg in self)
+        return u"PageCollection({0})".format(", ".join(
+                u"{0}[{1}]".format(pg.doc.name, pg.pos) for pg in self))
 
     def __add__(self, y):
         if isinstance(y, Page):
@@ -69,7 +69,7 @@ class PageCollection(list):
         write = self.combine if combine else self.save
         tempdir = os.path.split(mktemp())[0]
         temp = os.path.join(tempdir,
-                "%s_P%d.xdw" % (self[0].doc.name, self[0].pos + 1))
+                "{0}_P{1}.xdw".format(self[0].doc.name, self[0].pos + 1))
         temp = derivative_path(cp(temp))
         write(temp)
         proc = subprocess.Popen([viewer, temp])
@@ -121,7 +121,7 @@ class PageCollection(list):
         else:
             for pos, pg in enumerate(self):
                 temp = os.path.join(tempdir,
-                        "%s_P%d.xdw" % (pg.doc.name, pg.pos + 1))
+                        "{0}_P{1}.xdw".format(pg.doc.name, pg.pos + 1))
                 temp = pg.copy(temp)
                 bdoc.append(temp)
                 os.remove(temp)
@@ -208,12 +208,17 @@ class Page(Annotatable, Observer):
             return "mono"
 
     def __repr__(self):
-        return u"Page(%s[%d])" % (self.doc.name, self.pos)
+        return u"Page({0}[{1}])".format(self.doc.name, self.pos)
 
     def __str__(self):
-        return u"Page(page %d: %.2f*%.2fmm, %s, %d annotations)" % (
-                self.pos, self.size.x, self.size.y, self.type,
-                self.annotations)
+        return (u"Page(page {pos}: "
+                u"{width:.2f}*{height:.2f}mm, "
+                u"{type}, {anns} annotations)").format(
+                pos=self.pos,
+                width=self.size.x,
+                height=self.size.y,
+                type=self.type,
+                anns=self.annotations)
 
     @staticmethod
     def _split_attrname(name, store=False):
@@ -253,7 +258,7 @@ class Page(Annotatable, Observer):
             if event.para[0] < self.pos:
                 self.pos += 1
         else:
-            raise ValueError("illegal event type: %d" % event.type)
+            raise ValueError("illegal event type: {0}".format(event.type))
 
     def _add(self, ann_type, position, init_dat):
         """Concrete method over _add() for add()."""
@@ -387,7 +392,7 @@ class Page(Annotatable, Observer):
         if path:
             path = cp(path)
         else:
-            path = "%s_P%d.xdw" % (self.doc.name, self.pos + 1)
+            path = "{0}_P{1}.xdw".format(self.doc.name, self.pos + 1)
             path = cp(path, dir=self.doc.dirname())
         path = derivative_path(path)
         XDW_GetPage(self.doc.handle, self.absolute_page() + 1, path)

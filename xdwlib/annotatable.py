@@ -59,7 +59,7 @@ class Annotatable(Subject):
         append = 1 if append else 0
         if not (-self.annotations <= pos < self.annotations + append):
             raise IndexError(
-                    "Annotation number must be in [%d, %d), %d given" % (
+                    "Annotation number must be in [{0}, {1}), {2} given".format(
                     -self.annotations, self.annotations + append, pos))
         if pos < 0:
             pos += self.annotations
@@ -110,7 +110,7 @@ class Annotatable(Subject):
         try:
             cls = XDW_AID_INITIAL_DATA[ann_type]
         except KeyError:
-            raise ValueError("illegal annotation type %d" % ann_type)
+            raise ValueError("illegal annotation type {0}".format(ann_type))
         if cls is None:
             return None
         init_dat = cls()
@@ -126,7 +126,7 @@ class Annotatable(Subject):
             elif k.startswith("p"):
                 v = pointer(v[0])
             else:
-                raise TypeError("unknown type '%s'" % k)
+                raise TypeError("unknown type '{0}'".format(k))
             setattr(init_dat, k, v)
         return init_dat
 
@@ -294,7 +294,7 @@ class Annotatable(Subject):
             os.remove(imagepath)
         elif t in (XDW_AID_RECEIVEDSTAMP, XDW_AID_CUSTOM):
             warnings.warn(
-                    "copying %s annotation is not supported" % ann.type,
+                    "copying {0} annotation is not supported".format(ann.type),
                     DeprecationWarning, stacklevel=2)
             return None
         kw = ann.attributes()

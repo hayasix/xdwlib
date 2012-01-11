@@ -54,10 +54,10 @@ class Point(object):
         self.y = float(y)
 
     def __str__(self):
-        return "(%.2f, %.2f)" % (self.x, self.y)
+        return "({0:.2f}, {1:.2f})".format(self.x, self.y)
 
     def __repr__(self):
-        return "%s%s" % (self.__class__.__name__, str(self))
+        return self.__class__.__name__ + str(self)
 
     def __iter__(self):
         for pos in range(2):
@@ -185,7 +185,7 @@ class Rect(object):
                 elif k == "HALF_OPEN":
                     half_open = v
                 else:
-                    raise TypeError("unexpected keyword '%s'", k)
+                    raise TypeError("unexpected keyword '{0}'".format(k))
         if right < left:
             left, right = right, left
         if bottom < top:
@@ -199,11 +199,11 @@ class Rect(object):
             self.bottom += EPSILON
 
     def __str__(self):
-        return "((%.2f, %.2f)-(%.2f, %.2f))" % (
+        return "(({0:.2f}, {1:.2f})-({2:.2f}, {3:.2f}))".format(
                 self.left, self.top, self.right, self.bottom)
 
     def __repr__(self):
-        return "%s%s" % (self.__class__.__name__, str(self))
+        return self.__class__.__name__ + str(self)
 
     def __iter__(self):
         for pos in range(4):

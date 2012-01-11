@@ -187,10 +187,10 @@ class Document(BaseDocument, XDWFile):
                 readonly=readonly, authenticate=authenticate)
 
     def __repr__(self):
-        return u"Document(%s)" % self.name
+        return u"Document({0})".format(self.name)
 
     def __str__(self):
-        return u"Document(%s: %d pages, %d attachments)" % (
+        return u"Document({0}: {1} pages, {2} attachments)".format(
                 self.name, self.pages, self.original_data)
 
     def absolute_page(self, pos, append=False):

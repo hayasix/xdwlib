@@ -50,13 +50,21 @@ class DocumentInBinder(BaseDocument, Observer):
         self.pages = document_info.nPages
 
     def __repr__(self):
-        return u"DocumentInBinder(%s(%s[%d]))" % (
-                self.name, self.binder.name, self.pos)
+        return u"{cls}({name}({bdoc}[{pos}]))".format(
+                cls=self.__class__,
+                name=self.name,
+                bdoc=self.binder.name,
+                pos=self.pos)
 
     def __str__(self):
-        return u"DocumentInBinder(%s (%s[%d]): %d pages, %d attachments)" % (
-                self.name, self.binder.name, self.pos,
-                self.pages, self.original_data)
+        return (u"{cls}({name} ({bdoc}[{pos}]): "
+                u"{pages} pages, {atts} attachments)").format(
+                cls=self.__class__,
+                name=self.name,
+                bdoc=self.binder.name,
+                pos=self.pos,
+                pages=self.pages,
+                atts=self.original_data)
 
     def update(self, event):
         if not isinstance(event, Notification):
@@ -70,7 +78,7 @@ class DocumentInBinder(BaseDocument, Observer):
                 self.pos += 1
                 self._set_page_offset()
         else:
-            raise ValueError("illegal event type: %d" % event.type)
+            raise ValueError("illegal event type: {0}".format(event.type))
 
     def _set_page_offset(self):
         """Private method to renew the page offset for DocumentInBinder."""

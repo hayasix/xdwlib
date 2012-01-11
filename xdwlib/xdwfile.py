@@ -138,13 +138,12 @@ class XDWFile(object):
             open_mode.nAuthMode = XDW_AUTH_NODIALOGUE
         else:
             open_mode.nAuthMode = XDW_AUTH_NONE
-        if isinstance(path, str):
-            path = unicode(path, CODEPAGE)
         path = cp(path)
         self.handle = XDW_OpenDocumentHandle(path, open_mode)
         self.register()
         self.dir, self.name = os.path.split(path)
-        self.name = os.path.splitext(self.name)[0]
+        self.dir = unicode(self.dir, CODEPAGE)
+        self.name = unicode(os.path.splitext(self.name)[0], CODEPAGE)
         # Set document properties.
         document_info = XDW_GetDocumentInformation(self.handle)
         self.pages = document_info.nPages
@@ -214,6 +213,11 @@ class XDWFile(object):
 
     def pageform(self, form):
         return PageForm(self, form)
+
+    def pageform_text(self):
+        """Get all text in page form."""
+        return ASEP.join(self.pageform(form).text
+                for form in ("header", "footer"))
 
 
 class PageForm(object):

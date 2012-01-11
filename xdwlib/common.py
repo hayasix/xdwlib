@@ -42,7 +42,7 @@ PSEP = "\f"  # page separator
 ASEP = "\v"  # annotation separator
 
 CP = 932
-CODEPAGE = "cp%d" % CP
+CODEPAGE = "cp{0}".format(CP)
 DEFAULT_TZ = JST
 
 
@@ -184,10 +184,10 @@ def derivative_path(path):
         return path
     root, ext = os.path.splitext(path)
     n = 2
-    derivative = "%s-%d%s" % (root, n, ext)
+    derivative = "{0}-{1}{2}".format(root, n, ext)
     while os.path.exists(derivative):
         n += 1
-        derivative = "%s-%d%s" % (root, n, ext)
+        derivative = "{0}-{1}{2}".format(root, n, ext)
     return derivative
 
 

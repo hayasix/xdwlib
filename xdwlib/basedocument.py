@@ -58,7 +58,8 @@ class BaseDocument(Subject):
     def _pos(self, pos, append=False):
         append = 1 if append else 0
         if not (-self.pages <= pos < self.pages + append):
-            raise IndexError("Page number must be in [%d, %d), %d given" % (
+            raise IndexError(
+                    "Page number must be in [{0}, {1}), {2} given".format(
                     -self.pages, self.pages + append, pos))
         if pos < 0:
             pos += self.pages
@@ -144,7 +145,7 @@ class BaseDocument(Subject):
             doc = xdwopen(cp(obj))
             pc = PageCollection(doc)
         else:
-            raise ValueError("can't insert %s object" % (obj.__class__))
+            raise ValueError("can't insert {0} object".format(obj.__class__))
         temp = pc.combine(mktemp())
         XDW_InsertDocument(
                 self.handle,
@@ -242,10 +243,10 @@ class BaseDocument(Subject):
         if format.lower() not in ("bmp", "tiff", "jpeg", "pdf"):
             raise TypeError("image type must be BMP, TIFF, JPEG or PDF.")
         if not path:
-            path = "%s_P%d" % (self.name, pos + 1)
+            path = "{0}_P{1}".format(self.name, pos + 1)
             path = cp(path, dir=self.dirname())
             if 1 < pages:
-                path += "-%d" % ((pos + pages - 1) + 1)
+                path += "-{0}".format((pos + pages - 1) + 1)
             path += "." + format
         if not (10 <= dpi <= 600):
             raise ValueError("specify resolution between 10 and 600")

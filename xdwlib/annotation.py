@@ -75,13 +75,13 @@ class Annotation(Annotatable, Observer):
         while ann is not None:
             parents.insert(0, ann.pos)
             ann = ann.parent
-        return u"Annotation(%s[%d][%s])" % (
-                self.page.doc.name,
-                self.page.pos,
-                "][".join(map(str, parents)))
+        return u"Annotation({docname}[{pagepos}][{poslist}])".format(
+                docname=self.page.doc.name,
+                pagepos=self.page.pos,
+                poslist="][".join(map(str, parents)))
 
     def __str__(self):
-        return u"%s:%s)" % (repr(self)[:-1], self.type)
+        return u"{0}:{1})".format(repr(self)[:-1], self.type)
 
     def __getattr__(self, name):
         attrname = inner_attribute_name(name)
@@ -97,6 +97,8 @@ class Annotation(Annotatable, Observer):
                 return scale(attrname, value, store=False)
             elif data_type == XDW_ATYPE_STRING:
                 self.is_unicode = (text_type == XDW_TEXT_UNICODE)
+                if not self.is_unicode:
+                    value = unicode(value, CODEPAGE)
                 return value
             else:  # data_type == XDW_ATYPE_OTHER:  # Quick hack for points.
                 points = [Point(
@@ -209,7 +211,7 @@ class Annotation(Annotatable, Observer):
             if event.para[0] < self.pos:
                 self.pos += 1
         else:
-            raise ValueError("Illegal event type: %d" % event.type)
+            raise ValueError("Illegal event type: {0}".format(event.type))
 
     def attributes(self):
         """Returns dict of annotation attribute names and values."""
@@ -263,7 +265,7 @@ class Annotation(Annotatable, Observer):
         elif self.type == "LINK":
             return getattr(self, XDW_ATN_Caption)
         elif self.type == "STAMP":
-            return "%s <DATE> %s" % (
+            return "{0} <DATE> {1}".format(
                     getattr(self, XDW_ATN_TopField),
                     getattr(self, XDW_ATN_BottomField))
         return None

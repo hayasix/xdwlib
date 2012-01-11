@@ -43,7 +43,7 @@ class Binder(Subject, XDWFile):
         append = 1 if append else 0
         if not (-self.documents <= pos < self.documents + append):
             raise IndexError(
-                    "Document number must be in [%d, %d), %d given" % (
+                    "Document number must be in [{0}, {1}), {2} given".format(
                     -self.documents, self.documents + append, pos))
         if pos < 0:
             pos += self.documents
@@ -53,7 +53,7 @@ class Binder(Subject, XDWFile):
         append = 1 if append else 0
         if not (-self.pages <= pos < self.pages + append):
             raise IndexError(
-                    "Page number must be in [%d, %d), %d given" % (
+                    "Page number must be in [{0}, {1}), {2} given".format(
                     -self.pages, self.pages + append, pos))
         if pos < 0:
             pos += self.pages
@@ -74,10 +74,10 @@ class Binder(Subject, XDWFile):
                 readonly=readonly, authenticate=authenticate)
 
     def __repr__(self):
-        return u"Binder(%s)" % self.name
+        return u"Binder({0})".format(self.name)
 
     def __str__(self):
-        return u"Binder(%s: %d documents)" % (self.name, self.documents)
+        return u"Binder({0}: {1} documents)".format(self.name, self.documents)
 
     def __len__(self):
         return self.documents
