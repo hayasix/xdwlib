@@ -230,19 +230,12 @@ class PageForm(object):
         elif name == "form":
             self.__dict__[name] = XDW_PAGEFORM.normalize(value)
             return
-        if attrname.endswith("Color"):
-            value = XDW_COLOR.normalize(value)
-        elif attrname.endswith("FontCharSet"):
-            value = XDW_FONT_CHARSET.normalize(value)
-        elif attrname.endswith("Alignment"):
-            value = XDW_ALIGN_HPOS.normalize(value)
-        elif attrname.endswith("PageRange"):
-            value = XDW_PAGERANGE.normalize(value)
-        elif attrname.endswith("FontStyle"):
-            value = flagvalue(XDW_FONT_STYLE, value)
-        elif attrname.endswith("FontPitchAndFamily"):
-            value = flagvalue(XDW_PITCH_AND_FAMILY, value)
-        if isinstance(value, basestring):
+        special = isinstance(XDW_ANNOTATION_ATTRIBUTE[attrname][1], XDWConst)
+        if special or isinstance(value, (int, float)):
+            value = int(scale(attrname, value, store=True))
+            value = byref(c_int(value))
+            attribute_type = XDW_ATYPE_INT  # TODO: Scaling may be required.
+        elif isinstance(value, basestring):
             attribute_type = XDW_ATYPE_STRING
             """TODO: unicode handling.
             Currently Author has no idea to take unicode with ord < 256.
@@ -256,17 +249,6 @@ class PageForm(object):
                 value = value.encode(CODEPAGE)  # TODO: how can we take all unicodes?
             if 255 < len(value):
                 raise ValueError("text length must be <= 255")
-        #elif isinstance(value, bool):
-        #    attribute_type = XDW_ATYPE_BOOL
-        #elif isinstance(value, datetime.datetime):
-        #    attribute_type = XDW_ATYPE_DATE
-        #    if not value.tzinfo:
-        #        value = value.replace(tzinfo=DEFAULT_TZ)  # TODO: Care locale.
-        #    value = unixtime(value)
-        elif isinstance(value, (int, float)):
-            value = int(scale(attrname, value, store=True))
-            value = byref(c_int(value))
-            attribute_type = XDW_ATYPE_INT  # TODO: Scaling may be required.
         # TODO: XDW_ATYPE_OTHER should also be valid.
         else:
             raise TypeError("illegal value " + repr(value))
@@ -285,45 +267,21 @@ class PageForm(object):
         attribute_type = XDW_ANNOTATION_ATTRIBUTE[attrname][0]
         if attribute_type == 1:  # string
             return unicode(value, CODEPAGE)
-        n = 0
-        for c in value:
-            n += ord(c)
-            n <<= 8
-        value = n
-        if attrname.endswith("Color"):
-            return XDW_COLOR[value]
-        elif attrname.endswith("FontStyle"):
-            return ",".join(XDW_FONT_STYLE[b]
-                    for b in (1, 2, 4, 8) if b & value)
-        elif attrname.endswith("FontPitchAndFamily"):
-            result = []
-            pitch = XDW_PITCH_AND_FAMILY.get(value & 0x0f, "UNKNOWN")
-            if pitch != "DEFAULT":
-                result.append(pitch)
-            family = XDW_PITCH_AND_FAMILY.get(value & 0xf0, "UNKNOWN")
-            if family != "DEFAULT":
-                result.append(family)
-            return ",".join(result)
-        elif attrname.endswith("FontCharSet"):
-            return XDW_FONT_CHARSET[value]
-        elif attrname.endswith("Alignment"):
-            return XDW_ALIGN_HPOS[value]
-        elif attrname.endswith("PageRange"):
-            return XDW_PAGERANGE[value]
+        value = unpack(value)
         return scale(attrname, value, store=False)
 
-    def update(self, effect="ISOLATED"):
+    def update(self, sync=False):
         """Update page form.
 
-        effect  (str) "ISOLATED" | "CONSOLIDATED"
+        sync    (bool) also update pageforms for documents in binder
         """
-        XDW_UpdatePageForm(self.xdwfile.handle,
-                XDW_PAGEFORM_STAYREMOVE.normalize(effect))
+        sync = XDW_PAGEFORM_REMOVE if sync else XDW_PAGEFORM_STAY
+        XDW_UpdatePageForm(self.xdwfile.handle, sync)
 
-    def delete(self, effect="ISOLATED"):
-        """Remove page form.
+    def delete(self, sync=False):
+        """delete page form.
 
-        effect  (str) "ISOLATED" | "CONSOLIDATED"
+        sync    (bool) also delete pageforms for documents in binder
         """
-        XDW_RemovePageForm(self.xdwfile.handle,
-                XDW_PAGEFORM_STAYREMOVE.normalize(effect))
+        sync = XDW_PAGEFORM_REMOVE if sync else XDW_PAGEFORM_STAY
+        XDW_RemovePageForm(self.xdwfile.handle, sync)

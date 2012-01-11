@@ -835,7 +835,7 @@ XDW_STAMP_BASISYEAR_STYLE = XDWConst({
 XDW_STAMP_DATE_YMD                  = 0
 XDW_STAMP_DATE_DMY                  = 1
 
-XDW_STAMP_DATE_FORMAT = XDWConst({
+XDW_STAMP_DATE_ORDER = XDWConst({
         XDW_STAMP_DATE_YMD          : "YMD",
         XDW_STAMP_DATE_DMY          : "DMY",
         }, default=XDW_STAMP_DATE_YMD)
@@ -1079,150 +1079,37 @@ XDW_PAGE_FORM = XDWConst({
         XDW_PF_XDW_IN_XBD           : "DOCUMENTINBINDER",
         }, default=XDW_PF_XDW)
 
-# Assert to ensure XDW_ANNOTATION_ATTRIBUTE.
-assert XDW_ATYPE_INT == 0
-assert XDW_ATYPE_STRING == 1
-
-XDW_ANNOTATION_ATTRIBUTE = {
-        # attribute_id: (type, unit, available_ann_types)
-        #   where type is either 0(int), 1(string) or 2(points)
-        XDW_ATN_Alignment           : (0, None, ()),
-        XDW_ATN_ArrowheadStyle      : (0, None, (XDW_AID_STRAIGHTLINE,)),
-        XDW_ATN_ArrowheadType       : (0, None, (XDW_AID_STRAIGHTLINE,)),
-        XDW_ATN_AutoResize          : (0, None, (XDW_AID_LINK,
-                                                 XDW_AID_FUSEN,)),
-        XDW_ATN_BackColor           : (0, None, (XDW_AID_TEXT,)),
-        XDW_ATN_BasisYear           : (0, None, (XDW_AID_STAMP,)),
-        XDW_ATN_BasisYearStyle      : (0, None, (XDW_AID_STAMP,)),
-        XDW_ATN_BeginningPage       : (0, None, ()),
-        XDW_ATN_BorderColor         : (0, None, (XDW_AID_STRAIGHTLINE,
-                                                 XDW_AID_RECTANGLE,
-                                                 XDW_AID_ARC,
-                                                 XDW_AID_STAMP,
-                                                 XDW_AID_MARKER,
-                                                 XDW_AID_POLYGON,)),
-        XDW_ATN_BorderStyle         : (0, None, (XDW_AID_RECTANGLE,
-                                                 XDW_AID_ARC,
-                                                 XDW_AID_POLYGON,)),
-        XDW_ATN_BorderTransparent   : (0, None, (XDW_AID_STRAIGHTLINE,
-                                                 XDW_AID_MARKER,)),
-        XDW_ATN_BorderType          : (0, None, (XDW_AID_STRAIGHTLINE,)),
-        XDW_ATN_BorderWidth         : (0, "pt", (XDW_AID_STRAIGHTLINE,
-                                                 XDW_AID_RECTANGLE,
-                                                 XDW_AID_ARC,
-                                                 XDW_AID_MARKER,
-                                                 XDW_AID_POLYGON,)),
-        XDW_ATN_BottomField         : (1, None, (XDW_AID_STAMP,)),
-        XDW_ATN_Caption             : (1, None, (XDW_AID_LINK,)),
-        XDW_ATN_CustomData          : (0, None, ()),
-        XDW_ATN_DateField_FirstChar : (1, None, (XDW_AID_STAMP,)),
-        # DateFormat in ("yy.mm.dd", "yy.m.d", "dd.mmm.yy", "dd.mmm.yyyy")
-        XDW_ATN_DateFormat          : (1, None, (XDW_AID_STAMP,)),
-        XDW_ATN_DateOrder           : (0, None, (XDW_AID_STAMP,)),
-        XDW_ATN_DateStyle           : (0, None, (XDW_AID_STAMP,)),
-        XDW_ATN_DayField            : (1, None, (XDW_AID_STAMP,)),
-        XDW_ATN_Digit               : (0, None, ()),
-        XDW_ATN_EndingPage          : (0, None, ()),
-        XDW_ATN_FillColor           : (0, None, (XDW_AID_FUSEN,
-                                                 XDW_AID_RECTANGLE,
-                                                 XDW_AID_ARC,
-                                                 XDW_AID_POLYGON,)),
-        XDW_ATN_FillStyle           : (0, None, (XDW_AID_RECTANGLE,
-                                                 XDW_AID_ARC,
-                                                 XDW_AID_POLYGON,)),
-        XDW_ATN_FillTransparent     : (0, None, (XDW_AID_RECTANGLE,
-                                                 XDW_AID_ARC,
-                                                 XDW_AID_POLYGON,)),
-        XDW_ATN_FontCharSet         : (0, None, (XDW_AID_TEXT, XDW_AID_LINK,)),
-        XDW_ATN_FontName            : (1, None, (XDW_AID_TEXT, XDW_AID_LINK,)),
-        XDW_ATN_FontPitchAndFamily  : (0, None, (XDW_AID_TEXT, XDW_AID_LINK,)),
-        XDW_ATN_FontSize            : (0, "1/10pt", (XDW_AID_TEXT,
-                                                     XDW_AID_LINK,)),
-        XDW_ATN_FontStyle           : (0, None, (XDW_AID_TEXT, XDW_AID_LINK,)),
-        XDW_ATN_ForeColor           : (0, None, (XDW_AID_TEXT, XDW_AID_LINK,)),
-        XDW_ATN_GUID                : (0, None, ()),
-        XDW_ATN_ImageFile           : (0, None, ()),
-        XDW_ATN_Invisible           : (0, None, (XDW_AID_LINK,)),
-        XDW_ATN_LeftRightMargin     : (0, None, ()),
-        # 1 <= LineSpace <= 10
-        XDW_ATN_LineSpace           : (0, "1/100line", (XDW_AID_TEXT,)),
-        XDW_ATN_LinkAtn_Title       : (1, None, (XDW_AID_LINK,)),
-        XDW_ATN_LinkType            : (0, None, (XDW_AID_LINK,)),
-        XDW_ATN_MailAddress         : (1, None, (XDW_AID_LINK,)),
-        XDW_ATN_MonthField          : (1, None, (XDW_AID_STAMP,)),
-        XDW_ATN_OtherFilePath       : (1, None, (XDW_AID_LINK,)),
-        XDW_ATN_OtherFilePath_Relative  : (0, None, (XDW_AID_LINK,)),
-        XDW_ATN_PageFrom            : (0, None, (XDW_AID_LINK,)),
-        XDW_ATN_PageRange           : (0, None, ()),
-        # TODO: TREAT Points SPECIALLY
-        XDW_ATN_Points              : (2, "1/100mm", (XDW_AID_STRAIGHTLINE,
-                                                 XDW_AID_MARKER,
-                                                 XDW_AID_POLYGON,)),
-        XDW_ATN_ShowIcon            : (0, None, (XDW_AID_LINK,)),
-        XDW_ATN_StartingNumber      : (0, None, ()),
-        XDW_ATN_Text                : (1, None, (XDW_AID_TEXT,)),
-        XDW_ATN_TextAutoResizeHeight    : (0, None, (XDW_AID_TEXT,)),
-        # 0 <= TextBottomMargin <= 2000
-        XDW_ATN_TextBottomMargin    : (0, "1/100mm", (XDW_AID_TEXT,)),
-        XDW_ATN_TextDirection       : (0, None, (XDW_AID_TEXT,)),
-        # 0 <= TextLeftMargin <= 2000
-        XDW_ATN_TextLeftMargin      : (0, "1/100mm", (XDW_AID_TEXT,)),
-        XDW_ATN_TextOrientation     : (0, None, (XDW_AID_TEXT,)),
-        # 0 <= TextRightMargin <= 2000
-        XDW_ATN_TextRightMargin     : (0, "1/100mm", (XDW_AID_TEXT,)),
-        XDW_ATN_TextSpacing         : (0, "1/10char", (XDW_AID_TEXT,)),
-        # 0 <= TextTopMargin <= 2000
-        XDW_ATN_TextTopMargin       : (0, "1/100mm", (XDW_AID_TEXT,)),
-        XDW_ATN_Tooltip             : (0, None, (XDW_AID_LINK,)),
-        XDW_ATN_Tooltip_String      : (1, None, (XDW_AID_LINK,)),
-        XDW_ATN_TopBottomMargin     : (0, None, ()),
-        XDW_ATN_TopField            : (1, None, (XDW_AID_STAMP,)),
-        XDW_ATN_Url                 : (1, None, (XDW_AID_LINK,)),
-        XDW_ATN_VerPosition         : (0, None, ()),
-        XDW_ATN_WordWrap            : (0, None, (XDW_AID_TEXT,)),
-        XDW_ATN_XdwLink             : (0, None, (XDW_AID_LINK,)),
-        XDW_ATN_XdwNameInXbd        : (1, None, (XDW_AID_LINK,)),
-        XDW_ATN_XdwPage             : (0, None, (XDW_AID_LINK,)),
-        XDW_ATN_XdwPath             : (1, None, (XDW_AID_LINK,)),
-        XDW_ATN_XdwPath_Relative    : (0, None, (XDW_AID_LINK,)),
-        XDW_ATN_YearField           : (1, None, (XDW_AID_STAMP,)),
-        XDW_ATN_Zoom                : (0, None, ()),
-        }
-
-
-ANSI_CHARSET            = 0
-DEFAULT_CHARSET         = 1
-SYMBOL_CHARSET          = 2
-MAC_CHARSET             = 77
-SHIFTJIS_CHARSET        = 128
-HANGEUL_CHARSET         = 129
-CHINESEBIG5_CHARSET     = 136
-GREEK_CHARSET           = 161
-TURKISH_CHARSET         = 162
-BALTIC_CHARSET          = 186
-RUSSIAN_CHARSET         = 204
-EASTEUROPE_CHARSET      = 238
-OEM_CHARSET             = 255
+ANSI_CHARSET                        = 0
+DEFAULT_CHARSET                     = 1
+SYMBOL_CHARSET                      = 2
+MAC_CHARSET                         = 77
+SHIFTJIS_CHARSET                    = 128
+HANGEUL_CHARSET                     = 129
+CHINESEBIG5_CHARSET                 = 136
+GREEK_CHARSET                       = 161
+TURKISH_CHARSET                     = 162
+BALTIC_CHARSET                      = 186
+RUSSIAN_CHARSET                     = 204
+EASTEUROPE_CHARSET                  = 238
+OEM_CHARSET                         = 255
 
 XDW_FONT_CHARSET = XDWConst({
-        ANSI_CHARSET            : "ANSI",
-        DEFAULT_CHARSET         : "DEFAULT",
-        SYMBOL_CHARSET          : "SYMBOL",
-        MAC_CHARSET             : "MAC",
-        SHIFTJIS_CHARSET        : "SHIFTJIS",
-        HANGEUL_CHARSET         : "HANGEUL",
-        CHINESEBIG5_CHARSET     : "CHINESEBIG5",
-        GREEK_CHARSET           : "GREEK",
-        TURKISH_CHARSET         : "TURKISH",
-        BALTIC_CHARSET          : "BALTIC",
-        RUSSIAN_CHARSET         : "RUSSIAN",
-        EASTEUROPE_CHARSET      : "EASTEUROPE",
-        OEM_CHARSET             : "OEM",
+        ANSI_CHARSET                : "ANSI",
+        DEFAULT_CHARSET             : "DEFAULT",
+        SYMBOL_CHARSET              : "SYMBOL",
+        MAC_CHARSET                 : "MAC",
+        SHIFTJIS_CHARSET            : "SHIFTJIS",
+        HANGEUL_CHARSET             : "HANGEUL",
+        CHINESEBIG5_CHARSET         : "CHINESEBIG5",
+        GREEK_CHARSET               : "GREEK",
+        TURKISH_CHARSET             : "TURKISH",
+        BALTIC_CHARSET              : "BALTIC",
+        RUSSIAN_CHARSET             : "RUSSIAN",
+        EASTEUROPE_CHARSET          : "EASTEUROPE",
+        OEM_CHARSET                 : "OEM",
         }, default=DEFAULT_CHARSET)
 
-
 ### Windows LOGFONT constants
-
 DEFAULT_PITCH           = 0
 FIXED_PITCH             = 1
 VARIABLE_PITCH          = 2
@@ -1247,6 +1134,144 @@ XDW_PITCH_AND_FAMILY = XDWConst({
         FF_SCRIPT               : "SCRIPT",
         FF_DECORATIVE           : "DECORATIVE",
         }, default=FF_DONTCARE)
+
+# Assert to ensure XDW_ANNOTATION_ATTRIBUTE.
+assert XDW_ATYPE_INT == 0
+assert XDW_ATYPE_STRING == 1
+
+XDW_ANNOTATION_ATTRIBUTE = {
+        # attribute_id: (type, unit, available_ann_types)
+        #   where type is either 0(int), 1(string) or 2(points)
+        XDW_ATN_Alignment           : (0, XDW_ALIGN_HPOS, ()),
+        XDW_ATN_ArrowheadStyle      : (0, XDW_ARROWHEAD_STYLE, (
+                                        XDW_AID_STRAIGHTLINE,
+                                        )),
+        XDW_ATN_ArrowheadType       : (0, XDW_ARROWHEAD_TYPE, (
+                                        XDW_AID_STRAIGHTLINE,
+                                        )),
+        XDW_ATN_AutoResize          : (0, None, (
+                                        XDW_AID_LINK,
+                                        XDW_AID_FUSEN,
+                                        )),
+        XDW_ATN_BackColor           : (0, XDW_COLOR, (XDW_AID_TEXT,)),
+        XDW_ATN_BasisYear           : (0, None, (XDW_AID_STAMP,)),
+        XDW_ATN_BasisYearStyle      : (0, XDW_STAMP_BASISYEAR_STYLE, (
+                                        XDW_AID_STAMP,
+                                        )),
+        XDW_ATN_BeginningPage       : (0, None, ()),
+        XDW_ATN_BorderColor         : (0, XDW_COLOR, (
+                                        XDW_AID_STRAIGHTLINE,
+                                        XDW_AID_RECTANGLE,
+                                        XDW_AID_ARC,
+                                        XDW_AID_STAMP,
+                                        XDW_AID_MARKER,
+                                        XDW_AID_POLYGON,
+                                        )),
+        XDW_ATN_BorderStyle         : (0, None, (XDW_AID_RECTANGLE,
+                                                 XDW_AID_ARC,
+                                                 XDW_AID_POLYGON,)),
+        XDW_ATN_BorderTransparent   : (0, None, (XDW_AID_STRAIGHTLINE,
+                                                 XDW_AID_MARKER,)),
+        XDW_ATN_BorderType          : (0, XDW_BORDER_TYPE, (
+                                        XDW_AID_STRAIGHTLINE,
+                                        )),
+        XDW_ATN_BorderWidth         : (0, "pt", (
+                                        XDW_AID_STRAIGHTLINE,
+                                        XDW_AID_RECTANGLE,
+                                        XDW_AID_ARC,
+                                        XDW_AID_MARKER,
+                                        XDW_AID_POLYGON,
+                                        )),
+        XDW_ATN_BottomField         : (1, None, (XDW_AID_STAMP,)),
+        XDW_ATN_Caption             : (1, None, (XDW_AID_LINK,)),
+        XDW_ATN_CustomData          : (0, None, ()),
+        XDW_ATN_DateField_FirstChar : (1, None, (XDW_AID_STAMP,)),
+        # DateFormat in ("yy.mm.dd", "yy.m.d", "dd.mmm.yy", "dd.mmm.yyyy")
+        XDW_ATN_DateFormat          : (1, None, (XDW_AID_STAMP,)),
+        XDW_ATN_DateOrder           : (0, XDW_STAMP_DATE_ORDER, (
+                                        XDW_AID_STAMP,
+                                        )),
+        XDW_ATN_DateStyle           : (0, XDW_STAMP_DATE_STYLE, (
+                                        XDW_AID_STAMP,
+                                        )),
+        XDW_ATN_DayField            : (1, None, (XDW_AID_STAMP,)),
+        XDW_ATN_Digit               : (0, None, ()),
+        XDW_ATN_EndingPage          : (0, None, ()),
+        XDW_ATN_FillColor           : (0, XDW_COLOR, (XDW_AID_FUSEN,
+                                                 XDW_AID_RECTANGLE,
+                                                 XDW_AID_ARC,
+                                                 XDW_AID_POLYGON,)),
+        XDW_ATN_FillStyle           : (0, None, (XDW_AID_RECTANGLE,
+                                                 XDW_AID_ARC,
+                                                 XDW_AID_POLYGON,)),
+        XDW_ATN_FillTransparent     : (0, None, (XDW_AID_RECTANGLE,
+                                                 XDW_AID_ARC,
+                                                 XDW_AID_POLYGON,)),
+        XDW_ATN_FontCharSet         : (0, XDW_FONT_CHARSET, (
+                                        XDW_AID_TEXT, XDW_AID_LINK,
+                                        )),
+        XDW_ATN_FontName            : (1, None, (XDW_AID_TEXT, XDW_AID_LINK,)),
+        # Take special care in your code for FontPitchAndFamily.
+        XDW_ATN_FontPitchAndFamily  : (0, XDW_PITCH_AND_FAMILY, (
+                                        XDW_AID_TEXT, XDW_AID_LINK,
+                                        )),
+        XDW_ATN_FontSize            : (0, "1/10pt", (XDW_AID_TEXT,
+                                                     XDW_AID_LINK,)),
+        # Take special care in your code for FontStyle.
+        XDW_ATN_FontStyle           : (0, XDW_FONT_STYLE, (
+                                        XDW_AID_TEXT, XDW_AID_LINK,
+                                        )),
+        XDW_ATN_ForeColor           : (0, XDW_COLOR, (
+                                        XDW_AID_TEXT, XDW_AID_LINK,
+                                        )),
+        XDW_ATN_GUID                : (0, None, ()),
+        XDW_ATN_ImageFile           : (1, None, ()),
+        XDW_ATN_Invisible           : (0, None, (XDW_AID_LINK,)),
+        XDW_ATN_LeftRightMargin     : (0, "mm", ()),
+        # 1 <= LineSpace <= 10
+        XDW_ATN_LineSpace           : (0, "1/100line", (XDW_AID_TEXT,)),
+        XDW_ATN_LinkAtn_Title       : (1, None, (XDW_AID_LINK,)),
+        XDW_ATN_LinkType            : (0, XDW_LINK_TYPE, (XDW_AID_LINK,)),
+        XDW_ATN_MailAddress         : (1, None, (XDW_AID_LINK,)),
+        XDW_ATN_MonthField          : (1, None, (XDW_AID_STAMP,)),
+        XDW_ATN_OtherFilePath       : (1, None, (XDW_AID_LINK,)),
+        XDW_ATN_OtherFilePath_Relative  : (0, None, (XDW_AID_LINK,)),
+        XDW_ATN_PageFrom            : (0, None, (XDW_AID_LINK,)),
+        XDW_ATN_PageRange           : (0, XDW_PAGERANGE, ()),
+        # TODO: TREAT Points SPECIALLY
+        XDW_ATN_Points              : (2, "1/100mm", (XDW_AID_STRAIGHTLINE,
+                                                 XDW_AID_MARKER,
+                                                 XDW_AID_POLYGON,)),
+        XDW_ATN_ShowIcon            : (0, None, (XDW_AID_LINK,)),
+        XDW_ATN_StartingNumber      : (0, None, ()),
+        XDW_ATN_Text                : (1, None, (XDW_AID_TEXT,)),
+        XDW_ATN_TextAutoResizeHeight    : (0, None, (XDW_AID_TEXT,)),
+        # 0 <= TextBottomMargin <= 2000
+        XDW_ATN_TextBottomMargin    : (0, "1/100mm", (XDW_AID_TEXT,)),
+        XDW_ATN_TextDirection       : (0, None, (XDW_AID_TEXT,)),
+        # 0 <= TextLeftMargin <= 2000
+        XDW_ATN_TextLeftMargin      : (0, "1/100mm", (XDW_AID_TEXT,)),
+        XDW_ATN_TextOrientation     : (0, None, (XDW_AID_TEXT,)),
+        # 0 <= TextRightMargin <= 2000
+        XDW_ATN_TextRightMargin     : (0, "1/100mm", (XDW_AID_TEXT,)),
+        XDW_ATN_TextSpacing         : (0, "1/10char", (XDW_AID_TEXT,)),
+        # 0 <= TextTopMargin <= 2000
+        XDW_ATN_TextTopMargin       : (0, "1/100mm", (XDW_AID_TEXT,)),
+        XDW_ATN_Tooltip             : (0, None, (XDW_AID_LINK,)),
+        XDW_ATN_Tooltip_String      : (1, None, (XDW_AID_LINK,)),
+        XDW_ATN_TopBottomMargin     : (0, "mm", ()),
+        XDW_ATN_TopField            : (1, None, (XDW_AID_STAMP,)),
+        XDW_ATN_Url                 : (1, None, (XDW_AID_LINK,)),
+        XDW_ATN_VerPosition         : (0, XDW_ALIGN_VPOS, ()),
+        XDW_ATN_WordWrap            : (0, None, (XDW_AID_TEXT,)),
+        XDW_ATN_XdwLink             : (0, None, (XDW_AID_LINK,)),
+        XDW_ATN_XdwNameInXbd        : (1, None, (XDW_AID_LINK,)),
+        XDW_ATN_XdwPage             : (0, None, (XDW_AID_LINK,)),
+        XDW_ATN_XdwPath             : (1, None, (XDW_AID_LINK,)),
+        XDW_ATN_XdwPath_Relative    : (0, None, (XDW_AID_LINK,)),
+        XDW_ATN_YearField           : (1, None, (XDW_AID_STAMP,)),
+        XDW_ATN_Zoom                : (0, "%", ()),
+        }
 
 
 ######################################################################

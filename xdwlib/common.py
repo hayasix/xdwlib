@@ -33,7 +33,7 @@ __all__ = (
         "environ", "get_viewer",
         "inner_attribute_name", "outer_attribute_name",
         "adjust_path", "cp", "derivative_path", "mktemp",
-        "joinf", "flagvalue", "scale",
+        "joinf", "flagvalue", "scale", "unpack",
         "XDWTemp",
         )
 
@@ -202,13 +202,16 @@ def mktemp(suffix=".xdw", prefix=""):
     return path
 
 
-def flagvalue(table, flags):
+def flagvalue(table, value, store=True):
     """Sum up flag values according to XDWConst table."""
-    from operator import or_
-    if not flags:
-        return 0
-    values = [table.normalize(f.strip()) for f in flags.split(",") if f]
-    return reduce(or_, values) if values else 0
+    if store:
+        if not value:
+            return 0
+        value = [table.normalize(f.strip()) for f in value.split(",") if f]
+        if not value:
+            return 0
+        return reduce(lambda x, y: x | y, value)
+    return ",".join(table[b] for b in sorted(table.keys()) if b & value)
 
 
 def scale(attrname, value, store=False):
@@ -216,6 +219,12 @@ def scale(attrname, value, store=False):
     unit = XDW_ANNOTATION_ATTRIBUTE[attrname][1]
     if not unit:
         return value
+    if isinstance(unit, XDWConst):
+        if attrname in (XDW_ATN_FontStyle, XDW_ATN_FontPitchAndFamily):
+            return flagvalue(unit, value, store=store)
+        if store:
+            return unit.normalize(value)
+        return unit[value]
     mo = re.match(r"(1/)?([\d.]+)", unit)
     if not mo:
         return float(value)
@@ -225,6 +234,14 @@ def scale(attrname, value, store=False):
     else:
         return value * float(unit)
 
+
+def unpack(s):
+    """Unpack little-endian octets into int."""
+    n = 0
+    for c in s:
+        n <<= 8
+        n += ord(c)
+    return n
 
 
 class XDWTemp(object):

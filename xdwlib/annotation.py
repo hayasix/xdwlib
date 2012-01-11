@@ -37,18 +37,6 @@ class Annotation(Annotatable, Observer):
 
     """Annotation on DocuWorks document page."""
 
-    attrs = {
-            "PageForm"          : XDW_PAGE_FORM,
-            "LinkType"          : XDW_LINK_TYPE,
-            "ArrowheadType"     : XDW_ARROWHEAD_TYPE,
-            "ArrowheadStyle"    : XDW_ARROWHEAD_STYLE,
-            "BorderType"        : XDW_BORDER_TYPE,
-            "DateStyle"         : XDW_STAMP_DATE_STYLE,
-            "BasisYearStyle"    : XDW_STAMP_BASISYEAR_STYLE,
-            "DateOrder"         : XDW_STAMP_DATE_FORMAT,
-            "FontCharSet"       : XDW_FONT_CHARSET,
-            }
-
     @staticmethod
     def all_types():
         """Returns all annotation types for convenience."""
@@ -99,46 +87,28 @@ class Annotation(Annotatable, Observer):
         attrname = inner_attribute_name(name)
         if attrname in XDW_ANNOTATION_ATTRIBUTE:
             if attrname == "%FontName":  # TODO: investigate...
-                v = XDW_GetAnnotationAttribute(self.handle, attrname)
-                return unicode(v, CODEPAGE)
-            t, v, tt = XDW_GetAnnotationAttributeW(
+                value = XDW_GetAnnotationAttribute(self.handle, attrname)
+                return unicode(value, CODEPAGE)
+            data_type, value, text_type = XDW_GetAnnotationAttributeW(
                     self.handle, attrname, codepage=CP)
-            if t == XDW_ATYPE_INT:
-                if attrname.endswith("Color"):
-                    if self.type == "FUSEN":
-                        return XDW_COLOR_FUSEN[v]
-                    else:
-                        return XDW_COLOR[v]
-                if attrname.endswith("FontStyle"):
-                    return ",".join(XDW_FONT_STYLE[b]
-                            for b in (1, 2, 4, 8) if b & v)
-                elif attrname.endswith("FontPitchAndFamily"):
-                    result = []
-                    pitch = XDW_PITCH_AND_FAMILY.get(v & 0x0f, "UNKNOWN")
-                    if pitch != "DEFAULT":
-                        result.append(pitch)
-                    family = XDW_PITCH_AND_FAMILY.get(v & 0xf0, "UNKNOWN")
-                    if family != "DEFAULT":
-                        result.append(family)
-                    return ",".join(result)
-                for typename, table in Annotation.attrs.items():
-                    if attrname.endswith(typename):
-                        return table[v]  # Convert to symbol string.
-                return scale(attrname, v, store=False)
-            elif t == XDW_ATYPE_STRING:
-                self.is_unicode = (tt == XDW_TEXT_UNICODE)
-                return v
-            else:  # t == XDW_ATYPE_OTHER:  # Quick hack for points.
+            if data_type == XDW_ATYPE_INT:
+                if self.type == "FUSEN" and attrname.endswith("Color"):
+                    return XDW_COLOR_FUSEN[value]
+                return scale(attrname, value, store=False)
+            elif data_type == XDW_ATYPE_STRING:
+                self.is_unicode = (text_type == XDW_TEXT_UNICODE)
+                return value
+            else:  # data_type == XDW_ATYPE_OTHER:  # Quick hack for points.
                 points = [Point(
                         scale(attrname, p.x),
-                        scale(attrname, p.y)) for p in v]
+                        scale(attrname, p.y)) for p in value]
                 return absolute_points(points)
         elif name == "margin":  # Abbreviation support like CSS.
             result = []
             for d in ("Top", "Right", "Bottom", "Left"):
-                _, v, _ = XDW_GetAnnotationAttributeW(
+                _, value, _ = XDW_GetAnnotationAttributeW(
                         self.handle, "%{0}Margin".format(d))
-                result.append(v / 100.0)
+                result.append(value / 100.0)
             return tuple(result)
         elif name in ("position", "size"):
             info = XDW_GetAnnotationInformation(
@@ -147,10 +117,10 @@ class Annotation(Annotatable, Observer):
                     self.parent.handle if self.parent else NULL,
                     self.pos + 1)
             if name == "position":
-                v = Point(info.nHorPos, info.nVerPos)
+                value = Point(info.nHorPos, info.nVerPos)
             else:
-                v = Point(info.nWidth, info.nHeight)
-            self.__dict__[name] = v / 100.0  # mm;  update this property
+                value = Point(info.nWidth, info.nHeight)
+            self.__dict__[name] = value / 100.0  # mm;  update this property
         return self.__dict__[name]
 
     def __setattr__(self, name, value):
@@ -159,23 +129,21 @@ class Annotation(Annotatable, Observer):
             raise AttributeError(
                     "Points of polygon or marker cannot be updated.")
         if attrname in XDW_ANNOTATION_ATTRIBUTE:
-            if attrname.endswith("Color"):
-                if self.type == "FUSEN":
-                    value = XDW_COLOR_FUSEN.normalize(value)
-                else:
-                    value = XDW_COLOR.normalize(value)
-            elif attrname.endswith("FontStyle"):
-                value = flagvalue(XDW_FONT_STYLE, value)
-            elif attrname.endswith("FontPitchAndFamily"):
-                value = flagvalue(XDW_PITCH_AND_FAMILY, value)
-            elif attrname.endswith("FontCharSet"):
-                value = XDW_FONT_CHARSET.normalize(value)
-            else:
-                for typename, table in Annotation.attrs.items():
-                    if attrname.endswith(typename):
-                        value = table.normalize(value)
-                        break
-            if isinstance(value, basestring):
+            if self.type == "FUSEN" and attrname.endswith("Color"):
+                value = XDW_COLOR_FUSEN.normalize(value)
+            special = isinstance(XDW_ANNOTATION_ATTRIBUTE[attrname][1], XDWConst)
+            if special or isinstance(value, (int, float)):
+                value = int(scale(attrname, value, store=True))
+                value = c_int(value)
+                XDW_SetAnnotationAttributeW(
+                        self.page.doc.handle,
+                        self.handle,
+                        attrname,
+                        XDW_ATYPE_INT,
+                        byref(value),
+                        0,
+                        0)
+            elif isinstance(value, basestring):
                 if self.is_unicode:
                     texttype = XDW_TEXT_UNICODE
                 else:
@@ -199,17 +167,6 @@ class Annotation(Annotatable, Observer):
                             value,
                             texttype,
                             codepage=CP)
-            elif isinstance(value, (int, float)):
-                value = int(scale(attrname, value, store=True))
-                value = c_int(value)
-                XDW_SetAnnotationAttributeW(
-                        self.page.doc.handle,
-                        self.handle,
-                        attrname,
-                        XDW_ATYPE_INT,
-                        byref(value),
-                        0,
-                        0)
             else:
                 raise TypeError(
                         "Invalid type to set attribute value: " + str(value))
