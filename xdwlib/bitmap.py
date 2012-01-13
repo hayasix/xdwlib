@@ -56,6 +56,19 @@ class Bitmap(object):
 
     """DIB (Device Independent Bitmap)"""
 
+    attrs = dict(
+            width="biWidth",
+            height="biHeight",
+            planes="biPlanes",
+            depth="biBitCount",
+            compression="biCompression",
+            data_size="biSizeImage",
+            #xres="biXPelsPerMeter",
+            #yres="biXPelsPerMeter",
+            color_used="biClrUsed",
+            color_important="biClrImportant",
+            )
+
     def __init__(self, bitmap_info_header_p):
         self.header = BitmapInfoHeader()
         memmove(pointer(self.header), bitmap_info_header_p, sizeof(self.header))
@@ -65,17 +78,9 @@ class Bitmap(object):
                 self.header.biSizeImage)
 
     def __getattr__(self, name):
-        if name == "width": return self.header.biWidth
-        if name == "height": return self.header.biHeight
-        if name == "planes": return self.header.biPlanes
-        if name == "depth": return self.header.biBitCount
-        if name == "compression": return self.header.biCompression
-        if name == "data_size": return self.header.biSizeImage
-        if name == "resolution": return (self.header.biXPelsPerMeter, self.header.biYPelsPerMeter)
-        if name == "color_used": return self.header.biClrUsed
-        if name == "color_important": return self.header.biClrImportant
-        raise AttributeError(
-                "Bitmap object has no attribute '{0}'".format(name))
+        if name == "resolution":
+            return (self.header.biXPelsPerMeter, self.header.biYPelsPerMeter)
+        return getattr(self.header, Bitmap.attrs[name])
 
     @staticmethod
     def _pack16(n):

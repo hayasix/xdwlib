@@ -336,10 +336,10 @@ class BaseDocument(Subject):
         self._postprocess(pos, imagepath)
 
     def rotate(self, pos, degree=0, auto=False, strategy=1):
-        """Rotate page.
+        """Rotate page around the center.
 
-        degree  (int)
-        auto    (bool)
+        degree  (int) rotation angle in clockwise degree
+        auto    (bool) automatic rotation for OCR
 
         Resolution of converted page is <= 600 dpi even for more precise page,
         as far as degree is neither 0, 90, 180 or 270.
@@ -350,12 +350,12 @@ class BaseDocument(Subject):
         text will be lost.
         """
         pos = self._pos(pos)
-        degree %= 360
-        if degree == 0:
-            return
         abspos = self.absolute_page(pos)
         if auto:
             XDW_RotatePageAuto(self.doc.handle, abspos + 1)
+            return
+        degree %= 360
+        if degree == 0:
             return
         if degree in (90, 180, 270):
             XDW_RotatePage(self.doc.handle, abspos + 1, degree)
@@ -369,7 +369,15 @@ class BaseDocument(Subject):
             out = mktemp(suffix=".tif")
         else:
             raise ValueError("illegal strategy id " + str(strategy))
-        im = Image.open(in_).rotate(degree).save(out, "TIFF", resolution=dpi)
+        # To rotate naturally, we need white background with sqrt(2) times
+        # wide and high to the original image.
+        canvas_size = int(mm2px(max(self.page(pos).size), dpi) * 1.42)
+        canvas = Image.new("RGB", (canvas_size, canvas_size), "#ffffff")
+        im = Image.open(in_)
+        box = tuple((canvas_size - v) / 2 for v in im.size)
+        box += tuple((canvas_size - v) for v in box)
+        canvas.paste(im, box[:2])  # Paste on center.
+        canvas.rotate(-degree).crop(box).save(out, "TIFF", resolution=dpi)
         if not isinstance(in_, basestring):
             in_.close()
         self._postprocess(pos, out)

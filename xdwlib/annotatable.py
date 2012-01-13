@@ -26,6 +26,13 @@ from struct import *
 __all__ = ("Annotatable",)
 
 
+PIL_ENABLED = True
+try:
+    import Image
+except ImportError:
+    PIL_ENABLED = False
+
+
 MIN_ANN_SIZE = 3
 ANN_TOO_SMALL = "Annotation size must be >= {0}mm square".format(MIN_ANN_SIZE)
 MIN_FUSEN_SIZE = 5
@@ -41,6 +48,12 @@ _POINTS = (
         _POSITION + Point(_WIDTH, 0),
         _POSITION + _SIZE,
         _POSITION + Point(0, _HEIGHT))
+
+
+def check_PIL():
+    if PIL_ENABLED:
+        return
+    raise NotImplementedError("Install PIL (Python Imaging Library) package.")
 
 
 def relative_points(points):
@@ -265,9 +278,7 @@ class Annotatable(Subject):
             copy = self.add(t, position=ann.position,  # position is ignored.
                     nCounts=len(points), pPoints=c_points[0])
         elif t == XDW_AID_BITMAP:
-            try:
-                import Image
-            except ImportError:
+            if not PIL_ENABLED:
                 warnings.warn("copying bitmap annotation is not supported",
                         UserWarning, stacklevel=2)
                 return None

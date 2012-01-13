@@ -297,10 +297,10 @@ class Page(Annotatable, Observer):
         self = doc.page(pos)  # reset
 
     def rotate(self, degree=0, auto=False):
-        """Rotate a page.
+        """Rotate page around the center.
 
-        degree  90, 180 or 270
-        auto    True/False
+        degree  (int) rotation angle in clockwise degree
+        auto    (bool) automatic rotation for OCR
 
         Resolution of converted page is <= 600 dpi even for more precise page,
         as far as degree is neither 0, 90, 180 or 270.
@@ -315,7 +315,7 @@ class Page(Annotatable, Observer):
         self = doc.page(pos)  # reset
 
     def reduce_noise(self, level=XDW_REDUCENOISE_NORMAL):
-        """Process a page by noise reduction engine.
+        """Process page by noise reduction engine.
 
         level   "normal" | "weak" | "strong"
         """
@@ -337,7 +337,7 @@ class Page(Annotatable, Observer):
             insert_space=False,
             verbose=False,
             ):
-        """Process a page by OCR engine.
+        """Process page by OCR engine.
 
         engine          "default" | "winreader pro"
         strategy        "standard" | "speed" | "accuracy"
@@ -383,7 +383,7 @@ class Page(Annotatable, Observer):
         XDW_SetOcrData(self.doc.handle, self.absolute_page(), NULL)
 
     def copy(self, path=None):
-        """Copy current page and create another document.
+        """Copy page and create another document.
 
         Returns the actual pathname of generated XDW file, which may be
         different from `path' argument.  If path is not available,
@@ -399,7 +399,7 @@ class Page(Annotatable, Observer):
         return path
 
     def view(self, light=False, wait=True):
-        """View current page with DocuWorks Viewer (Light).
+        """View page with DocuWorks Viewer (Light).
 
         light   (bool) force to use DocuWorks Viewer Light.  Note that it will
                 use DocuWorks Viewer if Light version is not avaiable.
@@ -411,7 +411,7 @@ class Page(Annotatable, Observer):
 
     def text_regions(self, text,
             ignore_case=False, ignore_width=False, ignore_hirakata=False):
-        """Search text in current page and get regions occupied by them.
+        """Search text in page and get regions occupied by them.
 
         Returns a list of Rect or None (when rect is unavailable).
         """
@@ -462,7 +462,7 @@ class Page(Annotatable, Observer):
         return result
 
     def re_regions(self, pattern):
-        """Search regular expression in current page and get regions occupied.
+        """Search regular expression in page and get regions occupied.
 
         Returns a list of Rect or None (when rect is unavailable).
         """

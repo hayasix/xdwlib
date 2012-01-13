@@ -275,67 +275,40 @@ class Annotation(Annotatable, Observer):
         action = XDW_STARCH_ACTION.normalize(action)
         XDW_StarchAnnotation(self.page.doc.handle, self.handle, action)
 
+    def shift(self, *args, **kw):
+        self.position = self.position.shift(*args, **kw)
+
     def rotate(self, degree, origin=None):
         """Rotate annotation.
 
+        degree      (int) rotation angle in clockwise degree
+        origin      (Point)
+
         EXPERIMENTAL and WORK IN PROGROSS
         """
+        kw = self.attributes()
         if origin is None:
             origin = self.position
         t = XDW_ANNOTATION_TYPE.normalize(self.type)
-        if t in (XDW_AID_BITMAP, XDW_AID_STAMP):
+        if t in (XDW_AID_BITMAP, XDW_AID_STAMP, XDW_AID_RECTANGLE, XDW_AID_ARC):
             self.position = self.position.rotate(degree, origin=origin)
-            # Copy attributes.
-            for k, v in kw.items():
-                if k in ("position", "size", "points"):
-                    continue
-                setattr(copy, k, v)
-            self = parent.annotation(pos)
+        elif t == XDW_AID_STRAIGHTLINE:
+            self.position = self.position.rotate(degree, origin=origin)
+            self.size = self.size.rotate(degree)
         elif t == XDW_AID_TEXT:
             self.position = self.position.rotate(degree, origin=origin)
             degree += self.text_orientation
             self.text_orientation = int(degree) % 360
-            # Copy attributes.
-            for k, v in kw.items():
-                if k in ("position", "size", "points", "text_orientation"):
-                    continue
-                setattr(copy, k, v)
-            self = parent.annotation(pos)
-        elif t in (XDW_AID_STRAIGHTLINE, XDW_AID_RECTANGLE, XDW_AID_ARC):
-            """EXPERIMENTAL and WORK IN PROGROSS"""
-            self.position = self.position.rotate(degree, origin=origin)
-            self.size = self.size.rotate(degree)
-            # Copy attributes.
-            for k, v in kw.items():
-                if k in ("position", "size", "points"):
-                    continue
-                setattr(copy, k, v)
-            self = parent.annotation(pos)
-        elif t == XDW_AID_POLYGON:
-            """EXPERIMENTAL and WORK IN PROGROSS"""
+        elif t in (XDW_AID_MARKER, XDW_AID_POLYGON):
             points = [p.rotate(degree, origin=origin) for p in self.points]
             parent = self.parent or self.page
             pos = self.pos
-            copy = parent.add_polygon(position=self.position, points=points)
-            kw = self.attributes()
+            action = parent.add_marker if XDW_AID_MARKER else parent.add_polygon
+            copy = action(position=self.position, points=points)
             # Copy attributes.
             for k, v in kw.items():
                 if k in ("position", "size", "points"):
                     continue
                 setattr(copy, k, v)
-            parent.delete(pos)
-            self = copy
-        elif t == XDW_AID_MARKER:
-            """EXPERIMENTAL and WORK IN PROGROSS"""
-            points = [p.rotate(degree, origin=origin) for p in self.points]
-            parent = self.parent or self.page
-            pos = self.pos
-            copy = parent.add_marker(position=self.position, points=points)
-            self = parent.annotation(pos)
-            # Copy attributes.
-            for k, v in kw.items():
-                if k in ("position", "size", "points"):
-                    continue
-                setattr(copy, k, v)
-            parent.delete(pos)
+            parent.delete(pos)  ## TODO: update parent.observers correctly.
             self = copy
