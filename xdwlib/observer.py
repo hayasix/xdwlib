@@ -46,7 +46,8 @@ class Subject(object):
 class Observer(object):
 
     def __init__(self, subject, event):
-        subject.attach(self, event)
+        #subject.attach(self, event)
+        pass
 
     def update(self, event):
         raise NotImplementedError  # abstract

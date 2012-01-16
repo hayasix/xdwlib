@@ -61,7 +61,7 @@ def relative_points(points):
     if len(points) < 2:
         return points
     p0 = points[0]
-    return tuple([p0] + [p - p0 for p in points])
+    return tuple([p0] + [p - p0 for p in points[1:]])
 
 
 class Annotatable(Subject):
@@ -179,10 +179,14 @@ class Annotatable(Subject):
         return self.add(XDW_AID_FUSEN, position,
                 nWidth=(size.x * 100), nHeight=(size.y * 100))
 
-    def add_line(self, points=(_POSITION, _POSITION + _SIZE)):
-        """Paste a straight line annotation."""
-        return self.add(XDW_AID_STRAIGHTLINE, (points[0] * 100),
-                nWidth=(points[1].x * 100), nHeight=(point[1].y * 100))
+    def add_line(self, points=_POINTS[:2]):
+        """Paste a straight line annotation.
+
+        Note that `position' attribute is determined automatically.
+        """
+        points = relative_points(points)
+        return self.add(XDW_AID_STRAIGHTLINE, points[0],
+                nHorVec=(points[1].x * 100), nVerVec=(points[1].y * 100))
 
     add_straightline = add_line
 
@@ -230,24 +234,30 @@ class Annotatable(Subject):
                 nCustomDataSize=len(data), pCustomData=data)
     '''
 
-    def add_marker(self, position=_POSITION, points=_POINTS):
-        """Paste a marker annotation.  Note that position is ignored."""
+    def add_marker(self, points=_POINTS):
+        """Paste a marker annotation.
+
+        Note that `position' attribute is determined automatically.
+        """
         points = relative_points(points)
         c_points = (XDW_POINT * len(points))()
         for i, p in enumerate(points):
             c_points[i].x = int(p.x * 100)
             c_points[i].y = int(p.y * 100)
-        return self.add(XDW_AID_MARKER, position,
+        return self.add(XDW_AID_MARKER, _POSITION,  # position is dummy
                 nCounts=len(points), pPoints=c_points)
 
-    def add_polygon(self, position=_POSITION, points=_POINTS):
-        """Paste a polygon annotation.  Note that position is ignored."""
+    def add_polygon(self, points=_POINTS):
+        """Paste a polygon annotation.
+
+        Note that `position' attribute is determined automatically.
+        """
         points = relative_points(points)
         c_points = (XDW_POINT * len(points))()
         for i, p in enumerate(points):
             c_points[i].x = int(p.x * 100)
             c_points[i].y = int(p.y * 100)
-        return self.add(XDW_AID_POLYGON, position,
+        return self.add(XDW_AID_POLYGON, _POSITION,  # position is dummy
                 nCounts=len(points), pPoints=c_points)
 
     def copy_annotation(self, ann, strategy=1):
@@ -258,25 +268,18 @@ class Annotatable(Subject):
         """
         t = XDW_ANNOTATION_TYPE.normalize(ann.type)
         if t == XDW_AID_TEXT:
-            copy = self.add(t, position=ann.position)
+            copy = self.add_text(u"", position=ann.position)  # updated later
         elif t == XDW_AID_STAMP:
             copy = self.add_stamp(position=ann.position, width=ann.size.x)
-        elif t in (
-                XDW_AID_FUSEN,
-                XDW_AID_STRAIGHTLINE,
-                XDW_AID_RECTANGLE,
-                XDW_AID_ARC,
-                ):
+        elif t in (XDW_AID_FUSEN, XDW_AID_RECTANGLE, XDW_AID_ARC):
             copy = self.add(t, position=ann.position,
                     nWidth=(self.size.x * 100), nHeight=(self.size.y * 100))
-        elif t in (XDW_AID_MARKER, XDW_AID_POLYGON):
-            points = relative_points(ann.points)
-            c_points = (XDW_POINT * len(points))()
-            for i, p in enumerate(points):
-                c_points[i].x = int(p.x * 100)
-                c_points[i].y = int(p.y * 100)
-            copy = self.add(t, position=ann.position,  # position is ignored.
-                    nCounts=len(points), pPoints=c_points[0])
+        elif t == XDW_AID_STRAIGHTLINE:
+            copy = self.add_line(ann.points)
+        elif t == XDW_AID_MARKER:
+            copy = self.add_marker(ann.points)
+        elif t == XDW_AID_POLYGON:
+            copy = self.add_polygon(ann.points)
         elif t == XDW_AID_BITMAP:
             if not PIL_ENABLED:
                 warnings.warn("copying bitmap annotation is not supported",

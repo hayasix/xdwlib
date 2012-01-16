@@ -59,11 +59,14 @@ class Annotation(Annotatable, Observer):
         Observer.__init__(self, pg, EV_ANN_INSERTED)
         self.page = pg.page if isinstance(pg, Annotation) else pg
         self.parent = parent if isinstance(parent, Annotation) else None
+        self.reset_attr()
+
+    def reset_attr(self):
         info = XDW_GetAnnotationInformation(
                 self.page.doc.handle,
                 self.page.absolute_page() + 1,
                 self.parent.handle if self.parent else NULL,
-                pos + 1)
+                self.pos + 1)
         self.handle = info.handle
         self.type = XDW_ANNOTATION_TYPE[info.nAnnotationType]
         self.annotations = info.nChildAnnotations
@@ -83,12 +86,20 @@ class Annotation(Annotatable, Observer):
     def __str__(self):
         return u"{0}:{1})".format(repr(self)[:-1], self.type)
 
+    @staticmethod
+    def _unicode_enabled(ann_type):
+        return attrname in (
+                XDW_ATN_Text,
+                XDW_ATN_Caption, XDW_ATN_Url, XDW_ATN_XdwPath,
+                XDW_ATN_XdwNameInXbd, XDW_ATN_Tooltip_String,
+                XDW_ATN_LinkAtn_Title, XDW_ATN_OtherFilePath,
+                XDW_ATN_MailAddress,
+                XDW_ATN_TopField, XDW_ATN_BottomField,
+                )
+
     def __getattr__(self, name):
         attrname = inner_attribute_name(name)
         if attrname in XDW_ANNOTATION_ATTRIBUTE:
-            if attrname == "%FontName":  # TODO: investigate...
-                value = XDW_GetAnnotationAttribute(self.handle, attrname)
-                return unicode(value, CODEPAGE)
             data_type, value, text_type = XDW_GetAnnotationAttributeW(
                     self.handle, attrname, codepage=CP)
             if data_type == XDW_ATYPE_INT:
@@ -97,8 +108,6 @@ class Annotation(Annotatable, Observer):
                 return scale(attrname, value, store=False)
             elif data_type == XDW_ATYPE_STRING:
                 self.is_unicode = (text_type == XDW_TEXT_UNICODE)
-                if not self.is_unicode:
-                    value = unicode(value, CODEPAGE)
                 return value
             else:  # data_type == XDW_ATYPE_OTHER:  # Quick hack for points.
                 points = [Point(
@@ -146,29 +155,20 @@ class Annotation(Annotatable, Observer):
                         0,
                         0)
             elif isinstance(value, basestring):
-                if self.is_unicode:
+                if self.is_unicode and unicode_enabled:
                     texttype = XDW_TEXT_UNICODE
                 else:
                     texttype = XDW_TEXT_MULTIBYTE
                 if isinstance(value, str):
                     value = unicode(value, CODEPAGE)
-                if name in ("FontName", "font_name"):  # TODO: investigate...
-                    value = value.encode(CODEPAGE)
-                    XDW_SetAnnotationAttribute(
-                            self.page.doc.handle,
-                            self.handle,
-                            attrname,
-                            XDW_ATYPE_STRING,
-                            value)
-                else:
-                    XDW_SetAnnotationAttributeW(
-                            self.page.doc.handle,
-                            self.handle,
-                            attrname,
-                            XDW_ATYPE_STRING,
-                            value,
-                            texttype,
-                            codepage=CP)
+                XDW_SetAnnotationAttributeW(
+                        self.page.doc.handle,
+                        self.handle,
+                        attrname,
+                        XDW_ATYPE_STRING,
+                        value,
+                        texttype,
+                        codepage=CP)
             else:
                 raise TypeError(
                         "Invalid type to set attribute value: " + str(value))
@@ -191,12 +191,18 @@ class Annotation(Annotatable, Observer):
                     self.handle,
                     int(value.x * 100),
                     int(value.y * 100))
+            self.__dict__[name] = value
         elif name == "size":
+            if self.type not in (
+                    "FUSEN", "RECTANGLE", "ARC", "TEXT", "LINK", "STAMP"):
+                raise TypeError(
+                        "can't resize {0} annotation".format(self.type))
             XDW_SetAnnotationSize(
                     self.page.doc.handle,
                     self.handle,
                     int(value.x * 100),
                     int(value.y * 100))
+            self.__dict__[name] = value
         else:
             self.__dict__[name] = value
 
@@ -278,37 +284,94 @@ class Annotation(Annotatable, Observer):
     def shift(self, *args, **kw):
         self.position = self.position.shift(*args, **kw)
 
-    def rotate(self, degree, origin=None):
+    def rotate(self, degree, origin=None, orientation=False):
         """Rotate annotation.
 
         degree      (int) rotation angle in clockwise degree
-        origin      (Point)
+        origin      (Point) center of rotation; None = the current position.
+        orientation (bool) also change orientation of content of annotation.
+                    Effective only for text, straightline, marker and polygon.
 
-        EXPERIMENTAL and WORK IN PROGROSS
+        EXPERIMENTAL and WORK IN PROGROSS.
+
+        For straightline, marker and polygon, this method generates a new
+        annotation derived from the original.  Original one is deleted.
+        This process may result in the change of annotation position.  But
+        users usually points to an element of page or parent annotation's
+        `observers' (list) attribute, so nothing is required after such change.
+
+        Example (suppose there are 9 annotations in the page):
+        >>> for ann in pg: print ann.type
+        ...
+        TEXT
+        TEXT
+        POLYGON
+        MARKER
+        STAMP
+        CUSTOM
+        BITMAP
+        STRAIGHTLINE
+        MARKER
+        >>> ann = pg.annotation(2)  # POLYGON
+        >>> ann.pos, ann.type, ann.position, ann.points
+        (2, 'POLYGON', Point(52.12, 56.16), (Point(58.12, 62.16), Point(65.91, 99.76), P
+        oint(80.13, 75.37), Point(96.39, 79.10), Point(97.06, 60.47)))
+        >>> ann.rotate(30, orientation=True)
+        >>> ann.pos, ann.type, ann.position, ann.points
+        (8, 'POLYGON', Point(52.12, 56.16), (Point(54.31, 64.35), Point(42.26, 100.80),
+        Point(66.76, 86.79), Point(78.98, 98.15), Point(88.87, 82.35)))
+        >>> # Notice ann.pos is replaced automatically.
+        ...
+        >>> for ann in pg: print ann.type
+        ...
+        TEXT
+        TEXT
+        MARKER
+        STAMP
+        CUSTOM
+        BITMAP
+        STRAIGHTLINE
+        MARKER
+        POLYGON
+        >>>  # Deleted the original POLYGON and added a new POLYGON in the end.
+        ...
         """
-        kw = self.attributes()
-        if origin is None:
-            origin = self.position
         t = XDW_ANNOTATION_TYPE.normalize(self.type)
-        if t in (XDW_AID_BITMAP, XDW_AID_STAMP, XDW_AID_RECTANGLE, XDW_AID_ARC):
+        if t == XDW_AID_TEXT:
+            origin = origin or self.position
             self.position = self.position.rotate(degree, origin=origin)
-        elif t == XDW_AID_STRAIGHTLINE:
-            self.position = self.position.rotate(degree, origin=origin)
-            self.size = self.size.rotate(degree)
-        elif t == XDW_AID_TEXT:
-            self.position = self.position.rotate(degree, origin=origin)
-            degree += self.text_orientation
-            self.text_orientation = int(degree) % 360
-        elif t in (XDW_AID_MARKER, XDW_AID_POLYGON):
+            if orientation:
+                degree += self.text_orientation
+                self.text_orientation = int(degree) % 360
+        elif t in (XDW_AID_STRAIGHTLINE, XDW_AID_MARKER, XDW_AID_POLYGON):
+            # For these annotations, annotation position is determined
+            # automatically by DocuWorks in consideration for margins.
+            # So, we don't have to care for it.
+            origin = origin or self.points[0]
+            if not orientation:
+                gap = self.points[0] - self.position
+                p0 = self.points[0].rotate(degree, origin=origin)
+                self.position = p0 - gap
+                return
             points = [p.rotate(degree, origin=origin) for p in self.points]
             parent = self.parent or self.page
-            pos = self.pos
-            action = parent.add_marker if XDW_AID_MARKER else parent.add_polygon
-            copy = action(position=self.position, points=points)
+            if t == XDW_AID_STRAIGHTLINE: action = parent.add_line
+            elif t == XDW_AID_MARKER: action = parent.add_marker
+            elif t == XDW_AID_POLYGON: action = parent.add_polygon
+            copy = action(points=points)
             # Copy attributes.
+            kw = self.attributes()
             for k, v in kw.items():
                 if k in ("position", "size", "points"):
                     continue
                 setattr(copy, k, v)
-            parent.delete(pos)  ## TODO: update parent.observers correctly.
-            self = copy
+            # Acquire child annotations.
+            for child in self:
+                child.parent = copy
+            # Update content information.
+            parent.delete(self.pos)
+            self.pos = copy.pos
+            self.reset_attr()
+        else:
+            origin = origin or self.position
+            self.position = self.position.rotate(degree, origin=origin)
