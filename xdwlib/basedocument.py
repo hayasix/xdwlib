@@ -169,25 +169,25 @@ class BaseDocument(Subject):
             compress="NORMAL",
             zoom=0,  # %; 0=100%
             size=Point(0, 0),  # Point(width, height); 0=A4R
-            align=("center", "center"),  # left/center/right, top/center/bottom
+            align=("CENTER", "CENTER"),  # LEFT/CENTER/RIGHT, TOP/CENTER/BOTTOM
             maxpapersize="DEFAULT",
             ):
         """Insert a page created from image file(s).
 
-        fitimage        "fitdef" | "fit" | "fitdef_dividebmp" |
-                        "userdef" | "userdef_fit"
-        compress        "normal" | "lossless" | "nocompress" |
-                        "highquality" | "highcompress" |
-                        "jpeg" | "jpeg_ttn2" | "packbits" | "g4" |
-                        "mrc_normal" | "mrc_highquality" | "mrc_highcompress"
+        fitimage        "FITDEF" | "FIT" | "FITDEF_DIVIDEBMP" |
+                        "USERDEF" | "USERDEF_FIT"
+        compress        "NORMAL" | "LOSSLESS" | "NOCOMPRESS" |
+                        "HIGHQUALITY" | "HIGHCOMPRESS" |
+                        "JPEG" | "JPEG_TTN2" | "PACKBITS" | "G4" |
+                        "MRC_NORMAL" | "MRC_HIGHQUALITY" | "MRC_HIGHCOMPRESS"
         zoom            (float) in percent; 0 means 100%.  < 1/1000 is ignored.
         size            (Point) in mm; for fitimange "userdef" or "userdef_fit"
                         (int)   1=A3R, 2=A3, 3=A4R, 4=A4, 5=A5R, 6=A5,
                                 7=B4R, 8=B4, 9=B5R, 10=B5
         align           (horiz, vert) where:
-                            horiz   "center" | "left" | "right"
-                            vert    "center" | "top" | "bottom"
-        maxpapersize    "default" | "a3" | "2a0"
+                            horiz   "CENTER" | "LEFT" | "RIGHT"
+                            vert    "CENTER" | "TOP" | "BOTTOM"
+        maxpapersize    "DEFAULT" | "A3" | "2A0"
         """
         prev_pages = self.pages
         pos = self._pos(pos, append=True)
@@ -221,15 +221,15 @@ class BaseDocument(Subject):
         path        (basestring) pathname to output
         pages       (int)
         dpi         (int) 10..600
-        color       "color" | "mono" | "mono_highquality"
-        format      "bmp" | "tiff" | "jpeg" | "pdf"
+        color       "COLOR" | "MONO" | "MONO_HIGHQUALITY"
+        format      "BMP" | "TIFF" | "JPEG" | "PDF"
         compress    for BMP, not available
-                    for TIFF, "nocompress" | "packbits" |
-                              "jpeg | "jpeg_ttn2" | "g4"
-                    for JPEG, "normal" | "highquality" | "highcompress"
-                    for PDF,  "normal" | "highquality" | "highcompress" |
-                              "mrc_normal" | "mrc_highquality" |
-                              "mrc_highcompress"
+                    for TIFF, "NOCOMPRESS" | "PACKBITS" |
+                              "JPEG | "JPEG_TTN2" | "G4"
+                    for JPEG, "NORMAL" | "HIGHQUALITY" | "HIGHCOMPRESS"
+                    for PDF,  "NORMAL" | "HIGHQUALITY" | "HIGHCOMPRESS" |
+                              "MRC_NORMAL" | "MRC_HIGHQUALITY" |
+                              "MRC_HIGHCOMPRESS"
         """
         path = cp(path)
         if isinstance(pos, (list, tuple)):
@@ -352,13 +352,13 @@ class BaseDocument(Subject):
         pos = self._pos(pos)
         abspos = self.absolute_page(pos)
         if auto:
-            XDW_RotatePageAuto(self.doc.handle, abspos + 1)
+            XDW_RotatePageAuto(self.handle, abspos + 1)
             return
         degree %= 360
         if degree == 0:
             return
         if degree in (90, 180, 270):
-            XDW_RotatePage(self.doc.handle, abspos + 1, degree)
+            XDW_RotatePage(self.handle, abspos + 1, degree)
             return
         check_PIL()
         dpi = int(max(10, min(600, max(self.page(pos).resolution))))
@@ -390,7 +390,7 @@ class BaseDocument(Subject):
     def content_text(self, type=None):
         """Get all content text.
 
-        type    None | "image" | "application"
+        type    None | "IMAGE" | "APPLICATION"
                 None means both.
         """
         return joinf(PSEP, [pg.content_text(type=type) for pg in self])
@@ -408,7 +408,7 @@ class BaseDocument(Subject):
     def find_content_text(self, pattern, type=None):
         """Find given pattern (text or regex) in all content text.
 
-        type    None | "image" | "application"
+        type    None | "IMAGE" | "APPLICATION"
                 None means both.
         """
         func = lambda pg: pg.content_text(type=type)

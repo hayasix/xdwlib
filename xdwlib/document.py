@@ -63,25 +63,25 @@ def create_from_image(input_path, output_path=None,
         compress="NORMAL",
         zoom=0,  # %; 0=100%
         size=Point(0, 0),  # Point (in mm), int or str; 1,2..10=A3R,A3..B5
-        align=("center", "center"),  # left/center/right, top/center/bottom
+        align=("CENTER", "CENTER"),  # LEFT/CENTER/RIGHT, TOP/CENTER/BOTTOM
         maxpapersize="DEFAULT",
         ):
     """XDW generator from image file.
 
-    fitimage        "fitdef" | "fit" | "fitdef_dividebmp" |
-                    "userdef" | "userdef_fit"
-    compress        "normal" | "lossless" | "nocompress" |
-                    "highquality" | "highcompress" |
-                    "jpeg" | "jpeg_ttn2" | "packbits" | "g4" |
-                    "mrc_normal" | "mrc_highquality" | "mrc_highcompress"
+    fitimage        "FITDEF" | "FIT" | "FITDEF_DIVIDEBMP" |
+                    "USERDEF" | "USERDEF_FIT"
+    compress        "NORMAL" | "LOSSLESS" | "NOCOMPRESS" |
+                    "HIGHQUALITY" | "HIGHCOMPRESS" |
+                    "JPEG" | "JPEG_TTN2" | "PACKBITS" | "G4" |
+                    "MRC_NORMAL" | "MRC_HIGHQUALITY" | "MRC_HIGHCOMPRESS"
     zoom            (float) in percent; 0 means 100%.  < 1/1000 is ignored.
     size            (Point) in mm; for fitimange "userdef" or "userdef_fit"
                     (int)   1=A3R, 2=A3, 3=A4R, 4=A4, 5=A5R, 6=A5,
                             7=B4R, 8=B4, 9=B5R, 10=B5
     align           (horiz, vert) where:
-                        horiz   "center" | "left" | "right"
-                        vert    "center" | "top" | "bottom"
-    maxpapersize    "default" | "a3" | "2a0"
+                        horiz   "CENTER" | "LEFT" | "RIGHT"
+                        vert    "CENTER" | "TOP" | "BOTTOM"
+    maxpapersize    "DEFAULT" | "A3" | "2A0"
 
     Returns actual pathname of generated document, which may be different
     from `output_path' argument.

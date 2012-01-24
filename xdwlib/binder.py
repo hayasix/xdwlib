@@ -152,7 +152,7 @@ class Binder(Subject, XDWFile):
     def content_text(self, type=None):
         """Get all content text.
 
-        type    None | "image" | "application"
+        type    None | "IMAGE" | "APPLICATION"
                 None means both.
         """
         return joinf(PSEP, [doc.content_text(type=type) for doc in self])

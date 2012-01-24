@@ -50,8 +50,8 @@ class Annotation(Annotatable, Observer):
     @staticmethod
     def all_colors(fusen=False):
         """Returns all colors available."""
-        return tuple(sorted(c.lower() for c
-                in (XDW_COLOR_FUSEN if fusen else XDW_COLOR).values()))
+        return tuple(sorted(
+                (XDW_COLOR_FUSEN if fusen else XDW_COLOR).values()))
 
     def __init__(self, pg, pos, parent=None):
         self.pos = pos
@@ -142,10 +142,16 @@ class Annotation(Annotatable, Observer):
         if attrname in XDW_ANNOTATION_ATTRIBUTE:
             if self.type == "FUSEN" and attrname.endswith("Color"):
                 value = XDW_COLOR_FUSEN.normalize(value)
-            special = isinstance(XDW_ANNOTATION_ATTRIBUTE[attrname][1], XDWConst)
-            if special or isinstance(value, (int, float)):
-                value = int(scale(attrname, value, store=True))
-                value = c_int(value)
+            t, unit, limited = XDW_ANNOTATION_ATTRIBUTE[attrname]
+            anntype = XDW_ANNOTATION_TYPE.inner(self.type)
+            if limited and anntype not in limited:
+                raise AttributeError(
+                        "illegal attribute {0}.{1}".format(self.type, name))
+            if t == 0 or isinstance(unit, XDWConst):
+                if t == 0 and not isinstance(value, (int, float)):
+                    raise ValueError(
+                            "numeric data required, text given")
+                value = c_int(int(scale(attrname, value, store=True)))
                 XDW_SetAnnotationAttributeW(
                         self.page.doc.handle,
                         self.handle,
@@ -154,7 +160,10 @@ class Annotation(Annotatable, Observer):
                         byref(value),
                         0,
                         0)
-            elif isinstance(value, basestring):
+            elif t == 1:
+                if not isinstance(value, basestring):
+                    raise ValueError(
+                            "text data required, numeric given")
                 if self.is_unicode and unicode_enabled:
                     texttype = XDW_TEXT_UNICODE
                 else:

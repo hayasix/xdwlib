@@ -201,11 +201,11 @@ class Page(Annotatable, Observer):
 
     def color_scheme(self):
         if self.is_color:
-            return "color"
+            return "COLOR"
         elif 1 < self.bpp:
-            return "mono_highquality"
+            return "MONO_HIGHQUALITY"
         else:
-            return "mono"
+            return "MONO"
 
     def __repr__(self):
         return u"Page({0}[{1}])".format(self.doc.name, self.pos)
@@ -275,7 +275,7 @@ class Page(Annotatable, Observer):
     def content_text(self, type=None):
         """Returns content text of page.
 
-        type    None | "image" | "application"
+        type    None | "IMAGE" | "APPLICATION"
                 None means both.
         """
         if type and type.upper() != self.type:
@@ -317,7 +317,7 @@ class Page(Annotatable, Observer):
     def reduce_noise(self, level=XDW_REDUCENOISE_NORMAL):
         """Process page by noise reduction engine.
 
-        level   "normal" | "weak" | "strong"
+        level   "NORMAL" | "WEAK" | "STRONG"
         """
         level = XDW_OCR_NOISEREDUCTION.normalize(level)
         XDW_ReducePageNoise(self.doc.handle, self.absolute_page() + 1, level)
@@ -339,17 +339,17 @@ class Page(Annotatable, Observer):
             ):
         """Process page by OCR engine.
 
-        engine          "default" | "winreader pro"
-        strategy        "standard" | "speed" | "accuracy"
-        proprocessing   "none" | "speed" | "accuracy"
-        noise_reduction "none" | "normal" | "weak" | "strong"
+        engine          "DEFAULT" | "WINREADER PRO"
+        strategy        "STANDARD" | "SPEED" | "ACCURACY"
+        proprocessing   "NONE" | "SPEED" | "ACCURACY"
+        noise_reduction "NONE" | "NORMAL" | "WEAK" | "STRONG"
         deskew          (bool)
-        form            "auto" | "table" | "writing"
-        column          "auto" | "horizontal_single" | "horizontal_multi"
-                               | "vertical_single"   | "vertical_multi"
+        form            "AUTO" | "TABLE" | "WRITING"
+        column          "AUTO" | "HORIZONTAL_SINGLE" | "HORIZONTAL_MULTI"
+                               | "VERTICAL_SINGLE"   | "VERTICAL_MULTI"
         rects           (list of Rect)
-        language        "auto" | "japanese" | "english"
-        main_language   "balanced" | "japanese" | "english"
+        language        "AUTO" | "JAPANESE" | "ENGLISH"
+        main_language   "BALANCED" | "JAPANESE" | "ENGLISH"
         use_ascii       (bool)
         insert_space    (bool)
         verbose         (bool)

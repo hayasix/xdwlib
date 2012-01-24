@@ -204,6 +204,8 @@ def mktemp(suffix=".xdw", prefix=""):
 
 def flagvalue(table, value, store=True):
     """Sum up flag values according to XDWConst table."""
+    if store and isinstance(value, (int, float)):
+        return int(value)
     if store:
         if not value:
             return 0
