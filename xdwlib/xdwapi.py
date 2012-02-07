@@ -630,17 +630,22 @@ XDW_OCR_NOISEREDUCTION = XDWConst({
         XDW_REDUCENOISE_STRONG                  : "STRONG",
         }, default=XDW_REDUCENOISE_NONE)
 
-XDW_PRIORITY_NONE                               = 0
-XDW_PRIORITY_SPEED                              = 1
-XDW_PRIORITY_RECOGNITION                        = 2
+# Followings are just the same as official xdw_api.h (7.1-7.2) but wrong.
+#XDW_PRIORITY_NONE                               = 0
+#XDW_PRIORITY_SPEED                              = 1
+#XDW_PRIORITY_RECOGNITION                        = 2
+# Corrected definitions.
+XDW_PRIORITY_SPEED                              = 0
+XDW_PRIORITY_RECOGNITION                        = 1
 
 XDW_OCR_PREPROCESSING = XDWConst({
-        XDW_PRIORITY_NONE                       : "NONE",
+        #XDW_PRIORITY_NONE                       : "NONE",
         XDW_PRIORITY_SPEED                      : "SPEED",
         XDW_PRIORITY_RECOGNITION                : "ACCURACY",
-        }, default=XDW_PRIORITY_NONE)
+        #}, default=XDW_PRIORITY_NONE)
+        }, default=XDW_PRIORITY_SPEED)
 
-XDW_OCR_ENGINE_V4                               = 1  # for = compatibility
+XDW_OCR_ENGINE_V4                               = 1  # for compatibility
 XDW_OCR_ENGINE_DEFAULT                          = 1
 XDW_OCR_ENGINE_WRP                              = 2
 XDW_OCR_ENGINE_FRE                              = 3

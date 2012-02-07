@@ -341,7 +341,7 @@ class Page(Annotatable, Observer):
 
         engine          "DEFAULT" | "WINREADER PRO"
         strategy        "STANDARD" | "SPEED" | "ACCURACY"
-        proprocessing   "NONE" | "SPEED" | "ACCURACY"
+        proprocessing   "SPEED" | "ACCURACY"
         noise_reduction "NONE" | "NORMAL" | "WEAK" | "STRONG"
         deskew          (bool)
         form            "AUTO" | "TABLE" | "WRITING"
@@ -375,8 +375,7 @@ class Page(Annotatable, Observer):
             opt.pAreaRects = byref(rectlist)
         else:
             opt.pAreaRects = NULL
-        XDW_ApplyOcr(self.doc.handle, self.absolute_page() + 1,
-                engine, opt)
+        XDW_ApplyOcr(self.doc.handle, self.absolute_page() + 1, engine, opt)
 
     def clear_ocr_text(self):
         """Clear OCR text."""
