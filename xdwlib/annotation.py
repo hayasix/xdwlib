@@ -148,9 +148,10 @@ class Annotation(Annotatable, Observer):
                 raise AttributeError(
                         "illegal attribute {0}.{1}".format(self.type, name))
             if t == 0 or isinstance(unit, XDWConst):
-                if t == 0 and not isinstance(value, (int, float)):
-                    raise ValueError(
-                            "numeric data required, text given")
+                if not isinstance(unit, XDWConst):
+                    if not isinstance(value, (int, float)):
+                        raise ValueError(
+                                "numeric data required, text given")
                 value = c_int(int(scale(attrname, value, store=True)))
                 XDW_SetAnnotationAttributeW(
                         self.page.doc.handle,
