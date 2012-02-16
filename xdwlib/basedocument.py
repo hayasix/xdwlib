@@ -332,8 +332,9 @@ class BaseDocument(Subject):
     def rasterize(self, pos):
         """Rasterize; convert an application page into DocuWorks image page."""
         pos = self._pos(pos)
-        imagepath = self._preprocess(pos)
-        self._postprocess(pos, imagepath)
+        if self.page(pos).type == "APPLICATION":
+            imagepath = self._preprocess(pos)
+            self._postprocess(pos, imagepath)
 
     def rotate(self, pos, degree=0, auto=False, strategy=1):
         """Rotate page around the center.

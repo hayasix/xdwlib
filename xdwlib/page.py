@@ -292,9 +292,10 @@ class Page(Annotatable, Observer):
         are drawn as parts of image and cannot be handled as effective
         annotations any more.  Application/OCR text will be lost.
         """
-        doc, pos = self.doc, self.pos
-        doc.rasterize(pos)
-        self = doc.page(pos)  # reset
+        if self.type == "APPLICATION":
+            doc, pos = self.doc, self.pos
+            doc.rasterize(pos)
+            self = doc.page(pos)  # reset
 
     def rotate(self, degree=0, auto=False):
         """Rotate page around the center.
