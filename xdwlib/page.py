@@ -248,6 +248,18 @@ class Page(Annotatable, Observer):
     def __setattr__(self, name, value):
         self.__dict__[name] = value
 
+    def get_userattr(self, name):
+        """Get pagewise user defined attribute."""
+        if isinstance(name, unicode):
+            name = name.encode(CODEPAGE)
+        return XDW_GetPageUserAttribute(self.doc.handle, self.absolute_page() + 1, name)
+
+    def set_userattr(self, name, value):
+        """Set pagewise user defined attribute."""
+        if isinstance(name, unicode):
+            name = name.encode(CODEPAGE)
+        XDW_SetPageUserAttribute(self.doc.handle, self.absolute_page() + 1, name, value)
+
     def update(self, event):
         if not isinstance(event, Notification):
             raise TypeError("not an instance of Notification class")

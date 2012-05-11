@@ -21,10 +21,11 @@ import atexit
 from xdwapi import *
 from common import *
 from struct import Point
+from observer import Subject, Observer
 
 
 __all__ = (
-        "XDWFile", "PageForm",
+        "XDWFile", "PageForm", "AttachmentList", "Attachment",
         "xdwopen", "create_sfx", "extract_sfx", "optimize", "copy",
         "VALID_DOCUMENT_HANDLES", "close_all",
         )
@@ -114,6 +115,114 @@ def copy(input_path, output_path=None):
     return output_path
 
 
+class AttachmentList(Subject):
+
+    """Collection of Attachments aka original data."""
+
+    __type__ = "ATTACHMENTLIST"
+
+    def __init__(self, doc, size=None):
+        Subject.__init__(self)
+        self.doc = doc
+        if size:
+            self.size = size
+        else:
+            doc_info = XDW_GetDocumentInformation(doc.handle)
+            self.size = doc_info.nOriginalData
+
+    def __len__(self):
+        return self.size
+
+    def __iter__(self):
+        for pos in range(self.size):
+            yield self.attachment(pos)
+
+    def _pos(self, pos, append=False):
+        append = 1 if append else 0
+        if not (-self.size <= pos < self.size + append):
+            raise IndexError(
+                    "Attachment number must be in [{0}, {1}), {2} given".format(
+                    -self.size, self.size + append, pos))
+        if pos < 0:
+            pos += self.size
+        return pos
+
+    def attachment(self, pos):
+        """Get an attachment, aka original data."""
+        pos = self._pos(pos)
+        if pos not in self.observers:
+            self.observers[pos] = Attachment(self.doc, pos)
+        return self.observers[pos]
+
+    def __getitem__(self, pos):
+        return self.attachment(pos)
+
+    def append(self, path):
+        """Append an attachment, aka original data, at the end of XDW/XBD."""
+        return self.insert(self.size, path)
+
+    def insert(self, pos, path):
+        """Insert an attachment, aka original data.
+
+        pos     position to insert; starts with 0
+        path    pathname of a file to insert
+        """
+        pos = self._pos(pos, append=True)
+        XDW_InsertOriginalData(self.doc.handle, pos + 1, path)
+        self.size += 1
+        att = self.attachment(pos)
+        self.attach(att, EV_ATT_INSERTED)
+
+    def delete(self, pos):
+        """Remove an attachment, aka original data."""
+        pos = self._pos(pos)
+        att = self.attachment(pos)
+        XDW_DeleteOriginalData(self.doc.handle, pos + 1)
+        self.detach(att, EV_ATT_REMOVED)
+        self.size -= 1
+
+    def __delitem__(self, pos):
+        self.delete(pos)
+
+
+class Attachment(Observer):
+
+    """Place holder for attachments aka original data."""
+
+    __type__ = "ATTACHMENT"
+
+    def __init__(self, doc, pos):
+        self.doc = doc
+        self.pos = pos
+        info, text_type = XDW_GetOriginalDataInformationW(doc.handle, pos + 1, codepage=CP)
+        self.text_type = XDW_TEXT_TYPE[text_type]
+        self.size = info.nDataSize
+        self.datetime = datetime.datetime.fromtimestamp(info.nDate)
+        self.name = info.szName
+
+    def update(self, event):
+        """Update self as an observer."""
+        if not isinstance(event, Notification):
+            raise TypeError("not an instance of Notification class")
+        if event.type == EV_ATT_REMOVED:
+            if event.para[0] < self.pos:
+                self.pos -= 1
+        elif event.type == EV_ATT_INSERTED:
+            if event.para[0] < self.pos:
+                self.pos += 1
+        else:
+            raise ValueError("Illegal event type: {0}".format(event.type))
+
+    def save(self, path=None):
+        """Save attached file.
+
+        Returns pathname actually saved.
+        """
+        path = derivative_path(path or self.name)
+        XDW_GetOriginalData(self.doc.handle, self.pos + 1, path)
+        return path
+
+
 class XDWFile(object):
 
     """Docuworks file, XDW or XBD."""
@@ -148,7 +257,7 @@ class XDWFile(object):
         document_info = XDW_GetDocumentInformation(self.handle)
         self.pages = document_info.nPages
         self.version = document_info.nVersion - 3  # DocuWorks version
-        self.original_data = document_info.nOriginalData
+        self.attachments = AttachmentList(self, size=document_info.nOriginalData)
         self.type = XDW_DOCUMENT_TYPE[document_info.nDocType]
         self.editable = bool(document_info.nPermission & XDW_PERM_DOC_EDIT)
         self.annotatable = bool(document_info.nPermission & XDW_PERM_ANNO_EDIT)
@@ -177,8 +286,10 @@ class XDWFile(object):
         self.free()
 
     def __getattr__(self, name):
-        name = unicode(name)
-        attribute_name = inner_attribute_name(name)
+        if isinstance(name, int):
+            name, t, value = XDW_GetDocumentAttributeByOrder(self.handle, name)
+            return (name, makevalue(t, value))
+        attribute_name = unicode(inner_attribute_name(name))
         try:
             return XDW_GetDocumentAttributeByNameW(
                     self.handle, attribute_name, codepage=CP)[1]
@@ -190,8 +301,7 @@ class XDWFile(object):
         if name == "show_annotations":
             XDW_ShowOrHideAnnotations(self.handle, bool(value))
             return
-        name = unicode(name)
-        attribute_name = inner_attribute_name(name)
+        attribute_name = unicode(inner_attribute_name(name))
         if isinstance(value, basestring):
             attribute_type = XDW_ATYPE_STRING
         elif isinstance(value, bool):
@@ -210,6 +320,36 @@ class XDWFile(object):
                     XDW_TEXT_MULTIBYTE, codepage=CP)
             return
         self.__dict__[name] = value
+
+    def get_userattr(self, name):
+        """Get user defined attribute."""
+        if isinstance(name, unicode):
+            name = name.encode(CODEPAGE)
+        return XDW_GetUserAttribute(self.handle, name)
+
+    def set_userattr(self, name, value):
+        """Set user defined attribute."""
+        if isinstance(name, unicode):
+            name = name.encode(CODEPAGE)
+        XDW_SetUserAttribute(self.handle, name, value)
+
+    def get_property(self, name):
+        """Get user defined property."""
+        if isinstance(name, str):
+            name = name.decode(CODEPAGE)
+        return XDW_GetDocumentAttributeByNameW(self.handle, name, codepage=CP)[1]
+
+    def set_property(self, name, value):
+        """Set user defined property."""
+        if isinstance(name, str):
+            name = name.decode(CODEPAGE)
+        if isinstance(value, str):
+            value = value.decode(CODEPAGE)
+        t, value = typevalue(value)
+        XDW_SetDocumentAttributeW(self.handle, name, t, value, XDW_TEXT_MULTIBYTE, codepage=CP)
+
+    getprop = get_property
+    setprop = set_property
 
     def pageform(self, form):
         return PageForm(self, form)
@@ -283,7 +423,7 @@ class PageForm(object):
         XDW_UpdatePageForm(self.xdwfile.handle, sync)
 
     def delete(self, sync=False):
-        """delete page form.
+        """Delete page form.
 
         sync    (bool) also delete pageforms for documents in binder
         """

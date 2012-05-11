@@ -2050,7 +2050,7 @@ def UNICODE(api):
     return func
 
 
-def ATTR(by_order=False, widechar=False):
+def ATTR(by_order=False, widechar=False, custom=False):
     """Decorator to get document attribute via XDWAPI.
 
     NB. Decorated function must be of the same name as XDWAPI's one.
@@ -2064,25 +2064,24 @@ def ATTR(by_order=False, widechar=False):
                 attr_name = create_unicode_buffer(256) if widechar \
                             else create_string_buffer(256)
                 args.append(byref(attr_name))
-            if widechar:
+            if custom or not widechar:
+                args.extend([byref(attr_type), NULL, 0, NULL])
+            else:  # widechar and not custom
                 text_type = c_int()
                 args.extend([byref(attr_type), NULL, 0,
                         byref(text_type), codepage, NULL])
-            else:
-                args.extend([byref(attr_type), NULL, 0, NULL])
+            # Pass 1 - get size of returned value.
             size = TRY(getattr(DLL, api.__name__), *args)
-            if attr_type.value in (XDW_ATYPE_INT, XDW_ATYPE_BOOL):
-                attr_val = c_int()
-            elif attr_type.value == XDW_ATYPE_DATE:
-                attr_val = c_long()
-            elif attr_type.value in (XDW_ATYPE_STRING, XDW_ATYPE_OTHER):
-                attr_val = create_unicode_buffer(size) if widechar \
-                            else create_string_buffer(size)
+            if attr_type.value in (XDW_ATYPE_STRING, XDW_ATYPE_OTHER):
+                if widechar or custom:
+                    attr_val = create_unicode_buffer(size)
+                else:
+                    attr_val = create_string_buffer(size)
             else:
-                raise UnexpectedError(
-                        "invalid attribute type: %08X" % (attr_type.value))
+                attr_val = c_int()
             p = -5 if widechar else -3
             args[p:p + 2] = [byref(attr_val), size]
+            # Pass 2 - get the value actually
             TRY(getattr(DLL, api.__name__), *args)
             result = []
             if by_order:
@@ -2489,7 +2488,7 @@ def XDW_GetDocumentAttributeByName(doc_handle, attr_name):
     pass
 
 
-@ATTR(by_order=True)
+@ATTR(by_order=True, custom=True)
 def XDW_GetDocumentAttributeByOrder(doc_handle, order):
     """XDW_GetDocumentAttributeByOrder(doc_handle, order) --> (attr_name, attr_type, attr_val)"""
     pass
@@ -2695,13 +2694,13 @@ def XDW_GetProtectionInformation(input_path):
     return protection_info
 
 
-@ATTR
+@ATTR(custom=True)
 def XDW_GetAnnotationCustomAttributeByName(ann_handle, attr_name):
     """XDW_GetAnnotationCustomAttributeByName(ann_handle, attr_name) --> (attr_type, attr_val)"""
     pass
 
 
-@ATTR(by_order=True)
+@ATTR(by_order=True, custom=True)
 def XDW_GetAnnotationCustomAttributeByOrder(ann_handle, order):
     """XDW_GetAnnotationCustomAttributeByOrder(ann_handle, order) --> (attr_name, attr_type, attr_val)"""
     pass
@@ -2713,10 +2712,11 @@ def XDW_GetAnnotationCustomAttributeNumber(ann_handle):
     pass
 
 
-@APPEND(NULL)
+@RAISE
 def XDW_SetAnnotationCustomAttribute(doc_handle, ann_handle, attr_name, attr_type, attr_val):
     """XDW_SetAnnotationCustomAttribute(doc_handle, ann_handle, attr_name, attr_type, attr_val)"""
-    pass
+    size = len(attr_val) if isinstance(attr_val, basestring) else 0
+    return DLL.XDW_SetAnnotationCustomAttribute(doc_handle, ann_handle, attr_name, attr_type, attr_val, NULL)
 
 
 @UNICODE
@@ -2807,6 +2807,6 @@ def XDW_GetOriginalDataInformationW(doc_handle, org_data, codepage=932):
     """XDW_GetOriginalDataInformationW(doc_handle, org_data, codepage=932) --> (orgdata_infow, text_type)"""
     text_type = c_int()
     orgdata_infow = XDW_ORGDATA_INFOW()
-    TRY(DLL.XDW_GetOriginalDataInfomationW, doc_handle, org_data, byref(orgdata_infow), byref(text_type), codepage, NULL)
+    TRY(DLL.XDW_GetOriginalDataInformationW, doc_handle, org_data, byref(orgdata_infow), byref(text_type), codepage, NULL)
     return (orgdata_infow, text_type.value)
     # NB. orgdata_infow.nDate is UTC Unix time.

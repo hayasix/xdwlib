@@ -216,6 +216,52 @@ class Annotation(Annotatable, Observer):
         else:
             self.__dict__[name] = value
 
+    def get_userattr(self, name):
+        """Get annotationwise user defined attribute."""
+        if isinstance(name, unicode):
+            name = name.encode(CODEPAGE)
+        return XDW_GetAnnotationUserAttribute(self.handle, name)
+
+    def set_userattr(self, name, value):
+        """Set annotationwise user defined attribute."""
+        if isinstance(name, unicode):
+            name = name.encode(CODEPAGE)
+        XDW_SetAnnotationUserAttribute(self.page.doc.handle, self.handle, name, value)
+
+    def get_property(self, name):
+        """Get annotationwise custom (ie. with-type) user defined property."""
+        if isinstance(name, str):
+            name = name.decode(CODEPAGE)
+        if isinstance(name, unicode):
+            return makevalue(*XDW_GetAnnotationCustomAttributeByName(self.handle, name))
+        if not isinstance(name, int):
+            raise TypeError("name must be unicode or int")
+        # You can get any custom attribute by order (number) which starts with 0.
+        attrs = self.customattrs()
+        if name < 0:
+            name += attrs
+        if not (0 <= name < attrs):
+            raise IndexError("attribute order out of range [0, %d)" % attrs)
+        name, t, value = XDW_GetAnnotationCustomAttributeByOrder(self.handle, name + 1)
+        return (name, makevalue(t, value))
+
+    def properties(self):
+        """Get number of annotationwise custom (ie. with-type) user defined property."""
+        return XDW_GetAnnotationCustomAttributeNumber(self.handle)
+
+    def set_property(self, name, value):
+        """Set annotationwise custom (ie. with-type) user defined property."""
+        if isinstance(name, str):
+            name = name.decode(CODEPAGE)
+        if isinstance(value, str):
+            value = value.decode(CODEPAGE)
+        t, value = typevalue(value)
+        XDW_SetAnnotationCustomAttribute(self.page.doc.handle, self.handle, name, t, value)
+
+    getprop = get_property
+    setprop = set_property
+    props = properties
+
     def update(self, event):
         """Update self as an observer."""
         if not isinstance(event, Notification):

@@ -33,7 +33,7 @@ __all__ = (
         "environ", "get_viewer",
         "inner_attribute_name", "outer_attribute_name",
         "adjust_path", "cp", "derivative_path", "mktemp",
-        "joinf", "flagvalue", "scale", "unpack",
+        "joinf", "flagvalue", "typevalue", "makevalue", "scale", "unpack",
         "XDWTemp",
         )
 
@@ -53,9 +53,11 @@ EV_PAGE_REMOVED = 21
 EV_PAGE_INSERTED = 22
 EV_ANN_REMOVED = 31
 EV_ANN_INSERTED = 32
+EV_ATT_REMOVED = 41
+EV_ATT_INSERTED = 42
 
 
-BLANKPAGE = base64.b64decode(
+BLANKPAGE = (
         "YA6CAQeAAwDAE4MEAQ0KAWGCBK1jggSNBFFr4XC6JKM++++6O4EEUJcYphV1"
         "osL07eKZEHLrKOXKqTPdU0hx157ungI4gKmjnlFRpjAsV5muZ2XThEGiGR2n"
         "iF1zPnAKss5KtFsbNUpRnSqPv/3PjX7bNSJpY5XTaCsR0wSJKusrBWWdLyrE"
@@ -83,7 +85,7 @@ BLANKPAGE = base64.b64decode(
         "/linqmfRtX+cwuu5h1+ryOlI9JRkpyUpIATEqCZMjgWZxG9Lr7F9LrRpS0+u"
         "Iu15yzQVWGKYwqc/FqVIqdCNZ2GH78VOiq6O6Z6Kv4Ks7ukFTpKs9FTCp01V"
         "KeAO5OV1pR017/sBaYtCOxaHgGUagAEAggEAgwIHJ4QCBI2FBFLFTQqGBBoA"
-        "AAA=")
+        "AAA=").decode("base64")
 
 
 INCH = 25.4
@@ -216,6 +218,35 @@ def flagvalue(table, value, store=True):
     return ",".join(table[b] for b in sorted(table.keys()) if b & value)
 
 
+def typevalue(value):
+    """Determine object type by object itself."""
+    if isinstance(value, bool):
+        return (XDW_ATYPE_BOOL, -1 if value else 0)
+    if isinstance(value, int):
+        return (XDW_ATYPE_INT, value)
+    elif isinstance(value, str):
+        return (XDW_ATYPE_STRING, value)
+    elif isinstance(value, unicode):
+        return (XDW_ATYPE_STRING, value)
+    elif isinstance(value, (datetime.datetime, datetime.date)):
+        return (XDW_ATYPE_DATE, c_int(time.mktime(value.timetuple())))
+    else:
+        return (XDW_ATYPE_OTHER, byref(value))
+
+
+def makevalue(t, value):
+    t = XDW_ATTRIBUTE_TYPE.normalize(t)
+    if t == XDW_ATYPE_INT:
+        return int(value)
+    elif t == XDW_ATYPE_STRING:
+        return unicode(value)
+    elif t == XDW_ATYPE_DATE:
+        return datetime.datetime.fromtimestamp(value)
+    elif t == XDW_ATYPE_BOOL:
+        return bool(value)
+    return value
+
+
 def scale(attrname, value, store=False):
     """Scale actual size (length) to stored value and vice versa."""
     unit = XDW_ANNOTATION_ATTRIBUTE[attrname][1]
@@ -255,7 +286,6 @@ class XDWTemp(object):
         self.fd, self.path = tempfile.mkstemp(*args)
         if blank_page:
             os.write(self.fd, BLANKPAGE)
-        return self.path
 
     def __enter__(self):
         return self
@@ -272,3 +302,14 @@ class XDWTemp(object):
 
     def close(self):
         os.fdopen(self.fd).close()
+
+    def seek(self, pos, how=0):
+        """Change read/write pointer in the temporary file.
+
+        pos     position in stream by bytes
+        how     base; 0=top, 1=current, 2=bottom
+        """
+        os.lseek(self.fd, pos, how)
+
+    def read(self, size):
+        return os.read(self.fd, size)
