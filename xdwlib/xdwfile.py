@@ -115,6 +115,20 @@ def copy(input_path, output_path=None):
     return output_path
 
 
+def protection_info(path):
+    """Get protection information on a document/binder.
+
+    Returns (protect_type, permission) where:
+    protect_type    "PSWD" | "PSWD128" | "PKI" | "STAMP" | "CONTEXT_SERVICE"
+    permission      allowed operation(s); comma separated list of
+                    "EDIT_DOCUMENT", "EDIT_ANNOTATION", "PRINT" and "COPY"
+    """
+    info = XDW_GetProtectionInformation(cp(path))
+    protect_type = XDW_PROTECT[info.nProtectType]
+    permission = flagvalue(XDW_PERM, info.nPermission, store=False)
+    return (protect_type, permission)
+
+
 class AttachmentList(Subject):
 
     """Collection of Attachments aka original data."""

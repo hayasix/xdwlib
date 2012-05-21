@@ -297,6 +297,13 @@ XDW_PERM_ANNO_EDIT                  = 0x04
 XDW_PERM_PRINT                      = 0x08
 XDW_PERM_COPY                       = 0x10
 
+XDW_PERM = XDWConst({
+        XDW_PERM_DOC_EDIT           : "EDIT_DOCUMENT",
+        XDW_PERM_ANNO_EDIT          : "EDIT_ANNOTATION",
+        XDW_PERM_PRINT              : "PRINT",
+        XDW_PERM_COPY               : "COPY",
+        })
+
 XDW_CREATE_FITDEF                   = 0
 XDW_CREATE_FIT                      = 1
 XDW_CREATE_USERDEF                  = 2
@@ -432,11 +439,21 @@ XDW_ANNOTATION                      = 4
 
 # protection
 
+XDW_PROTECT_NONE                    = 0
 XDW_PROTECT_PSWD                    = 1
 XDW_PROTECT_PSWD128                 = 3
 XDW_PROTECT_PKI                     = 4
 XDW_PROTECT_STAMP                   = 5
 XDW_PROTECT_CONTEXT_SERVICE         = 6
+
+XDW_PROTECT = XDWConst({
+        XDW_PROTECT_NONE            : "NONE",
+        XDW_PROTECT_PSWD            : "PASSWORD",
+        XDW_PROTECT_PSWD128         : "PASSWORD128",
+        XDW_PROTECT_PKI             : "PKI",
+        XDW_PROTECT_STAMP           : "STAMP",
+        XDW_PROTECT_CONTEXT_SERVICE : "CONTEXT_SERVICE",
+        }, default=XDW_PROTECT_NONE)
 
 # signature
 
