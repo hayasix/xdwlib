@@ -129,6 +129,87 @@ def protection_info(path):
     return (protect_type, permission)
 
 
+def protect(input_path, output_path=None, protect_type="PASSWORD", auth="NONE", **options):
+    """Generate protected document/binder.
+
+    protect_type    "PASSWORD" | "PASSWORD128" | "PKI"
+    auth            "NONE" | "NODIALOGUE" | "CONDITIONAL"
+
+    **options for PSWD and PSWD128:
+    permission      allowed operation(s); comma separated list of
+                    "EDIT_DOCUMENT", "EDIT_ANNOTATION", "PRINT" and "COPY"
+    password        str or None; password to open document/binder
+    fullaccess      str or None; password to open document/binder with full-access privilege
+    comment         str or None; notice in password dialogue
+
+    **options for PKI:
+    permission      allowed operation(s); comma separated list of
+                    "EDIT_DOCUMENT", "EDIT_ANNOTATION", "PRINT" and "COPY"
+    certificates    list of certificates in DER (RFC3280) formatted str
+    fullaccesscerts list of certificates in DER (RFC3280) formatted str
+
+    Returns pathname of protected file.
+    """
+    input_path, output_path = cp(input_path), cp(output_path)
+    output_path = derivative_path(output_path or input_path)
+    protect_option = XDW_PROTECT_OPTION()
+    protect_option.nAuthMode = XDW_AUTH.normalize(auth)
+    protect_type = XDW_PROTECT.normalize(protect_type)
+    if protect_type in (XDW_PROTECT_PSWD, XDW_PROTECT_PSWD128):
+        opt = XDW_SECURITY_OPTION_PSWD()
+        opt.nPermission = flagvalue(XDW_PERM, options.get("permission"), store=True)
+        opt.szOpenPswd = options.get("password") or ""
+        opt.szFullAccessPswd = options.get("fullaccess") or ""
+        opt.lpszComment = options.get("comment") or ""
+    elif protect_type == XDW_PROTECT_PKI:
+        opt = XDW_SECURITY_OPTION_PKI()
+        opt.nPermission = flagvalue(XDW_PERM, options.get("permission"), store=True)
+        certificates = options.get("certificates")
+        if not certificates:
+            raise ValueError("a list of certificate(s) is required")
+        fullaccesscerts = options.get("fullacccesscerts")
+        opt.nCertsNum = len(certificates) + len(fullaccesscerts)
+        opt.nFullAccessCertsNum = len(fullaccesscerts)
+        certs = fullaccesscerts + certificates
+        ders = XDW_DER_CERTIFICATE() * opt.nCertsNum
+        for i in range(opt.nCertsNum):
+            ders[i].pCert = pointer(certs[i])
+            ders[i].nCertSize = len(certs[i])
+        opt.lpxdcCerts = byref(ders)
+    elif protect_type in (XDW_PROTECT_STAMP, XDW_PROTECT_CONTEXT_SERVICE):
+        raise NotImplementedError("currently STAMP and CONTEXT_SERVICE is not available")
+    else:
+        raise ValueError("protect_type must be PASSWORD, PASSWORD128 or PKI")
+    try:
+        XDW_ProtectDocument(input_path, output_path, protect_type, opt, protect_option)
+    except ProtectModuleError as e:
+        msg = XDW_SECURITY_PKI_ERROR[opt.nErrorStatus]
+        if 0 <= opt.nFirstErrorCert:
+            msg += " in cert[%d]" % opt.nFirstErrorCert
+        raise ProtectModuleError(msg)
+    return output_path
+
+
+def unprotect(input_path, output_path=None, auth="NONE"):
+    """Release protection on document/binder.
+
+    auth            "NODIALOGUE" | "CONDITIONAL"
+
+    Returns pathname of unprotected file.
+    """
+    input_path, output_path = cp(input_path), cp(output_path)
+    output_path = derivative_path(output_path or input_path)
+    if protection_info(input_path)[0] not in ("PKI", "STAMP"):
+        raise ValueError("file is neither protected in PKI nor STAMP")
+    auth = XDW_AUTH.normalize(auth)
+    if auth not in (XDW_AUTH_NODIALOGUE, XDW_AUTH_CONDITIONAL_DIALOGUE):
+        raise ValueError("auth must be NODIALOGUE or CONDITIONAL")
+    opt = XDW_RELEASE_PROTECTION_OPTION()
+    opt.nAuthMode = auth
+    XDW_ReleaseProtectionOfDocument(input_path, output_path, opt)
+    return output_path
+
+
 class AttachmentList(Subject):
 
     """Collection of Attachments aka original data."""

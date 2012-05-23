@@ -173,7 +173,9 @@ def adjust_path(path, dir="", ext=".xdw", coding=None):
 
 def cp(path, dir="", ext=".xdw"):
     """Returns adjust_path(pathname, coding=CODEPAGE)"""
-    return adjust_path(path, dir=dir, ext=ext, coding=CODEPAGE)
+    if path:
+        return adjust_path(path, dir=dir, ext=ext, coding=CODEPAGE)
+    return None
 
 
 def derivative_path(path):
