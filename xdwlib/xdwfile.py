@@ -121,7 +121,7 @@ def protection_info(path):
     """Get protection information on a document/binder.
 
     Returns (protect_type, permission) where:
-    protect_type    "PSWD" | "PSWD128" | "PKI" | "STAMP" | "CONTEXT_SERVICE"
+    protect_type    "PASSWORD" | "PASSWORD128" | "PKI" | "STAMP" | "CONTEXT_SERVICE"
     permission      allowed operation(s); comma separated list of
                     "EDIT_DOCUMENT", "EDIT_ANNOTATION", "PRINT" and "COPY"
     """
@@ -210,6 +210,33 @@ def unprotect(input_path, output_path=None, auth="NONE"):
     opt.nAuthMode = auth
     XDW_ReleaseProtectionOfDocument(input_path, output_path, opt)
     return output_path
+
+
+def sign(input_path, output_path=None, page=0, position=None, type_="STAMP",
+        certificate=None):
+    """Place a signature on document/binder page.
+
+    page            page number to paste signature; starts with 0
+    position        Point; position to paste signature; default=(0, 0)
+    type_           "STAMP" | "PKI"
+    certificate     certificate in DER (RFC3280) formatted str; valid for PKI
+
+    Returns pathname of signed file.
+    """
+    input_path, output_path = cp(input_path), cp(output_path)
+    output_path = derivative_path(output_path or input_path)
+    opt = XDW_SIGNATURE_OPTION_V5()
+    opt.nPage = page + 1
+    opt.nHorPos, opt.nVerPos = ((position or Point(0, 0)) * 100).int()
+    opt.nSignatureType = XDW_SIGNATURE.normalize(type_)
+    type_ = XDW_SIGNATURE.normalize(type_)
+    if type_ == XDW_SIGNATURE_STAMP:
+        modopt = None
+    else:  # type_ == XDW_SIGNATURE_PKI
+        modopt = XDW_SIGNATURE_MODULE_OPTION_PKI()
+        modopt.pSignerCert = ptr(cert)
+        modopt.nSignerCertSize = len(cert)
+    XDW_SignDocument(input_path, output_path, opt, modopt)
 
 
 class AttachmentList(Subject):
@@ -510,12 +537,11 @@ class BaseSignature(object):
         self.type = "UNKNOWN"  # Override this in subclasses.
 
     def __repr__(self):
-        return  "{0}({1}[{2}]{3};{4})".format(
+        return  "{0}({1}[{2}]{3})".format(
                 self.__class__.__name__,
                 self.xdwfile,
                 self.page,
                 self.position,
-                self.type,
                 )
 
 
@@ -528,7 +554,6 @@ class StampSignature(BaseSignature):
             memo="",
             ):
         Signature.__init__(self, xdwfile, page, position, size, dt)
-        self.type = "STAMP"
         self.stamp_name = stamp_name
         self.owner_name = owner_name
         self.valid_until = valid_until
@@ -551,7 +576,6 @@ class PKISignature(BaseSignature):
             signing_time=None,
             ):
         Signature.__init__(self, xdwfile, page, position, size, dt)
-        self.type = "PKI"
         self.module = module
         self.subjectdn = subjectdn  # max. 511 bytes
         self.subject = subject  # CN, OU, O or E

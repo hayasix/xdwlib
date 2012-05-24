@@ -2695,9 +2695,18 @@ def XDW_AddAnnotationOnParentAnnotation(doc_handle, ann_handle, ann_type, hpos, 
 
 
 @RAISE
-def XDW_SignDocument(input_path, output_path, option, module_option, module_status):
-    """XDW_SignDocument(input_path, output_path, option, module_option, module_status)"""
-    return DLL.XDW_SignDocument(input_path, output_path, byref(option), byref(module_option), NULL, byref(module_status))
+def XDW_SignDocument(input_path, output_path, option, module_option):
+    """XDW_SignDocument(input_path, output_path, option, module_option)"""
+    module_status = XDW_SIGNATURE_MODULE_STATUS()
+    try:
+        TRY(DLL.XDW_SignDocument, input_path, output_path, ptr(option), ptr(module_option), NULL, ptr(module_status))
+    except SignatureModuleError as e:
+        if module_status.nSignatureType == XDW_SIGNATURE_STAMP:
+            msg = XDW_SIGNATURE_STAMP_ERROR[module_status.nErrorStatus]
+        else:
+            msg = XDW_SIGNATURE_PIK_ERROR[module_status.nErrorStatus]
+        raise SignatureModuleError(msg)
+    return 0
 
 
 def XDW_GetSignatureInformation(doc_handle, pos):
@@ -2720,7 +2729,7 @@ def XDW_GetSignatureInformation(doc_handle, pos):
 @RAISE
 def XDW_UpdateSignatureStatus(doc_handle, signature, module_option, module_status):
     """XDW_UpdateSignatureStatus(doc_handle, signature, module_option, module_status)"""
-    return XDW_UpdateSignatureStatus(doc_handle, signature, ptr(module_option), NULL, ptr(module_status))
+    return DLL.XDW_UpdateSignatureStatus(doc_handle, signature, ptr(module_option), NULL, ptr(module_status))
 
 
 @RAISE
