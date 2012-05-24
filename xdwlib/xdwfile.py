@@ -21,11 +21,13 @@ import atexit
 from xdwapi import *
 from common import *
 from struct import Point
+from timezone import *
 from observer import Subject, Observer
 
 
 __all__ = (
         "XDWFile", "PageForm", "AttachmentList", "Attachment",
+        "StampSignature", "PKISignature",
         "xdwopen", "create_sfx", "extract_sfx", "optimize", "copy",
         "VALID_DOCUMENT_HANDLES", "close_all",
         )
@@ -365,6 +367,8 @@ class XDWFile(object):
         self.binder_size = XDW_BINDER_SIZE[document_info.nBinderSize]
         # Document attributes.
         self.attributes = XDW_GetDocumentAttributeNumber(self.handle)
+        # Attached signatures.
+        self.signatures = XDW_GetDocumentSignatureNumber(self.handle)
 
     def update_pages(self):
         """Update number of pages; used after insert multiple pages in."""
@@ -453,6 +457,112 @@ class XDWFile(object):
         """Get all text in page form."""
         return ASEP.join(self.pageform(form).text
                 for form in ("header", "footer"))
+
+    def signature(self, pos):
+        """Get signature information.
+
+        Returns StampSignature or PKISignature object.
+        """
+        siginfo, modinfo = XDW_GetSignatureInformation(self.handle, pos + 1)
+        is_stamp = (siginfo.nSignatureType == XDW_SIGNATURE_STAMP)
+        sig = (StampSignature if is_stamp else PKISignature)(
+                self,
+                siginfo.nPage - 1,
+                Point(siginfo.nHorPos, siginfo.nVerPos) / 100.0,
+                Point(siginfo.nWidth, siginfo.nHeight) / 100.0,
+                fromunixtime(siginfo.nSignedTime),
+                )
+        if is_stamp:
+            sig.stamp_name = modinfo.lpszStampName
+            sig.owner_name = modinfo.lpszOwnerName
+            sig.valid_until = fromunixtime(modinfo.nValidDate)
+            sig.memo = modinfo.lpszRemarks
+            sig.document_status = XDW_SIGNATURE_STAMP_DOC[modinfo.nDocVerificationStatus]
+            sig.stamp_status = XDW_SIGNATURE_STAMP_STAMP[modinfo.nStampVerificationStatus]
+        else:
+            def parsedt(s):
+                return datetime.datetime.strptime(s, "%Y/%m/%d %H:%M:%S")
+            sig.module = modinfo.lpszModule
+            sig.subject_dn = modinfo.lpszSubjectDN
+            sig.subject = modinfo.lpszSubject
+            sig.issuer_dn = modinfo.lpszIssuerDN
+            sig.issuer = modinfo.lpszIssuer
+            sig.not_before = parsedt(modinfo.lpszNotBefore)
+            sig.not_after = parsedt(modinfo.lpszNotAfter)
+            sig.serial = modinfo.lpszSerial
+            sig.signer_cert = modinfo.signer_cert
+            sig.memo = modinfo.lpszRemarks
+            sig.signing_time = parsedt(modinfo.lpszSigningTime)
+            sig.document_status = XDW_SIGNATURE_PKI_DOC[modinfo.nDocVerificationStatus]
+            sig.cert_type = XDW_SIGNATURE_PKI_TYPE[modinfo.nCertVerificationType]
+            sig.cert_status = XDW_SIGNATURE_PKI_CERT[modinfo.nCertVerificationStatus]
+        return sig
+
+
+class BaseSignature(object):
+
+    def __init__(self, xdwfile, page, position, size, dt):
+        self.xdwfile = xdwfile
+        self.page = page
+        self.position = position
+        self.size = size
+        self.dt = dt
+        self.type = "UNKNOWN"  # Override this in subclasses.
+
+    def __repr__(self):
+        return  "{0}({1}[{2}]{3};{4})".format(
+                self.__class__.__name__,
+                self.xdwfile,
+                self.page,
+                self.position,
+                self.type,
+                )
+
+
+class StampSignature(BaseSignature):
+
+    def __init__(self, xdwfile, page, position, size, dt,
+            stamp_name="",
+            owner_name="",
+            valid_until=None,
+            memo="",
+            ):
+        Signature.__init__(self, xdwfile, page, position, size, dt)
+        self.type = "STAMP"
+        self.stamp_name = stamp_name
+        self.owner_name = owner_name
+        self.valid_until = valid_until
+        self.memo = memo
+
+
+class PKISignature(BaseSignature):
+
+    def __init__(self, xdwfile, page, position, size, dt,
+            module="",
+            subjectdn="",
+            subject="",
+            issuerdn="",
+            issuer="",
+            not_before=None,
+            not_after=None,
+            serial=None,
+            signer_cert=None,
+            memo="",
+            signing_time=None,
+            ):
+        Signature.__init__(self, xdwfile, page, position, size, dt)
+        self.type = "PKI"
+        self.module = module
+        self.subjectdn = subjectdn  # max. 511 bytes
+        self.subject = subject  # CN, OU, O or E
+        self.issuerdn = issuerdn  # max. 511 bytes
+        self.issuer = issuer  # CN, OU, O or E
+        self.not_before = not_before
+        self.not_after = not_after
+        self.serial = serial
+        self.signer_cert = signer_cert
+        self.memo = memo
+        self.signing_time = signing_time
 
 
 class PageForm(object):

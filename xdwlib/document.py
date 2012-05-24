@@ -191,7 +191,7 @@ class Document(BaseDocument, XDWFile):
 
     def __str__(self):
         return u"Document({0}: {1} pages, {2} attachments)".format(
-                self.name, self.pages, self.original_data)
+                self.name, self.pages, len(self.attachments))
 
     def absolute_page(self, pos, append=False):
         """Concrete method over absolute_page()."""

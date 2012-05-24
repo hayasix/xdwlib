@@ -466,14 +466,32 @@ XDW_PROTECT = XDWConst({
 XDW_SIGNATURE_STAMP                                     = 100
 XDW_SIGNATURE_PKI                                       = 102
 
+XDW_SIGNATURE = XDWConst({
+        XDW_SIGNATURE_STAMP                             : "STAMP",
+        XDW_SIGNATURE_PKI                               : "PKI",
+        })
+
 XDW_SIGNATURE_STAMP_DOC_NONE                            = 0
 XDW_SIGNATURE_STAMP_DOC_NOEDIT                          = 1
 XDW_SIGNATURE_STAMP_DOC_EDIT                            = 2
 XDW_SIGNATURE_STAMP_DOC_BAD                             = 3
 
+XDW_SIGNATURE_STAMP_DOC = XDWConst({
+        XDW_SIGNATURE_STAMP_DOC_NONE                    : "NONE",
+        XDW_SIGNATURE_STAMP_DOC_NOEDIT                  : "NOEDIT",
+        XDW_SIGNATURE_STAMP_DOC_EDIT                    : "EDIT",
+        XDW_SIGNATURE_STAMP_DOC_BAD                     : "BAD",
+        })
+
 XDW_SIGNATURE_STAMP_STAMP_NONE                          = 0
 XDW_SIGNATURE_STAMP_STAMP_TRUSTED                       = 1
 XDW_SIGNATURE_STAMP_STAMP_NOTRUST                       = 2
+
+XDW_SIGNATURE_STAMP_STAMP = XDWConst({
+        XDW_SIGNATURE_STAMP_STAMP_NONE                  : "NONE",
+        XDW_SIGNATURE_STAMP_STAMP_TRUSTED               : "TRUSTED",
+        XDW_SIGNATURE_STAMP_STAMP_NOTRUST               : "NOTRUST",
+        })
 
 XDW_SIGNATURE_STAMP_ERROR_OK                            = 0
 XDW_SIGNATURE_STAMP_ERROR_NO_OPENING_CASE               = 1
@@ -483,6 +501,16 @@ XDW_SIGNATURE_STAMP_ERROR_INVALID_DATA                  = 4
 XDW_SIGNATURE_STAMP_ERROR_OUT_OF_MEMORY                 = 100
 XDW_SIGNATURE_STAMP_ERROR_UNKNOWN                       = 9999
 
+XDW_SIGNATURE_STAMP_ERROR = XDWConst({
+        XDW_SIGNATURE_STAMP_ERROR_OK                    : "OK",
+        XDW_SIGNATURE_STAMP_ERROR_NO_OPENING_CASE       : "NO_OPENING_CASE",
+        XDW_SIGNATURE_STAMP_ERROR_NO_SELFSTAMP          : "NO_SELFSTAMP",
+        XDW_SIGNATURE_STAMP_ERROR_OUT_OF_VALIDITY       : "OUT_OF_VALIDITY",
+        XDW_SIGNATURE_STAMP_ERROR_INVALID_DATA          : "INVALID_DATA",
+        XDW_SIGNATURE_STAMP_ERROR_OUT_OF_MEMORY         : "OUT_OF_MEMORY",
+        XDW_SIGNATURE_STAMP_ERROR_UNKNOWN               : "UNKNOWN",
+        })
+
 XDW_SIGNATURE_PKI_DOC_UNKNOWN                           = 0
 XDW_SIGNATURE_PKI_DOC_GOOD                              = 1
 XDW_SIGNATURE_PKI_DOC_MODIFIED                          = 2
@@ -490,11 +518,28 @@ XDW_SIGNATURE_PKI_DOC_BAD                               = 3
 XDW_SIGNATURE_PKI_DOC_GOOD_TRUSTED                      = 4
 XDW_SIGNATURE_PKI_DOC_MODIFIED_TRUSTED                  = 5
 
+XDW_SIGNATURE_PKI_DOC = XDWConst({
+        XDW_SIGNATURE_PKI_DOC_UNKNOWN                   : "UNKNOWN",
+        XDW_SIGNATURE_PKI_DOC_GOOD                      : "GOOD",
+        XDW_SIGNATURE_PKI_DOC_MODIFIED                  : "MODIFIED",
+        XDW_SIGNATURE_PKI_DOC_BAD                       : "BAD",
+        XDW_SIGNATURE_PKI_DOC_GOOD_TRUSTED              : "GOOD_TRUSTED",
+        XDW_SIGNATURE_PKI_DOC_MODIFIED_TRUSTED          : "MODIFIED_TRUSTED",
+        })
+
 XDW_SIGNATURE_PKI_TYPE_LOW                              = 0
 XDW_SIGNATURE_PKI_TYPE_MID_LOCAL                        = 1
 XDW_SIGNATURE_PKI_TYPE_MID_NETWORK                      = 2
 XDW_SIGNATURE_PKI_TYPE_HIGH_LOCAL                       = 3
 XDW_SIGNATURE_PKI_TYPE_HIGH_NETWORK                     = 4
+
+XDW_SIGNATURE_PKI_TYPE = XDWConst({
+        XDW_SIGNATURE_PKI_TYPE_LOW                      : "LOW",
+        XDW_SIGNATURE_PKI_TYPE_MID_LOCAL                : "MID_LOCAL",
+        XDW_SIGNATURE_PKI_TYPE_MID_NETWORK              : "MID_NETWORK",
+        XDW_SIGNATURE_PKI_TYPE_HIGH_LOCAL               : "HIGH_LOCAL",
+        XDW_SIGNATURE_PKI_TYPE_HIGH_NETWORK             : "HIGH_NETWORK",
+        })
 
 XDW_SIGNATURE_PKI_CERT_UNKNOWN                          = 0
 XDW_SIGNATURE_PKI_CERT_OK                               = 1
@@ -507,6 +552,20 @@ XDW_SIGNATURE_PKI_CERT_REVOKE_INTERMEDIATE_CERTIFICATE  = 7
 XDW_SIGNATURE_PKI_CERT_INVALID_SIGNATURE                = 8
 XDW_SIGNATURE_PKI_CERT_INVALID_USAGE                    = 9
 XDW_SIGNATURE_PKI_CERT_UNDEFINED_ERROR                  = 10
+
+XDW_SIGNATURE_PKI_CERT = XDWConst({
+        XDW_SIGNATURE_PKI_CERT_UNKNOWN                  : "UNKNOWN",
+        XDW_SIGNATURE_PKI_CERT_OK                       : "OK",
+        XDW_SIGNATURE_PKI_CERT_NO_ROOT_CERTIFICATE      : "NO_ROOT_CERTIFICATE",
+        XDW_SIGNATURE_PKI_CERT_NO_REVOCATION_CHECK      : "NO_REVOCATION_CHECK",
+        XDW_SIGNATURE_PKI_CERT_OUT_OF_VALIDITY          : "OUT_OF_VALIDITY",
+        XDW_SIGNATURE_PKI_CERT_OUT_OF_VALIDITY_AT_SIGNED_TIME : "OUT_OF_VALIDITY_AT_SIGNED_TIME",
+        XDW_SIGNATURE_PKI_CERT_REVOKE_CERTIFICATE       : "REVOKE_CERTIFICATE",
+        XDW_SIGNATURE_PKI_CERT_REVOKE_INTERMEDIATE_CERTIFICATE : "REVOKE_INTERMEDIATE_CERTIFICATE",
+        XDW_SIGNATURE_PKI_CERT_INVALID_SIGNATURE        : "INVALID_SIGNATURE",
+        XDW_SIGNATURE_PKI_CERT_INVALID_USAGE            : "INVALID_USAGE",
+        XDW_SIGNATURE_PKI_CERT_UNDEFINED_ERROR          : "UNDEFINED_ERROR",
+        })
 
 XDW_SIGNATURE_PKI_ERROR_UNKNOWN                         = 0
 XDW_SIGNATURE_PKI_ERROR_OK                              = 1
@@ -530,6 +589,31 @@ XDW_SIGNATURE_PKI_ERROR_NO_ROOT_CERT                    = 18
 XDW_SIGNATURE_PKI_ERROR_BAD_CERT_SIZE                   = 19
 XDW_SIGNATURE_PKI_ERROR_BAD_ARG                         = 20
 XDW_SIGNATURE_PKI_ERROR_BAD_CERT_FORMAT                 = 21
+
+XDW_SIGNATURE_PKI_ERROR = XDWConst({
+        XDW_SIGNATURE_PKI_ERROR_UNKNOWN                 : "UNKNOWN",
+        XDW_SIGNATURE_PKI_ERROR_OK                      : "OK",
+        XDW_SIGNATURE_PKI_ERROR_BAD_PLATFORM            : "BAD_PLATFORM",
+        XDW_SIGNATURE_PKI_ERROR_WRITE_REG_ERROR         : "WRITE_REG_ERROR",
+        XDW_SIGNATURE_PKI_ERROR_BAD_TRUST_LEVEL         : "BAD_TRUST_LEVEL",
+        XDW_SIGNATURE_PKI_ERROR_BAD_REVOKE_CHECK_TYPE   : "BAD_REVOKE_CHECK_TYPE",
+        XDW_SIGNATURE_PKI_ERROR_BAD_AUTO_IMPORT_CERT_FLAG : "BAD_AUTO_IMPORT_CERT_FLAG",
+        XDW_SIGNATURE_PKI_ERROR_BAD_SIGN_CONFIG         : "BAD_SIGN_CONFIG",
+        XDW_SIGNATURE_PKI_ERROR_NO_IMAGE_FILE           : "NO_IMAGE_FILE",
+        XDW_SIGNATURE_PKI_ERROR_BAD_SIGN_CERT           : "BAD_SIGN_CERT",
+        XDW_SIGNATURE_PKI_ERROR_NO_SIGN_CERT            : "NO_SIGN_CERT",
+        XDW_SIGNATURE_PKI_ERROR_NOT_USE_PRIVATE_KEY     : "NOT_USE_PRIVATE_KEY",
+        XDW_SIGNATURE_PKI_ERROR_INVALID                 : "INVALID",
+        XDW_SIGNATURE_PKI_ERROR_BAD_SIGN                : "BAD_SIGN",
+        XDW_SIGNATURE_PKI_ERROR_REVOKE_CHECK_ERROR      : "REVOKE_CHECK_ERROR",
+        XDW_SIGNATURE_PKI_ERROR_OUT_OF_VALIDITY         : "OUT_OF_VALIDITY",
+        XDW_SIGNATURE_PKI_ERROR_NO_CERT                 : "NO_CERT",
+        XDW_SIGNATURE_PKI_ERROR_FAILURE_IMPOPT_CERT     : "FAILURE_IMPOPT_CERT",
+        XDW_SIGNATURE_PKI_ERROR_NO_ROOT_CERT            : "NO_ROOT_CERT",
+        XDW_SIGNATURE_PKI_ERROR_BAD_CERT_SIZE           : "BAD_CERT_SIZE",
+        XDW_SIGNATURE_PKI_ERROR_BAD_ARG                 : "BAD_ARG",
+        XDW_SIGNATURE_PKI_ERROR_BAD_CERT_FORMAT         : "BAD_CERT_FORMAT",
+        })
 
 XDW_SECURITY_PKI_ERROR_UNKNOWN                          = 0
 XDW_SECURITY_PKI_ERROR_OK                               = 1
@@ -2616,12 +2700,21 @@ def XDW_SignDocument(input_path, output_path, option, module_option, module_stat
     return DLL.XDW_SignDocument(input_path, output_path, byref(option), byref(module_option), NULL, byref(module_status))
 
 
-def XDW_GetSignatureInformation(doc_handle, signature, module_info, module_status):
-    """XDW_GetSignatureInformation(doc_handle, signature, module_info, module_status) --> signature_info_v5"""
-    signature_info_v5 = XDW_SIGNATURE_INFO_V5()
-    TRY(DLL.XDW_GetSignatureInformation, doc_handle, signature, byref(signature_info_v5), ptr(module_info), NULL, ptr(module_status))
-    # NB. signature_info_v5.nSignedTime is UTC Unix time.
-    return signature_info_v5
+def XDW_GetSignatureInformation(doc_handle, pos):
+    """XDW_GetSignatureInformation(doc_handle, pos) --> (signature_info, module_info)"""
+    signature_info = XDW_SIGNATURE_INFO_V5()
+    TRY(DLL.XDW_GetSignatureInformation, doc_handle, pos, byref(signature_info), NULL, NULL, NULL)
+    if signature_info.nSignatureType == XDW_SIGNATURE_STAMP:
+        module_info = XDW_SIGNATURE_STAMP_INFO_V5()
+    else:  # signature_info.nSignatureType == XDW_SIGNATURE_PKI
+        module_info = XDW_SIGNATURE_PKI_INFO_V5()
+    module_status = XDW_SIGNATURE_MODULE_STATUS()
+    try:
+        TRY(DLL.XDW_GetSignatureInformation, doc_handle, pos, ptr(signature_info), ptr(module_info), NULL, ptr(module_status))
+    except SignatureModuleError as e:
+        raise SignatureModuleError("signature type {0}, error status {1}".format(module_status.nSignatureType, module_status.nErrorStatus))
+    # NB. signature_info.nSignedTime is UTC Unix time.
+    return (signature_info, module_info)
 
 
 @RAISE
