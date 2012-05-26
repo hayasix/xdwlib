@@ -26,8 +26,6 @@ class DocumentInBinder(BaseDocument, Observer):
 
     """Document part of DocuWorks binder."""
 
-    __type__ = "DOCUMENT_IN_BINDER"
-
     def __init__(self, bdoc, pos):
         BaseDocument.__init__(self)
         self.pos = pos
@@ -41,7 +39,6 @@ class DocumentInBinder(BaseDocument, Observer):
                 self.handle, pos + 1)
         self.pages = document_info.nPages
         self.original_data = document_info.nOriginalData
-        self.type = DocumentInBinder.__type__
 
     def update_pages(self):
         """Concrete method over update_pages()."""

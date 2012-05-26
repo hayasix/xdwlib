@@ -2710,26 +2710,59 @@ def XDW_SignDocument(input_path, output_path, option, module_option):
 
 
 def XDW_GetSignatureInformation(doc_handle, pos):
-    """XDW_GetSignatureInformation(doc_handle, pos) --> (signature_info, module_info)"""
+    """XDW_GetSignatureInformation(doc_handle, pos) --> (signature_info, module_info)
+
+    For PKI based signatures, returning module_info contains additional attribute
+    `signer_cert', which provides actual certificate as a DER (RFC3280) formatted str.
+    Note that accessing module_info.pSignerCert is expected to raise error like GPE.
+    """
     signature_info = XDW_SIGNATURE_INFO_V5()
     TRY(DLL.XDW_GetSignatureInformation, doc_handle, pos, byref(signature_info), NULL, NULL, NULL)
     if signature_info.nSignatureType == XDW_SIGNATURE_STAMP:
         module_info = XDW_SIGNATURE_STAMP_INFO_V5()
+        module_status = XDW_SIGNATURE_MODULE_STATUS()
+        try:
+            TRY(DLL.XDW_GetSignatureInformation,
+                    doc_handle, pos, ptr(signature_info), ptr(module_info), NULL, ptr(module_status))
+        except SignatureModuleError as e:
+            raise SignatureModuleError("signature type {0}, error status {1}".format(
+                    module_status.nSignatureType, module_status.nErrorStatus))
+        # NB. signature_info.nSignedTime is UTC Unix time.
+        return (signature_info, module_info)
     else:  # signature_info.nSignatureType == XDW_SIGNATURE_PKI
         module_info = XDW_SIGNATURE_PKI_INFO_V5()
-    module_status = XDW_SIGNATURE_MODULE_STATUS()
-    try:
-        TRY(DLL.XDW_GetSignatureInformation, doc_handle, pos, ptr(signature_info), ptr(module_info), NULL, ptr(module_status))
-    except SignatureModuleError as e:
-        raise SignatureModuleError("signature type {0}, error status {1}".format(module_status.nSignatureType, module_status.nErrorStatus))
-    # NB. signature_info.nSignedTime is UTC Unix time.
-    return (signature_info, module_info)
+        module_status = XDW_SIGNATURE_MODULE_STATUS()
+        try:  # Try to get certificate size.
+            #module_info.pSignerCert = NULL
+            TRY(DLL.XDW_GetSignatureInformation,
+                    doc_handle, pos, ptr(signature_info), ptr(module_info), NULL, ptr(module_status))
+        except SignatureModuleError as e:
+            raise SignatureModuleError("signature type {0}, error status {1}".format(
+                    module_status.nSignatureType, module_status.nErrorStatus))
+        signer_cert = c_char * module_info.nSignerCertSize
+        module_info.pSignerCert = byref(signer_cert)
+        try:  # Actually get certificate and other attributes.
+            TRY(DLL.XDW_GetSignatureInformation,
+                    doc_handle, pos, ptr(signature_info), ptr(module_info), NULL, ptr(module_status))
+        except SignatureModuleError as e:
+            raise SignatureModuleError("signature type {0}, error status {1}".format(
+                    module_status.nSignatureType, module_status.nErrorStatus))
+        # NB. signature_info.nSignedTime is UTC Unix time.
+        module_info.signer_cert = signer_cert
+        return (signature_info, module_info)
 
 
 @RAISE
-def XDW_UpdateSignatureStatus(doc_handle, signature, module_option, module_status):
-    """XDW_UpdateSignatureStatus(doc_handle, signature, module_option, module_status)"""
-    return DLL.XDW_UpdateSignatureStatus(doc_handle, signature, ptr(module_option), NULL, ptr(module_status))
+def XDW_UpdateSignatureStatus(doc_handle, pos, module_option, module_status):
+    """XDW_UpdateSignatureStatus(doc_handle, pos, module_option, module_status)"""
+    # The 3rd argument, module_option, should currently be specified as NULL.
+    module_status = XDW_SIGNATURE_MODULE_STATUS()
+    try:
+        TRY(DLL.XDW_UpdateSignatureStatus, doc_handle, pos, NULL, NULL, ptr(module_status))
+    except SignatureModuleError as e:
+        raise SignatureModuleError("signature type {0}, error status {1}".format(module_status.nSignatureType, module_status.nErrorStatus))
+    # Note that signature information (XDW_GetSignatureInformation()) may be altered.
+    return 0
 
 
 @RAISE

@@ -37,8 +37,6 @@ class Binder(Subject, XDWFile):
 
     """DocuWorks Binder."""
 
-    __type__ = "BINDER"
-
     def _pos(self, pos, append=False):
         append = 1 if append else 0
         if not (-self.documents <= pos < self.documents + append):

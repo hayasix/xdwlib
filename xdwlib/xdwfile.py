@@ -86,9 +86,9 @@ def extract_sfx(input_path, output_path=None):
     XDW_ExtractFromSfxDocument(input_path, output_path)
     # Created file can be either document or binder.  We have to examine
     # which type of file was generated and rename if needed.
-    xdwfile = xdwopen(output_path, readonly=True)
-    doctype = xdwfile.type
-    xdwfile.close()
+    doc = xdwopen(output_path, readonly=True)
+    doctype = doc.type
+    doc.close()
     if doctype == XDW_DT_BINDER:
         orig, output_path = output_path, root + ".xbd"
         os.rename(orig, output_path)
@@ -216,8 +216,8 @@ def sign(input_path, output_path=None, page=0, position=None, type_="STAMP",
         certificate=None):
     """Place a signature on document/binder page.
 
-    page            page number to paste signature; starts with 0
-    position        Point; position to paste signature; default=(0, 0)
+    page            page number to paste signature on; starts with 0
+    position        Point; position to paste signature on; default=(0, 0)
     type_           "STAMP" | "PKI"
     certificate     certificate in DER (RFC3280) formatted str; valid for PKI
 
@@ -242,8 +242,6 @@ def sign(input_path, output_path=None, page=0, position=None, type_="STAMP",
 class AttachmentList(Subject):
 
     """Collection of Attachments aka original data."""
-
-    __type__ = "ATTACHMENTLIST"
 
     def __init__(self, doc, size=None):
         Subject.__init__(self)
@@ -312,8 +310,6 @@ class AttachmentList(Subject):
 class Attachment(Observer):
 
     """Place holder for attachments aka original data."""
-
-    __type__ = "ATTACHMENT"
 
     def __init__(self, doc, pos):
         self.doc = doc
@@ -396,6 +392,8 @@ class XDWFile(object):
         self.attributes = XDW_GetDocumentAttributeNumber(self.handle)
         # Attached signatures.
         self.signatures = XDW_GetDocumentSignatureNumber(self.handle)
+        # Document verification status.
+        self.status = None
 
     def update_pages(self):
         """Update number of pages; used after insert multiple pages in."""
@@ -421,6 +419,8 @@ class XDWFile(object):
                     self.handle, attribute_name, codepage=CP)[1]
         except InvalidArgError as e:
             pass
+        if name == "status" and self.signatures:
+            self.signature(0)  # Update document verification status.
         return self.__dict__[name]
 
     def __setattr__(self, name, value):
@@ -491,78 +491,120 @@ class XDWFile(object):
         Returns StampSignature or PKISignature object.
         """
         siginfo, modinfo = XDW_GetSignatureInformation(self.handle, pos + 1)
-        is_stamp = (siginfo.nSignatureType == XDW_SIGNATURE_STAMP)
-        sig = (StampSignature if is_stamp else PKISignature)(
-                self,
-                siginfo.nPage - 1,
-                Point(siginfo.nHorPos, siginfo.nVerPos) / 100.0,
-                Point(siginfo.nWidth, siginfo.nHeight) / 100.0,
-                fromunixtime(siginfo.nSignedTime),
-                )
-        if is_stamp:
-            sig.stamp_name = modinfo.lpszStampName
-            sig.owner_name = modinfo.lpszOwnerName
-            sig.valid_until = fromunixtime(modinfo.nValidDate)
-            sig.memo = modinfo.lpszRemarks
-            sig.document_status = XDW_SIGNATURE_STAMP_DOC[modinfo.nDocVerificationStatus]
-            sig.stamp_status = XDW_SIGNATURE_STAMP_STAMP[modinfo.nStampVerificationStatus]
-        else:
+        if siginfo.nSignatureType == XDW_SIGNATURE_STAMP:
+            sig = StampSignature(
+                    self,
+                    pos,
+                    siginfo.nPage - 1,
+                    Point(siginfo.nHorPos, siginfo.nVerPos) / 100.0,
+                    Point(siginfo.nWidth, siginfo.nHeight) / 100.0,
+                    fromunixtime(siginfo.nSignedTime),
+                    stamp_name=modinfo.lpszStampName,
+                    owner_name=modinfo.lpszOwnerName,
+                    valid_until=fromunixtime(modinfo.nValidDate),
+                    memo=modinfo.lpszRemarks,
+                    status=XDW_SIGNATURE_STAMP_STAMP[modinfo.nStampVerificationStatus],
+                    )
+            self.status = XDW_SIGNATURE_STAMP_DOC[modinfo.nDocVerificationStatus]
+        else:  # siginfo.nSignatureType == XDW_SIGNATURE_PKI
             def parsedt(s):
                 return datetime.datetime.strptime(s, "%Y/%m/%d %H:%M:%S")
-            sig.module = modinfo.lpszModule
-            sig.subject_dn = modinfo.lpszSubjectDN
-            sig.subject = modinfo.lpszSubject
-            sig.issuer_dn = modinfo.lpszIssuerDN
-            sig.issuer = modinfo.lpszIssuer
-            sig.not_before = parsedt(modinfo.lpszNotBefore)
-            sig.not_after = parsedt(modinfo.lpszNotAfter)
-            sig.serial = modinfo.lpszSerial
-            sig.signer_cert = modinfo.signer_cert
-            sig.memo = modinfo.lpszRemarks
-            sig.signing_time = parsedt(modinfo.lpszSigningTime)
-            sig.document_status = XDW_SIGNATURE_PKI_DOC[modinfo.nDocVerificationStatus]
-            sig.cert_type = XDW_SIGNATURE_PKI_TYPE[modinfo.nCertVerificationType]
-            sig.cert_status = XDW_SIGNATURE_PKI_CERT[modinfo.nCertVerificationStatus]
+            sig = PKISignature(
+                    self,
+                    pos,
+                    siginfo.nPage - 1,
+                    Point(siginfo.nHorPos, siginfo.nVerPos) / 100.0,
+                    Point(siginfo.nWidth, siginfo.nHeight) / 100.0,
+                    fromunixtime(siginfo.nSignedTime),
+                    stamp_name=modinfo.lpszStampName,
+                    module=modinfo.lpszModule,
+                    subject_dn=modinfo.lpszSubjectDN,
+                    subject=modinfo.lpszSubject,
+                    issuer_dn=modinfo.lpszIssuerDN,
+                    issuer=modinfo.lpszIssuer,
+                    not_before=parsedt(modinfo.lpszNotBefore),
+                    not_after=parsedt(modinfo.lpszNotAfter),
+                    serial=modinfo.lpszSerial,
+                    certificate=modinfo.signer_cert,
+                    memo=modinfo.lpszRemarks,
+                    signing_time=parsedt(modinfo.lpszSigningTime),
+                    verification_type=XDW_SIGNATURE_PKI_TYPE[modinfo.nCertVerificationType],
+                    status=XDW_SIGNATURE_PKI_CERT[modinfo.nCertVerificationStatus],
+                    )
+            self.status = XDW_SIGNATURE_PKI_DOC[modinfo.nDocVerificationStatus]
         return sig
 
 
 class BaseSignature(object):
 
-    def __init__(self, xdwfile, page, position, size, dt):
-        self.xdwfile = xdwfile
+    """Base class for StampSignature and PKISignature."""
+
+    def __init__(self, doc, pos, page, position, size, dt):
+        """Creator.
+
+        doc         Document/Binder
+        pos         position in signature list of doc
+        page        page number to paste signature on
+        position    Point; position to paste signature on
+        size        Point; size to show signature
+        dt          datetime.datetime; signed datetime
+        """
+        self.doc = doc
+        self.pos = pos
         self.page = page
         self.position = position
         self.size = size
         self.dt = dt
-        self.type = "UNKNOWN"  # Override this in subclasses.
 
     def __repr__(self):
-        return  "{0}({1}[{2}]{3})".format(
+        return  "{0}({1}[{2}])".format(
                 self.__class__.__name__,
-                self.xdwfile,
+                self.doc.name,
+                self.pos,
+                )
+
+    def __str__(self):
+        return  "{0}({1}[{2}]; page {3}, position {4}mm)".format(
+                self.__class__.__name__,
+                self.doc.name,
+                self.pos,
                 self.page,
                 self.position,
                 )
 
+    def update(self):
+        """Update signature status.
+
+        Note that the result of XDW_GetSignatureInformation() and therefore
+        doc.signature() may be altered.
+        """
+        XDW_UpdateSignatureStatus(self.doc.handle, self.pos + 1)
+
 
 class StampSignature(BaseSignature):
 
-    def __init__(self, xdwfile, page, position, size, dt,
+    """DocuWorks' inherent stamp signature."""
+
+    def __init__(self, doc, pos, page, position, size, dt,
             stamp_name="",
             owner_name="",
             valid_until=None,
             memo="",
+            status=None,
             ):
-        Signature.__init__(self, xdwfile, page, position, size, dt)
+        BaseSignature.__init__(self, doc, pos, page, position, size, dt)
         self.stamp_name = stamp_name
         self.owner_name = owner_name
         self.valid_until = valid_until
         self.memo = memo
+        self.status = status
 
 
 class PKISignature(BaseSignature):
 
-    def __init__(self, xdwfile, page, position, size, dt,
+    """PKI-based signature."""
+
+    def __init__(self, doc, pos, page, position, size, dt,
             module="",
             subjectdn="",
             subject="",
@@ -571,11 +613,13 @@ class PKISignature(BaseSignature):
             not_before=None,
             not_after=None,
             serial=None,
-            signer_cert=None,
+            certificate=None,
             memo="",
             signing_time=None,
+            verification_type=None,
+            status=None,
             ):
-        Signature.__init__(self, xdwfile, page, position, size, dt)
+        BaseSignature.__init__(self, doc, pos, page, position, size, dt)
         self.module = module
         self.subjectdn = subjectdn  # max. 511 bytes
         self.subject = subject  # CN, OU, O or E
@@ -584,20 +628,22 @@ class PKISignature(BaseSignature):
         self.not_before = not_before
         self.not_after = not_after
         self.serial = serial
-        self.signer_cert = signer_cert
+        self.certificate = certificate
         self.memo = memo
         self.signing_time = signing_time
+        self.verification_type = verification_type
+        self.status = status
 
 
 class PageForm(object):
 
-    def __init__(self, xdwfile, form):
-        self.xdwfile = xdwfile
+    def __init__(self, doc, form):
+        self.doc = doc
         self.form = XDW_PAGEFORM.normalize(inner_attribute_name(form))
 
     def __setattr__(self, name, value):
         attrname = inner_attribute_name(name)
-        if name == "xdwfile":
+        if name == "doc":
             self.__dict__[name] = value
             return
         elif name == "form":
@@ -626,16 +672,16 @@ class PageForm(object):
         else:
             raise TypeError("illegal value " + repr(value))
         XDW_SetPageFormAttribute(
-                self.__dict__["xdwfile"].handle,
+                self.__dict__["doc"].handle,
                 self.__dict__["form"],
                 attrname, attribute_type, value)
 
     def __getattr__(self, name):
-        if name in ("xdwfile", "form"):
+        if name in ("doc", "form"):
             return self.__dict__[name]
         attrname = inner_attribute_name(name)
         value = XDW_GetPageFormAttribute(
-                self.__dict__["xdwfile"].handle,
+                self.__dict__["doc"].handle,
                 self.__dict__["form"], attrname)
         attribute_type = XDW_ANNOTATION_ATTRIBUTE[attrname][0]
         if attribute_type == 1:  # string
@@ -649,7 +695,7 @@ class PageForm(object):
         sync    (bool) also update pageforms for documents in binder
         """
         sync = XDW_PAGEFORM_REMOVE if sync else XDW_PAGEFORM_STAY
-        XDW_UpdatePageForm(self.xdwfile.handle, sync)
+        XDW_UpdatePageForm(self.doc.handle, sync)
 
     def delete(self, sync=False):
         """Delete page form.
@@ -657,4 +703,4 @@ class PageForm(object):
         sync    (bool) also delete pageforms for documents in binder
         """
         sync = XDW_PAGEFORM_REMOVE if sync else XDW_PAGEFORM_STAY
-        XDW_RemovePageForm(self.xdwfile.handle, sync)
+        XDW_RemovePageForm(self.doc.handle, sync)
