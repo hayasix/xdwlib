@@ -236,7 +236,7 @@ class Annotation(Annotatable, Observer):
             return makevalue(*XDW_GetAnnotationCustomAttributeByName(self.handle, name))
         if not isinstance(name, int):
             raise TypeError("name must be unicode or int")
-        # You can get any custom attribute by order (number) which starts with 0.
+        # Any custom attribute can be taken by order (number) which starts with 0.
         attrs = self.customattrs()
         if name < 0:
             name += attrs

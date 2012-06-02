@@ -72,8 +72,8 @@ class Annotatable(Subject):
         append = 1 if append else 0
         if not (-self.annotations <= pos < self.annotations + append):
             raise IndexError(
-                    "Annotation number must be in [{0}, {1}), {2} given".format(
-                    -self.annotations, self.annotations + append, pos))
+                    "Annotation number {0} not in [{1}, {2})".format(
+                    pos, -self.annotations, self.annotations + append))
         if pos < 0:
             pos += self.annotations
         return pos
@@ -151,7 +151,7 @@ class Annotatable(Subject):
         """Paste an annotation.
 
         ann_type    annotation type by inner code
-        position    Point; float, unit:mm
+        position    (Point, unit=mm) location to paste
         """
         from annotation import Annotation
         ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
@@ -292,14 +292,15 @@ class Annotatable(Subject):
                 pg.doc.export_image(pg.pos, imagepath,
                         dpi=dpi, format="bmp", compress="nocompress")
                 lt, rb = ann.position, ann.position + ann.size
-                rect = map(lambda v: int(mm2px(v, dpi)), (lt.x, lt.y, rb.x, rb.y))
+                rect = [int(mm2px(v, dpi)) for v in (lt.x, lt.y, rb.x, rb.y)]
                 Image.open(imagepath).crop(rect).save(imagepath, "BMP")
-                # PIL BmpImagePlugin sets resolution to 1, so we have to fix it.
+                # PIL BmpImagePlugin sets resolution to 1, so fix it.
                 self._fix_bmp_resolution(imagepath, dpi)
             elif strategy == 2:
                 in_ = StringIO(pg.doc.page_image(pg.pos).octet_stream())
                 imagepath = mktemp(suffix=".tif")
-                Image.open(in_).crop(rect).save(imagepath, "TIFF", resolution=dpi)
+                Image.open(in_).crop(rect).\
+                        save(imagepath, "TIFF", resolution=dpi)
                 in_.close()
             else:
                 raise ValueError("illegal strategy")

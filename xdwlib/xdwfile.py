@@ -140,9 +140,9 @@ def protect(input_path, output_path=None, protect_type="PASSWORD", auth="NONE", 
     **options for PSWD and PSWD128:
     permission      allowed operation(s); comma separated list of
                     "EDIT_DOCUMENT", "EDIT_ANNOTATION", "PRINT" and "COPY"
-    password        str or None; password to open document/binder
-    fullaccess      str or None; password to open document/binder with full-access privilege
-    comment         str or None; notice in password dialogue
+    password        password to open document/binder, or None
+    fullaccess      password to open document/binder with full-access privilege, or None
+    comment         notice in password dialogue, or None
 
     **options for PKI:
     permission      allowed operation(s); comma separated list of
@@ -217,7 +217,7 @@ def sign(input_path, output_path=None, page=0, position=None, type_="STAMP",
     """Place a signature on document/binder page.
 
     page            page number to paste signature on; starts with 0
-    position        Point; position to paste signature on; default=(0, 0)
+    position        (Point) position to paste signature on; default=(0, 0)
     type_           "STAMP" | "PKI"
     certificate     certificate in DER (RFC3280) formatted str; valid for PKI
 
@@ -542,12 +542,12 @@ class BaseSignature(object):
     def __init__(self, doc, pos, page, position, size, dt):
         """Creator.
 
-        doc         Document/Binder
-        pos         position in signature list of doc
-        page        page number to paste signature on
-        position    Point; position to paste signature on
-        size        Point; size to show signature
-        dt          datetime.datetime; signed datetime
+        doc             Document/Binder
+        pos             position in signature list of doc
+        page            page number to paste signature on
+        position        (Point) position to paste signature on
+        size            (Point) size to show signature
+        dt              (datetime.datetime) signed datetime
         """
         self.doc = doc
         self.pos = pos
@@ -583,7 +583,7 @@ class BaseSignature(object):
 
 class StampSignature(BaseSignature):
 
-    """DocuWorks' inherent stamp signature."""
+    """DocuWorks' built-in stamp signature."""
 
     def __init__(self, doc, pos, page, position, size, dt,
             stamp_name="",
@@ -592,6 +592,20 @@ class StampSignature(BaseSignature):
             memo="",
             status=None,
             ):
+        """Creator.
+
+        doc             Document/Binder
+        pos             position in signature list of doc
+        page            page number to paste signature on
+        position        (Point) position to paste signature on
+        size            (Point) size to show signature
+        dt              (datetime.datetime) signed datetime
+        stamp_name      stamp's name
+        owner_name      owner's name
+        valid_until     (datetime.datetime) ending time of validity
+        memo            (str)
+        status          "NONE" | "TRUSTED" | "NOTRUST"
+        """
         BaseSignature.__init__(self, doc, pos, page, position, size, dt)
         self.stamp_name = stamp_name
         self.owner_name = owner_name
@@ -619,11 +633,43 @@ class PKISignature(BaseSignature):
             verification_type=None,
             status=None,
             ):
+        """Creator.
+
+        doc             Document/Binder
+        pos             position in signature list of doc
+        page            page number to paste signature on
+        position        (Point) position to paste signature on
+        size            (Point) size to show signature
+        dt              (datetime.datetime) signed datetime
+        module          security module name
+        subjectdn       content of SUBJECT DN (distinguished name);
+                        max. 511 bytes
+        subject         content of SUBJECT; CN, OU, O or E
+        issuerdn        content of ISSUER DN (distinguished name);
+                        max. 511 bytes
+        issuer          content of ISSUER; CN, OU, O or E
+        not_before      (datetime.datetime)
+        not_after       (datetime.datetime)
+        serial          (str)
+        certificate     (str) content of singer certificate in DER (RFC3280)
+                        format
+        memo            (str)
+        signing_time    (datetime.datetime)
+        verification_type   "LOW" | "MID_LOCAL" | "MID_NETWORK" |
+                            "HIGH_LOCAL" | "HIGH_NETWORK"
+        status          "UNKNOWN" | "OK" | "NO_ROOT_CERTIFICATE" |
+                        "NO_REVOCATION_CHECK" | OUT_OF_VALIDITY" |
+                        "OUT_OF_VALIDITY_AT_SIGNED_TIME |
+                        "REVOKE_CERTIFICATE" |
+                        "REVOKE_INTERMEDIATE_CERTIFICATE" |
+                        "INVLIAD_SIGNATURE" | "INVALID_USAGE" |
+                        "UNDEFINED_ERROR"
+        """
         BaseSignature.__init__(self, doc, pos, page, position, size, dt)
         self.module = module
-        self.subjectdn = subjectdn  # max. 511 bytes
+        self.subjectdn = subjectdn[:511]  # max. 511 bytes
         self.subject = subject  # CN, OU, O or E
-        self.issuerdn = issuerdn  # max. 511 bytes
+        self.issuerdn = issuerdn[:511]  # max. 511 bytes
         self.issuer = issuer  # CN, OU, O or E
         self.not_before = not_before
         self.not_after = not_after
@@ -636,6 +682,8 @@ class PKISignature(BaseSignature):
 
 
 class PageForm(object):
+
+    """Header/footer of document."""
 
     def __init__(self, doc, form):
         self.doc = doc

@@ -87,7 +87,7 @@ class Binder(Subject, XDWFile):
                     for p in range(pos.start, pos.stop, pos.step))
         return self.document(pos)
 
-    def __setitem__(self, pos):
+    def __setitem__(self, pos, value):
         raise NotImplementError()
 
     def __delitem__(self, pos):
