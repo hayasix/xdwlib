@@ -29,6 +29,7 @@ __all__ = (
         "XDWFile", "PageForm", "AttachmentList", "Attachment",
         "StampSignature", "PKISignature",
         "xdwopen", "create_sfx", "extract_sfx", "optimize", "copy",
+        "protection_info", "protect", "unprotect", "sign",
         "VALID_DOCUMENT_HANDLES", "close_all",
         )
 
@@ -462,6 +463,9 @@ class XDWFile(object):
 
     def get_property(self, name):
         """Get user defined property."""
+        if isinstance(name, int):
+            name, t, value = XDW_GetDocumentAttributeByOrder(self.handle, name)
+            return (name, makevalue(t, value))
         if isinstance(name, str):
             name = name.decode(CODEPAGE)
         return XDW_GetDocumentAttributeByNameW(self.handle, name, codepage=CP)[1]
