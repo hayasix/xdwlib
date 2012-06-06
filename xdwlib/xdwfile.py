@@ -389,7 +389,8 @@ class XDWFile(object):
         self.binder_color = XDW_BINDER_COLOR[document_info.nBinderColor]
         self.binder_size = XDW_BINDER_SIZE[document_info.nBinderSize]
         # Document attributes.
-        self.attributes = XDW_GetDocumentAttributeNumber(self.handle)
+        #self.attributes = XDW_GetDocumentAttributeNumber(self.handle)
+        self.properties = XDW_GetDocumentAttributeNumber(self.handle)
         # Attached signatures.
         self.signatures = XDW_GetDocumentSignatureNumber(self.handle)
         # Document verification status.
