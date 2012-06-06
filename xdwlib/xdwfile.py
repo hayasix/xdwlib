@@ -372,8 +372,10 @@ class XDWFile(object):
         self.handle = XDW_OpenDocumentHandle(path, open_mode)
         self.register()
         self.dir, self.name = os.path.split(path)
-        self.dir = unicode(self.dir, CODEPAGE)
-        self.name = unicode(os.path.splitext(self.name)[0], CODEPAGE)
+        if isinstance(self.dir, str):
+            self.dir = self.dir.decode(CODEPAGE)
+        if isinstance(self.name, str):
+            self.name = os.path.splitext(self.name)[0].decode(CODEPAGE)
         # Set document properties.
         document_info = XDW_GetDocumentInformation(self.handle)
         self.pages = document_info.nPages
@@ -412,9 +414,6 @@ class XDWFile(object):
         self.free()
 
     def __getattr__(self, name):
-        if isinstance(name, int):
-            name, t, value = XDW_GetDocumentAttributeByOrder(self.handle, name)
-            return (name, makevalue(t, value))
         attribute_name = unicode(inner_attribute_name(name))
         try:
             return XDW_GetDocumentAttributeByNameW(
@@ -430,7 +429,10 @@ class XDWFile(object):
             XDW_ShowOrHideAnnotations(self.handle, bool(value))
             return
         attribute_name = unicode(inner_attribute_name(name))
-        if isinstance(value, basestring):
+        if isinstance(value, str):
+            attribute_type = XDW_ATYPE_STRING
+            value = value.decode(CODEPAGE)
+        if isinstance(value, unicode):
             attribute_type = XDW_ATYPE_STRING
         elif isinstance(value, bool):
             attribute_type = XDW_ATYPE_BOOL
@@ -464,7 +466,8 @@ class XDWFile(object):
     def get_property(self, name):
         """Get user defined property."""
         if isinstance(name, int):
-            name, t, value = XDW_GetDocumentAttributeByOrder(self.handle, name)
+            name, t, value, _ = XDW_GetDocumentAttributeByOrderW(self.handle, name + 1)
+            # _ must be XDW_TEXT_MULTIBYTE.
             return (name, makevalue(t, value))
         if isinstance(name, str):
             name = name.decode(CODEPAGE)
@@ -473,9 +476,9 @@ class XDWFile(object):
     def set_property(self, name, value):
         """Set user defined property."""
         if isinstance(name, str):
-            name = name.decode(CODEPAGE)
+            name = name.decode(CODEPAGE)  # Force to store in unicode.
         if isinstance(value, str):
-            value = value.decode(CODEPAGE)
+            value = value.decode(CODEPAGE)  # Force to store in unicode.
         t, value = typevalue(value)
         XDW_SetDocumentAttributeW(self.handle, name, t, value, XDW_TEXT_MULTIBYTE, codepage=CP)
 
