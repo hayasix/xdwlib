@@ -147,6 +147,13 @@ class Binder(Subject, XDWFile):
         self.detach(doc, EV_DOC_REMOVED)
         self.documents -= 1
 
+    def view(self, light=False, wait=True):
+        """View binder with DocuWorks Viewer (Light)."""
+        pc = PageCollection()
+        for doc in self:
+            pc += PageCollection(doc)
+        return pc.view(light=light, wait=wait)
+
     def content_text(self, type=None):
         """Get all content text.
 

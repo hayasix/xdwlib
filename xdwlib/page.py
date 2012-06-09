@@ -42,7 +42,7 @@ class PageCollection(list):
         elif isinstance(y, PageCollection):
             return PageCollection(list.__add__(self, y))
         raise TypeError(
-                "Page or PageCollection can be added to PageCollection")
+                "only Page or PageCollection can be added")
 
     def __iadd__(self, y):
         if isinstance(y, Page):
@@ -51,7 +51,7 @@ class PageCollection(list):
             self.extend(y)
         else:
             raise TypeError(
-                    "Page or PageCollection can be added to PageCollection")
+                    "only Page or PageCollection can be added")
         return self
 
     def view(self, combine=False, light=False, wait=True):
