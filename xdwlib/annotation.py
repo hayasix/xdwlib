@@ -48,10 +48,10 @@ class Annotation(Annotatable, Observer):
         return [outer_attribute_name(k) for k in XDW_ANNOTATION_ATTRIBUTE]
 
     @staticmethod
-    def all_colors(fusen=False):
+    def all_colors(stickey=False):
         """Returns all colors available."""
         return tuple(sorted(
-                (XDW_COLOR_FUSEN if fusen else XDW_COLOR).values()))
+                (XDW_COLOR_FUSEN if stickey else XDW_COLOR).values()))
 
     def __init__(self, pg, pos, parent=None):
         self.pos = pos
@@ -103,7 +103,7 @@ class Annotation(Annotatable, Observer):
             data_type, value, text_type = XDW_GetAnnotationAttributeW(
                     self.handle, attrname, codepage=CP)
             if data_type == XDW_ATYPE_INT:
-                if self.type == "FUSEN" and attrname.endswith("Color"):
+                if self.type == "STICKEY" and attrname.endswith("Color"):
                     return XDW_COLOR_FUSEN[value]
                 return scale(attrname, value, store=False)
             elif data_type == XDW_ATYPE_STRING:
@@ -140,7 +140,7 @@ class Annotation(Annotatable, Observer):
             raise AttributeError(
                     "Points of polygon or marker cannot be updated.")
         if attrname in XDW_ANNOTATION_ATTRIBUTE:
-            if self.type == "FUSEN" and attrname.endswith("Color"):
+            if self.type == "STICKEY" and attrname.endswith("Color"):
                 value = XDW_COLOR_FUSEN.normalize(value)
             t, unit, limited = XDW_ANNOTATION_ATTRIBUTE[attrname]
             anntype = XDW_ANNOTATION_TYPE.inner(self.type)
@@ -204,7 +204,7 @@ class Annotation(Annotatable, Observer):
             self.__dict__[name] = value
         elif name == "size":
             if self.type not in (
-                    "FUSEN", "RECTANGLE", "ARC", "TEXT", "LINK", "STAMP"):
+                    "STICKEY", "RECTANGLE", "ARC", "TEXT", "LINK", "STAMP"):
                 raise TypeError(
                         "can't resize {0} annotation".format(self.type))
             XDW_SetAnnotationSize(

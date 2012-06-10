@@ -878,7 +878,7 @@ XDW_AID_TITLE                       = 32838
 XDW_AID_GROUP                       = 32839
 
 XDW_ANNOTATION_TYPE = XDWConst({
-        XDW_AID_FUSEN               : "FUSEN",
+        XDW_AID_FUSEN               : "STICKEY",
         XDW_AID_TEXT                : "TEXT",
         XDW_AID_STAMP               : "STAMP",
         XDW_AID_STRAIGHTLINE        : "STRAIGHTLINE",

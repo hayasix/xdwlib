@@ -36,7 +36,7 @@ except ImportError:
 MIN_ANN_SIZE = 3
 ANN_TOO_SMALL = "Annotation size must be >= {0}mm square".format(MIN_ANN_SIZE)
 MIN_FUSEN_SIZE = 5
-FUSEN_TOO_SMALL = "Fusen size must be >= {0}mm square".format(MIN_FUSEN_SIZE)
+FUSEN_TOO_SMALL = "Stickey size must be >= {0}mm square".format(MIN_FUSEN_SIZE)
 
 _WIDTH = 75
 _HEIGHT = 25
@@ -172,8 +172,8 @@ class Annotatable(Subject):
             setattr(ann, k, v)
         return ann
 
-    def add_fusen(self, position=_POSITION, size=_SIZE):
-        """Paste a fusen annotation."""
+    def add_stickey(self, position=_POSITION, size=_SIZE):
+        """Paste a stickey annotation."""
         if size.x < MIN_FUSEN_SIZE or size.y < MIN_FUSEN_SIZE:
             raise ValueError(FUSEN_TOO_SMALL)
         return self.add(XDW_AID_FUSEN, position,
