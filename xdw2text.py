@@ -17,7 +17,7 @@ import sys
 import codecs
 
 from xdwlib import xdwopen
-from xdwlib.xdwapi import XDWError, XDW_E_INVALIDARG
+from xdwlib.xdwapi import XDWError, InvalidArgError
 
 
 OPTION_ASK = False
@@ -77,7 +77,7 @@ def parse():
 def exit(xdwerror, verbose=False):
     if verbose:
         print xdwerror
-    sys.exit(xdwerror.error_code)
+    sys.exit(xdwerror.code)
 
 
 if __name__ == "__main__":
@@ -85,7 +85,7 @@ if __name__ == "__main__":
     options, args = parse()
 
     if len(args) < 1:
-        exit(XDWError(XDW_E_INVALIDARG), not options.silent)
+        exit(InvalidArgError(), not options.silent)
 
     if len(args) < 2:
         options.pipe = True

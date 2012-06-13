@@ -12,7 +12,7 @@ setup(
     author=__author__,
     author_email=__email__,
     url="https://launchpad.net/xdwlib",
-    description="xdwlib -- DocuWorks library for Python.",
+    description="A DocuWorks library.",
     long_description="""xdwlib is a DocuWorks library for Python.
 It supports almost all functions of original XDWAPI library from Fuji Xerox.
 You can handle documents or binders in object-oriented style.  Pages and
@@ -21,6 +21,7 @@ annotations are also handled as objects.  Plus, every object is iterable.""",
     platforms=["win32",],
     packages=["xdwlib",],
     console=["xdw2text.py",],
+    data_files=["LICENSE.txt",],
     options={"py2exe": {"optimize": 1},},
     zipfile="xdwlib.zip",
     )

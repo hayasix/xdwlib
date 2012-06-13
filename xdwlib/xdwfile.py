@@ -426,7 +426,9 @@ class XDWFile(object):
 
     def __setattr__(self, name, value):
         if name == "show_annotations":
-            XDW_ShowOrHideAnnotations(self.handle, bool(value))
+            value = bool(value)
+            XDW_ShowOrHideAnnotations(self.handle, value)
+            self.__dict__[name] = value
             return
         attribute_name = unicode(inner_attribute_name(name))
         if isinstance(value, str):
