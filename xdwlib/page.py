@@ -63,6 +63,13 @@ class PageCollection(list):
         wait    (bool) wait until viewer stops.  For False, (Popen, path) is
                 returned.  Users should remove the file of path after the Popen
                 object ends.
+
+        Returns (proc, temp) where:
+                proc    subprocess.Popen object
+                temp    pathname of temporary file to view.
+
+        NB. Attachments are not shown.
+        NB. Viewing signed pages will raise AccessDeniedError.
         """
         viewer = get_viewer(light=light)
         suffix = ".xdw" if combine else ".xbd"

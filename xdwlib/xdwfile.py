@@ -180,7 +180,7 @@ def protect(input_path, output_path=None, protect_type="PASSWORD", auth="NONE", 
             ders[i].nCertSize = len(certs[i])
         opt.lpxdcCerts = byref(ders)
     elif protect_type in (XDW_PROTECT_STAMP, XDW_PROTECT_CONTEXT_SERVICE):
-        raise NotImplementedError("currently STAMP and CONTEXT_SERVICE is not available")
+        raise NotImplementedError("only password- or PKI-based protection is available")
     else:
         raise ValueError("protect_type must be PASSWORD, PASSWORD128 or PKI")
     try:
@@ -199,11 +199,14 @@ def unprotect(input_path, output_path=None, auth="NONE"):
     auth            "NODIALOGUE" | "CONDITIONAL"
 
     Returns pathname of unprotected file.
+
+    NB. Only PKI-based or DocuWorks-builtin-stamp-based protected files are
+        processed.  Password-based protected files are beyond xdwlib.
     """
     input_path, output_path = cp(input_path), cp(output_path)
     output_path = derivative_path(output_path or input_path)
     if protection_info(input_path)[0] not in ("PKI", "STAMP"):
-        raise ValueError("file is neither protected in PKI nor STAMP")
+        raise ValueError("only PKI- or STAMP-protected file is acceptable")
     auth = XDW_AUTH.normalize(auth)
     if auth not in (XDW_AUTH_NODIALOGUE, XDW_AUTH_CONDITIONAL_DIALOGUE):
         raise ValueError("auth must be NODIALOGUE or CONDITIONAL")
@@ -215,7 +218,7 @@ def unprotect(input_path, output_path=None, auth="NONE"):
 
 def sign(input_path, output_path=None, page=0, position=None, type_="STAMP",
         certificate=None):
-    """Place a signature on document/binder page.
+    """Sign ie. place a signature on document/binder page.
 
     page            page number to paste signature on; starts with 0
     position        (Point) position to paste signature on; default=(0, 0)
@@ -238,6 +241,7 @@ def sign(input_path, output_path=None, page=0, position=None, type_="STAMP",
         modopt.pSignerCert = ptr(cert)
         modopt.nSignerCertSize = len(cert)
     XDW_SignDocument(input_path, output_path, opt, modopt)
+    return output_path
 
 
 class AttachmentList(Subject):
@@ -358,7 +362,12 @@ class XDWFile(object):
     def free(self):
         VALID_DOCUMENT_HANDLES.remove(self.handle)
 
+    @staticmethod
+    def _free(handle):
+        VALID_DOCUMENT_HANDLES.remove(handle)
+
     def __init__(self, path, readonly=False, authenticate=True):
+        protection = protection_info(path)
         open_mode = XDW_OPEN_MODE_EX()
         if readonly:
             open_mode.nOption = XDW_OPEN_READONLY
@@ -371,6 +380,7 @@ class XDWFile(object):
         path = cp(path)
         self.handle = XDW_OpenDocumentHandle(path, open_mode)
         self.register()
+        self.protection = protection
         self.dir, self.name = os.path.split(path)
         if isinstance(self.dir, str):
             self.dir = self.dir.decode(CODEPAGE)
@@ -386,7 +396,8 @@ class XDWFile(object):
         self.annotatable = bool(document_info.nPermission & XDW_PERM_ANNO_EDIT)
         self.printable = bool(document_info.nPermission & XDW_PERM_PRINT)
         self.copyable = bool(document_info.nPermission & XDW_PERM_COPY)
-        self.show_annotations = bool(document_info.nShowAnnotations)
+        #self.show_annotations = bool(document_info.nShowAnnotations)
+        self.__dict__["show_annotations"] = bool(document_info.nShowAnnotations)
         # Followings are effective only for binders.
         self.documents = document_info.nDocuments
         self.binder_color = XDW_BINDER_COLOR[document_info.nBinderColor]
@@ -398,6 +409,9 @@ class XDWFile(object):
         self.signatures = XDW_GetDocumentSignatureNumber(self.handle)
         # Document verification status.
         self.status = None
+        # Remember arguments for future use.
+        self.readonly = readonly
+        self.authenticate = authenticate
 
     def update_pages(self):
         """Update number of pages; used after insert multiple pages in."""
@@ -412,6 +426,11 @@ class XDWFile(object):
         """Close document."""
         XDW_CloseDocumentHandle(self.handle)
         self.free()
+
+    @staticmethod
+    def _close(handle):
+        XDW_CloseDocumentHandle(handle)
+        XDWFile._free(handle)
 
     def __getattr__(self, name):
         attribute_name = unicode(inner_attribute_name(name))
@@ -543,6 +562,83 @@ class XDWFile(object):
                     )
             self.status = XDW_SIGNATURE_PKI_DOC[modinfo.nDocVerificationStatus]
         return sig
+
+    def _reopen(self):
+        if self.type == "DOCUMENT":
+            from document import Document as cls
+        else:
+            from binder import Binder as cls
+        cls.__init__(self, os.path.join(self.dir, self.name),
+                readonly=self.readonly, authenticate=self.authenticate)
+
+    def _process(self, meth, *args, **kw):
+        self_path = os.path.join(self.dir, self.name)
+        oldhandle = self.handle
+        self.save()
+        self.close()
+        new_path = meth(self_path, *args, **kw)
+        if kw.get("output_path"):
+            self._reopen()
+            return new_path
+        # Swap the old for the new, and remove the old.
+        os.remove(self_path)
+        os.rename(new_path, self_path)
+        self._reopen()
+        # Renew related attributes.
+        self.signatures = XDW_GetDocumentSignatureNumber(self.handle)
+        self.status = None
+
+    def sign(self, output_path=None, page=0, position=None, type_="STAMP", certificate=None):
+        """Sign ie. attach signature.
+
+        See xdwfile.sign() for arguments.
+
+        Returns actual pathname of signed file if output_path is specified;
+        otherwise, nothing is returned.
+
+        NB. self.save() is performed internally.
+        """
+        return self._process(sign, output_path=output_path,
+                page=page, position=position, type_=type_, certificate=certificate)
+
+    def protect(self, output_path=None, protect_type="PASSWORD", auth="NONE", **options):
+        """Protect document/binder.
+
+        See xdwfile.protect() for arguments.
+
+        Returns pathname of protected file if output_path is specified;
+        otherwise, nothing is returned.
+
+        NB. Only password- or PKI-based protection is available.
+        NB. self.save() is performed internally.
+        """
+        return self._process(protect, output_path=output_path,
+                protect_type=protect_type, auth=auth, **options)
+
+    def unprotect(self, output_path=None, auth="NONE"):
+        """Release protection on document/binder.
+
+        See xdwfile.unprotect() for arguments.
+
+        Returns pathname of unprotected file if output_path is specified;
+        otherwise, nothing is returned.
+
+        NB. Only PKI- or STAMP-protected file is acceptable.
+        NB. self.save() is performed internally.
+        """
+        return self._process(unprotect, output_path=output_path, auth=auth)
+
+    def optimize(self, output_path=None):
+        """Optimize document/binder file.
+
+        See xdwfile.optimize() for arguments.
+
+        Returns pathname of optimized file if output_path is specified;
+        otherwise, nothing is returned.
+
+        NB. self.save() is performed internally.
+        """
+        return self._process(optimize, output_path=output_path)
 
 
 class BaseSignature(object):
