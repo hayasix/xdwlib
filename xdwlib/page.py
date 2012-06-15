@@ -115,9 +115,11 @@ class PageCollection(list):
         from `path' argument.
         """
         from binder import Binder, create_binder
+        from xdwfile import xdwopen
         path = derivative_path(cp(path or self[0].doc.name))
+        path = os.path.splitext(path)[0] + ".xbd"
         create_binder(path)
-        bdoc = Binder(path)
+        bdoc = xdwopen(path)
         tempdir = os.path.split(mktemp())[0]
         if group:
             for pos, pc in enumerate(self.group()):
@@ -142,10 +144,10 @@ class PageCollection(list):
         Returns actual pathname of generated document, which may be different
         from `path' argument.
         """
-        from document import Document
+        from xdwfile import xdwopen
         path = derivative_path(cp(path or self[0].doc.name))
         path = self[0].copy(path)
-        doc = Document(path)
+        doc = xdwopen(path)
         tempdir = os.path.split(mktemp())[0]
         for pos, pg in enumerate(self[1:]):
             temp = os.path.join(tempdir, pg.doc.name + ".xdw")

@@ -62,7 +62,9 @@ def xdwopen(path, readonly=False, authenticate=True):
     ext = os.path.splitext(path)[1].upper()
     if ext not in XDW_TYPES:
         raise BadFormatError("extension must be .xdw or .xbd")
-    return XDW_TYPES[ext](path, readonly=readonly, authenticate=authenticate)
+    doc = XDW_TYPES[ext](path)
+    doc.open(readonly=readonly, authenticate=authenticate)
+    return doc
 
 
 def create_sfx(input_path, output_path=None):
@@ -366,8 +368,18 @@ class XDWFile(object):
     def _free(handle):
         VALID_DOCUMENT_HANDLES.remove(handle)
 
-    def __init__(self, path, readonly=False, authenticate=True):
-        protection = protection_info(path)
+    def __init__(self, path):
+        """Creator."""
+        path = cp(path)
+        self.dir, self.name = os.path.split(path)
+        self._set_protection_info()
+
+    def _set_protection_info(self):
+        self.protection = protection_info(os.path.join(self.dir, self.name))
+
+    def open(self, readonly=False, authenticate=True):
+        """Opener."""
+        self._set_protection_info()
         open_mode = XDW_OPEN_MODE_EX()
         if readonly:
             open_mode.nOption = XDW_OPEN_READONLY
@@ -377,11 +389,9 @@ class XDWFile(object):
             open_mode.nAuthMode = XDW_AUTH_NODIALOGUE
         else:
             open_mode.nAuthMode = XDW_AUTH_NONE
-        path = cp(path)
-        self.handle = XDW_OpenDocumentHandle(path, open_mode)
+        self.handle = XDW_OpenDocumentHandle(
+                os.path.join(self.dir, self.name), open_mode)
         self.register()
-        self.protection = protection
-        self.dir, self.name = os.path.split(path)
         if isinstance(self.dir, str):
             self.dir = self.dir.decode(CODEPAGE)
         if isinstance(self.name, str):
@@ -563,14 +573,6 @@ class XDWFile(object):
             self.status = XDW_SIGNATURE_PKI_DOC[modinfo.nDocVerificationStatus]
         return sig
 
-    def _reopen(self):
-        if self.type == "DOCUMENT":
-            from document import Document as cls
-        else:
-            from binder import Binder as cls
-        cls.__init__(self, os.path.join(self.dir, self.name),
-                readonly=self.readonly, authenticate=self.authenticate)
-
     def _process(self, meth, *args, **kw):
         self_path = os.path.join(self.dir, self.name)
         oldhandle = self.handle
@@ -578,12 +580,12 @@ class XDWFile(object):
         self.close()
         new_path = meth(self_path, *args, **kw)
         if kw.get("output_path"):
-            self._reopen()
+            self.open(readonly=self.readonly, authenticate=self.authenticate)
             return new_path
         # Swap the old for the new, and remove the old.
         os.remove(self_path)
         os.rename(new_path, self_path)
-        self._reopen()
+        self.open(readonly=self.readonly, authenticate=self.authenticate)
         # Renew related attributes.
         self.signatures = XDW_GetDocumentSignatureNumber(self.handle)
         self.status = None

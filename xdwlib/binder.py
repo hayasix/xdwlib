@@ -66,10 +66,9 @@ class Binder(Subject, XDWFile):
                 1 if pos.step is None else pos.step,
                 )
 
-    def __init__(self, path, readonly=False, authenticate=True):
+    def __init__(self, path):
         Subject.__init__(self)
-        XDWFile.__init__(self, path,
-                readonly=readonly, authenticate=authenticate)
+        XDWFile.__init__(self, path)
 
     def __repr__(self):
         return u"Binder({0})".format(self.name)

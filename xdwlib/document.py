@@ -179,10 +179,9 @@ class Document(BaseDocument, XDWFile):
 
     """DocuWorks document (XDW)."""
 
-    def __init__(self, path, readonly=False, authenticate=True):
+    def __init__(self, path):
         BaseDocument.__init__(self)
-        XDWFile.__init__(self, path,
-                readonly=readonly, authenticate=authenticate)
+        XDWFile.__init__(self, path)
 
     def __repr__(self):
         return u"Document({0})".format(self.name)
