@@ -1,0 +1,58 @@
+====================
+Xdwlib 2.14.1 README
+====================
+
+
+Welcome to the xdwlib source release
+====================================
+
+Xdwlib is a DocuWorks library for Python.
+
+This document provides some general information about xdwlib source release and provides links to other documents.
+
+General xdwlib information is available at https://launchpad.net/xdwlib/.  Japanese document is also available at http://xdwlib.linxs.org/.
+
+Report problems with this release to xdwlib@linxs.org.
+
+License
+-------
+
+Xdwlib is provided under The Zope Public License (ZPL) Version 2.1, which is included in 'LICENSE'.  Send your feedback about the license to xdwlib@linxs.org.
+
+
+Installing xdwlib
+=================
+
+System Requirements
+-------------------
+
+    - Microsoft Windows (versions compatible with DocuWorks 7.0)
+
+    - Python 2.6
+
+    - DocuWorks 7.0+ (Japanese version; English version is not tested yet)
+
+Installation
+------------
+
+Set PATH environment variable properly and issue the following command::
+
+    python setup.py install
+
+This will install xdwlib in $PYTHONPATH/xdwlib.
+
+Installation via PyPI
+---------------------
+
+Xdwlib is also delivered via Python Package Index (PyPI).  You can install the newest version of xdwlib by issuing::
+
+    easy_install xdwlib
+
+
+Reporting bugs
+==============
+
+Bugs reports are welcome at xdwlib@linxs.org.
+
+
+Have fun!
