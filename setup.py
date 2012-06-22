@@ -21,7 +21,7 @@ annotations are also handled as objects.  Plus, every object is iterable.""",
     platforms=["win32",],
     packages=["xdwlib",],
     console=["xdw2text.py",],
-    data_files=["LICENSE.txt",],
+    data_files=["README", "LICENSE",],
     options={"py2exe": {"optimize": 1},},
     zipfile="xdwlib.zip",
     )
