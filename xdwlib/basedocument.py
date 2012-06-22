@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.6
 #vim:fileencoding=cp932:fileformat=dos
 
-"""basedocument.py -- DocuWorks library for Python.
+"""basedocument.py -- BaseDocument, base class for Document and DocumentInBinder
 
 Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>  All rights reserved.
 
@@ -142,7 +142,9 @@ class BaseDocument(Subject):
             pc = PageCollection(obj)
         elif isinstance(obj, basestring):  # XDW path
             assert obj.lower().endswith(".xdw")  # binder is not acceptable
-            doc = xdwopen(cp(obj))
+            if isinstance(obj, str):
+                obj = obj.decode(CODEPAGE)
+            doc = xdwopen(obj)
             pc = PageCollection(doc)
         else:
             raise ValueError("can't insert {0} object".format(obj.__class__))
@@ -191,7 +193,7 @@ class BaseDocument(Subject):
         """
         prev_pages = self.pages
         pos = self._pos(pos, append=True)
-        input_path = cp(input_path)
+        input_path = uc(input_path)
         opt = XDW_CREATE_OPTION_EX2()
         opt.nFitImage = XDW_CREATE_FITIMAGE.normalize(fitimage)
         opt.nCompress = XDW_COMPRESS.normalize(compress)
@@ -231,7 +233,7 @@ class BaseDocument(Subject):
                               "MRC_NORMAL" | "MRC_HIGHQUALITY" |
                               "MRC_HIGHCOMPRESS"
         """
-        path = cp(path)
+        path = uc(path)
         if isinstance(pos, (list, tuple)):
             pos, pages = pos
             pages -= pos
@@ -243,8 +245,8 @@ class BaseDocument(Subject):
         if format.lower() not in ("bmp", "tiff", "jpeg", "pdf"):
             raise TypeError("image type must be BMP, TIFF, JPEG or PDF.")
         if not path:
-            path = "{0}_P{1}".format(self.name, pos + 1)
-            path = cp(path, dir=self.dirname())
+            path = u"{0}_P{1}".format(self.name, pos + 1)
+            path = adjust_path(path, dir=self.dirname())
             if 1 < pages:
                 path += "-{0}".format((pos + pages - 1) + 1)
             path += "." + format

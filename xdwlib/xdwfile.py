@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #vim:fileencoding=cp932:fileformat=dos
 
-"""xdwfile.py -- DocuWorks library for Python.
+"""xdwfile.py -- DocuWorks-compatible files
 
 Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>  All rights reserved.
 
@@ -54,10 +54,13 @@ def atexithandler():
 
 
 def xdwopen(path, readonly=False, authenticate=True):
-    """General opener.  Returns Document or Binder object."""
+    """General opener.
+
+    Returns Document or Binder object.
+    """
     from document import Document
     from binder import Binder
-    path = cp(path)
+    path = uc(path)
     XDW_TYPES = {".XDW": Document, ".XBD": Binder}
     ext = os.path.splitext(path)[1].upper()
     if ext not in XDW_TYPES:
@@ -72,9 +75,9 @@ def create_sfx(input_path, output_path=None):
 
     Returns pathname of generated sfx executable file.
     """
-    input_path, output_path = cp(input_path), cp(output_path)
+    input_path, output_path = uc(input_path), uc(output_path)
     output_path = os.path.splitext(output_path or input_path)[0] + ".exe"
-    XDW_CreateSfxDocument(input_path, output_path)
+    XDW_CreateSfxDocument(cp(input_path), cp(output_path))
     return output_path
 
 
@@ -83,10 +86,10 @@ def extract_sfx(input_path, output_path=None):
 
     Returns pathname of generated document/binder file.
     """
-    input_path, output_path = cp(input_path), cp(output_path)
+    input_path, output_path = uc(input_path), uc(output_path)
     root = os.path.splitext(output_path or input_path)[0]
     output_path = root + ".xdw"  # for now
-    XDW_ExtractFromSfxDocument(input_path, output_path)
+    XDW_ExtractFromSfxDocument(cp(input_path), cp(output_path))
     # Created file can be either document or binder.  We have to examine
     # which type of file was generated and rename if needed.
     doc = xdwopen(output_path, readonly=True)
@@ -103,9 +106,9 @@ def optimize(input_path, output_path=None):
 
     Returns pathname of optimized document/binder file.
     """
-    input_path, output_path = cp(input_path), cp(output_path)
+    input_path, output_path = uc(input_path), uc(output_path)
     output_path = derivative_path(output_path or input_path)
-    XDW_OptimizeDocument(input_path, output_path)
+    XDW_OptimizeDocument(cp(input_path), cp(output_path))
     return output_path
 
 
@@ -114,7 +117,7 @@ def copy(input_path, output_path=None):
 
     Returns pathname of copied file.
     """
-    input_path, output_path = cp(input_path), cp(output_path)
+    input_path, output_path = uc(input_path), uc(output_path)
     output_path = derivative_path(output_path or input_path)
     shutil.copyfile(input_path, output_path)
     return output_path
@@ -124,7 +127,8 @@ def protection_info(path):
     """Get protection information on a document/binder.
 
     Returns (protect_type, permission) where:
-    protect_type    "PASSWORD" | "PASSWORD128" | "PKI" | "STAMP" | "CONTEXT_SERVICE"
+    protect_type    "PASSWORD" | "PASSWORD128" | "PKI" | "STAMP" |
+                    "CONTEXT_SERVICE"
     permission      allowed operation(s); comma separated list of
                     "EDIT_DOCUMENT", "EDIT_ANNOTATION", "PRINT" and "COPY"
     """
@@ -144,7 +148,8 @@ def protect(input_path, output_path=None, protect_type="PASSWORD", auth="NONE", 
     permission      allowed operation(s); comma separated list of
                     "EDIT_DOCUMENT", "EDIT_ANNOTATION", "PRINT" and "COPY"
     password        password to open document/binder, or None
-    fullaccess      password to open document/binder with full-access privilege, or None
+    fullaccess      password to open document/binder with full-access
+                    privilege, or None
     comment         notice in password dialogue, or None
 
     **options for PKI:
@@ -155,7 +160,7 @@ def protect(input_path, output_path=None, protect_type="PASSWORD", auth="NONE", 
 
     Returns pathname of protected file.
     """
-    input_path, output_path = cp(input_path), cp(output_path)
+    input_path, output_path = uc(input_path), uc(output_path)
     output_path = derivative_path(output_path or input_path)
     protect_option = XDW_PROTECT_OPTION()
     protect_option.nAuthMode = XDW_AUTH.normalize(auth)
@@ -186,7 +191,7 @@ def protect(input_path, output_path=None, protect_type="PASSWORD", auth="NONE", 
     else:
         raise ValueError("protect_type must be PASSWORD, PASSWORD128 or PKI")
     try:
-        XDW_ProtectDocument(input_path, output_path, protect_type, opt, protect_option)
+        XDW_ProtectDocument(cp(input_path), cp(output_path), protect_type, opt, protect_option)
     except ProtectModuleError as e:
         msg = XDW_SECURITY_PKI_ERROR[opt.nErrorStatus]
         if 0 <= opt.nFirstErrorCert:
@@ -205,7 +210,7 @@ def unprotect(input_path, output_path=None, auth="NONE"):
     NB. Only PKI-based or DocuWorks-builtin-stamp-based protected files are
         processed.  Password-based protected files are beyond xdwlib.
     """
-    input_path, output_path = cp(input_path), cp(output_path)
+    input_path, output_path = uc(input_path), uc(output_path)
     output_path = derivative_path(output_path or input_path)
     if protection_info(input_path)[0] not in ("PKI", "STAMP"):
         raise ValueError("only PKI- or STAMP-protected file is acceptable")
@@ -214,13 +219,13 @@ def unprotect(input_path, output_path=None, auth="NONE"):
         raise ValueError("auth must be NODIALOGUE or CONDITIONAL")
     opt = XDW_RELEASE_PROTECTION_OPTION()
     opt.nAuthMode = auth
-    XDW_ReleaseProtectionOfDocument(input_path, output_path, opt)
+    XDW_ReleaseProtectionOfDocument(cp(input_path), cp(output_path), opt)
     return output_path
 
 
 def sign(input_path, output_path=None, page=0, position=None, type_="STAMP",
         certificate=None):
-    """Sign ie. place a signature on document/binder page.
+    """Sign i.e. place a signature on document/binder page.
 
     page            page number to paste signature on; starts with 0
     position        (Point) position to paste signature on; default=(0, 0)
@@ -229,7 +234,7 @@ def sign(input_path, output_path=None, page=0, position=None, type_="STAMP",
 
     Returns pathname of signed file.
     """
-    input_path, output_path = cp(input_path), cp(output_path)
+    input_path, output_path = uc(input_path), uc(output_path)
     output_path = derivative_path(output_path or input_path)
     opt = XDW_SIGNATURE_OPTION_V5()
     opt.nPage = page + 1
@@ -242,7 +247,7 @@ def sign(input_path, output_path=None, page=0, position=None, type_="STAMP",
         modopt = XDW_SIGNATURE_MODULE_OPTION_PKI()
         modopt.pSignerCert = ptr(cert)
         modopt.nSignerCertSize = len(cert)
-    XDW_SignDocument(input_path, output_path, opt, modopt)
+    XDW_SignDocument(cp(input_path), cp(output_path), opt, modopt)
     return output_path
 
 
@@ -369,9 +374,8 @@ class XDWFile(object):
         VALID_DOCUMENT_HANDLES.remove(handle)
 
     def __init__(self, path):
-        """Creator."""
-        path = cp(path)
-        self.dir, self.name = os.path.split(path)
+        """Constructor."""
+        self.dir, self.name = os.path.split(uc(path))
         self._set_protection_info()
 
     def _set_protection_info(self):
@@ -390,12 +394,12 @@ class XDWFile(object):
         else:
             open_mode.nAuthMode = XDW_AUTH_NONE
         self.handle = XDW_OpenDocumentHandle(
-                os.path.join(self.dir, self.name), open_mode)
+                cp(os.path.join(self.dir, self.name)), open_mode)
         self.register()
         if isinstance(self.dir, str):
             self.dir = self.dir.decode(CODEPAGE)
         if isinstance(self.name, str):
-            self.name = os.path.splitext(self.name)[0].decode(CODEPAGE)
+            self.name = self.name.decode(CODEPAGE)
         # Set document properties.
         document_info = XDW_GetDocumentInformation(self.handle)
         self.pages = document_info.nPages
@@ -591,7 +595,7 @@ class XDWFile(object):
         self.status = None
 
     def sign(self, output_path=None, page=0, position=None, type_="STAMP", certificate=None):
-        """Sign ie. attach signature.
+        """Sign i.e. attach signature.
 
         See xdwfile.sign() for arguments.
 
@@ -648,7 +652,7 @@ class BaseSignature(object):
     """Base class for StampSignature and PKISignature."""
 
     def __init__(self, doc, pos, page, position, size, dt):
-        """Creator.
+        """Constructor.
 
         doc             Document/Binder
         pos             position in signature list of doc
@@ -700,7 +704,7 @@ class StampSignature(BaseSignature):
             memo="",
             status=None,
             ):
-        """Creator.
+        """Constructor.
 
         doc             Document/Binder
         pos             position in signature list of doc
@@ -741,7 +745,7 @@ class PKISignature(BaseSignature):
             verification_type=None,
             status=None,
             ):
-        """Creator.
+        """Constructor.
 
         doc             Document/Binder
         pos             position in signature list of doc
@@ -815,8 +819,8 @@ class PageForm(object):
             """TODO: unicode handling.
             Currently Author has no idea to take unicode with ord < 256.
             Python's unicode may have inner representation with 0x00,
-            eg.  0x41 0x00 0x42 0x00 0x43 0x00 for "ABC".  This results in
-            unexpected string termination eg. "ABC" -> "A".  So, if the next
+            e.g.  0x41 0x00 0x42 0x00 0x43 0x00 for "ABC".  This results in
+            unexpected string termination e.g. "ABC" -> "A".  So, if the next
             if-block is not placed, you will get much more but inexact
             elements in result for abbreviated search string.
             """

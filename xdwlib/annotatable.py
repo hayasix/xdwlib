@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #vim:fileencoding=cp932:fileformat=dos
 
-"""annotatable.py -- DocuWorks library for Python.
+"""annotatable.py -- Annotatable, base class for Page and Annotation
 
 Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>  All rights reserved.
 
@@ -66,7 +66,7 @@ def relative_points(points):
 
 class Annotatable(Subject):
 
-    """Annotatable objects ie. page or annotation."""
+    """Annotatable objects i.e. page or annotation."""
 
     def _pos(self, pos, append=False):
         append = 1 if append else 0

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #vim:fileencoding=cp932:fileformat=dos
 
-"""annotation.py -- DocuWorks library for Python.
+"""annotation.py -- Annotation
 
 Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>  All rights reserved.
 
@@ -229,7 +229,7 @@ class Annotation(Annotatable, Observer):
         XDW_SetAnnotationUserAttribute(self.page.doc.handle, self.handle, name, value)
 
     def get_property(self, name):
-        """Get annotationwise custom (ie. with-type) user defined property."""
+        """Get annotationwise custom (i.e. with-type) user defined property."""
         if isinstance(name, str):
             name = name.decode(CODEPAGE)
         if isinstance(name, unicode):
@@ -246,11 +246,11 @@ class Annotation(Annotatable, Observer):
         return (name, makevalue(t, value))
 
     def properties(self):
-        """Get number of annotationwise custom (ie. with-type) user defined property."""
+        """Get number of annotationwise custom (i.e. with-type) user defined property."""
         return XDW_GetAnnotationCustomAttributeNumber(self.handle)
 
     def set_property(self, name, value):
-        """Set annotationwise custom (ie. with-type) user defined property."""
+        """Set annotationwise custom (i.e. with-type) user defined property."""
         if isinstance(name, str):
             name = name.decode(CODEPAGE)
         if isinstance(value, str):

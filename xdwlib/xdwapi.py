@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #vim:fileencoding=cp932:fileformat=dos
 
-"""xdwapi.py -- DocuWorks API
+"""xdwapi.py -- raw DocuWorks API
 
 Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>  All rights reserved.
 

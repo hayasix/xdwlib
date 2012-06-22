@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #vim:fileencoding=cp932:fileformat=dos
 
-"""common.py -- DocuWorks library for Python.
+"""common.py -- common utility functions
 
 Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>  All rights reserved.
 
@@ -32,7 +32,7 @@ __all__ = (
         "mm2in", "in2mm", "mm2px", "px2mm",
         "environ", "get_viewer",
         "inner_attribute_name", "outer_attribute_name",
-        "adjust_path", "cp", "derivative_path", "mktemp",
+        "adjust_path", "cp", "uc", "derivative_path", "mktemp",
         "joinf", "flagvalue", "typevalue", "makevalue", "scale", "unpack",
         "XDWTemp",
         )
@@ -137,7 +137,7 @@ def joinf(sep, seq):
 
 
 def inner_attribute_name(name):
-    """Get XDWAPI style attribute name eg. font_name --> %FontName"""
+    """Get XDWAPI style attribute name e.g. font_name --> %FontName"""
     if name.startswith("%"):
         return name
     if "A" <= name[0] <= "Z":
@@ -146,7 +146,7 @@ def inner_attribute_name(name):
 
 
 def outer_attribute_name(name):
-    """Get xdwlib style attribute name eg. %FontName --> font_name"""
+    """Get xdwlib style attribute name e.g. %FontName --> font_name"""
     if not name.startswith("%"):
         return name
     return re.sub("([A-Z])", r"_\1", name[1:])[1:].lower()
@@ -155,11 +155,13 @@ def outer_attribute_name(name):
 def adjust_path(path, dir="", ext=".xdw", coding=None):
     """Build a new pathname with filename and directory name.
 
-    path    pathname.  Bare filename is acceptable as well as full pathname.
-    dir     directory.  If dir is given, directory part of path is ignored.
-    ext     Default extension to append if original path has no one.
-    coding  coding name.  Returned pathname is encoded by this.
-            For None, unicode pathname is returned.
+    path    (unicode) pathname
+            Full pathname is acceptable as well as bare filename (basename);
+            only its basename is taken.
+    dir     (unicode) directory part of new pathname
+            If dir is given, directory part of path is ignored.
+    ext     (unicode) default extension to append if original path has no one
+    coding  (str/unicode) encoding of the result; None = unicode
     """
     directory, basename = os.path.split(path)
     directory = dir or directory or os.getcwd()
@@ -171,15 +173,30 @@ def adjust_path(path, dir="", ext=".xdw", coding=None):
     return path
 
 
-def cp(path, dir="", ext=".xdw"):
-    """Returns adjust_path(pathname, coding=CODEPAGE)"""
-    if path:
-        return adjust_path(path, dir=dir, ext=ext, coding=CODEPAGE)
-    return None
+def cp(s):
+    """Coerce unicode into str."""
+    if not s:
+        return ""
+    if isinstance(s, unicode):
+        return s.encode(CODEPAGE)
+    if not isinstance(s, str):
+        raise TypeError("str expected")
+    return s
+
+
+def uc(s):
+    """Coerce str into unicode."""
+    if not s:
+        return u""
+    if isinstance(s, str):
+        return s.decode(CODEPAGE)
+    if not isinstance(s, unicode):
+        raise TypeError("unicode expected")
+    return s
 
 
 def derivative_path(path):
-    """Convert pathname to n-th derivative eg. somedocument-2.xdw or so.
+    """Convert pathname to n-th derivative e.g. somedocument-2.xdw or so.
 
     Addtional number (2, 3, ...) is determined automatically.
     If pathname given does not exist, original pathname is returned.

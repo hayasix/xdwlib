@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #vim:fileencoding=cp932:fileformat=dos
 
-"""page.py -- DocuWorks library for Python.
+"""page.py -- Page and PageCollection
 
 Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>  All rights reserved.
 
@@ -30,7 +30,7 @@ __all__ = ("Page", "PageCollection")
 
 class PageCollection(list):
 
-    """Page collection ie. container for pages."""
+    """Page collection i.e. container for pages."""
 
     def __repr__(self):
         return u"PageCollection({0})".format(", ".join(
@@ -76,8 +76,10 @@ class PageCollection(list):
         write = self.combine if combine else self.save
         tempdir = os.path.split(mktemp())[0]
         temp = os.path.join(tempdir,
-                "{0}_P{1}.xdw".format(self[0].doc.name, self[0].pos + 1))
-        temp = derivative_path(cp(temp))
+                u"{0}_P{1}.xdw".format(
+                        os.path.splitext(self[0].doc.name)[0],
+                        self[0].pos + 1))
+        temp = derivative_path(adjust_path(temp, dir=tempdir))
         write(temp)
         proc = subprocess.Popen([viewer, temp])
         if wait:
@@ -107,16 +109,16 @@ class PageCollection(list):
     def save(self, path=None, group=True):
         """Create a binder (XBD file) as a container for page collection.
 
-        path    (str) pathname for output
+        path    (unicode) pathname for output
         group   (bool) group continuous pages by original document,
-                ie. create document-in-binder.
+                i.e. create document-in-binder.
 
         Returns actual pathname of generated binder, which may be different
         from `path' argument.
         """
         from binder import Binder, create_binder
         from xdwfile import xdwopen
-        path = derivative_path(cp(path or self[0].doc.name))
+        path = derivative_path(path or self[0].doc.name)
         path = os.path.splitext(path)[0] + ".xbd"
         create_binder(path)
         bdoc = xdwopen(path)
@@ -145,7 +147,7 @@ class PageCollection(list):
         from `path' argument.
         """
         from xdwfile import xdwopen
-        path = derivative_path(cp(path or self[0].doc.name))
+        path = derivative_path(adjust_path(uc(path) or self[0].doc.name))
         path = self[0].copy(path)
         doc = xdwopen(path)
         tempdir = os.path.split(mktemp())[0]
@@ -410,13 +412,15 @@ class Page(Annotatable, Observer):
         different from `path' argument.  If path is not available,
         default name "DOCUMENTNAME_Pxx.xdw" will be used.
         """
+        path = uc(path)
         if path:
-            path = cp(path)
+            path = adjust_path(path)
         else:
-            path = "{0}_P{1}.xdw".format(self.doc.name, self.pos + 1)
-            path = cp(path, dir=self.doc.dirname())
+            path = adjust_path(
+                    u"{0}_P{1}.xdw".format(os.path.splitext(self.doc.name)[0], self.pos + 1),
+                    dir=self.doc.dirname())
         path = derivative_path(path)
-        XDW_GetPage(self.doc.handle, self.absolute_page() + 1, path)
+        XDW_GetPage(self.doc.handle, self.absolute_page() + 1, cp(path))
         return path
 
     def view(self, light=False, wait=True):
@@ -449,8 +453,8 @@ class Page(Annotatable, Observer):
         """TODO: unicode handling.
         Currently Author has no idea to take unicode with ord < 256.
         Python's unicode may have inner representation with 0x00,
-        eg.  0x41 0x00 0x42 0x00 0x43 0x00 for "ABC".  This results in
-        unexpected string termination eg. "ABC" -> "A".  So, if the next
+        e.g.  0x41 0x00 0x42 0x00 0x43 0x00 for "ABC".  This results in
+        unexpected string termination e.g. "ABC" -> "A".  So, if the next
         if-block is not placed, you will get much more but inexact
         elements in result for abbreviated search string.
         """

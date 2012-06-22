@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.6
 #vim:fileencoding=cp932:fileformat=dos
 
-"""binder.py -- DocuWorks library for Python.
+"""binder.py -- Binder
 
 Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>  All rights reserved.
 
@@ -25,12 +25,16 @@ __all__ = ("Binder", "create_binder")
 
 
 def create_binder(path, color="RED", size="FREE", coding=CODEPAGE):
-    """The XBD generator."""
-    path = cp(path)
+    """The XBD generator.
+
+    Returns actual pathname.
+    """
+    path = derivative_path(path)
     data = XDW_BINDER_INITIAL_DATA()
     data.nBinderColor = XDW_BINDER_COLOR.normalize(color)
     data.nBinderSize = XDW_BINDER_SIZE.normalize(size)
     XDW_CreateBinder(path, data)
+    return path
 
 
 class Binder(Subject, XDWFile):

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #vim:fileencoding=cp932:fileformat=dos
 
-"""document.py -- DocuWorks library for Python.
+"""document.py -- Document
 
 Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>  All rights reserved.
 
@@ -38,9 +38,8 @@ def create(input_path=None, output_path=None, **kw):
     Returns actual pathname of generated document, which may be different
     from `output_path' argument.
     """
-    output_path = cp(output_path)
-    if isinstance(input_path, basestring):
-        input_path = cp(input_path)
+    input_path, output_path = uc(input_path), uc(output_path)
+    if input_path:
         root, ext = os.path.splitext(input_path)
         output_path = derivative_path(output_path or root + ".xdw")
         if ext.upper() == "PDF":
@@ -52,7 +51,7 @@ def create(input_path=None, output_path=None, **kw):
                 pass  # fall through; processed by respective apps.
         return create_from_app(input_path, output_path, **kw)
     # input_path==None means generating single blank page.
-    output_path = derivative_path(output_path or cp("blank.xdw"))
+    output_path = derivative_path(output_path or u"blank.xdw")
     with open(output_path, "wb") as f:
         f.write(BLANKPAGE)
     return output_path
@@ -86,7 +85,7 @@ def create_from_image(input_path, output_path=None,
     Returns actual pathname of generated document, which may be different
     from `output_path' argument.
     """
-    input_path, output_path = cp(input_path), cp(output_path)
+    input_path, output_path = uc(input_path), uc(output_path)
     if not output_path:
         output_path = os.path.split(input_path)[0] + ".xdw"
     output_path = derivative_path(output_path)
@@ -105,7 +104,7 @@ def create_from_image(input_path, output_path=None,
     opt.nHorPos = XDW_CREATE_HPOS.normalize(align[0])
     opt.nVerPos = XDW_CREATE_VPOS.normalize(align[1])
     opt.nMaxPaperSize = XDW_CREATE_MAXPAPERSIZE.normalize(maxpapersize)
-    XDW_CreateXdwFromImageFile(input_path, output_path, opt)
+    XDW_CreateXdwFromImageFile(cp(input_path), cp(output_path), opt)
     return output_path
 
 
@@ -115,12 +114,12 @@ def create_from_pdf(input_path, output_path=None):
     Returns actual pathname of generated document, which may be different
     from `output_path' argument.
     """
-    input_path, output_path = cp(input_path), cp(output_path)
+    input_path, output_path = uc(input_path), uc(output_path)
     if not output_path:
         output_path = os.path.split(input_path)[0] + ".xdw"
     output_path = derivative_path(output_path)
     try:
-        XDW_CreateXdwFromImagePdfFile(input_path, output_path)
+        XDW_CreateXdwFromImagePdfFile(cp(input_path), cp(output_path))
     except Exception as e:
         # If PDF is not compatible with DocuWorks, try to handle it
         # with the system-defined application program.
@@ -138,12 +137,12 @@ def create_from_app(input_path, output_path=None,
     Returns actual pathname of generated document, which may be different
     from `output_path' argument.
     """
-    input_path, output_path = cp(input_path), cp(output_path)
+    input_path, output_path = uc(input_path), uc(output_path)
     if not output_path:
         output_path = os.path.split(input_path)[0] + ".xdw"
     output_path = derivative_path(output_path)
     handle = XDW_BeginCreationFromAppFile(
-            input_path, output_path, bool(attachment))
+            cp(input_path), cp(output_path), bool(attachment))
     st = time.time()
     try:
         while True:
@@ -167,11 +166,11 @@ def merge(input_paths, output_path=None):
     Returns actual pathname of generated document, which may be different
     from `output_path' argument.
     """
-    input_paths = [cp(path) for path in input_paths]
+    input_paths = [uc(path) for path in input_paths]
     if not output_path:
         output_path = input_paths[0]
-    output_path = derivative_path(output_path)
-    XDW_MergeXdwFiles(input_paths, output_path)
+    output_path = derivative_path(uc(output_path))
+    XDW_MergeXdwFiles(cp(input_paths), cp(output_path))
     return output_path
 
 
