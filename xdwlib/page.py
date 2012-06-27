@@ -393,10 +393,13 @@ class Page(Annotatable, Observer):
         opt.nDisplayProcess = bool(verbose)
         if rects:
             opt.nAreaNum = len(rects)
-            rectlist = XDW_RECT() * len(rects)
-            for r, rect in zip(rectlist, rects):
-                r.left, r.top, r.right, r.bottom = rect.left
-            opt.pAreaRects = byref(rectlist)
+            rs = (XDW_RECT * len(rects))()
+            ps = (POINTER(XDW_RECT) * len(rects))()
+            for i, rect in enumerate(rects):
+                rs[i].left, rs[i].top, rs[i].right, rs[i].bottom = \
+                        [int(x * 100) for x in rect]
+                ps[i] = pointer(rs[i])
+            opt.pAreaRects = ps
         else:
             opt.pAreaRects = NULL
         XDW_ApplyOcr(self.doc.handle, self.absolute_page() + 1, engine, opt)
