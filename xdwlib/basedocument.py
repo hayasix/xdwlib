@@ -207,7 +207,7 @@ class BaseDocument(Subject):
         XDW_CreateXdwFromImageFileAndInsertDocument(
                 self.handle,
                 self.absolute_page(pos, append=True) + 1,
-                input_path,
+                cp(input_path),
                 opt)
         self.update_pages()
         # Check inserted pages in order to attach them to this document and
@@ -298,7 +298,7 @@ class BaseDocument(Subject):
             dopt.nConvertMethod = XDW_CONVERT_MRC_OS
             opt.pDetailOption = cast(pointer(dopt), c_void_p)
         XDW_ConvertPageToImageFile(
-                self.handle, self.absolute_page(pos) + 1, path, opt)
+                self.handle, self.absolute_page(pos) + 1, cp(path), opt)
 
     def page_image(self, pos):
         """Returns page image with annotations in BMP/DIB format."""

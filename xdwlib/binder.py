@@ -29,11 +29,11 @@ def create_binder(path, color="RED", size="FREE", coding=CODEPAGE):
 
     Returns actual pathname.
     """
-    path = derivative_path(path)
+    path = derivative_path(uc(path))
     data = XDW_BINDER_INITIAL_DATA()
     data.nBinderColor = XDW_BINDER_COLOR.normalize(color)
     data.nBinderSize = XDW_BINDER_SIZE.normalize(size)
-    XDW_CreateBinder(path, data)
+    XDW_CreateBinder(cp(path), data)
     return path
 
 
