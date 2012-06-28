@@ -15,7 +15,6 @@ FOR A PARTICULAR PURPOSE.
 
 import os
 import datetime
-from datetime.datetime import fromtimestamp, strpdate
 import shutil
 import atexit
 
@@ -341,7 +340,7 @@ class Attachment(Observer):
                 doc.handle, pos + 1, codepage=CP)
         self.text_type = XDW_TEXT_TYPE[text_type]
         self.size = info.nDataSize
-        self.datetime = fromtimestamp(info.nDate)
+        self.datetime = datetime.datetime.fromtimestamp(info.nDate)
         self.name = info.szName
 
     def update(self, event):
@@ -571,7 +570,10 @@ class XDWFile(object):
                     )
             self.status = docsts
         else:  # siginfo.nSignatureType == XDW_SIGNATURE_PKI
-            parsedt = lambda s: strptime(s, "%Y/%m/%d %H:%M:%S")
+
+            def parsedt(s):
+                return datetime.datetime.strptime(s, "%Y/%m/%d %H:%M:%S")
+
             ver = XDW_SIGNATURE_PKI_TYPE[modinfo.nCertVerificationType]
             sts = XDW_SIGNATURE_PKI_CERT[modinfo.nCertVerificationStatus]
             docsts = XDW_SIGNATURE_PKI_DOC[modinfo.nDocVerificationStatus]
