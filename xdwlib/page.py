@@ -60,11 +60,11 @@ class PageCollection(list):
         combine (bool) combine pages into a single document.
         light   (bool) force to use DocuWorks Viewer Light.  Note that it will
                 use DocuWorks Viewer if Light version is not avaiable.
-        wait    (bool) wait until viewer stops.  For False, (Popen, path) is
+        wait    (bool) wait until viewer stops.  For False, (proc, temp) is
                 returned.  Users should remove the file of path after the Popen
                 object ends.
 
-        Returns (proc, temp) where:
+        Returns (proc, temp) if wait is False, where:
                 proc    subprocess.Popen object
                 temp    pathname of temporary file to view.
 
@@ -173,28 +173,28 @@ class Page(Annotatable, Observer):
 
     def reset_attr(self):
         abspos = self.doc.absolute_page(self.pos)
-        page_info = XDW_GetPageInformation(
+        pginfo = XDW_GetPageInformation(
                 self.doc.handle, abspos + 1, extend=True)
         self.size = Point(
-                page_info.nWidth / 100.0,
-                page_info.nHeight / 100.0)  # float, in mm
+                pginfo.nWidth / 100.0,
+                pginfo.nHeight / 100.0)  # float, in mm
         # XDW_PGT_FROMIMAGE/FROMAPPL/NULL
-        self.type = XDW_PAGE_TYPE[page_info.nPageType]
+        self.type = XDW_PAGE_TYPE[pginfo.nPageType]
         self.resolution = Point(
-                Page.norm_res(page_info.nHorRes),
-                Page.norm_res(page_info.nVerRes))  # dpi
-        self.compress_type = XDW_COMPRESS[page_info.nCompressType]
-        self.annotations = page_info.nAnnotations
-        self.degree = page_info.nDegree
+                Page.norm_res(pginfo.nHorRes),
+                Page.norm_res(pginfo.nVerRes))  # dpi
+        self.compress_type = XDW_COMPRESS[pginfo.nCompressType]
+        self.annotations = pginfo.nAnnotations
+        self.degree = pginfo.nDegree
         self.original_size = Point(
-                page_info.nOrgWidth / 100.0,
-                page_info.nOrgHeight / 100.0)  # mm
+                pginfo.nOrgWidth / 100.0,
+                pginfo.nOrgHeight / 100.0)  # mm
         self.original_resolution = Point(
-                Page.norm_res(page_info.nOrgHorRes),
-                Page.norm_res(page_info.nOrgVerRes))  # dpi
+                Page.norm_res(pginfo.nOrgHorRes),
+                Page.norm_res(pginfo.nOrgVerRes))  # dpi
         self.image_size = Point(
-                page_info.nImageWidth,
-                page_info.nImageHeight)  # px
+                pginfo.nImageWidth,
+                pginfo.nImageHeight)  # px
         # Page color info.
         pci = XDW_GetPageColorInformation(self.doc.handle, abspos + 1)
         self.is_color = bool(pci.nColor)
@@ -263,13 +263,15 @@ class Page(Annotatable, Observer):
         """Get pagewise user defined attribute."""
         if isinstance(name, unicode):
             name = name.encode(CODEPAGE)
-        return XDW_GetPageUserAttribute(self.doc.handle, self.absolute_page() + 1, name)
+        return XDW_GetPageUserAttribute(
+                self.doc.handle, self.absolute_page() + 1, name)
 
     def set_userattr(self, name, value):
         """Set pagewise user defined attribute."""
         if isinstance(name, unicode):
             name = name.encode(CODEPAGE)
-        XDW_SetPageUserAttribute(self.doc.handle, self.absolute_page() + 1, name, value)
+        XDW_SetPageUserAttribute(
+                self.doc.handle, self.absolute_page() + 1, name, value)
 
     def update(self, event):
         if not isinstance(event, Notification):
@@ -419,8 +421,9 @@ class Page(Annotatable, Observer):
         if path:
             path = adjust_path(path)
         else:
+            docname = os.path.splitext(self.doc.name)[0]
             path = adjust_path(
-                    u"{0}_P{1}.xdw".format(os.path.splitext(self.doc.name)[0], self.pos + 1),
+                    u"{0}_P{1}.xdw".format(docname, self.pos + 1),
                     dir=self.doc.dirname())
         path = derivative_path(path)
         XDW_GetPage(self.doc.handle, self.absolute_page() + 1, cp(path))
@@ -435,7 +438,8 @@ class Page(Annotatable, Observer):
                 returned.  Users should remove the file of path after the Popen
                 object ends.
         """
-        return (PageCollection() + self).view(combine=True, light=light, wait=wait)
+        pc = PageCollection() + self
+        return pc.view(combine=True, light=light, wait=wait)
 
     def text_regions(self, text,
             ignore_case=False, ignore_width=False, ignore_hirakata=False):

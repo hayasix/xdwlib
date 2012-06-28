@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.6
 #vim:fileencoding=cp932:fileformat=dos
 
-"""basedocument.py -- BaseDocument, base class for Document and DocumentInBinder
+"""basedocument.py -- BaseDocument, base class for Document/DocumentInBinder
 
 Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>  All rights reserved.
 

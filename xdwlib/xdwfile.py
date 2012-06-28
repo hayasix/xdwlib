@@ -15,6 +15,7 @@ FOR A PARTICULAR PURPOSE.
 
 import os
 import datetime
+from datetime.datetime import fromtimestamp, strpdate
 import shutil
 import atexit
 
@@ -138,7 +139,11 @@ def protection_info(path):
     return (protect_type, permission)
 
 
-def protect(input_path, output_path=None, protect_type="PASSWORD", auth="NONE", **options):
+def protect(input_path,
+        output_path=None,
+        protect_type="PASSWORD",
+        auth="NONE",
+        **options):
     """Generate protected document/binder.
 
     protect_type    "PASSWORD" | "PASSWORD128" | "PKI"
@@ -165,19 +170,20 @@ def protect(input_path, output_path=None, protect_type="PASSWORD", auth="NONE", 
     protect_option = XDW_PROTECT_OPTION()
     protect_option.nAuthMode = XDW_AUTH.normalize(auth)
     protect_type = XDW_PROTECT.normalize(protect_type)
+    o = lambda s: options.get(s)
     if protect_type in (XDW_PROTECT_PSWD, XDW_PROTECT_PSWD128):
         opt = XDW_SECURITY_OPTION_PSWD()
-        opt.nPermission = flagvalue(XDW_PERM, options.get("permission"), store=True)
-        opt.szOpenPswd = options.get("password") or ""
-        opt.szFullAccessPswd = options.get("fullaccess") or ""
-        opt.lpszComment = options.get("comment") or ""
+        opt.nPermission = flagvalue(XDW_PERM, o("permission"), store=True)
+        opt.szOpenPswd = o("password") or ""
+        opt.szFullAccessPswd = o("fullaccess") or ""
+        opt.lpszComment = o("comment") or ""
     elif protect_type == XDW_PROTECT_PKI:
         opt = XDW_SECURITY_OPTION_PKI()
-        opt.nPermission = flagvalue(XDW_PERM, options.get("permission"), store=True)
-        certificates = options.get("certificates")
+        opt.nPermission = flagvalue(XDW_PERM, o("permission"), store=True)
+        certificates = o("certificates")
         if not certificates:
             raise ValueError("a list of certificate(s) is required")
-        fullaccesscerts = options.get("fullacccesscerts")
+        fullaccesscerts = o("fullacccesscerts")
         opt.nCertsNum = len(certificates) + len(fullaccesscerts)
         opt.nFullAccessCertsNum = len(fullaccesscerts)
         certs = fullaccesscerts + certificates
@@ -187,11 +193,13 @@ def protect(input_path, output_path=None, protect_type="PASSWORD", auth="NONE", 
             ders[i].nCertSize = len(certs[i])
         opt.lpxdcCerts = byref(ders)
     elif protect_type in (XDW_PROTECT_STAMP, XDW_PROTECT_CONTEXT_SERVICE):
-        raise NotImplementedError("only password- or PKI-based protection is available")
+        raise NotImplementedError(
+                "only password- or PKI-based protection is available")
     else:
         raise ValueError("protect_type must be PASSWORD, PASSWORD128 or PKI")
     try:
-        XDW_ProtectDocument(cp(input_path), cp(output_path), protect_type, opt, protect_option)
+        XDW_ProtectDocument(cp(input_path), cp(output_path),
+                protect_type, opt, protect_option)
     except ProtectModuleError as e:
         msg = XDW_SECURITY_PKI_ERROR[opt.nErrorStatus]
         if 0 <= opt.nFirstErrorCert:
@@ -223,7 +231,11 @@ def unprotect(input_path, output_path=None, auth="NONE"):
     return output_path
 
 
-def sign(input_path, output_path=None, page=0, position=None, type_="STAMP",
+def sign(input_path,
+        output_path=None,
+        page=0,
+        position=None,
+        type_="STAMP",
         certificate=None):
     """Sign i.e. place a signature on document/binder page.
 
@@ -261,8 +273,8 @@ class AttachmentList(Subject):
         if size:
             self.size = size
         else:
-            doc_info = XDW_GetDocumentInformation(doc.handle)
-            self.size = doc_info.nOriginalData
+            docinfo = XDW_GetDocumentInformation(doc.handle)
+            self.size = docinfo.nOriginalData
 
     def __len__(self):
         return self.size
@@ -274,9 +286,8 @@ class AttachmentList(Subject):
     def _pos(self, pos, append=False):
         append = 1 if append else 0
         if not (-self.size <= pos < self.size + append):
-            raise IndexError(
-                    "Attachment number must be in [{0}, {1}), {2} given".format(
-                    -self.size, self.size + append, pos))
+            raise IndexError("Attachment #{0} not in [{1}, {2})".format(
+                    pos, -self.size, self.size + append))
         if pos < 0:
             pos += self.size
         return pos
@@ -326,10 +337,11 @@ class Attachment(Observer):
     def __init__(self, doc, pos):
         self.doc = doc
         self.pos = pos
-        info, text_type = XDW_GetOriginalDataInformationW(doc.handle, pos + 1, codepage=CP)
+        info, text_type = XDW_GetOriginalDataInformationW(
+                doc.handle, pos + 1, codepage=CP)
         self.text_type = XDW_TEXT_TYPE[text_type]
         self.size = info.nDataSize
-        self.datetime = datetime.datetime.fromtimestamp(info.nDate)
+        self.datetime = fromtimestamp(info.nDate)
         self.name = info.szName
 
     def update(self, event):
@@ -401,21 +413,21 @@ class XDWFile(object):
         if isinstance(self.name, str):
             self.name = self.name.decode(CODEPAGE)
         # Set document properties.
-        document_info = XDW_GetDocumentInformation(self.handle)
-        self.pages = document_info.nPages
-        self.version = document_info.nVersion - 3  # DocuWorks version
-        self.attachments = AttachmentList(self, size=document_info.nOriginalData)
-        self.type = XDW_DOCUMENT_TYPE[document_info.nDocType]
-        self.editable = bool(document_info.nPermission & XDW_PERM_DOC_EDIT)
-        self.annotatable = bool(document_info.nPermission & XDW_PERM_ANNO_EDIT)
-        self.printable = bool(document_info.nPermission & XDW_PERM_PRINT)
-        self.copyable = bool(document_info.nPermission & XDW_PERM_COPY)
-        #self.show_annotations = bool(document_info.nShowAnnotations)
-        self.__dict__["show_annotations"] = bool(document_info.nShowAnnotations)
+        docinfo = XDW_GetDocumentInformation(self.handle)
+        self.pages = docinfo.nPages
+        self.version = docinfo.nVersion - 3  # DocuWorks version
+        self.attachments = AttachmentList(self, size=docinfo.nOriginalData)
+        self.type = XDW_DOCUMENT_TYPE[docinfo.nDocType]
+        self.editable = bool(docinfo.nPermission & XDW_PERM_DOC_EDIT)
+        self.annotatable = bool(docinfo.nPermission & XDW_PERM_ANNO_EDIT)
+        self.printable = bool(docinfo.nPermission & XDW_PERM_PRINT)
+        self.copyable = bool(docinfo.nPermission & XDW_PERM_COPY)
+        #self.show_annotations = bool(docinfo.nShowAnnotations)
+        self.__dict__["show_annotations"] = bool(docinfo.nShowAnnotations)
         # Followings are effective only for binders.
-        self.documents = document_info.nDocuments
-        self.binder_color = XDW_BINDER_COLOR[document_info.nBinderColor]
-        self.binder_size = XDW_BINDER_SIZE[document_info.nBinderSize]
+        self.documents = docinfo.nDocuments
+        self.binder_color = XDW_BINDER_COLOR[docinfo.nBinderColor]
+        self.binder_size = XDW_BINDER_SIZE[docinfo.nBinderSize]
         # Document attributes.
         #self.attributes = XDW_GetDocumentAttributeNumber(self.handle)
         self.properties = XDW_GetDocumentAttributeNumber(self.handle)
@@ -429,8 +441,8 @@ class XDWFile(object):
 
     def update_pages(self):
         """Update number of pages; used after insert multiple pages in."""
-        document_info = XDW_GetDocumentInformation(self.handle)
-        self.pages = document_info.nPages
+        docinfo = XDW_GetDocumentInformation(self.handle)
+        self.pages = docinfo.nPages
 
     def save(self):
         """Save document regardless of whether it is modified or not."""
@@ -499,14 +511,20 @@ class XDWFile(object):
         XDW_SetUserAttribute(self.handle, name, value)
 
     def get_property(self, name):
-        """Get user defined property."""
+        """Get user defined property.
+
+        name    (unicode) name of property, or user attribute
+                (int) property order which starts with 0
+        """
         if isinstance(name, int):
-            name, t, value, _ = XDW_GetDocumentAttributeByOrderW(self.handle, name + 1)
+            name, t, value, _ = XDW_GetDocumentAttributeByOrderW(
+                    self.handle, name + 1)
             # _ must be XDW_TEXT_MULTIBYTE.
             return (name, makevalue(t, value))
         if isinstance(name, str):
             name = name.decode(CODEPAGE)
-        return XDW_GetDocumentAttributeByNameW(self.handle, name, codepage=CP)[1]
+        return XDW_GetDocumentAttributeByNameW(
+                self.handle, name, codepage=CP)[1]
 
     def set_property(self, name, value):
         """Set user defined property."""
@@ -515,7 +533,8 @@ class XDWFile(object):
         if isinstance(value, str):
             value = value.decode(CODEPAGE)  # Force to store in unicode.
         t, value = typevalue(value)
-        XDW_SetDocumentAttributeW(self.handle, name, t, value, XDW_TEXT_MULTIBYTE, codepage=CP)
+        XDW_SetDocumentAttributeW(
+                self.handle, name, t, value, XDW_TEXT_MULTIBYTE, codepage=CP)
 
     getprop = get_property
     setprop = set_property
@@ -535,6 +554,8 @@ class XDWFile(object):
         """
         siginfo, modinfo = XDW_GetSignatureInformation(self.handle, pos + 1)
         if siginfo.nSignatureType == XDW_SIGNATURE_STAMP:
+            sts = XDW_SIGNATURE_STAMP_STAMP[modinfo.nStampVerificationStatus]
+            docsts = XDW_SIGNATURE_STAMP_DOC[modinfo.nDocVerificationStatus]
             sig = StampSignature(
                     self,
                     pos,
@@ -546,12 +567,14 @@ class XDWFile(object):
                     owner_name=modinfo.lpszOwnerName,
                     valid_until=fromunixtime(modinfo.nValidDate),
                     memo=modinfo.lpszRemarks,
-                    status=XDW_SIGNATURE_STAMP_STAMP[modinfo.nStampVerificationStatus],
+                    status=sts,
                     )
-            self.status = XDW_SIGNATURE_STAMP_DOC[modinfo.nDocVerificationStatus]
+            self.status = docsts
         else:  # siginfo.nSignatureType == XDW_SIGNATURE_PKI
-            def parsedt(s):
-                return datetime.datetime.strptime(s, "%Y/%m/%d %H:%M:%S")
+            parsedt = lambda s: strptime(s, "%Y/%m/%d %H:%M:%S")
+            ver = XDW_SIGNATURE_PKI_TYPE[modinfo.nCertVerificationType]
+            sts = XDW_SIGNATURE_PKI_CERT[modinfo.nCertVerificationStatus]
+            docsts = XDW_SIGNATURE_PKI_DOC[modinfo.nDocVerificationStatus]
             sig = PKISignature(
                     self,
                     pos,
@@ -571,10 +594,10 @@ class XDWFile(object):
                     certificate=modinfo.signer_cert,
                     memo=modinfo.lpszRemarks,
                     signing_time=parsedt(modinfo.lpszSigningTime),
-                    verification_type=XDW_SIGNATURE_PKI_TYPE[modinfo.nCertVerificationType],
-                    status=XDW_SIGNATURE_PKI_CERT[modinfo.nCertVerificationStatus],
+                    verification_type=ver,
+                    status=sts,
                     )
-            self.status = XDW_SIGNATURE_PKI_DOC[modinfo.nDocVerificationStatus]
+            self.status = docsts
         return sig
 
     def _process(self, meth, *args, **kw):
@@ -594,7 +617,12 @@ class XDWFile(object):
         self.signatures = XDW_GetDocumentSignatureNumber(self.handle)
         self.status = None
 
-    def sign(self, output_path=None, page=0, position=None, type_="STAMP", certificate=None):
+    def sign(self,
+            output_path=None,
+            page=0,
+            position=None,
+            type_="STAMP",
+            certificate=None):
         """Sign i.e. attach signature.
 
         See xdwfile.sign() for arguments.
@@ -604,10 +632,14 @@ class XDWFile(object):
 
         NB. self.save() is performed internally.
         """
-        return self._process(sign, output_path=output_path,
-                page=page, position=position, type_=type_, certificate=certificate)
+        return self._process(sign, output_path=output_path, page=page,
+                lposition=position, type_=type_, certificate=certificate)
 
-    def protect(self, output_path=None, protect_type="PASSWORD", auth="NONE", **options):
+    def protect(self,
+            output_path=None,
+            protect_type="PASSWORD",
+            auth="NONE",
+            **options):
         """Protect document/binder.
 
         See xdwfile.protect() for arguments.
@@ -825,7 +857,7 @@ class PageForm(object):
             elements in result for abbreviated search string.
             """
             if isinstance(value, unicode):
-                value = value.encode(CODEPAGE)  # TODO: how can we take all unicodes?
+                value = value.encode(CODEPAGE)  # TODO: unicode handling
             if 255 < len(value):
                 raise ValueError("text length must be <= 255")
         # TODO: XDW_ATYPE_OTHER should also be valid.

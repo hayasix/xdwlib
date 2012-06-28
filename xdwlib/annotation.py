@@ -226,37 +226,41 @@ class Annotation(Annotatable, Observer):
         """Set annotationwise user defined attribute."""
         if isinstance(name, unicode):
             name = name.encode(CODEPAGE)
-        XDW_SetAnnotationUserAttribute(self.page.doc.handle, self.handle, name, value)
+        XDW_SetAnnotationUserAttribute(
+                self.page.doc.handle, self.handle, name, value)
 
     def get_property(self, name):
         """Get annotationwise custom (i.e. with-type) user defined property."""
         if isinstance(name, str):
             name = name.decode(CODEPAGE)
         if isinstance(name, unicode):
-            return makevalue(*XDW_GetAnnotationCustomAttributeByName(self.handle, name))
+            t, v = XDW_GetAnnotationCustomAttributeByName(self.handle, name)
+            return makevalue(t, v)
         if not isinstance(name, int):
             raise TypeError("name must be unicode or int")
-        # Any custom attribute can be taken by order (number) which starts with 0.
+        # Any custom attribute can be taken by order which starts with 0.
         attrs = self.customattrs()
         if name < 0:
             name += attrs
         if not (0 <= name < attrs):
             raise IndexError("attribute order out of range [0, %d)" % attrs)
-        name, t, value = XDW_GetAnnotationCustomAttributeByOrder(self.handle, name + 1)
+        name, t, value = \
+                XDW_GetAnnotationCustomAttributeByOrder(self.handle, name + 1)
         return (name, makevalue(t, value))
 
     def properties(self):
-        """Get number of annotationwise custom (i.e. with-type) user defined property."""
+        """Get number of annotationwise custom user defined property."""
         return XDW_GetAnnotationCustomAttributeNumber(self.handle)
 
     def set_property(self, name, value):
-        """Set annotationwise custom (i.e. with-type) user defined property."""
+        """Set annotationwise custom user defined property."""
         if isinstance(name, str):
             name = name.decode(CODEPAGE)
         if isinstance(value, str):
             value = value.decode(CODEPAGE)
         t, value = typevalue(value)
-        XDW_SetAnnotationCustomAttribute(self.page.doc.handle, self.handle, name, t, value)
+        XDW_SetAnnotationCustomAttribute(
+                self.page.doc.handle, self.handle, name, t, value)
 
     getprop = get_property
     setprop = set_property
@@ -370,12 +374,14 @@ class Annotation(Annotatable, Observer):
         MARKER
         >>> ann = pg.annotation(2)  # POLYGON
         >>> ann.pos, ann.type, ann.position, ann.points
-        (2, 'POLYGON', Point(52.12, 56.16), (Point(58.12, 62.16), Point(65.91, 99.76), P
-        oint(80.13, 75.37), Point(96.39, 79.10), Point(97.06, 60.47)))
+        (2, 'POLYGON', Point(52.12, 56.16), (Point(58.12, 62.16), Point(
+        65.91, 99.76), Point(80.13, 75.37), Point(96.39, 79.10), Point(9
+        7.06, 60.47)))
         >>> ann.rotate(30, orientation=True)
         >>> ann.pos, ann.type, ann.position, ann.points
-        (8, 'POLYGON', Point(52.12, 56.16), (Point(54.31, 64.35), Point(42.26, 100.80),
-        Point(66.76, 86.79), Point(78.98, 98.15), Point(88.87, 82.35)))
+        (8, 'POLYGON', Point(52.12, 56.16), (Point(54.31, 64.35), Point(
+        42.26, 100.80), Point(66.76, 86.79), Point(78.98, 98.15), Point(
+        88.87, 82.35)))
         >>> # Notice ann.pos is replaced automatically.
         ...
         >>> for ann in pg: print ann.type
@@ -411,9 +417,11 @@ class Annotation(Annotatable, Observer):
                 return
             points = [p.rotate(degree, origin=origin) for p in self.points]
             parent = self.parent or self.page
-            if t == XDW_AID_STRAIGHTLINE: action = parent.add_line
-            elif t == XDW_AID_MARKER: action = parent.add_marker
-            elif t == XDW_AID_POLYGON: action = parent.add_polygon
+            action = {
+                    XDW_AID_STRAIGHTLINE: parent.add_line,
+                    XDW_AID_MARKER: parent.add_marker,
+                    XDW_AID_POLYGON: parent.add_polygon,
+                    }.get(t)
             copy = action(points=points)
             # Copy attributes.
             kw = self.attributes()

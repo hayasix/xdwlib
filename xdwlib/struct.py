@@ -77,7 +77,7 @@ class Point(object):
         return Point(math.ceil(self.x), math.ceil(self.y))
 
     def fix(self):
-        return Point(int(self.x), int(self,y))
+        return Point(int(self.x), int(self.y))
 
     @staticmethod
     def _round(f, places=0):

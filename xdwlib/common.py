@@ -91,10 +91,10 @@ BLANKPAGE = (
 INCH = 25.4
 
 
-def mm2in(value): return value / INCH
-def in2mm(value): return value * INCH
-def mm2px(value, dpi): return value / INCH * dpi
-def px2mm(value, dpi): return value / dpi * INCH
+mm2in = lambda v: v / INCH
+in2mm = lambda v: v * INCH
+mm2px = lambda v, dpi: v / INCH * dpi
+px2mm = lambda v, dpi: v / dpi * INCH
 
 
 def environ(name=None):

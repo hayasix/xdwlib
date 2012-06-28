@@ -71,7 +71,9 @@ class Bitmap(object):
 
     def __init__(self, bitmap_info_header_p):
         self.header = BitmapInfoHeader()
-        memmove(pointer(self.header), bitmap_info_header_p, sizeof(self.header))
+        memmove(pointer(self.header),
+                bitmap_info_header_p,
+                sizeof(self.header))
         self.data = create_string_buffer(self.header.biSizeImage)
         memmove(pointer(self.data),
                 bitmap_info_header_p + sizeof(self.header),
@@ -79,7 +81,8 @@ class Bitmap(object):
 
     def __getattr__(self, name):
         if name == "resolution":
-            return (self.header.biXPelsPerMeter, self.header.biYPelsPerMeter)
+            return (self.header.biXPelsPerMeter,
+                    self.header.biYPelsPerMeter)
         return getattr(self.header, Bitmap.attrs[name])
 
     @staticmethod

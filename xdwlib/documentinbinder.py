@@ -35,16 +35,15 @@ class DocumentInBinder(BaseDocument, Observer):
         self._set_page_offset()  # self.page_offset
         self.name = XDW_GetDocumentNameInBinderW(
                 self.handle, pos + 1, codepage=CP)[0]
-        document_info = XDW_GetDocumentInformationInBinder(
+        docinfo = XDW_GetDocumentInformationInBinder(
                 self.handle, pos + 1)
-        self.pages = document_info.nPages
-        self.original_data = document_info.nOriginalData
+        self.pages = docinfo.nPages
+        self.original_data = docinfo.nOriginalData
 
     def update_pages(self):
         """Concrete method over update_pages()."""
-        document_info = XDW_GetDocumentInformationInBinder(
-                self.handle, pos + 1)
-        self.pages = document_info.nPages
+        docinfo = XDW_GetDocumentInformationInBinder(self.handle, pos + 1)
+        self.pages = docinfo.nPages
 
     def __repr__(self):
         return u"{cls}({name}({bdoc}[{pos}]))".format(
