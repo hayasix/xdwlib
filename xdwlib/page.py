@@ -76,9 +76,8 @@ class PageCollection(list):
         write = self.combine if combine else self.save
         tempdir = os.path.split(mktemp())[0]
         temp = os.path.join(tempdir,
-                u"{0}_P{1}.xdw".format(
-                        os.path.splitext(self[0].doc.name)[0],
-                        self[0].pos + 1))
+                u"{0}_P{1}{2}".format(
+                        self[0].doc.name, self[0].pos + 1, suffix))
         temp = derivative_path(adjust_path(temp, dir=tempdir))
         write(temp)
         proc = subprocess.Popen([viewer, temp])
@@ -118,8 +117,8 @@ class PageCollection(list):
         """
         from binder import Binder, create_binder
         from xdwfile import xdwopen
-        path = derivative_path(path or self[0].doc.name)
-        path = os.path.splitext(path)[0] + ".xbd"
+        path = adjust_path(uc(path or (self[0].doc.name + ".xbd")))
+        path = derivative_path(path)
         create_binder(path)
         bdoc = xdwopen(path)
         tempdir = os.path.split(mktemp())[0]
@@ -147,7 +146,8 @@ class PageCollection(list):
         from `path' argument.
         """
         from xdwfile import xdwopen
-        path = derivative_path(adjust_path(uc(path) or self[0].doc.name))
+        path = adjust_path(uc(path or (self[0].doc.name + ".xdw")))
+        path = derivative_path(path)
         path = self[0].copy(path)
         doc = xdwopen(path)
         tempdir = os.path.split(mktemp())[0]
@@ -421,9 +421,8 @@ class Page(Annotatable, Observer):
         if path:
             path = adjust_path(path)
         else:
-            docname = os.path.splitext(self.doc.name)[0]
             path = adjust_path(
-                    u"{0}_P{1}.xdw".format(docname, self.pos + 1),
+                    u"{0}_P{1}.xdw".format(self.doc.name, self.pos + 1),
                     dir=self.doc.dirname())
         path = derivative_path(path)
         XDW_GetPage(self.doc.handle, self.absolute_page() + 1, cp(path))

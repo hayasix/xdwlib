@@ -137,7 +137,7 @@ class Binder(Subject, XDWFile):
     def insert(self, pos, path):
         """Insert a document by path ."""
         pos = self._pos(pos, append=True)
-        XDW_InsertDocumentToBinder(self.handle, pos + 1, path)
+        XDW_InsertDocumentToBinder(self.handle, pos + 1, cp(path))
         self.documents += 1
         doc = self.document(pos)
         self.attach(doc, EV_DOC_INSERTED)

@@ -385,16 +385,24 @@ class XDWFile(object):
         VALID_DOCUMENT_HANDLES.remove(handle)
 
     def __init__(self, path):
-        """Constructor."""
-        self.dir, self.name = os.path.split(uc(path))
-        self._set_protection_info()
+        """Constructor.
 
-    def _set_protection_info(self):
-        self.protection = protection_info(os.path.join(self.dir, self.name))
+        Sets the following properties:
+            dir         (unicode) directory part of path
+            name        (unicode) filename without extension
+            type        (str) "DOCUMENT" | "BINDER"
+            protection  result of protection_info(path)
+
+        NB. value of `type' may be changed after actual open().
+        """
+        self.dir, self.name = os.path.split(uc(path))
+        self.name, ext = os.path.splitext(self.name)
+        self.type = {".xdw": "DOCUMENT", ".xbd": "BINDER"}.get(
+                ext.lower(), "DOCUMENT")
+        self.protection = protection_info(path)
 
     def open(self, readonly=False, authenticate=True):
         """Opener."""
-        self._set_protection_info()
         open_mode = XDW_OPEN_MODE_EX()
         if readonly:
             open_mode.nOption = XDW_OPEN_READONLY
@@ -404,13 +412,8 @@ class XDWFile(object):
             open_mode.nAuthMode = XDW_AUTH_NODIALOGUE
         else:
             open_mode.nAuthMode = XDW_AUTH_NONE
-        self.handle = XDW_OpenDocumentHandle(
-                cp(os.path.join(self.dir, self.name)), open_mode)
+        self.handle = XDW_OpenDocumentHandle(cp(self.pathname()), open_mode)
         self.register()
-        if isinstance(self.dir, str):
-            self.dir = self.dir.decode(CODEPAGE)
-        if isinstance(self.name, str):
-            self.name = self.name.decode(CODEPAGE)
         # Set document properties.
         docinfo = XDW_GetDocumentInformation(self.handle)
         self.pages = docinfo.nPages
@@ -437,6 +440,14 @@ class XDWFile(object):
         # Remember arguments for future use.
         self.readonly = readonly
         self.authenticate = authenticate
+
+    def filename(self):
+        """Get filename with extension."""
+        return self.name + {"DOCUMENT": ".xdw", "BINDER": ".xbd"}[self.type]
+
+    def pathname(self):
+        """Get full pathname with extension."""
+        return os.path.join(self.dir, self.filename())
 
     def update_pages(self):
         """Update number of pages; used after insert multiple pages in."""
@@ -603,7 +614,7 @@ class XDWFile(object):
         return sig
 
     def _process(self, meth, *args, **kw):
-        self_path = os.path.join(self.dir, self.name)
+        self_path = self.pathname()
         oldhandle = self.handle
         self.save()
         self.close()

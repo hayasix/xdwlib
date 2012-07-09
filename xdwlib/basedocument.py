@@ -152,7 +152,7 @@ class BaseDocument(Subject):
         XDW_InsertDocument(
                 self.handle,
                 self.absolute_page(pos, append=True) + 1,
-                temp)
+                cp(temp))
         self.pages += len(pc)
         if doc:
             doc.close()
