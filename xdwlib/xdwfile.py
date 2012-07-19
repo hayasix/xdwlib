@@ -543,6 +543,8 @@ class XDWFile(object):
         if isinstance(value, str):
             value = value.decode(CODEPAGE)  # Force to store in unicode.
         t, value = typevalue(value)
+        if t != XDW_ATYPE_STRING:
+            value = byref(value)
         XDW_SetDocumentAttributeW(
                 self.handle, name, t, value, XDW_TEXT_MULTIBYTE, codepage=CP)
 
