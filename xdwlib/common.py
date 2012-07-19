@@ -250,7 +250,7 @@ def typevalue(value):
     elif isinstance(value, unicode):
         return (XDW_ATYPE_STRING, value)
     elif isinstance(value, (datetime.datetime, datetime.date)):
-        return (XDW_ATYPE_DATE, c_int(time.mktime(value.timetuple())))
+        return (XDW_ATYPE_DATE, c_int(int(time.mktime(value.timetuple()))))
     else:
         return (XDW_ATYPE_OTHER, byref(value))
 
