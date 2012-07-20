@@ -105,6 +105,8 @@ class Annotation(Annotatable, Observer):
             if data_type == XDW_ATYPE_INT:
                 if self.type == "STICKEY" and attrname.endswith("Color"):
                     return XDW_COLOR_FUSEN[value]
+                elif self.type == "LINK" and attrname.endswith("XdwPage"):
+                    return value - 1  # So, -1 for profile view.
                 return scale(attrname, value, store=False)
             elif data_type == XDW_ATYPE_STRING:
                 self.is_unicode = (text_type == XDW_TEXT_UNICODE)
@@ -142,6 +144,8 @@ class Annotation(Annotatable, Observer):
         if attrname in XDW_ANNOTATION_ATTRIBUTE:
             if self.type == "STICKEY" and attrname.endswith("Color"):
                 value = XDW_COLOR_FUSEN.normalize(value)
+            elif self.type == "LINK" and attrname.endswith("XdwPage"):
+                value += 1  # So, specify -1 for profile view.
             t, unit, limited = XDW_ANNOTATION_ATTRIBUTE[attrname]
             anntype = XDW_ANNOTATION_TYPE.inner(self.type)
             if limited and anntype not in limited:
@@ -169,14 +173,12 @@ class Annotation(Annotatable, Observer):
                     texttype = XDW_TEXT_UNICODE
                 else:
                     texttype = XDW_TEXT_MULTIBYTE
-                if isinstance(value, str):
-                    value = unicode(value, CODEPAGE)
                 XDW_SetAnnotationAttributeW(
                         self.page.doc.handle,
                         self.handle,
                         attrname,
                         XDW_ATYPE_STRING,
-                        value,
+                        uc(value),
                         texttype,
                         codepage=CP)
             else:
@@ -231,10 +233,8 @@ class Annotation(Annotatable, Observer):
 
     def get_property(self, name):
         """Get annotationwise custom (i.e. with-type) user defined property."""
-        if isinstance(name, str):
-            name = name.decode(CODEPAGE)
-        if isinstance(name, unicode):
-            t, v = XDW_GetAnnotationCustomAttributeByName(self.handle, name)
+        if isinstance(name, basestring):
+            t, v = XDW_GetAnnotationCustomAttributeByName(self.handle, uc(name))
             return makevalue(t, v)
         if not isinstance(name, int):
             raise TypeError("name must be unicode or int")
@@ -254,13 +254,11 @@ class Annotation(Annotatable, Observer):
 
     def set_property(self, name, value):
         """Set annotationwise custom user defined property."""
-        if isinstance(name, str):
-            name = name.decode(CODEPAGE)
-        if isinstance(value, str):
-            value = value.decode(CODEPAGE)
+        if isinstance(value, basestring):
+            value = uc(value)
         t, value = typevalue(value)
         XDW_SetAnnotationCustomAttribute(
-                self.page.doc.handle, self.handle, name, t, value)
+                self.page.doc.handle, self.handle, uc(name), t, value)
 
     getprop = get_property
     setprop = set_property

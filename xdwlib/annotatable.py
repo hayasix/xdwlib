@@ -164,10 +164,16 @@ class Annotatable(Subject):
         ann = self.annotation(pos)
         return ann
 
-    def add_text(self, text, position=_POSITION, **kw):
+    def add_text(self, position=_POSITION, **kw):
         """Paste a text annotation."""
         ann = self.add(XDW_AID_TEXT, position)
-        ann.Text = text
+        for k, v in kw.items():
+            setattr(ann, k, v)
+        return ann
+
+    def add_link(self, position=_POSITION, **kw):
+        """Paste a link annotation."""
+        ann = self.add(XDW_AID_LINK, position)
         for k, v in kw.items():
             setattr(ann, k, v)
         return ann

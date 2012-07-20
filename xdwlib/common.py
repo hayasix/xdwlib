@@ -182,7 +182,7 @@ def cp(s):
     if isinstance(s, unicode):
         return s.encode(CODEPAGE)
     if not isinstance(s, str):
-        raise TypeError("str expected")
+        raise TypeError("str or unicode expected")
     return s
 
 
@@ -193,7 +193,7 @@ def uc(s):
     if isinstance(s, str):
         return s.decode(CODEPAGE)
     if not isinstance(s, unicode):
-        raise TypeError("unicode expected")
+        raise TypeError("str or unicode expected")
     return s
 
 
@@ -242,9 +242,9 @@ def flagvalue(table, value, store=True):
 def typevalue(value):
     """Determine object type by object itself."""
     if isinstance(value, bool):
-        return (XDW_ATYPE_BOOL, -1 if value else 0)
+        return (XDW_ATYPE_BOOL, c_int(-1 if value else 0))
     if isinstance(value, int):
-        return (XDW_ATYPE_INT, value)
+        return (XDW_ATYPE_INT, c_int(value))
     elif isinstance(value, str):
         return (XDW_ATYPE_STRING, value)
     elif isinstance(value, unicode):
@@ -252,7 +252,7 @@ def typevalue(value):
     elif isinstance(value, (datetime.datetime, datetime.date)):
         return (XDW_ATYPE_DATE, c_int(int(time.mktime(value.timetuple()))))
     else:
-        return (XDW_ATYPE_OTHER, byref(value))
+        return (XDW_ATYPE_OTHER, value)
 
 
 def makevalue(t, value):

@@ -488,7 +488,7 @@ class XDWFile(object):
         attribute_name = unicode(inner_attribute_name(name))
         if isinstance(value, str):
             attribute_type = XDW_ATYPE_STRING
-            value = value.decode(CODEPAGE)
+            value = uc(value)
         if isinstance(value, unicode):
             attribute_type = XDW_ATYPE_STRING
         elif isinstance(value, bool):
@@ -529,19 +529,16 @@ class XDWFile(object):
         if isinstance(name, int):
             name, t, value, _ = XDW_GetDocumentAttributeByOrderW(
                     self.handle, name + 1)
-            # _ must be XDW_TEXT_MULTIBYTE.
             return (name, makevalue(t, value))
-        if isinstance(name, str):
-            name = name.decode(CODEPAGE)
-        return XDW_GetDocumentAttributeByNameW(
-                self.handle, name, codepage=CP)[1]
+        t, value, _ = XDW_GetDocumentAttributeByNameW(
+                self.handle, uc(name), codepage=CP)
+        return makevalue(t, value)
 
     def set_property(self, name, value):
         """Set user defined property."""
-        if isinstance(name, str):
-            name = name.decode(CODEPAGE)  # Force to store in unicode.
+        name = uc(name)  # Force to specify in unicode.
         if isinstance(value, str):
-            value = value.decode(CODEPAGE)  # Force to store in unicode.
+            value = uc(value)  # Force to store in unicode.
         t, value = typevalue(value)
         if t != XDW_ATYPE_STRING:
             value = byref(value)

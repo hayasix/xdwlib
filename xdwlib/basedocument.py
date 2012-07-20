@@ -141,9 +141,9 @@ class BaseDocument(Subject):
         elif isinstance(obj, BaseDocument):
             pc = PageCollection(obj)
         elif isinstance(obj, basestring):  # XDW path
-            assert obj.lower().endswith(".xdw")  # binder is not acceptable
-            if isinstance(obj, str):
-                obj = obj.decode(CODEPAGE)
+            obj = uc(obj)
+            if not obj.lower().endswith(u".xdw"):
+                raise TypeError("binder is not acceptable")
             doc = xdwopen(obj)
             pc = PageCollection(doc)
         else:
