@@ -34,7 +34,7 @@ class Point(object):
     >>> p - Point(5, 10)
     Point(-5.00, 0.00)
     >>> -p
-    Point(0.00, -10.00)
+    Point(-0.00, -10.00)
     >>> p * 2
     Point(0.00, 20.00)
     >>> p / 2
@@ -47,6 +47,18 @@ class Point(object):
     Point(20.00, 10.00)
     >>> list(p)
     [0.0, 10.0]
+    >>> p == Point(0, 10)
+    True
+    >>> p != Point(0, 10)
+    False
+    >>> p == Point(5, 10)
+    False
+    >>> p != Point(5, 10)
+    True
+    >>> bool(p)
+    True
+    >>> bool(Point(0, 0))
+    False
     """
 
     def __init__(self, x=0, y=0):
@@ -85,6 +97,15 @@ class Point(object):
 
     def round(self, places=0):
         return Point(self._round(self.x, places), self._round(self.y, places))
+
+    def __eq__(self, pnt):
+        return self.x == pnt.x and self.y == pnt.y
+
+    def __ne__(self, pnt):
+        return self.x != pnt.x or self.y != pnt.y
+
+    def __nonzero__(self):
+        return self.x != 0 or self.y != 0
 
     def __neg__(self):
         return Point(-self.x, -self.y)
@@ -155,6 +176,10 @@ class Rect(object):
     Rect((0.00, 10.00)-(10.00, 20.00))
     >>> list(r)
     [0.0, 10.0, 20.0, 30.0]
+    >>> r == Rect(0, 10, 20, 30)
+    True
+    >>> r != Rect(0, 10, 20, 30)
+    False
     """
 
     def __init__(self, *args, **kw):
@@ -232,6 +257,14 @@ class Rect(object):
     def position_and_size(self):
         return (self.position(), self.size())
 
+    def __eq__(self, rect):
+        return (self.left == rect.left and self.top == rect.top and
+                self.right == rect.right and self.bottom == rect.bottom)
+
+    def __ne__(self, rect):
+        return (self.left != rect.left or self.top != rect.top or
+                self.right != rect.right or self.bottom != rect.bottom)
+
     def __mul__(self, n):
         if not isinstance(n, (int, float)):
             raise NotImplementedError
@@ -262,3 +295,9 @@ class Rect(object):
 
     def rotate(self, degree, origin=None):
         return Rect(p.rotate(degree, origin=origin) for p in self)
+
+
+if __name__ == "__main__":
+
+    import doctest
+    doctest.testmod()
