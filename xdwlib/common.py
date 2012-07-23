@@ -22,7 +22,7 @@ import datetime
 
 from xdwapi import *
 from observer import *
-from timezone import JST
+from timezone import *
 
 
 __all__ = (
@@ -249,8 +249,9 @@ def typevalue(value):
         return (XDW_ATYPE_STRING, value)
     elif isinstance(value, unicode):
         return (XDW_ATYPE_STRING, value)
-    elif isinstance(value, (datetime.datetime, datetime.date)):
-        return (XDW_ATYPE_DATE, c_int(int(time.mktime(value.timetuple()))))
+    elif isinstance(value, datetime.date):
+        value = int(time.mktime(value.timetuple()) - time.timezone)
+        return (XDW_ATYPE_DATE, c_int(value))
     else:
         return (XDW_ATYPE_OTHER, value)
 
@@ -262,7 +263,7 @@ def makevalue(t, value):
     elif t == XDW_ATYPE_STRING:
         return unicode(value)
     elif t == XDW_ATYPE_DATE:
-        return datetime.datetime.fromtimestamp(value)
+        return datetime.date.fromtimestamp(value + time.timezone)
     elif t == XDW_ATYPE_BOOL:
         return bool(value)
     return value

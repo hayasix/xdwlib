@@ -431,15 +431,20 @@ class XDWFile(object):
         self.binder_color = XDW_BINDER_COLOR[docinfo.nBinderColor]
         self.binder_size = XDW_BINDER_SIZE[docinfo.nBinderSize]
         # Document attributes.
-        #self.attributes = XDW_GetDocumentAttributeNumber(self.handle)
-        self.properties = XDW_GetDocumentAttributeNumber(self.handle)
+        self._set_property_count()
         # Attached signatures.
-        self.signatures = XDW_GetDocumentSignatureNumber(self.handle)
+        self._set_signature_count()
         # Document verification status.
         self.status = None
         # Remember arguments for future use.
         self.readonly = readonly
         self.authenticate = authenticate
+
+    def _set_property_count(self):
+        self.properties = XDW_GetDocumentAttributeNumber(self.handle)
+
+    def _set_signature_count(self):
+        self.signatures = XDW_GetDocumentSignatureNumber(self.handle)
 
     def filename(self):
         """Get filename with extension."""
@@ -470,14 +475,13 @@ class XDWFile(object):
 
     def __getattr__(self, name):
         attribute_name = unicode(inner_attribute_name(name))
-        try:
-            return XDW_GetDocumentAttributeByNameW(
-                    self.handle, attribute_name, codepage=CP)[1]
-        except InvalidArgError as e:
-            pass
-        if name == "status" and self.signatures:
-            self.signature(0)  # Update document verification status.
-        return self.__dict__[name]
+        if attribute_name not in XDW_DOCUMENT_ATTRIBUTE_W:
+            if name == "status" and self.signatures:
+                self.signature(0)  # Update document verification status.
+            return self.__dict__[name]
+        t, value = XDW_GetDocumentAttributeByNameW(
+                self.handle, attribute_name, codepage=CP)
+        return makevalue(t, value)
 
     def __setattr__(self, name, value):
         if name == "show_annotations":
@@ -486,45 +490,31 @@ class XDWFile(object):
             self.__dict__[name] = value
             return
         attribute_name = unicode(inner_attribute_name(name))
-        if isinstance(value, str):
-            attribute_type = XDW_ATYPE_STRING
-            value = uc(value)
-        if isinstance(value, unicode):
-            attribute_type = XDW_ATYPE_STRING
-        elif isinstance(value, bool):
-            attribute_type = XDW_ATYPE_BOOL
-        elif isinstance(value, datetime.datetime):
-            attribute_type = XDW_ATYPE_DATE
-            if not value.tzinfo:
-                value = value.replace(tzinfo=DEFAULT_TZ)  # TODO: Care locale.
-            value = unixtime(value)
-        else:
-            attribute_type = XDW_ATYPE_INT  # TODO: Scaling may be required.
-        # TODO: XDW_ATYPE_OTHER should also be valid.
-        if attribute_name in XDW_DOCUMENT_ATTRIBUTE_W:
-            XDW_SetDocumentAttributeW(
-                    self.handle, attribute_name, attribute_type, value,
-                    XDW_TEXT_MULTIBYTE, codepage=CP)
+        if attribute_name not in XDW_DOCUMENT_ATTRIBUTE_W:
+            self.__dict__[name] = value
             return
-        self.__dict__[name] = value
+        t, value = typevalue(value)
+        XDW_SetDocumentAttributeW(
+                self.handle, attribute_name, t, value,
+                XDW_TEXT_MULTIBYTE, codepage=CP)
 
     def get_userattr(self, name):
         """Get user defined attribute."""
-        if isinstance(name, unicode):
-            name = name.encode(CODEPAGE)
-        return XDW_GetUserAttribute(self.handle, name)
+        return XDW_GetUserAttribute(self.handle, cp(name))
 
     def set_userattr(self, name, value):
         """Set user defined attribute."""
-        if isinstance(name, unicode):
-            name = name.encode(CODEPAGE)
-        XDW_SetUserAttribute(self.handle, name, value)
+        XDW_SetUserAttribute(self.handle, cp(name), value)
 
     def get_property(self, name):
         """Get user defined property.
 
-        name    (unicode) name of property, or user attribute
+        name    (str or unicode) name of property, or user attribute
                 (int) property order which starts with 0
+
+        Returns a unicode, int, bool or datetime.date.
+
+        Note that previous set_property(str_value) gives unicode.
         """
         if isinstance(name, int):
             name, t, value, _ = XDW_GetDocumentAttributeByOrderW(
@@ -535,8 +525,18 @@ class XDWFile(object):
         return makevalue(t, value)
 
     def set_property(self, name, value):
-        """Set user defined property."""
+        """Set user defined property.
+
+        name    (str or unicode) name of property, or user attribute
+        value   (str, unicode, int, bool or datetime.date) stored value
+
+        Note that str value is actually stored in unicode and get_property()
+        will returen unicode.
+        """
         name = uc(name)  # Force to specify in unicode.
+        if value is None:
+            self.del_property(name)
+            return
         if isinstance(value, str):
             value = uc(value)  # Force to store in unicode.
         t, value = typevalue(value)
@@ -544,9 +544,22 @@ class XDWFile(object):
             value = byref(value)
         XDW_SetDocumentAttributeW(
                 self.handle, name, t, value, XDW_TEXT_MULTIBYTE, codepage=CP)
+        self._set_property_count()
+
+    def del_property(self, name):
+        """Delete user defined property.
+
+        name    (unicode) name of property, or user attribute
+        """
+        name = uc(name)  # Force to specify in unicode.
+        XDW_SetDocumentAttributeW(
+                self.handle, name, XDW_ATYPE_INT, NULL,
+                XDW_TEXT_MULTIBYTE, codepage=CP)
+        self._set_property_count()
 
     getprop = get_property
     setprop = set_property
+    delprop = del_property
 
     def pageform(self, form):
         return PageForm(self, form)

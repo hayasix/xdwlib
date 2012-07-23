@@ -45,5 +45,5 @@ def unixtime(dt):
     return time.mktime(dt.utctimetuple())
 
 
-def fromunixtime(t, tz=UTC):
-    return datetime.datetime.fromtimestamp(t, tz=tz)
+def fromunixtime(t):
+    return datetime.datetime.utcfromtimestamp(t)

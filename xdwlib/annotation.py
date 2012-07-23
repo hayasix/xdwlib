@@ -71,6 +71,7 @@ class Annotation(Annotatable, Observer):
         self.type = XDW_ANNOTATION_TYPE[info.nAnnotationType]
         self.annotations = info.nChildAnnotations
         self.is_unicode = False
+        self._set_property_count()
 
     def __repr__(self):
         parents = []
@@ -219,50 +220,93 @@ class Annotation(Annotatable, Observer):
             self.__dict__[name] = value
 
     def get_userattr(self, name):
-        """Get annotationwise user defined attribute."""
+        """Get annotationwise user defined attribute.
+
+        Note that user defined attribute consists of simple byte string.
+        If you want to handle values with types, consider set/get_property().
+        """
         if isinstance(name, unicode):
             name = name.encode(CODEPAGE)
         return XDW_GetAnnotationUserAttribute(self.handle, name)
 
     def set_userattr(self, name, value):
-        """Set annotationwise user defined attribute."""
+        """Set annotationwise user defined attribute.
+
+        Note that user defined attribute consists of simple byte string.
+        If you want to handle values with types, consider set/get_property().
+        """
         if isinstance(name, unicode):
             name = name.encode(CODEPAGE)
         XDW_SetAnnotationUserAttribute(
                 self.page.doc.handle, self.handle, name, value)
 
     def get_property(self, name):
-        """Get annotationwise custom (i.e. with-type) user defined property."""
+        """Get annotationwise custom (i.e. with-type) user defined property.
+
+        name    (str or unicode) name of property
+                (int) property order which starts with 0
+
+        Type of returned value is unicode, int, bool or datetime.date; if the
+        property has custom type of value, a simple byte string is returned.
+
+        Note that previous set_property(str_value) gives unicode.
+        """
         if isinstance(name, basestring):
             t, v = XDW_GetAnnotationCustomAttributeByName(self.handle, uc(name))
             return makevalue(t, v)
         if not isinstance(name, int):
             raise TypeError("name must be unicode or int")
         # Any custom attribute can be taken by order which starts with 0.
-        attrs = self.customattrs()
+        n = self.properties
         if name < 0:
-            name += attrs
-        if not (0 <= name < attrs):
-            raise IndexError("attribute order out of range [0, %d)" % attrs)
+            name += n
+        if not (0 <= name < n):
+            raise IndexError("attribute order out of range [0, %d)" % n)
         name, t, value = \
                 XDW_GetAnnotationCustomAttributeByOrder(self.handle, name + 1)
         return (name, makevalue(t, value))
 
-    def properties(self):
-        """Get number of annotationwise custom user defined property."""
-        return XDW_GetAnnotationCustomAttributeNumber(self.handle)
+    def _set_property_count(self):
+        """Set self.properties to the number of custom attributes."""
+        self.properties = XDW_GetAnnotationCustomAttributeNumber(self.handle)
 
     def set_property(self, name, value):
-        """Set annotationwise custom user defined property."""
-        if isinstance(value, basestring):
-            value = uc(value)
+        """Set annotationwise custom (i.e. with-type) user defined property.
+
+        name        (str or unicode) name of property
+        value       (str, unicode, int, bool or datetime.date) stored value
+
+        If you want to set other type of value, store a simple byte string.
+
+        Note that str value is actually stored in unicode and get_property()
+        will returen unicode.
+        """
+        if value is None:
+            self.del_property(name)
+            return
+        name = uc(name)  # Force to specify in unicode.
+        if isinstance(value, str):
+            value = uc(value)  # Force to store in unicode.
         t, value = typevalue(value)
+        if t != XDW_ATYPE_STRING:
+            value = byref(value)
         XDW_SetAnnotationCustomAttribute(
-                self.page.doc.handle, self.handle, uc(name), t, value)
+                self.page.doc.handle, self.handle, name, t, value)
+        self._set_property_count()
+
+    def del_property(self, name):
+        """Delete annotationwise custom (i.e. with-type) user defined property.
+
+        name    (unicode) name of property, or user attribute
+        """
+        name = uc(name)  # Force to specify in unicode.
+        XDW_SetAnnotationCustomAttribute(
+                self.page.doc.handle, self.handle, name, XDW_ATYPE_INT, NULL)
+        self._set_property_count()
 
     getprop = get_property
     setprop = set_property
-    props = properties
+    delprop = del_property
 
     def update(self, event):
         """Update self as an observer."""
