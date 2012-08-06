@@ -178,9 +178,7 @@ class BaseDocument(Subject):
 
         fitimage        "FITDEF" | "FIT" | "FITDEF_DIVIDEBMP" |
                         "USERDEF" | "USERDEF_FIT"
-        compress        "NORMAL" | "LOSSLESS" | "NOCOMPRESS" |
-                        "HIGHQUALITY" | "HIGHCOMPRESS" |
-                        "JPEG" | "JPEG_TTN2" | "PACKBITS" | "G4" |
+        compress        "NORMAL" | "LOSSLESS" | "HIGHQUALITY" | "HIGHCOMPRESS" |
                         "MRC_NORMAL" | "MRC_HIGHQUALITY" | "MRC_HIGHCOMPRESS"
         zoom            (float) in percent; 0 means 100%.  < 1/1000 is ignored.
         size            (Point) in mm; for fitimange "userdef" or "userdef_fit"
@@ -197,6 +195,15 @@ class BaseDocument(Subject):
         opt = XDW_CREATE_OPTION_EX2()
         opt.nFitImage = XDW_CREATE_FITIMAGE.normalize(fitimage)
         opt.nCompress = XDW_COMPRESS.normalize(compress)
+        if opt.nCompress in (
+                XDW_COMPRESS_NOCOMPRESS,
+                XDW_COMPRESS_JPEG,
+                XDW_COMPRESS_PACKBITS,
+                XDW_COMPRESS_G4,
+                XDW_COMPRESS_MRC,
+                XDW_COMPRESS_JPEG_TTN2,
+                ):
+            raise ValueError("%s is invalid for insert_image()." % XDW_COMPRESS[opt.nCompress])
         #opt.nZoom = 0
         opt.nZoomDetail = int(zoom * 1000)  # .3f
         # NB. Width and height are valid only for XDW_CREATE_USERDEF(_FIT).
@@ -232,6 +239,8 @@ class BaseDocument(Subject):
                     for PDF,  "NORMAL" | "HIGHQUALITY" | "HIGHCOMPRESS" |
                               "MRC_NORMAL" | "MRC_HIGHQUALITY" |
                               "MRC_HIGHCOMPRESS"
+
+        Returns actual pathname of created image file.
         """
         path = uc(path)
         if isinstance(pos, (list, tuple)):
@@ -250,6 +259,7 @@ class BaseDocument(Subject):
             if 1 < pages:
                 path += "-{0}".format((pos + pages - 1) + 1)
             path += "." + format
+        path = derivative_path(path)
         if not (10 <= dpi <= 600):
             raise ValueError("specify resolution between 10 and 600")
         opt = XDW_IMAGE_OPTION_EX()
@@ -299,6 +309,7 @@ class BaseDocument(Subject):
             opt.pDetailOption = cast(pointer(dopt), c_void_p)
         XDW_ConvertPageToImageFile(
                 self.handle, self.absolute_page(pos) + 1, cp(path), opt)
+        return path
 
     def page_image(self, pos):
         """Returns page image with annotations in BMP/DIB format."""

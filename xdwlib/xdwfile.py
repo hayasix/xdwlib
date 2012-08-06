@@ -76,7 +76,8 @@ def create_sfx(input_path, output_path=None):
     Returns pathname of generated sfx executable file.
     """
     input_path, output_path = uc(input_path), uc(output_path)
-    output_path = os.path.splitext(output_path or input_path)[0] + ".exe"
+    output_path = derivative_path(
+            os.path.splitext(output_path or input_path)[0] + ".exe")
     XDW_CreateSfxDocument(cp(input_path), cp(output_path))
     return output_path
 
@@ -88,7 +89,7 @@ def extract_sfx(input_path, output_path=None):
     """
     input_path, output_path = uc(input_path), uc(output_path)
     root = os.path.splitext(output_path or input_path)[0]
-    output_path = root + ".xdw"  # for now
+    output_path = derivative_path(root + ".xdw")  # for now
     XDW_ExtractFromSfxDocument(cp(input_path), cp(output_path))
     # Created file can be either document or binder.  We have to examine
     # which type of file was generated and rename if needed.
@@ -96,7 +97,7 @@ def extract_sfx(input_path, output_path=None):
     doctype = doc.type
     doc.close()
     if doctype == XDW_DT_BINDER:
-        orig, output_path = output_path, root + ".xbd"
+        orig, output_path = output_path, derivative_path(root + ".xbd")
         os.rename(orig, output_path)
     return output_path
 
@@ -148,7 +149,7 @@ def protect(input_path,
     protect_type    "PASSWORD" | "PASSWORD128" | "PKI"
     auth            "NONE" | "NODIALOGUE" | "CONDITIONAL"
 
-    **options for PSWD and PSWD128:
+    **options for PASSWORD and PASSWORD128:
     permission      allowed operation(s); comma separated list of
                     "EDIT_DOCUMENT", "EDIT_ANNOTATION", "PRINT" and "COPY"
     password        password to open document/binder, or None
@@ -340,7 +341,7 @@ class Attachment(Observer):
                 doc.handle, pos + 1, codepage=CP)
         self.text_type = XDW_TEXT_TYPE[text_type]
         self.size = info.nDataSize
-        self.datetime = datetime.datetime.fromtimestamp(info.nDate)
+        self.datetime = fromunixtime(info.nDate)
         self.name = info.szName
 
     def update(self, event):
@@ -400,6 +401,7 @@ class XDWFile(object):
         self.type = {".xdw": "DOCUMENT", ".xbd": "BINDER"}.get(
                 ext.lower(), "DOCUMENT")
         self.protection = protection_info(path)
+        self.handle = None
 
     def open(self, readonly=False, authenticate=True):
         """Opener."""
@@ -424,8 +426,7 @@ class XDWFile(object):
         self.annotatable = bool(docinfo.nPermission & XDW_PERM_ANNO_EDIT)
         self.printable = bool(docinfo.nPermission & XDW_PERM_PRINT)
         self.copyable = bool(docinfo.nPermission & XDW_PERM_COPY)
-        #self.show_annotations = bool(docinfo.nShowAnnotations)
-        self.__dict__["show_annotations"] = bool(docinfo.nShowAnnotations)
+        self._show_annotations = bool(docinfo.nShowAnnotations)
         # Followings are effective only for binders.
         self.documents = docinfo.nDocuments
         self.binder_color = XDW_BINDER_COLOR[docinfo.nBinderColor]
@@ -467,11 +468,23 @@ class XDWFile(object):
         """Close document."""
         XDW_CloseDocumentHandle(self.handle)
         self.free()
+        self.handle = None
 
     @staticmethod
     def _close(handle):
         XDW_CloseDocumentHandle(handle)
         XDWFile._free(handle)
+
+    @property
+    def show_annotations(self):
+        return self._show_annotations
+
+    @show_annotations.setter
+    def show_annotations(self, value):
+        value = bool(value)
+        XDW_ShowOrHideAnnotations(self.handle, value)
+        self._show_annotations = value
+        return
 
     def __getattr__(self, name):
         attribute_name = unicode(inner_attribute_name(name))
@@ -484,19 +497,14 @@ class XDWFile(object):
         return makevalue(t, value)
 
     def __setattr__(self, name, value):
-        if name == "show_annotations":
-            value = bool(value)
-            XDW_ShowOrHideAnnotations(self.handle, value)
-            self.__dict__[name] = value
-            return
         attribute_name = unicode(inner_attribute_name(name))
-        if attribute_name not in XDW_DOCUMENT_ATTRIBUTE_W:
-            self.__dict__[name] = value
+        if attribute_name in XDW_DOCUMENT_ATTRIBUTE_W:
+            t, value = typevalue(value)
+            XDW_SetDocumentAttributeW(
+                    self.handle, attribute_name, t, value,
+                    XDW_TEXT_MULTIBYTE, codepage=CP)
             return
-        t, value = typevalue(value)
-        XDW_SetDocumentAttributeW(
-                self.handle, attribute_name, t, value,
-                XDW_TEXT_MULTIBYTE, codepage=CP)
+        object.__setattr__(self, name, value)
 
     def get_userattr(self, name):
         """Get user defined attribute."""
@@ -569,6 +577,25 @@ class XDWFile(object):
         return ASEP.join(self.pageform(form).text
                 for form in ("header", "footer"))
 
+    def update_pageform(self, sync=False):
+        """Update page form.
+
+        sync    (bool) also update pageforms for documents in binder
+        """
+        sync = XDW_PAGEFORM_REMOVE if sync else XDW_PAGEFORM_STAY
+        XDW_UpdatePageForm(self.handle, sync)
+
+    def delete_pageform(self, sync=False):
+        """Delete page form.
+
+        sync    (bool) also delete pageforms for documents in binder
+        """
+        sync = XDW_PAGEFORM_REMOVE if sync else XDW_PAGEFORM_STAY
+        XDW_RemovePageForm(self.handle, sync)
+
+    updform = update_pageform
+    delform = delete_pageform
+
     def signature(self, pos):
         """Get signature information.
 
@@ -626,21 +653,25 @@ class XDWFile(object):
         return sig
 
     def _process(self, meth, *args, **kw):
-        self_path = self.pathname()
+        selfpath = self.pathname()
         oldhandle = self.handle
-        self.save()
-        self.close()
-        new_path = meth(self_path, *args, **kw)
+        if oldhandle:
+            self.save()
+            self.close()
+        newpath = meth(selfpath, *args, **kw)
         if kw.get("output_path"):
-            self.open(readonly=self.readonly, authenticate=self.authenticate)
-            return new_path
+            if oldhandle:
+                self.open(readonly=self.readonly,
+                        authenticate=self.authenticate)
+            return newpath
         # Swap the old for the new, and remove the old.
-        os.remove(self_path)
-        os.rename(new_path, self_path)
-        self.open(readonly=self.readonly, authenticate=self.authenticate)
-        # Renew related attributes.
-        self.signatures = XDW_GetDocumentSignatureNumber(self.handle)
-        self.status = None
+        os.remove(selfpath)
+        os.rename(newpath, selfpath)
+        if oldhandle:
+            self.open(readonly=self.readonly, authenticate=self.authenticate)
+            # Renew related attributes.
+            self.signatures = XDW_GetDocumentSignatureNumber(self.handle)
+            self.status = None
 
     def sign(self,
             output_path=None,
@@ -745,7 +776,7 @@ class BaseSignature(object):
         """Update signature status.
 
         Note that the result of XDW_GetSignatureInformation() and therefore
-        doc.signature() may be altered.
+        self.doc.status may be altered.
         """
         XDW_UpdateSignatureStatus(self.doc.handle, self.pos + 1)
 
@@ -854,21 +885,48 @@ class PageForm(object):
 
     """Header/footer of document."""
 
+    @staticmethod
+    def all_types():
+        """Return all pageform types for convenience."""
+        return tuple(sorted(XDW_PAGEFORM.values()))
+
+    @staticmethod
+    def all_attributes():
+        """Return all pageform attributes for convenience."""
+        return tuple(sorted(
+                "alignment back_color beginning_page digit doc ending_page "
+                "font_char_set font_name font_pitch_and_family font_size "
+                "font_style fore_color form image_file left_right_margin "
+                "page_range starting_number text top_bottom_margin "
+                "ver_position zoom".split()))
+
+    @staticmethod
+    def all_colors():
+        """Returns all colors available."""
+        return tuple(sorted(XDW_COLOR.values()))
+
     def __init__(self, doc, form):
-        self.doc = doc
-        self.form = XDW_PAGEFORM.normalize(inner_attribute_name(form))
+        self.__dict__["doc"] = doc
+        self.__dict__["form"] = XDW_PAGEFORM.normalize(form)
+
+    def __repr__(self):
+        return "PageForm({0}.{1})".format(
+                self.doc, outer_attribute_name(XDW_PAGEFORM[self.form]))
+    @property
+    def form(self):
+        return self.__dict__["form"]
+
+    @form.setter
+    def form(self, value):
+        object.__setattr__(self, "form", XDW_PAGEFORM.normalize(value))
 
     def __setattr__(self, name, value):
         attrname = inner_attribute_name(name)
-        if name == "doc":
-            self.__dict__[name] = value
-            return
-        elif name == "form":
-            self.__dict__[name] = XDW_PAGEFORM.normalize(value)
-            return
         special = isinstance(XDW_ANNOTATION_ATTRIBUTE[attrname][1], XDWConst)
         if special or isinstance(value, (int, float)):
             value = int(scale(attrname, value, store=True))
+            if attrname.endswith("Page"):
+                value += 1  # 1-based
             value = byref(c_int(value))
             attribute_type = XDW_ATYPE_INT  # TODO: Scaling may be required.
         elif isinstance(value, basestring):
@@ -888,22 +946,18 @@ class PageForm(object):
         # TODO: XDW_ATYPE_OTHER should also be valid.
         else:
             raise TypeError("illegal value " + repr(value))
-        XDW_SetPageFormAttribute(
-                self.__dict__["doc"].handle,
-                self.__dict__["form"],
+        XDW_SetPageFormAttribute(self.doc.handle, self.form,
                 attrname, attribute_type, value)
 
     def __getattr__(self, name):
-        if name in ("doc", "form"):
-            return self.__dict__[name]
         attrname = inner_attribute_name(name)
-        value = XDW_GetPageFormAttribute(
-                self.__dict__["doc"].handle,
-                self.__dict__["form"], attrname)
+        value = XDW_GetPageFormAttribute(self.doc.handle, self.form, attrname)
         attribute_type = XDW_ANNOTATION_ATTRIBUTE[attrname][0]
         if attribute_type == 1:  # string
             return unicode(value, CODEPAGE)
         value = unpack(value)
+        if attrname.endswith("Page"):
+            value -= 1  # 0-based
         return scale(attrname, value, store=False)
 
     def update(self, sync=False):

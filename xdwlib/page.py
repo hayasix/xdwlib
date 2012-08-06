@@ -257,7 +257,7 @@ class Page(Annotatable, Observer):
         return self.__dict__[name]
 
     def __setattr__(self, name, value):
-        self.__dict__[name] = value
+        Annotatable.__setattr__(self, name, value)
 
     def get_userattr(self, name):
         """Get pagewise user defined attribute."""
@@ -340,7 +340,7 @@ class Page(Annotatable, Observer):
         doc.rotate(pos, degree=degree, auto=auto)
         self = doc.page(pos)  # reset
 
-    def reduce_noise(self, level=XDW_REDUCENOISE_NORMAL):
+    def reduce_noise(self, level="NORMAL"):
         """Process page by noise reduction engine.
 
         level   "NORMAL" | "WEAK" | "STRONG"

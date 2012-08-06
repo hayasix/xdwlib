@@ -104,6 +104,12 @@ class Binder(Subject, XDWFile):
         for pos in xrange(self.documents):
             yield self.document(pos)
 
+    @staticmethod
+    def all_colors():
+        """Returns all colors available."""
+        return tuple(sorted(
+                (XDW_BINDER_COLOR).values()))
+
     def document(self, pos):
         """Get a DocumentInBinder."""
         pos = self._pos(pos)

@@ -72,6 +72,7 @@ class Annotation(Annotatable, Observer):
         self.annotations = info.nChildAnnotations
         self.is_unicode = False
         self._set_property_count()
+        #self.locked = unknown  # XDWAPI provides no information on this.
 
     def __repr__(self):
         parents = []
@@ -98,6 +99,67 @@ class Annotation(Annotatable, Observer):
                 XDW_ATN_TopField, XDW_ATN_BottomField,
                 )
 
+    @property
+    def margin(self):
+        return tuple([
+                XDW_GetAnnotationAttributeW(
+                        self.handle,
+                        "%{0}Margin".format(d)
+                )[1] / 100.0 for d in ("Top", "Right", "Bottom", "Left")
+                ])
+
+    @margin.setter
+    def margin(self, value):
+        if not isinstance(value, (list, tuple)):  # Assuming a scalar.
+            value = [value] * 4
+        elif len(value) == 1:
+            value *= 4
+        elif len(value) == 2:
+            value *=  2
+        elif len(value) == 3:
+            value = [value[0], value[1], value[2], value[1]]
+        else:
+            value = value[:4]
+        for i, d in enumerate("Top Right Bottom Left".split()):
+            v = c_int(int(value[i] * 100))
+            XDW_SetAnnotationAttributeW(
+                    self.page.doc.handle, self.handle,
+                    "%{0}Margin".format(d), XDW_ATYPE_INT, byref(v), 0, 0)
+
+    @property
+    def position(self):
+        info = XDW_GetAnnotationInformation(
+                self.page.doc.handle,
+                self.page.absolute_page() + 1,
+                self.parent.handle if self.parent else NULL,
+                self.pos + 1)
+        return Point(info.nHorPos, info.nVerPos) / 100.0
+
+    @position.setter
+    def position(self, value):
+        XDW_SetAnnotationPosition(
+                self.page.doc.handle, self.handle,
+                int(value.x * 100), int(value.y * 100))
+
+    @property
+    def size(self):
+        info = XDW_GetAnnotationInformation(
+                self.page.doc.handle,
+                self.page.absolute_page() + 1,
+                self.parent.handle if self.parent else NULL,
+                self.pos + 1)
+        return Point(info.nWidth, info.nHeight) / 100.0
+
+    @size.setter
+    def size(self, value):
+        if self.type not in (
+                "STICKEY", "RECTANGLE", "ARC", "TEXT", "LINK", "STAMP"):
+            raise TypeError(
+                    "can't resize {0} annotation".format(self.type))
+        XDW_SetAnnotationSize(
+                self.page.doc.handle, self.handle,
+                int(value.x * 100), int(value.y * 100))
+
     def __getattr__(self, name):
         attrname = inner_attribute_name(name)
         if attrname in XDW_ANNOTATION_ATTRIBUTE:
@@ -117,24 +179,6 @@ class Annotation(Annotatable, Observer):
                         scale(attrname, p.x),
                         scale(attrname, p.y)) for p in value]
                 return absolute_points(points)
-        elif name == "margin":  # Abbreviation support like CSS.
-            result = []
-            for d in ("Top", "Right", "Bottom", "Left"):
-                _, value, _ = XDW_GetAnnotationAttributeW(
-                        self.handle, "%{0}Margin".format(d))
-                result.append(value / 100.0)
-            return tuple(result)
-        elif name in ("position", "size"):
-            info = XDW_GetAnnotationInformation(
-                    self.page.doc.handle,
-                    self.page.absolute_page() + 1,
-                    self.parent.handle if self.parent else NULL,
-                    self.pos + 1)
-            if name == "position":
-                value = Point(info.nHorPos, info.nVerPos)
-            else:
-                value = Point(info.nWidth, info.nHeight)
-            self.__dict__[name] = value / 100.0  # mm;  update this property
         return self.__dict__[name]
 
     def __setattr__(self, name, value):
@@ -145,7 +189,7 @@ class Annotation(Annotatable, Observer):
         if attrname in XDW_ANNOTATION_ATTRIBUTE:
             if self.type == "STICKEY" and attrname.endswith("Color"):
                 value = XDW_COLOR_FUSEN.normalize(value)
-            elif self.type == "LINK" and attrname.endswith("XdwPage"):
+            elif self.type == "LINK" and attrname.endswith("Page"):
                 value += 1  # So, specify -1 for profile view.
             t, unit, limited = XDW_ANNOTATION_ATTRIBUTE[attrname]
             anntype = XDW_ANNOTATION_TYPE.inner(self.type)
@@ -185,39 +229,8 @@ class Annotation(Annotatable, Observer):
             else:
                 raise TypeError(
                         "Invalid type to set attribute value: " + str(value))
-        elif name == "margin":  # Abbreviation support like CSS.
-            if not isinstance(value, (list, tuple)):  # Assuming a scalar.
-                value = [value] * 4
-            elif len(value) == 1:
-                value = value * 4
-            elif len(value) == 2:
-                value = [value[0], value[1]] * 2
-            elif len(value) == 3:
-                value = [value[0], value[1], value[2], value[1]]
-            else:
-                value = value[:4]
-            for i, d in enumerate("Top Right Bottom Left".split()):
-                setattr(self, "%{0}Margin".format(d), value[i])
-        elif name == "position":
-            XDW_SetAnnotationPosition(
-                    self.page.doc.handle,
-                    self.handle,
-                    int(value.x * 100),
-                    int(value.y * 100))
-            self.__dict__[name] = value
-        elif name == "size":
-            if self.type not in (
-                    "STICKEY", "RECTANGLE", "ARC", "TEXT", "LINK", "STAMP"):
-                raise TypeError(
-                        "can't resize {0} annotation".format(self.type))
-            XDW_SetAnnotationSize(
-                    self.page.doc.handle,
-                    self.handle,
-                    int(value.x * 100),
-                    int(value.y * 100))
-            self.__dict__[name] = value
         else:
-            self.__dict__[name] = value
+            Annotatable.__setattr__(self, name, value)
 
     def get_userattr(self, name):
         """Get annotationwise user defined attribute.
@@ -324,10 +337,13 @@ class Annotation(Annotatable, Observer):
     def attributes(self):
         """Returns dict of annotation attribute names and values."""
         tv = XDW_ANNOTATION_TYPE.normalize(self.type)
-        return dict(
+        d = dict(
                 (outer_attribute_name(k), getattr(self, k))
                 for (k, v) in XDW_ANNOTATION_ATTRIBUTE.iteritems()
                 if tv in v[2])
+        d["position"] = self.position
+        d["size"] = self.size
+        return d
 
     def inside(self, rect):  # Assume rect is half-open.
         """Returns if annotation is placed inside rect."""
@@ -378,12 +394,25 @@ class Annotation(Annotatable, Observer):
                     getattr(self, XDW_ATN_BottomField))
         return None
 
-    def peg(self, action="ON"):
-        """Peg annotation on current position."""
-        action = XDW_STARCH_ACTION.normalize(action)
-        XDW_StarchAnnotation(self.page.doc.handle, self.handle, action)
+    def lock(self):
+        """Make annotation unmovable and uneditable.
+
+        Note that locking is effective only for DocuWorks Viewer.
+        XDWAPI can move and edit annotations even if they are locked.
+        """
+        XDW_StarchAnnotation(self.page.doc.handle, self.handle, XDW_STARCH)
+        self.locked = True
+
+    def unlock(self):
+        """Make annotation movable and editable."""
+        XDW_StarchAnnotation(self.page.doc.handle, self.handle, XDW_STARCH_OFF)
+        self.locked = False
 
     def shift(self, *args, **kw):
+        """Move annotation.
+
+        Arguments can be 2 values, a tuple/list of 2 values or Point object.
+        """
         self.position = self.position.shift(*args, **kw)
 
     def rotate(self, degree, origin=None, orientation=False):

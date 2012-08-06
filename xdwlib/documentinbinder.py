@@ -81,7 +81,7 @@ class DocumentInBinder(BaseDocument, Observer):
         self.page_offset = sum(self.binder.document_pages()[:self.pos])
 
     def absolute_page(self, pos, append=False):
-        """Concrete method over dirname()."""
+        """Concrete method over absolute_page()."""
         pos = self._pos(pos, append=append)
         return self.page_offset + pos
 
