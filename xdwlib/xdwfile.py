@@ -396,6 +396,7 @@ class XDWFile(object):
 
         NB. value of `type' may be changed after actual open().
         """
+        self.signatures = None  # hack
         self.dir, self.name = os.path.split(uc(path))
         self.name, ext = os.path.splitext(self.name)
         self.type = {".xdw": "DOCUMENT", ".xbd": "BINDER"}.get(
@@ -486,14 +487,17 @@ class XDWFile(object):
         self._show_annotations = value
         return
 
-    def __getattr__(self, name):
+    def __getattribute__(self, name):
         attribute_name = unicode(inner_attribute_name(name))
         if attribute_name not in XDW_DOCUMENT_ATTRIBUTE_W:
-            if name == "status" and self.signatures:
-                self.signature(0)  # Update document verification status.
-            return self.__dict__[name]
+            self_signatures = object.__getattribute__(self, "signatures")
+            if name == "status" and self_signatures:
+                self_signature = object.__getattribute__(self, "signature")
+                self_signature(0)  # Update document verification status.
+            return object.__getattribute__(self, name)
+        self_handle = object.__getattribute__(self, "handle")
         t, value = XDW_GetDocumentAttributeByNameW(
-                self.handle, attribute_name, codepage=CP)
+                self_handle, attribute_name, codepage=CP)
         return makevalue(t, value)
 
     def __setattr__(self, name, value):
@@ -922,6 +926,9 @@ class PageForm(object):
 
     def __setattr__(self, name, value):
         attrname = inner_attribute_name(name)
+        if attrname not in XDW_ANNOTATION_ATTRIBUTE:
+            object.__setattr__(self, name, value)
+            return
         special = isinstance(XDW_ANNOTATION_ATTRIBUTE[attrname][1], XDWConst)
         if special or isinstance(value, (int, float)):
             value = int(scale(attrname, value, store=True))
@@ -949,9 +956,13 @@ class PageForm(object):
         XDW_SetPageFormAttribute(self.doc.handle, self.form,
                 attrname, attribute_type, value)
 
-    def __getattr__(self, name):
+    def __getattribute__(self, name):
         attrname = inner_attribute_name(name)
-        value = XDW_GetPageFormAttribute(self.doc.handle, self.form, attrname)
+        if attrname not in XDW_ANNOTATION_ATTRIBUTE:
+            return object.__getattribute__(self, name)
+        self_doc = object.__getattribute__(self, "doc")
+        self_form = object.__getattribute__(self, "form")
+        value = XDW_GetPageFormAttribute(self_doc.handle, self_form, attrname)
         attribute_type = XDW_ANNOTATION_ATTRIBUTE[attrname][0]
         if attribute_type == 1:  # string
             return unicode(value, CODEPAGE)

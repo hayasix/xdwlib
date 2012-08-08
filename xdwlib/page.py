@@ -234,13 +234,14 @@ class Page(Annotatable, Observer):
             name = name[name.index("_") + 1:]
         return (form, name)
 
-    def __getattr__(self, name):
+    def __getattribute__(self, name):
         if "_" in name:
-            form, name = self._split_attrname(name)
+            form, name = Annotatable.__getattribute__(self, "_split_attrname")(name)
             if form is not None:
                 name = inner_attribute_name(name)
-                return XDW_GetPageFormAttribute(self.doc.handle, form, name)
-        return self.__dict__[name]
+                doc = Annotatable.__getattribute__(self, "doc")
+                return XDW_GetPageFormAttribute(doc.handle, form, name)
+        return Annotatable.__getattribute__(self, name)
 
     def __setattr__(self, name, value):
         Annotatable.__setattr__(self, name, value)

@@ -79,11 +79,14 @@ class Bitmap(object):
                 bitmap_info_header_p + sizeof(self.header),
                 self.header.biSizeImage)
 
-    def __getattr__(self, name):
+    def __getattribute__(self, name):
+        self_header = object.__getattribute__(self, "header")
         if name == "resolution":
-            return (self.header.biXPelsPerMeter,
-                    self.header.biYPelsPerMeter)
-        return getattr(self.header, Bitmap.attrs[name])
+            return (self_header.biXPelsPerMeter,
+                    self_header.biYPelsPerMeter)
+        if name in Bitmap.attrs:
+            return getattr(self_header, Bitmap.attrs[name])
+        return object.__getattribute__(self, name)
 
     @staticmethod
     def _pack16(n):

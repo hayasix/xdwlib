@@ -160,26 +160,29 @@ class Annotation(Annotatable, Observer):
                 self.page.doc.handle, self.handle,
                 int(value.x * 100), int(value.y * 100))
 
-    def __getattr__(self, name):
+    def __getattribute__(self, name):
         attrname = inner_attribute_name(name)
-        if attrname in XDW_ANNOTATION_ATTRIBUTE:
-            data_type, value, text_type = XDW_GetAnnotationAttributeW(
-                    self.handle, attrname, codepage=CP)
-            if data_type == XDW_ATYPE_INT:
-                if self.type == "STICKEY" and attrname.endswith("Color"):
-                    return XDW_COLOR_FUSEN[value]
-                elif self.type == "LINK" and attrname.endswith("XdwPage"):
-                    return value - 1  # So, -1 for profile view.
-                return scale(attrname, value, store=False)
-            elif data_type == XDW_ATYPE_STRING:
-                self.is_unicode = (text_type == XDW_TEXT_UNICODE)
-                return value
-            else:  # data_type == XDW_ATYPE_OTHER:  # Quick hack for points.
-                points = [Point(
-                        scale(attrname, p.x),
-                        scale(attrname, p.y)) for p in value]
-                return absolute_points(points)
-        return self.__dict__[name]
+        if attrname not in XDW_ANNOTATION_ATTRIBUTE:
+            return Annotatable.__getattribute__(self, name)
+        self_handle = Annotatable.__getattribute__(self, "handle")
+        self_type = Annotatable.__getattribute__(self, "type")
+        self_isunicode = Annotatable.__getattribute__(self, "isunicode")
+        data_type, value, text_type = XDW_GetAnnotationAttributeW(
+                self_handle, attrname, codepage=CP)
+        if data_type == XDW_ATYPE_INT:
+            if self_type == "STICKEY" and attrname.endswith("Color"):
+                return XDW_COLOR_FUSEN[value]
+            elif self_type == "LINK" and attrname.endswith("XdwPage"):
+                return value - 1  # So, -1 for profile view.
+            return scale(attrname, value, store=False)
+        elif data_type == XDW_ATYPE_STRING:
+            self_is_unicode = (text_type == XDW_TEXT_UNICODE)
+            return value
+        else:  # data_type == XDW_ATYPE_OTHER:  # Quick hack for points.
+            points = [Point(
+                    scale(attrname, p.x),
+                    scale(attrname, p.y)) for p in value]
+            return absolute_points(points)
 
     def __setattr__(self, name, value):
         attrname = inner_attribute_name(name)
