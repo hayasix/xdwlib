@@ -54,15 +54,15 @@ class PageCollection(list):
                     "only Page or PageCollection can be added")
         return self
 
-    def view(self, combine=False, light=False, wait=True):
+    def view(self, light=False, wait=True, flat=False):
         """View pages with DocuWorks Viewer (Light).
 
-        combine (bool) combine pages into a single document.
         light   (bool) force to use DocuWorks Viewer Light.  Note that it will
                 use DocuWorks Viewer if Light version is not avaiable.
         wait    (bool) wait until viewer stops.  For False, (proc, temp) is
                 returned.  Users should remove the file of path after the Popen
                 object ends.
+        flat    (bool) combine pages into a single document.
 
         Returns (proc, temp) if wait is False, where:
                 proc    subprocess.Popen object
@@ -72,14 +72,11 @@ class PageCollection(list):
         NB. Viewing signed pages will raise AccessDeniedError.
         """
         viewer = get_viewer(light=light)
-        suffix = ".xdw" if combine else ".xbd"
-        write = self.combine if combine else self.save
-        tempdir = os.path.split(mktemp())[0]
-        temp = os.path.join(tempdir,
-                u"{0}_P{1}{2}".format(
-                        self[0].doc.name, self[0].pos + 1, suffix))
-        temp = derivative_path(adjust_path(temp, dir=tempdir))
-        write(temp)
+        temp = u"{0}_P{1}{2}".format(
+                self[0].doc.name, self[0].pos + 1, ".xdw" if flat else ".xbd")
+        temp = derivative_path(adjust_path(temp,
+                dir=os.path.split(mktemp())[0]))
+        self.export(temp, flat=flat)
         proc = subprocess.Popen([viewer, temp])
         if wait:
             proc.wait()
@@ -105,57 +102,44 @@ class PageCollection(list):
             result.append(PageCollection(pc))
         return result
 
-    def save(self, path=None, group=True):
-        """Create a binder (XBD file) as a container for page collection.
+    def export(self, path=None, flat=False, group=True):
+        """Create a binder (.xbd) or document (.xdw) as a container for page collection.
 
         path    (unicode) pathname for output
         group   (bool) group continuous pages by original document,
                 i.e. create document-in-binder.
+        flat    (bool) create document instead of binder
 
-        Returns actual pathname of generated binder, which may be different
+        Returns actual pathname of generated file, which may be different
         from `path' argument.
         """
-        from binder import Binder, create_binder
+        from document import create as create_document
+        from binder import create_binder
         from xdwfile import xdwopen
-        path = adjust_path(uc(path or (self[0].doc.name + ".xbd")))
-        path = derivative_path(path)
-        create_binder(path)
-        bdoc = xdwopen(path)
+        path = derivative_path(adjust_path(uc(path or
+                (self[0].doc.name + ".xdw" if flat else ".xbd"))))
+        path = create_document(output_path=path) if flat else create_binder(path)
+        doc = xdwopen(path)
         tempdir = os.path.split(mktemp())[0]
-        if group:
-            for pos, pc in enumerate(self.group()):
+        if flat:
+            for pg in self:
+                temp = pg.export(os.path.join(tempdir, pg.doc.name + ".xdw"))
+                doc.append(temp)
+                os.remove(temp)
+            del doc[0]  # Delete the initial blank page.
+        elif group:
+            for pc in self.group():
                 temp = os.path.join(tempdir, pc[0].doc.name + ".xdw")
-                temp = pc.combine(temp)
-                bdoc.append(temp)
+                temp = pc.export(temp, flat=True)
+                doc.append(temp)
                 os.remove(temp)
         else:
             for pos, pg in enumerate(self):
                 temp = os.path.join(tempdir,
                         "{0}_P{1}.xdw".format(pg.doc.name, pg.pos + 1))
-                temp = pg.copy(temp)
-                bdoc.append(temp)
+                temp = pg.export(temp)
+                doc.append(temp)
                 os.remove(temp)
-        bdoc.save()
-        bdoc.close()
-        return path
-
-    def combine(self, path=None):
-        """Create a document (XDW file) as a container for page collection.
-
-        Returns actual pathname of generated document, which may be different
-        from `path' argument.
-        """
-        from xdwfile import xdwopen
-        path = adjust_path(uc(path or (self[0].doc.name + ".xdw")))
-        path = derivative_path(path)
-        path = self[0].copy(path)
-        doc = xdwopen(path)
-        tempdir = os.path.split(mktemp())[0]
-        for pos, pg in enumerate(self[1:]):
-            temp = os.path.join(tempdir, pg.doc.name + ".xdw")
-            temp = pg.copy(temp)
-            doc.append(temp)
-            os.remove(temp)
         doc.save()
         doc.close()
         return path
@@ -308,6 +292,13 @@ class Page(Annotatable, Observer):
         return XDW_GetPageTextToMemoryW(
                 self.doc.handle, self.absolute_page() + 1)
 
+    def bitmap(self):
+        """Returns page image with annotations as a Bitmap object."""
+        opt = XDW_IMAGE_OPTION()
+        opt.nDpi = int(max(10, min(600, max(pg.resolution))))
+        opt.nColor = XDW_IMAGE_COLORSCHEME.normalize(self.color_scheme())
+        return XDW_ConvertPageToImageHandle(self.handle, self.pos + 1, opt)
+
     def rasterize(self):
         """Rasterize; convert an application page into DocuWorks image page.
 
@@ -410,8 +401,12 @@ class Page(Annotatable, Observer):
         """Clear OCR text."""
         XDW_SetOcrData(self.doc.handle, self.absolute_page(), NULL)
 
-    def copy(self, path=None):
-        """Copy page and create another document.
+    def export(self, path=None):
+        """Export page to another document.
+
+        path    (basestring) pathname to export;
+                given only basename without directory, exported file is
+                placed in the very directory of the original document.
 
         Returns the actual pathname of generated XDW file, which may be
         different from `path' argument.  If path is not available,
@@ -438,7 +433,7 @@ class Page(Annotatable, Observer):
                 object ends.
         """
         pc = PageCollection() + self
-        return pc.view(combine=True, light=light, wait=wait)
+        return pc.view(light=light, wait=wait, flat=True)
 
     def text_regions(self, text,
             ignore_case=False, ignore_width=False, ignore_hirakata=False):

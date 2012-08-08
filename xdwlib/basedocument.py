@@ -133,33 +133,29 @@ class BaseDocument(Subject):
         obj     Page/PageCollection/BaseDocument or path
         """
         pos = self._pos(pos, append=True)
-        doc = None
         if isinstance(obj, Page):
-            pc = PageCollection([obj])
+            temp = obj.export(mktemp())
         elif isinstance(obj, PageCollection):
-            pc = obj
+            temp = obj.export(mktemp(), flat=True)
         elif isinstance(obj, BaseDocument):
-            pc = PageCollection(obj)
+            temp = PageCollection(obj).export(mktemp(), flat=True)
         elif isinstance(obj, basestring):  # XDW path
-            obj = uc(obj)
-            if not obj.lower().endswith(u".xdw"):
+            temp = uc(obj)
+            if not temp.lower().endswith(u".xdw"):
                 raise TypeError("binder is not acceptable")
-            doc = xdwopen(obj)
-            pc = PageCollection(doc)
         else:
             raise ValueError("can't insert {0} object".format(obj.__class__))
-        temp = pc.combine(mktemp())
         XDW_InsertDocument(
                 self.handle,
                 self.absolute_page(pos, append=True) + 1,
                 cp(temp))
-        self.pages += len(pc)
-        if doc:
-            doc.close()
-        os.remove(temp)
+        inslen = XDW_GetDocumentInformation(self.handle).nPages - self.pages
+        self.pages += inslen
+        if not isinstance(obj, basestring):
+            os.remove(temp)
         # Check inserted pages in order to attach them to this document and
         # shift observer entries appropriately.
-        for p in xrange(pos, pos + len(pc)):
+        for p in xrange(pos, pos + inslen):
             Page(self, p)
 
     def append_image(self, *args, **kw):
@@ -311,13 +307,9 @@ class BaseDocument(Subject):
                 self.handle, self.absolute_page(pos) + 1, cp(path), opt)
         return path
 
-    def page_image(self, pos):
-        """Returns page image with annotations in BMP/DIB format."""
-        pg = self.page(pos)
-        opt = XDW_IMAGE_OPTION()
-        opt.nDpi = int(max(10, min(600, max(pg.resolution))))
-        opt.nColor = XDW_IMAGE_COLORSCHEME.normalize(pg.color_scheme())
-        return XDW_ConvertPageToImageHandle(self.handle, pos + 1, opt)
+    def bitmap(self, pos):
+        """Returns page image with annotations as a Bitmap object."""
+        return self.page(pos).bitmap()
 
     def delete(self, pos):
         """Delete a page."""
@@ -399,7 +391,7 @@ class BaseDocument(Subject):
     def view(self, light=False, wait=True):
         """View document with DocuWorks Viewer (Light)."""
         pc = PageCollection(self)
-        return pc.view(combine=True, light=light, wait=wait)
+        return pc.view(light=light, wait=wait, flat=True)
 
     def content_text(self, type=None):
         """Get all content text.
