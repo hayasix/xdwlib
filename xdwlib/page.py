@@ -54,7 +54,7 @@ class PageCollection(list):
                     "only Page or PageCollection can be added")
         return self
 
-    def view(self, light=False, wait=True, flat=False):
+    def view(self, light=False, wait=True, flat=False, group=True):
         """View pages with DocuWorks Viewer (Light).
 
         light   (bool) force to use DocuWorks Viewer Light.  Note that it will
@@ -63,6 +63,8 @@ class PageCollection(list):
                 returned.  Users should remove the file of path after the Popen
                 object ends.
         flat    (bool) combine pages into a single document.
+        group   (bool) group continuous pages by original document,
+                i.e. create document-in-binder.
 
         Returns (proc, temp) if wait is False, where:
                 proc    subprocess.Popen object
@@ -76,7 +78,7 @@ class PageCollection(list):
                 self[0].doc.name, self[0].pos + 1, ".xdw" if flat else ".xbd")
         temp = derivative_path(adjust_path(temp,
                 dir=os.path.split(mktemp())[0]))
-        self.export(temp, flat=flat)
+        self.export(temp, flat=flat, group=group)
         proc = subprocess.Popen([viewer, temp])
         if wait:
             proc.wait()
@@ -106,9 +108,9 @@ class PageCollection(list):
         """Create a binder (.xbd) or document (.xdw) as a container for page collection.
 
         path    (unicode) pathname for output
+        flat    (bool) create document instead of binder
         group   (bool) group continuous pages by original document,
                 i.e. create document-in-binder.
-        flat    (bool) create document instead of binder
 
         Returns actual pathname of generated file, which may be different
         from `path' argument.
