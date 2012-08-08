@@ -295,9 +295,9 @@ class Page(Annotatable, Observer):
     def bitmap(self):
         """Returns page image with annotations as a Bitmap object."""
         opt = XDW_IMAGE_OPTION()
-        opt.nDpi = int(max(10, min(600, max(pg.resolution))))
+        opt.nDpi = int(max(10, min(600, max(self.resolution))))
         opt.nColor = XDW_IMAGE_COLORSCHEME.normalize(self.color_scheme())
-        return XDW_ConvertPageToImageHandle(self.handle, self.pos + 1, opt)
+        return XDW_ConvertPageToImageHandle(self.doc.handle, self.pos + 1, opt)
 
     def rasterize(self):
         """Rasterize; convert an application page into DocuWorks image page.
