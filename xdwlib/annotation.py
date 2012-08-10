@@ -80,7 +80,8 @@ class Annotation(Annotatable, Observer):
         while ann is not None:
             parents.insert(0, ann.pos)
             ann = ann.parent
-        return u"Annotation({docname}[{pagepos}][{poslist}])".format(
+        return u"{cls}({docname}[{pagepos}][{poslist}])".format(
+                cls=self.__class__.__name__,
                 docname=self.page.doc.name,
                 pagepos=self.page.pos,
                 poslist="][".join(map(str, parents)))

@@ -31,36 +31,50 @@ class DocumentInBinder(BaseDocument, Observer):
         self.pos = pos
         Observer.__init__(self, bdoc, EV_DOC_INSERTED)
         self.binder = bdoc
-        self.handle = bdoc.handle
         self._set_page_offset()  # self.page_offset
-        self.name = XDW_GetDocumentNameInBinderW(
-                self.handle, pos + 1, codepage=CP)[0]
         docinfo = XDW_GetDocumentInformationInBinder(
-                self.handle, pos + 1)
+                self.binder.handle, pos + 1)
         self.pages = docinfo.nPages
         self.original_data = docinfo.nOriginalData
 
+    @property
+    def handle(self):
+        return self.binder.handle
+
+    @property
+    def name(self):
+        return XDW_GetDocumentNameInBinderW(
+                self.binder.handle, self.pos + 1, codepage=CP)[0]
+
+    @name.setter
+    def name(self, value):
+        XDW_SetDocumentNameInBinderW(
+                self.binder.handle, self.pos + 1, uc(value),
+                XDW_TEXT_MULTIBYTE, CP)
+
     def update_pages(self):
         """Concrete method over update_pages()."""
-        docinfo = XDW_GetDocumentInformationInBinder(self.handle, pos + 1)
+        docinfo = XDW_GetDocumentInformationInBinder(self.binder.handle, pos + 1)
         self.pages = docinfo.nPages
 
     def __repr__(self):
-        return u"{cls}({name}({bdoc}[{pos}]))".format(
-                cls=self.__class__,
+        return u"{cls}({name} ({bdoc}[{pos}]){status})".format(
+                cls=self.__class__.__name__,
                 name=self.name,
                 bdoc=self.binder.name,
-                pos=self.pos)
+                pos=self.pos,
+                status="" if self.binder.handle else "; CLOSED")
 
     def __str__(self):
         return (u"{cls}({name} ({bdoc}[{pos}]): "
-                u"{pages} pages, {atts} attachments)").format(
-                cls=self.__class__,
+                u"{pages} pages, {atts} attachments{status})").format(
+                cls=self.__class__.__name__,
                 name=self.name,
                 bdoc=self.binder.name,
                 pos=self.pos,
                 pages=self.pages,
-                atts=self.original_data)
+                atts=self.original_data,
+                status="" if self.binder.handle else "; CLOSED")
 
     def update(self, event):
         if not isinstance(event, Notification):

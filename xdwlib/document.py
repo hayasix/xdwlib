@@ -183,11 +183,18 @@ class Document(BaseDocument, XDWFile):
         XDWFile.__init__(self, path)
 
     def __repr__(self):
-        return u"Document({0})".format(self.name)
+        return u"{cls}({name}{status})".format(
+                cls=self.__class__.__name__,
+                name=self.name,
+                status="" if self.handle else "; CLOSED")
 
     def __str__(self):
-        return u"Document({0}: {1} pages, {2} attachments)".format(
-                self.name, self.pages, len(self.attachments))
+        return u"{cls}({name}: {pages} pages, {atts} attachments{status})".format(
+                cls=self.__class__.__name__,
+                name=self.name,
+                pages=self.pages,
+                atts=len(self.attachments),
+                status="" if self.handle else "; CLOSED")
 
     def absolute_page(self, pos, append=False):
         """Concrete method over absolute_page()."""

@@ -53,7 +53,7 @@ def atexithandler():
     XDW_Finalize()
 
 
-def xdwopen(path, readonly=False, authenticate=True):
+def xdwopen(path, readonly=False, authenticate=True, autosave=False):
     """General opener.
 
     Returns Document or Binder object.
@@ -66,7 +66,7 @@ def xdwopen(path, readonly=False, authenticate=True):
     if ext not in XDW_TYPES:
         raise BadFormatError("extension must be .xdw or .xbd")
     doc = XDW_TYPES[ext](path)
-    doc.open(readonly=readonly, authenticate=authenticate)
+    doc.open(readonly=readonly, authenticate=authenticate, autosave=autosave)
     return doc
 
 
@@ -404,8 +404,9 @@ class XDWFile(object):
         self.protection = protection_info(path)
         self.handle = None
 
-    def open(self, readonly=False, authenticate=True):
+    def open(self, readonly=False, authenticate=True, autosave=False):
         """Opener."""
+        self._autosave = bool(autosave)
         open_mode = XDW_OPEN_MODE_EX()
         if readonly:
             open_mode.nOption = XDW_OPEN_READONLY
@@ -441,6 +442,7 @@ class XDWFile(object):
         # Remember arguments for future use.
         self.readonly = readonly
         self.authenticate = authenticate
+        return self
 
     def _set_property_count(self):
         self.properties = XDW_GetDocumentAttributeNumber(self.handle)
@@ -467,6 +469,8 @@ class XDWFile(object):
 
     def close(self):
         """Close document."""
+        if self._autosave:
+            self.save()
         XDW_CloseDocumentHandle(self.handle)
         self.free()
         self.handle = None
@@ -509,6 +513,12 @@ class XDWFile(object):
                     XDW_TEXT_MULTIBYTE, codepage=CP)
             return
         object.__setattr__(self, name, value)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
     def get_userattr(self, name):
         """Get user defined attribute."""
@@ -666,13 +676,16 @@ class XDWFile(object):
         if kw.get("output_path"):
             if oldhandle:
                 self.open(readonly=self.readonly,
-                        authenticate=self.authenticate)
+                        authenticate=self.authenticate,
+                        autosave=self._autosave)
             return newpath
         # Swap the old for the new, and remove the old.
         os.remove(selfpath)
         os.rename(newpath, selfpath)
         if oldhandle:
-            self.open(readonly=self.readonly, authenticate=self.authenticate)
+            self.open(readonly=self.readonly,
+                    authenticate=self.authenticate,
+                    autosave=self._autosave)
             # Renew related attributes.
             self.signatures = XDW_GetDocumentSignatureNumber(self.handle)
             self.status = None
@@ -761,19 +774,19 @@ class BaseSignature(object):
         self.dt = dt
 
     def __repr__(self):
-        return  "{0}({1}[{2}])".format(
-                self.__class__.__name__,
-                self.doc.name,
-                self.pos,
+        return  u"{cls}({doc}[{pos}])".format(
+                cls=self.__class__.__name__,
+                doc=self.doc.name,
+                pos=self.pos,
                 )
 
     def __str__(self):
-        return  "{0}({1}[{2}]; page {3}, position {4}mm)".format(
-                self.__class__.__name__,
-                self.doc.name,
-                self.pos,
-                self.page,
-                self.position,
+        return  u"{cls}({doc}[{pos}]; page {pages}, position {position}mm)".format(
+                cls=self.__class__.__name__,
+                doc=self.doc.name,
+                pos=self.pos,
+                pages=self.page,
+                position=self.position,
                 )
 
     def update(self):
@@ -914,8 +927,11 @@ class PageForm(object):
         self.__dict__["form"] = XDW_PAGEFORM.normalize(form)
 
     def __repr__(self):
-        return "PageForm({0}.{1})".format(
-                self.doc, outer_attribute_name(XDW_PAGEFORM[self.form]))
+        return u"{cls}({doc}.{attr})".format(
+                cls=self.__class__.__name__,
+                doc=self.doc,
+                attr=outer_attribute_name(XDW_PAGEFORM[self.form]))
+
     @property
     def form(self):
         return self.__dict__["form"]

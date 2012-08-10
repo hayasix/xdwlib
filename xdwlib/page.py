@@ -33,8 +33,9 @@ class PageCollection(list):
     """Page collection i.e. container for pages."""
 
     def __repr__(self):
-        return u"PageCollection({0})".format(", ".join(
-                u"{0}[{1}]".format(pg.doc.name, pg.pos) for pg in self))
+        return u"{cls}({seq})".format(
+                cls=self.__class__.__name__,
+                seq=", ".join(u"{0}[{1}]".format(pg.doc.name, pg.pos) for pg in self))
 
     def __add__(self, y):
         if isinstance(y, Page):
@@ -205,7 +206,10 @@ class Page(Annotatable, Observer):
             return "MONO"
 
     def __repr__(self):
-        return u"Page({0}[{1}])".format(self.doc.name, self.pos)
+        return u"{cls}({doc}[{pos}])".format(
+                cls=self.__class__.__name__,
+                doc=self.doc.name,
+                pos=self.pos)
 
     def __str__(self):
         return (u"Page(page {pos}: "
