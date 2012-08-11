@@ -80,10 +80,10 @@ class Annotation(Annotatable, Observer):
         while ann is not None:
             parents.insert(0, ann.pos)
             ann = ann.parent
-        return u"{cls}({docname}[{pagepos}][{poslist}])".format(
+        return u"{cls}({docname}[{pgpos}][{poslist}])".format(
                 cls=self.__class__.__name__,
                 docname=self.page.doc.name,
-                pagepos=self.page.pos,
+                pgpos=self.page.pos,
                 poslist="][".join(map(str, parents)))
 
     def __str__(self):
@@ -116,7 +116,7 @@ class Annotation(Annotatable, Observer):
         elif len(value) == 1:
             value *= 4
         elif len(value) == 2:
-            value *=  2
+            value *= 2
         elif len(value) == 3:
             value = [value[0], value[1], value[2], value[1]]
         else:
@@ -269,7 +269,8 @@ class Annotation(Annotatable, Observer):
         Note that previous set_property(str_value) gives unicode.
         """
         if isinstance(name, basestring):
-            t, v = XDW_GetAnnotationCustomAttributeByName(self.handle, uc(name))
+            name = uc(name)
+            t, v = XDW_GetAnnotationCustomAttributeByName(self.handle, name)
             return makevalue(t, v)
         if not isinstance(name, int):
             raise TypeError("name must be unicode or int")

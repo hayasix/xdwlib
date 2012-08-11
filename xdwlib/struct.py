@@ -69,11 +69,13 @@ class Point(object):
         return "({0:.2f}, {1:.2f})".format(self.x, self.y)
 
     def __repr__(self):
-        return self.__class__.__name__ + str(self)
+        return "{cls}({pts})".format(
+                cls=self.__class__.__name__,
+                pts=", ".join("{0:.2f}".format(f) for f in self))
 
     def __iter__(self):
-        for pos in range(2):
-            yield (self.x, self.y)[pos]
+        for f in (self.x, self.y):
+            yield f
 
     def int(self):
         """Special method to adapt to XDW_POINT."""
@@ -160,7 +162,7 @@ class Rect(object):
 
     >>> r = Rect(0, 10, 20, 30)
     >>> r
-    Rect((0.00, 10.00)-(20.00, 30.00))
+    Rect(0.00, 10.00, 20.00, 30.00)
     >>> r.position()
     Point(0.00, 10.00)
     >>> r.size()
@@ -169,11 +171,11 @@ class Rect(object):
     >>> r.size()
     Point(20.00, 20.00)
     >>> r.shift(Point(15, 25))
-    Rect((15.00, 35.00)-(35.00, 55.00))
+    Rect(15.00, 35.00, 35.00, 55.00)
     >>> r * 2
-    Rect((0.00, 10.00)-(40.00, 50.00))
+    Rect(0.00, 10.00, 40.00, 50.00)
     >>> r / 2
-    Rect((0.00, 10.00)-(10.00, 20.00))
+    Rect(0.00, 10.00, 10.00, 20.00)
     >>> list(r)
     [0.0, 10.0, 20.0, 30.0]
     >>> r == Rect(0, 10, 20, 30)
@@ -224,15 +226,17 @@ class Rect(object):
             self.bottom += EPSILON
 
     def __str__(self):
-        return "(({0:.2f}, {1:.2f})-({2:.2f}, {3:.2f}))".format(
+        return "({0:.2f}, {1:.2f})-({2:.2f}, {3:.2f})".format(
                 self.left, self.top, self.right, self.bottom)
 
     def __repr__(self):
-        return self.__class__.__name__ + str(self)
+        return "{cls}({pts})".format(
+                cls=self.__class__.__name__,
+                pts=", ".join("{0:.2f}".format(f) for f in self))
 
     def __iter__(self):
-        for pos in range(4):
-            yield (self.left, self.top, self.right, self.bottom)[pos]
+        for f in (self.left, self.top, self.right, self.bottom):
+            yield f
 
     def half_open(self):
         """Make self half-open."""

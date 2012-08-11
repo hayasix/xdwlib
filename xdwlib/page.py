@@ -35,7 +35,8 @@ class PageCollection(list):
     def __repr__(self):
         return u"{cls}({seq})".format(
                 cls=self.__class__.__name__,
-                seq=", ".join(u"{0}[{1}]".format(pg.doc.name, pg.pos) for pg in self))
+                seq=", ".join(u"{0}[{1}]".format(pg.doc.name, pg.pos)
+                        for pg in self))
 
     def __add__(self, y):
         if isinstance(y, Page):
@@ -106,7 +107,7 @@ class PageCollection(list):
         return result
 
     def export(self, path=None, flat=False, group=True):
-        """Create a binder (.xbd) or document (.xdw) as a container for page collection.
+        """Create a binder or document as a container for page collection.
 
         path    (unicode) pathname for output
         flat    (bool) create document instead of binder
@@ -121,7 +122,10 @@ class PageCollection(list):
         from xdwfile import xdwopen
         path = derivative_path(adjust_path(uc(path or
                 (self[0].doc.name + ".xdw" if flat else ".xbd"))))
-        path = create_document(output_path=path) if flat else create_binder(path)
+        if flat:
+            path = create_document(output_path=path)
+        else:
+            path = create_binder(path)
         doc = xdwopen(path)
         tempdir = os.path.split(mktemp())[0]
         if flat:
@@ -212,9 +216,10 @@ class Page(Annotatable, Observer):
                 pos=self.pos)
 
     def __str__(self):
-        return (u"Page(page {pos}: "
+        return (u"Page({doc}[{pos}]; "
                 u"{width:.2f}*{height:.2f}mm, "
                 u"{type}, {anns} annotations)").format(
+                doc=self.doc.name,
                 pos=self.pos,
                 width=self.size.x,
                 height=self.size.y,
@@ -240,7 +245,8 @@ class Page(Annotatable, Observer):
 
     def __getattribute__(self, name):
         if "_" in name:
-            form, name = Annotatable.__getattribute__(self, "_split_attrname")(name)
+            spl = Annotatable.__getattribute__(self, "_split_attrname")
+            form, name = spl(name)
             if form is not None:
                 name = inner_attribute_name(name)
                 doc = Annotatable.__getattribute__(self, "doc")
@@ -334,6 +340,8 @@ class Page(Annotatable, Observer):
         cannot be handled as effective annotations any more.  Application/OCR
         text will be lost.
         """
+        if self.type != "IMAGE":
+            raise TypeError("rotation is available for image pages")
         doc, pos = self.doc, self.pos
         doc.rotate(pos, degree=degree, auto=auto)
         self = doc.page(pos)  # reset
@@ -343,6 +351,8 @@ class Page(Annotatable, Observer):
 
         level   "NORMAL" | "WEAK" | "STRONG"
         """
+        if self.type != "IMAGE" or self.color_scheme() != "MONO":
+            raise TypeError("noise reduction is for monochrome image pages")
         level = XDW_OCR_NOISEREDUCTION.normalize(level)
         XDW_ReducePageNoise(self.doc.handle, self.absolute_page() + 1, level)
 
@@ -378,6 +388,8 @@ class Page(Annotatable, Observer):
         insert_space    (bool)
         verbose         (bool)
         """
+        if self.type != "IMAGE":
+            raise TypeError("OCR is available for image pages")
         opt = XDW_OCR_OPTION_V7()
         engine = XDW_OCR_ENGINE.normalize(engine)
         opt.nEngineLevel = XDW_OCR_STRATEGY.normalize(strategy)
@@ -406,7 +418,41 @@ class Page(Annotatable, Observer):
 
     def clear_ocr_text(self):
         """Clear OCR text."""
+        if self.type != "IMAGE":
+            raise TypeError("OCR text is available for image pages")
         XDW_SetOcrData(self.doc.handle, self.absolute_page(), NULL)
+
+    def set_ocr_text(self, rtlist, charset="SHIFTJIS"):
+        """Set OCR text.
+
+        rtlist      sequence of (rect, text), where:
+                        rect    Rect
+                        text    basestring
+        charset     'DEFAULT' | 'OEM' | 'ANSI' | 'SYMBOL' | 'MAC' |
+                    'SHIFTJIS' | 'HANGEUL' | 'CHINESEBIG5' |
+                    'GREEK' | 'TURKISH' | 'BALTIC' | 'RUSSIAN' |
+                    'EASTEUROPE'
+        """
+        if self.type != "IMAGE":
+            raise TypeError("OCR text is available for image pages")
+        rects = (XDW_RECT * len(rtlist))()
+        crlf = "\x0d\x0a"
+        text = []
+        for i, (r, t) in enumerate(rtlist):
+            text.append(cp(t.strip()) + crlf)  # TODO: cp() != charset
+            rects[i].left = int(mm2px(r.left, self.resolution.x))
+            rects[i].top = int(mm2px(r.top, self.resolution.y))
+            rects[i].right = int(mm2px(r.right, self.resolution.x))
+            rects[i].bottom = int(mm2px(r.bottom, self.resolution.y))
+        text = "".join(text)
+        info = XDW_OCR_TEXTINFO()
+        info.nWidth = int(self.image_size.x)
+        info.nHeight = int(self.image_size.y)
+        info.charset = XDW_FONT_CHARSET.normalize(charset)
+        info.lpszText = text
+        info.nLineRect = len(rtlist)
+        info.pLineRect = pointer(rects[0])
+        XDW_SetOcrData(self.doc.handle, self.absolute_page() + 1, info)
 
     def export(self, path=None):
         """Export page to another document.

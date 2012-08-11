@@ -756,19 +756,19 @@ class BaseSignature(object):
 
     """Base class for StampSignature and PKISignature."""
 
-    def __init__(self, doc, pos, page, position, size, dt):
+    def __init__(self, doc, pos, pagepos, position, size, dt):
         """Constructor.
 
         doc             Document/Binder
-        pos             position in signature list of doc
-        page            page number to paste signature on
-        position        (Point) position to paste signature on
-        size            (Point) size to show signature
+        pos             position in signature list of doc; starts with 0
+        pagepos         page number to paste signature on; starts with 0
+        position        (Point) position in mm to paste signature on
+        size            (Point) size in mm to show signature
         dt              (datetime.datetime) signed datetime
         """
         self.doc = doc
         self.pos = pos
-        self.page = page
+        self.pagepos = pagepos
         self.position = position
         self.size = size
         self.dt = dt
@@ -781,12 +781,12 @@ class BaseSignature(object):
                 )
 
     def __str__(self):
-        return  u"{cls}({doc}[{pos}]; page {pages}, position {position}mm)".format(
+        return  u"{cls}({doc}[{pos}]; page {pgpos}, position {loc}mm)".format(
                 cls=self.__class__.__name__,
                 doc=self.doc.name,
                 pos=self.pos,
-                pages=self.page,
-                position=self.position,
+                pgpos=self.pagepos,
+                loc="({0:.2f}, {1:.2f})".format(*self.position),
                 )
 
     def update(self):
@@ -802,7 +802,7 @@ class StampSignature(BaseSignature):
 
     """DocuWorks' built-in stamp signature."""
 
-    def __init__(self, doc, pos, page, position, size, dt,
+    def __init__(self, doc, pos, pagepos, position, size, dt,
             stamp_name="",
             owner_name="",
             valid_until=None,
@@ -812,8 +812,8 @@ class StampSignature(BaseSignature):
         """Constructor.
 
         doc             Document/Binder
-        pos             position in signature list of doc
-        page            page number to paste signature on
+        pos             position in signature list of doc; starts with 0
+        pagepos         page number to paste signature on; starts with 0
         position        (Point) position to paste signature on
         size            (Point) size to show signature
         dt              (datetime.datetime) signed datetime
@@ -823,7 +823,7 @@ class StampSignature(BaseSignature):
         memo            (str)
         status          "NONE" | "TRUSTED" | "NOTRUST"
         """
-        BaseSignature.__init__(self, doc, pos, page, position, size, dt)
+        BaseSignature.__init__(self, doc, pos, pagepos, position, size, dt)
         self.stamp_name = stamp_name
         self.owner_name = owner_name
         self.valid_until = valid_until
@@ -835,7 +835,7 @@ class PKISignature(BaseSignature):
 
     """PKI-based signature."""
 
-    def __init__(self, doc, pos, page, position, size, dt,
+    def __init__(self, doc, pos, pagepos, position, size, dt,
             module="",
             subjectdn="",
             subject="",
@@ -853,8 +853,8 @@ class PKISignature(BaseSignature):
         """Constructor.
 
         doc             Document/Binder
-        pos             position in signature list of doc
-        page            page number to paste signature on
+        pos             position in signature list of doc; starts with 0
+        pagepos         page number to paste signature on; starts with 0
         position        (Point) position to paste signature on
         size            (Point) size to show signature
         dt              (datetime.datetime) signed datetime
@@ -882,7 +882,7 @@ class PKISignature(BaseSignature):
                         "INVLIAD_SIGNATURE" | "INVALID_USAGE" |
                         "UNDEFINED_ERROR"
         """
-        BaseSignature.__init__(self, doc, pos, page, position, size, dt)
+        BaseSignature.__init__(self, doc, pos, pagepos, position, size, dt)
         self.module = module
         self.subjectdn = subjectdn[:511]  # max. 511 bytes
         self.subject = subject  # CN, OU, O or E

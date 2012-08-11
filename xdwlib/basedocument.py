@@ -174,7 +174,8 @@ class BaseDocument(Subject):
 
         fitimage        "FITDEF" | "FIT" | "FITDEF_DIVIDEBMP" |
                         "USERDEF" | "USERDEF_FIT"
-        compress        "NORMAL" | "LOSSLESS" | "HIGHQUALITY" | "HIGHCOMPRESS" |
+        compress        "NORMAL" | "LOSSLESS" |
+                        "HIGHQUALITY" | "HIGHCOMPRESS" |
                         "MRC_NORMAL" | "MRC_HIGHQUALITY" | "MRC_HIGHCOMPRESS"
         zoom            (float) in percent; 0 means 100%.  < 1/1000 is ignored.
         size            (Point) in mm; for fitimange "userdef" or "userdef_fit"
@@ -199,7 +200,8 @@ class BaseDocument(Subject):
                 XDW_COMPRESS_MRC,
                 XDW_COMPRESS_JPEG_TTN2,
                 ):
-            raise ValueError("%s is invalid for insert_image()." % XDW_COMPRESS[opt.nCompress])
+            raise ValueError("invalid compression method `{0}'".format(
+                    XDW_COMPRESS[opt.nCompress]))
         #opt.nZoom = 0
         opt.nZoomDetail = int(zoom * 1000)  # .3f
         # NB. Width and height are valid only for XDW_CREATE_USERDEF(_FIT).
@@ -340,6 +342,7 @@ class BaseDocument(Subject):
         if self.page(pos).type == "APPLICATION":
             imagepath = self._preprocess(pos)
             self._postprocess(pos, imagepath)
+            self.page(pos).reset_attr()
 
     def rotate(self, pos, degree=0, auto=False, strategy=1):
         """Rotate page around the center.

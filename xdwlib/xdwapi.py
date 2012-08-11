@@ -2771,11 +2771,10 @@ def XDW_GetOcrImage(doc_handle, page, output_path, img_option):
     return DLL.XDW_GetOcrImage(doc_handle, page, output_path, byref(img_option), NULL)
 
 
-def XDW_SetOcrData(doc_handle, page):
-    """XDW_SetOcrData(doc_handle, page) --> ocr_text_info"""
-    ocr_text_info = XDW_OCR_TEXTINFO()
-    TRY(DLL.XDW_SetOcrData, doc_handle, page, byref(ocr_text_info), NULL)
-    return ocr_text_info
+def XDW_SetOcrData(doc_handle, page, ocr_textinfo):
+    """XDW_SetOcrData(doc_handle, page, pdata)"""
+    info = XDW_OCR_TEXTINFO()
+    TRY(DLL.XDW_SetOcrData, doc_handle, page, byref(ocr_textinfo), NULL)
 
 
 @APPEND(NULL)
