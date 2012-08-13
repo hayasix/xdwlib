@@ -239,9 +239,14 @@ class Rect(object):
             yield f
 
     def half_open(self):
-        """Make self half-open."""
+        """Make self half-open i.e. right-bottom is excluded."""
         self.right += EPSILON
         self.bottom += EPSILON
+
+    def closed(self):
+        """Make self closed i.e. rigit-bottom is included."""
+        self.right -= EPSILON
+        self.bottom -= EPSILON
 
     def int(self):
         """Special method to adapt to XDW_RECT."""

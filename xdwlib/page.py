@@ -422,7 +422,7 @@ class Page(Annotatable, Observer):
             raise TypeError("OCR text is available for image pages")
         XDW_SetOcrData(self.doc.handle, self.absolute_page(), NULL)
 
-    def set_ocr_text(self, rtlist, charset="SHIFTJIS"):
+    def set_ocr_text(self, rtlist, charset="SHIFTJIS", half_open=True):
         """Set OCR text.
 
         rtlist      sequence of (rect, text), where:
@@ -432,6 +432,10 @@ class Page(Annotatable, Observer):
                     'SHIFTJIS' | 'HANGEUL' | 'CHINESEBIG5' |
                     'GREEK' | 'TURKISH' | 'BALTIC' | 'RUSSIAN' |
                     'EASTEUROPE'
+        half_open   (bool) rect's are half open i.e. right-bottom is outside
+
+        CAUTION: After calling this method, text_regions()/re_regions() will
+        raise AccessDeniedError, restricted by genuine XDWAPI.
         """
         if self.type != "IMAGE":
             raise TypeError("OCR text is available for image pages")
@@ -440,6 +444,10 @@ class Page(Annotatable, Observer):
         text = []
         for i, (r, t) in enumerate(rtlist):
             text.append(cp(t.strip()) + crlf)  # TODO: cp() != charset
+            if not isinstance(r, Rect):
+                r = Rect(*r)
+            if half_open:
+                r = r.closed()
             rects[i].left = int(mm2px(r.left, self.resolution.x))
             rects[i].top = int(mm2px(r.top, self.resolution.y))
             rects[i].right = int(mm2px(r.right, self.resolution.x))
@@ -493,6 +501,7 @@ class Page(Annotatable, Observer):
         """Search text in page and get regions occupied by them.
 
         Returns a list of Rect or None (when rect is unavailable).
+        Note that Rect is half-open i.e. right-bottom is outside.
         """
         result = []
         opt = XDW_FIND_TEXT_OPTION()
@@ -532,6 +541,7 @@ class Page(Annotatable, Observer):
                         r.bottom += 1
                         r = Rect(r.left / 100.0, r.top / 100.0,
                                 r.right / 100.0, r.bottom / 100.0)
+                        r = r.half_open()
                     else:
                         r = None  # Actually rect is not available.
                     result.append(r)
