@@ -167,7 +167,7 @@ class Annotation(Annotatable, Observer):
             return Annotatable.__getattribute__(self, name)
         self_handle = Annotatable.__getattribute__(self, "handle")
         self_type = Annotatable.__getattribute__(self, "type")
-        self_isunicode = Annotatable.__getattribute__(self, "isunicode")
+        self_is_unicode = Annotatable.__getattribute__(self, "is_unicode")
         data_type, value, text_type = XDW_GetAnnotationAttributeW(
                 self_handle, attrname, codepage=CP)
         if data_type == XDW_ATYPE_INT:

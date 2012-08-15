@@ -274,7 +274,7 @@ class Annotatable(Subject):
         """
         t = XDW_ANNOTATION_TYPE.normalize(ann.type)
         if t == XDW_AID_TEXT:
-            copy = self.add_text(u"", position=ann.position)  # updated later
+            copy = self.add_text(position=ann.position)  # updated later
         elif t == XDW_AID_STAMP:
             copy = self.add_stamp(position=ann.position, width=ann.size.x)
         elif t in (XDW_AID_FUSEN, XDW_AID_RECTANGLE, XDW_AID_ARC):
@@ -322,6 +322,11 @@ class Annotatable(Subject):
         for k, v in kw.items():
             if k in ("points",):  # This attribute cannot be updated.
                 continue
+            if k == "size":
+                if (t == XDW_AID_TEXT and (
+                            not ann.word_wrap or ann.text_orientation != 0) or
+                        t == XDW_AID_LINK and ann.auto_resize):
+                    continue
             setattr(copy, k, v)
         return copy
 
