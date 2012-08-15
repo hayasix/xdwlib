@@ -236,15 +236,19 @@ class Annotation(Annotatable, Observer):
         else:
             Annotatable.__setattr__(self, name, value)
 
-    def get_userattr(self, name):
+    def get_userattr(self, name, default=None):
         """Get annotationwise user defined attribute.
+
+        name        (str or unicode) attribute name
+        default     value to return if no attribute named name exist
 
         Note that user defined attribute consists of simple byte string.
         If you want to handle values with types, consider set/get_property().
         """
-        if isinstance(name, unicode):
-            name = name.encode(CODEPAGE)
-        return XDW_GetAnnotationUserAttribute(self.handle, name)
+        try:
+            return XDW_GetAnnotationUserAttribute(self.handle, cp(name))
+        except InvalidArgError:
+            return default
 
     def set_userattr(self, name, value):
         """Set annotationwise user defined attribute.

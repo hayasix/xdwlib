@@ -520,9 +520,16 @@ class XDWFile(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
-    def get_userattr(self, name):
-        """Get user defined attribute."""
-        return XDW_GetUserAttribute(self.handle, cp(name))
+    def get_userattr(self, name, default=None):
+        """Get user defined attribute.
+
+        name        (str or unicode) attribute name
+        default     value to return if no attribute named name exist
+        """
+        try:
+            return XDW_GetUserAttribute(self.handle, cp(name))
+        except InvalidArgError:
+            return default
 
     def set_userattr(self, name, value):
         """Set user defined attribute."""

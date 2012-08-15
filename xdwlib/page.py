@@ -256,12 +256,17 @@ class Page(Annotatable, Observer):
     def __setattr__(self, name, value):
         Annotatable.__setattr__(self, name, value)
 
-    def get_userattr(self, name):
-        """Get pagewise user defined attribute."""
-        if isinstance(name, unicode):
-            name = name.encode(CODEPAGE)
-        return XDW_GetPageUserAttribute(
-                self.doc.handle, self.absolute_page() + 1, name)
+    def get_userattr(self, name, default=None):
+        """Get pagewise user defined attribute.
+
+        name        (str or unicode) attribute name
+        default     value to return if no attribute named name exist
+        """
+        try:
+            return XDW_GetPageUserAttribute(
+                    self.doc.handle, self.absolute_page() + 1, cp(name))
+        except InvalidArgError:
+            return default
 
     def set_userattr(self, name, value):
         """Set pagewise user defined attribute."""
@@ -465,7 +470,7 @@ class Page(Annotatable, Observer):
     def export(self, path=None):
         """Export page to another document.
 
-        path    (basestring) pathname to export;
+        path    (str or unicode) pathname to export;
                 given only basename without directory, exported file is
                 placed in the very directory of the original document.
 

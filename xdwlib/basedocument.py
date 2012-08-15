@@ -225,7 +225,7 @@ class BaseDocument(Subject):
         """Export page(s) to image file.
 
         pos         (int or tuple (start stop) in half-open style like slice)
-        path        (basestring) pathname to output
+        path        (str or unicode) pathname to output
         pages       (int)
         dpi         (int) 10..600
         color       "COLOR" | "MONO" | "MONO_HIGHQUALITY"
