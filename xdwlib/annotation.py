@@ -257,11 +257,28 @@ class Annotation(Annotatable, Observer):
         XDW_SetAnnotationUserAttribute(
                 self.page.doc.handle, self.handle, name, value)
 
-    def get_property(self, name):
+    def has_property(self, name):
+        """Test if annotationwise custom user defined property exists.
+
+        name        (str or unicode) name of property
+
+        Returns True if such property exists, or False if not.
+        """
+        if not isinstance(name, basestring):
+            raise TypeError("property name must be str or unicode")
+        name = uc(name)
+        try:
+            t, v = XDW_GetAnnotationCustomAttributeByName(self.handle, name)
+        except InvalidArgError:
+            return False
+        return True
+
+    def get_property(self, name, default=None):
         """Get annotationwise custom (i.e. with-type) user defined property.
 
-        name    (str or unicode) name of property
-                (int) property order which starts with 0
+        name        (str or unicode) name of property
+                    (int) property order which starts with 0
+        default     value to return if no property named name exist
 
         Type of returned value is unicode, int, bool or datetime.date; if the
         property has custom type of value, a simple byte string is returned.
@@ -270,7 +287,11 @@ class Annotation(Annotatable, Observer):
         """
         if isinstance(name, basestring):
             name = uc(name)
-            t, v = XDW_GetAnnotationCustomAttributeByName(self.handle, name)
+            try:
+                t, v = XDW_GetAnnotationCustomAttributeByName(
+                        self.handle, name)
+            except InvalidArgError:
+                return default
             return makevalue(t, v)
         if not isinstance(name, int):
             raise TypeError("name must be unicode or int")
@@ -322,6 +343,7 @@ class Annotation(Annotatable, Observer):
                 self.page.doc.handle, self.handle, name, XDW_ATYPE_INT, NULL)
         self._set_property_count()
 
+    hasprop = has_property
     getprop = get_property
     setprop = set_property
     delprop = del_property
