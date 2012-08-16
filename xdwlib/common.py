@@ -15,7 +15,7 @@ FOR A PARTICULAR PURPOSE.
 
 import os
 import re
-import tempfile
+from tempfile import mkstemp, mkdtemp
 import base64
 import time
 import datetime
@@ -34,7 +34,7 @@ __all__ = (
         "mm2in", "in2mm", "mm2px", "px2mm",
         "environ", "get_viewer",
         "inner_attribute_name", "outer_attribute_name",
-        "adjust_path", "cp", "uc", "derivative_path", "mktemp",
+        "adjust_path", "cp", "uc", "derivative_path", "mktemp", "rmtemp",
         "joinf", "flagvalue", "typevalue", "makevalue", "scale", "unpack",
         "XDWTemp",
         )
@@ -45,8 +45,8 @@ ASEP = "\v"  # annotation separator
 
 CP = 932
 CODEPAGE = "cp{0}".format(CP)
-DEFAULT_TZ = JST
 
+DEFAULT_TZ = JST
 
 # Observer pattern event
 EV_DOC_REMOVED = 11
@@ -57,7 +57,6 @@ EV_ANN_REMOVED = 31
 EV_ANN_INSERTED = 32
 EV_ATT_REMOVED = 41
 EV_ATT_INSERTED = 42
-
 
 BLANKPAGE = (
         "YA6CAQeAAwDAE4MEAQ0KAWGCBK1jggSNBFFr4XC6JKM++++6O4EEUJcYphV1"
@@ -89,10 +88,7 @@ BLANKPAGE = (
         "KeAO5OV1pR017/sBaYtCOxaHgGUagAEAggEAgwIHJ4QCBI2FBFLFTQqGBBoA"
         "AAA=").decode("base64")
 
-
 INCH = 25.4
-
-
 mm2in = lambda v: v / INCH
 in2mm = lambda v: v * INCH
 mm2px = lambda v, dpi: v / INCH * dpi
@@ -215,14 +211,14 @@ def derivative_path(path):
 
 
 def mktemp(suffix=".xdw", prefix=""):
-    """Prepare path of temporary file.
+    fd, temp = mkstemp(suffix=suffix, prefix=prefix, dir=mkdtemp())
+    os.close(fd)
+    return temp
 
-    Yes, reinvention of wheel.  Not safe for multiprocessing.
-    """
-    temp = tempfile.NamedTemporaryFile(suffix=suffix, prefix=prefix)
-    path = temp.name
-    temp.close()  # On Windows, you cannot reopen temp.  TODO: better code
-    return path
+
+def rmtemp(path):
+    os.remove(path)
+    os.rmdir(os.path.split(path)[0])
 
 
 def flagvalue(table, value, store=True):
@@ -305,7 +301,7 @@ class XDWTemp(object):
 
     def __init__(self, suffix=".xdw", dir=None, blank_page=False):
         args = [suffix, "", dir] if dir else [suffix]
-        self.fd, self.path = tempfile.mkstemp(*args)
+        self.fd, self.path = mkstemp(*args)
         if blank_page:
             os.write(self.fd, BLANKPAGE)
 

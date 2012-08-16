@@ -15,7 +15,6 @@ FOR A PARTICULAR PURPOSE.
 
 import os
 import re
-import tempfile
 import subprocess
 
 from xdwapi import *
@@ -76,15 +75,16 @@ class PageCollection(list):
         NB. Viewing signed pages will raise AccessDeniedError.
         """
         viewer = get_viewer(light=light)
-        temp = u"{0}_P{1}{2}".format(
-                self[0].doc.name, self[0].pos + 1, ".xdw" if flat else ".xbd")
-        temp = derivative_path(adjust_path(temp,
-                dir=os.path.split(mktemp())[0]))
-        self.export(temp, flat=flat, group=group)
+        temp = mktemp()
+        tmp = os.path.join(os.path.split(temp)[0],
+                u"{0}_P{1}.{2}".format(
+                self[0].doc.name, self[0].pos + 1, "xdw" if flat else "xbd"))
+        os.remove(temp)
+        temp = self.export(tmp, flat=flat, group=group)
         proc = subprocess.Popen([viewer, temp])
         if wait:
             proc.wait()
-            os.remove(temp)
+            rmtemp(temp)
             return None
         else:
             return (proc, temp)
@@ -127,26 +127,28 @@ class PageCollection(list):
         else:
             path = create_binder(path)
         doc = xdwopen(path)
-        tempdir = os.path.split(mktemp())[0]
+        temp = mktemp()
+        tempdir = os.path.split(temp)[0]
         if flat:
             for pg in self:
-                temp = pg.export(os.path.join(tempdir, pg.doc.name + ".xdw"))
-                doc.append(temp)
-                os.remove(temp)
+                tmp = pg.export(os.path.join(tempdir, pg.doc.name + ".xdw"))
+                doc.append(tmp)
+                os.remove(tmp)
             del doc[0]  # Delete the initial blank page.
         elif group:
             for pc in self.group():
-                temp = os.path.join(tempdir, pc[0].doc.name + ".xdw")
-                temp = pc.export(temp, flat=True)
-                doc.append(temp)
-                os.remove(temp)
+                tmp = os.path.join(tempdir, pc[0].doc.name + ".xdw")
+                tmp = pc.export(tmp, flat=True)
+                doc.append(tmp)
+                os.remove(tmp)
         else:
             for pos, pg in enumerate(self):
-                temp = os.path.join(tempdir,
+                tmp = os.path.join(tempdir,
                         "{0}_P{1}.xdw".format(pg.doc.name, pg.pos + 1))
-                temp = pg.export(temp)
-                doc.append(temp)
-                os.remove(temp)
+                tmp = pg.export(tmp)
+                doc.append(tmp)
+                os.remove(tmp)
+        rmtemp(temp)
         doc.save()
         doc.close()
         return path

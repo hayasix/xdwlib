@@ -15,7 +15,6 @@ FOR A PARTICULAR PURPOSE.
 
 import sys
 import os
-import tempfile
 from cStringIO import StringIO
 
 from xdwapi import *
@@ -26,20 +25,7 @@ from xdwfile import xdwopen
 from page import Page, PageCollection
 
 
-PIL_ENABLED = True
-try:
-    import Image
-except ImportError:
-    PIL_ENABLED = False
-
-
 __all__ = ("BaseDocument",)
-
-
-def check_PIL():
-    if PIL_ENABLED:
-        return
-    raise NotImplementedError("Install PIL (Python Imaging Library) package.")
 
 
 class BaseDocument(Subject):
@@ -134,11 +120,15 @@ class BaseDocument(Subject):
         """
         pos = self._pos(pos, append=True)
         if isinstance(obj, Page):
-            temp = obj.export(mktemp())
+            temp = mktemp(suffix=".xdw")
+            obj.export(temp)
         elif isinstance(obj, PageCollection):
-            temp = obj.export(mktemp(), flat=True)
+            temp = mktemp(suffix=".xdw")
+            obj.export(temp, flat=True)
         elif isinstance(obj, BaseDocument):
-            temp = PageCollection(obj).export(mktemp(), flat=True)
+            temp = mktemp(suffix=".xdw")
+            pc = PageCollection(obj)
+            pc.export(temp, flat=True)
         elif isinstance(obj, basestring):  # XDW path
             temp = uc(obj)
             if not temp.lower().endswith(u".xdw"):
@@ -152,7 +142,7 @@ class BaseDocument(Subject):
         inslen = XDW_GetDocumentInformation(self.handle).nPages - self.pages
         self.pages += inslen
         if not isinstance(obj, basestring):
-            os.remove(temp)
+            rmtemp(temp)
         # Check inserted pages in order to attach them to this document and
         # shift observer entries appropriately.
         for p in xrange(pos, pos + inslen):
@@ -334,15 +324,16 @@ class BaseDocument(Subject):
     def _postprocess(self, pos, imagepath):
         self.insert_image(pos, imagepath)  # Insert image page.
         self.delete(pos + 1)  # Delete original application page.
-        os.remove(imagepath)
+        rmtemp(imagepath)
 
     def rasterize(self, pos):
         """Rasterize; convert an application page into DocuWorks image page."""
         pos = self._pos(pos)
-        if self.page(pos).type == "APPLICATION":
-            imagepath = self._preprocess(pos)
-            self._postprocess(pos, imagepath)
-            self.page(pos).reset_attr()
+        if self.page(pos).type != "APPLICATION":
+            return
+        imagepath = self._preprocess(pos)
+        self._postprocess(pos, imagepath)
+        self.page(pos).reset_attr()
 
     def rotate(self, pos, degree=0, auto=False, strategy=1):
         """Rotate page around the center.
@@ -369,12 +360,16 @@ class BaseDocument(Subject):
         if degree in (90, 180, 270):
             XDW_RotatePage(self.handle, abspos + 1, degree)
             return
-        check_PIL()
+        # Angle other than 90, 180 or 270 requires some imaging library.
+        try:
+            import Image
+        except ImportError:
+            raise NotImplementedError("missing PIL (Python Imaging Library)")
         dpi = int(max(10, min(600, max(self.page(pos).resolution))))
         if strategy == 1:
             out = in_ = self._preprocess(pos)
         elif strategy == 2:
-            in_ = StringIO(self.page_image(pos).octet_stream())
+            in_ = StringIO(self.bitmap(pos).octet_stream())
             out = mktemp(suffix=".tif")
         else:
             raise ValueError("illegal strategy id " + str(strategy))
@@ -382,12 +377,23 @@ class BaseDocument(Subject):
         # wide and high to the original image.
         canvas_size = int(mm2px(max(self.page(pos).size), dpi) * 1.42)
         canvas = Image.new("RGB", (canvas_size, canvas_size), "#ffffff")
-        im = Image.open(in_)
+        if strategy == 1:
+            fp = open(in_, "rb")
+            im = Image.open(fp)
+            im.load()
+            fp.close()
+        else:
+            im = Image.open(in_)
         box = tuple((canvas_size - v) / 2 for v in im.size)
         box += tuple((canvas_size - v) for v in box)
-        canvas.paste(im, box[:2])  # Paste on center.
+        while True:  # Quick hack for PIL lazy reading from file.
+            try:
+                canvas.paste(im, box[:2])  # Paste on center.
+            except IOError:
+                continue
+            break
         canvas.rotate(-degree).crop(box).save(out, "TIFF", resolution=dpi)
-        if not isinstance(in_, basestring):
+        if strategy == 2:
             in_.close()
         self._postprocess(pos, out)
 

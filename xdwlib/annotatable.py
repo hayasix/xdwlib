@@ -15,7 +15,6 @@ FOR A PARTICULAR PURPOSE.
 
 import os
 import warnings
-import tempfile
 
 from xdwapi import *
 from common import *
@@ -24,13 +23,6 @@ from struct import *
 
 
 __all__ = ("Annotatable",)
-
-
-PIL_ENABLED = True
-try:
-    import Image
-except ImportError:
-    PIL_ENABLED = False
 
 
 MIN_ANN_SIZE = 3
@@ -48,12 +40,6 @@ _POINTS = (
         _POSITION + Point(_WIDTH, 0),
         _POSITION + _SIZE,
         _POSITION + Point(0, _HEIGHT))
-
-
-def check_PIL():
-    if PIL_ENABLED:
-        return
-    raise NotImplementedError("Install PIL (Python Imaging Library) package.")
 
 
 def relative_points(points):
@@ -303,7 +289,7 @@ class Annotatable(Subject):
                 # PIL BmpImagePlugin sets resolution to 1, so fix it.
                 self._fix_bmp_resolution(imagepath, dpi)
             elif strategy == 2:
-                in_ = StringIO(pg.doc.page_image(pg.pos).octet_stream())
+                in_ = StringIO(pg.doc.bitmap(pg.pos).octet_stream())
                 imagepath = mktemp(suffix=".tif")
                 Image.open(in_).crop(rect).\
                         save(imagepath, "TIFF", resolution=dpi)
@@ -312,7 +298,7 @@ class Annotatable(Subject):
                 raise ValueError("illegal strategy")
             copy = self.add(t, position=ann.position,
                     szImagePath=imagepath)
-            os.remove(imagepath)
+            rmtemp(imagepath)
         elif t in (XDW_AID_RECEIVEDSTAMP, XDW_AID_CUSTOM):
             warnings.warn(
                     "copying {0} annotation is not supported".format(ann.type),
