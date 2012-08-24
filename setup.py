@@ -16,7 +16,10 @@ setup(
     long_description="""xdwlib is a DocuWorks library for Python.
 It supports almost all functions of original XDWAPI library from Fuji Xerox.
 You can handle documents or binders in object-oriented style.  Pages and
-annotations are also handled as objects.  Plus, every object is iterable.""",
+annotations are also handled as objects.  Plus, every object is iterable.
+
+You can read brief description with Python's lovely help() function.
+Further information is available in Japanese at http://xdwlib.linxs.org/""",
     license=__license__,
     platforms=["win32",],
     packages=["xdwlib",],

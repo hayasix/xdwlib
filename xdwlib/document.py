@@ -41,7 +41,7 @@ def create(input_path=None, output_path=None, **kw):
     input_path, output_path = uc(input_path), uc(output_path)
     if input_path:
         root, ext = os.path.splitext(input_path)
-        output_path = derivative_path(output_path or root + ".xdw")
+        output_path = derivative_path(output_path or (root + ".xdw"))
         if ext.upper() == "PDF":
             return create_from_pdf(input_path, output_path, **kw)
         if ext.upper() in ("BMP", "JPG", "JPEG", "TIF", "TIFF"):
@@ -86,9 +86,8 @@ def create_from_image(input_path, output_path=None,
     from `output_path' argument.
     """
     input_path, output_path = uc(input_path), uc(output_path)
-    if not output_path:
-        output_path = os.path.split(input_path)[0] + ".xdw"
-    output_path = derivative_path(output_path)
+    root, ext = os.path.splitext(input_path)
+    output_path = derivative_path(output_path or (root + ".xdw"))
     opt = XDW_CREATE_OPTION_EX2()
     opt.nFitImage = XDW_CREATE_FITIMAGE.normalize(fitimage)
     opt.nCompress = XDW_COMPRESS.normalize(compress)
@@ -115,9 +114,8 @@ def create_from_pdf(input_path, output_path=None):
     from `output_path' argument.
     """
     input_path, output_path = uc(input_path), uc(output_path)
-    if not output_path:
-        output_path = os.path.split(input_path)[0] + ".xdw"
-    output_path = derivative_path(output_path)
+    root, ext = os.path.splitext(input_path)
+    output_path = derivative_path(output_path or (root + ".xdw"))
     try:
         XDW_CreateXdwFromImagePdfFile(cp(input_path), cp(output_path))
     except Exception as e:
@@ -138,9 +136,8 @@ def create_from_app(input_path, output_path=None,
     from `output_path' argument.
     """
     input_path, output_path = uc(input_path), uc(output_path)
-    if not output_path:
-        output_path = os.path.split(input_path)[0] + ".xdw"
-    output_path = derivative_path(output_path)
+    root, ext = os.path.splitext(input_path)
+    output_path = derivative_path(output_path or (root + ".xdw"))
     handle = XDW_BeginCreationFromAppFile(
             cp(input_path), cp(output_path), bool(attachment))
     st = time.time()
@@ -167,9 +164,8 @@ def merge(input_paths, output_path=None):
     from `output_path' argument.
     """
     input_paths = [uc(path) for path in input_paths]
-    if not output_path:
-        output_path = input_paths[0]
-    output_path = derivative_path(uc(output_path))
+    root, ext = os.path.splitext(input_paths[0])
+    output_path = derivative_path(output_path or (root + ".xdw"))
     XDW_MergeXdwFiles(cp(input_paths), cp(output_path))
     return output_path
 
