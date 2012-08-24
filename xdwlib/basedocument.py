@@ -120,13 +120,13 @@ class BaseDocument(Subject):
         """
         pos = self._pos(pos, append=True)
         if isinstance(obj, Page):
-            temp = mktemp(suffix=".xdw")
+            temp = mktemp(suffix=".xdw", nofile=True)
             obj.export(temp)
         elif isinstance(obj, PageCollection):
-            temp = mktemp(suffix=".xdw")
+            temp = mktemp(suffix=".xdw", nofile=True)
             obj.export(temp, flat=True)
         elif isinstance(obj, BaseDocument):
-            temp = mktemp(suffix=".xdw")
+            temp = mktemp(suffix=".xdw", nofile=True)
             pc = PageCollection(obj)
             pc.export(temp, flat=True)
         elif isinstance(obj, basestring):  # XDW path
@@ -316,7 +316,7 @@ class BaseDocument(Subject):
         dpi = int(max(pg.resolution))
         dpi = max(10, min(600, dpi))  # Force 10 <= dpi <= 600.
         color = pg.color_scheme()
-        imagepath = mktemp(suffix=".tif")
+        imagepath = mktemp(suffix=".tif", nofile=True)
         self.export_image(pos, imagepath,
                 dpi=dpi, color=color, format="tiff", compress="nocompress")
         return imagepath
@@ -370,7 +370,7 @@ class BaseDocument(Subject):
             out = in_ = self._preprocess(pos)
         elif strategy == 2:
             in_ = StringIO(self.bitmap(pos).octet_stream())
-            out = mktemp(suffix=".tif")
+            out = mktemp(suffix=".tif", nofile=False)
         else:
             raise ValueError("illegal strategy id " + str(strategy))
         # To rotate naturally, we need white background with sqrt(2) times

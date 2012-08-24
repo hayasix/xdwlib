@@ -280,7 +280,7 @@ class Annotatable(Subject):
             pg = ann.page
             dpi = max(pg.resolution)
             if strategy == 1:
-                imagepath = mktemp(suffix=".bmp")
+                imagepath = mktemp(suffix=".bmp", nofile=True)
                 pg.doc.export_image(pg.pos, imagepath,
                         dpi=dpi, format="bmp", compress="nocompress")
                 lt, rb = ann.position, ann.position + ann.size
@@ -290,7 +290,7 @@ class Annotatable(Subject):
                 self._fix_bmp_resolution(imagepath, dpi)
             elif strategy == 2:
                 in_ = StringIO(pg.doc.bitmap(pg.pos).octet_stream())
-                imagepath = mktemp(suffix=".tif")
+                imagepath = mktemp(suffix=".tif", nofile=True)
                 Image.open(in_).crop(rect).\
                         save(imagepath, "TIFF", resolution=dpi)
                 in_.close()

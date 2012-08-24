@@ -210,14 +210,17 @@ def derivative_path(path):
     return derivative
 
 
-def mktemp(suffix=".xdw", prefix=""):
+def mktemp(suffix=".xdw", prefix="", nofile=False):
     fd, temp = mkstemp(suffix=suffix, prefix=prefix, dir=mkdtemp())
     os.close(fd)
+    if nofile:
+        os.remove(temp)  # Directory is not removed.
     return temp
 
 
 def rmtemp(path):
-    os.remove(path)
+    if os.path.exists(path):
+        os.remove(path)
     os.rmdir(os.path.split(path)[0])
 
 

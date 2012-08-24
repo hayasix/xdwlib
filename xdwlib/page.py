@@ -75,11 +75,9 @@ class PageCollection(list):
         NB. Viewing signed pages will raise AccessDeniedError.
         """
         viewer = get_viewer(light=light)
-        temp = mktemp()
-        tmp = os.path.join(os.path.split(temp)[0],
-                u"{0}_P{1}.{2}".format(
+        tempdir = os.path.split(mktemp(nofile=True))[0]
+        tmp = os.path.join(tempdir, u"{0}_P{1}.{2}".format(
                 self[0].doc.name, self[0].pos + 1, "xdw" if flat else "xbd"))
-        os.remove(temp)
         temp = self.export(tmp, flat=flat, group=group)
         proc = subprocess.Popen([viewer, temp])
         if wait:
