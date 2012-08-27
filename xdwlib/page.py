@@ -55,17 +55,20 @@ class PageCollection(list):
                     "only Page or PageCollection can be added")
         return self
 
-    def view(self, light=False, wait=True, flat=False, group=True):
+    def view(self, light=False, wait=True, flat=False, group=True, *options):
         """View pages with DocuWorks Viewer (Light).
 
-        light   (bool) force to use DocuWorks Viewer Light.  Note that it will
-                use DocuWorks Viewer if Light version is not avaiable.
-        wait    (bool) wait until viewer stops.  For False, (proc, temp) is
-                returned.  Users should remove the file of path after the Popen
-                object ends.
-        flat    (bool) combine pages into a single document.
-        group   (bool) group continuous pages by original document,
-                i.e. create document-in-binder.
+        light       (bool) force to use DocuWorks Viewer Light.
+                    Note that DocuWorks Viewer is used if Light version is
+                    not avaiable.
+        wait        (bool) wait until viewer stops.
+                    Given False, (proc, temp) is returned.  Users should
+                    remove the file of path after the Popen object ends.
+        flat        (bool) combine pages into a single document.
+        group       (bool) group continuous pages by original document,
+                    i.e. create document-in-binder.
+        options     optional arguments for DocuWorks Viewer (Light).
+                    See DocuWorks genuine help document.
 
         Returns (proc, temp) if wait is False, where:
                 proc    subprocess.Popen object
@@ -74,12 +77,14 @@ class PageCollection(list):
         NB. Attachments are not shown.
         NB. Viewing signed pages will raise AccessDeniedError.
         """
-        viewer = get_viewer(light=light)
         tempdir = os.path.split(mktemp(nofile=True))[0]
         tmp = os.path.join(tempdir, u"{0}_P{1}.{2}".format(
                 self[0].doc.name, self[0].pos + 1, "xdw" if flat else "xbd"))
         temp = self.export(tmp, flat=flat, group=group)
-        proc = subprocess.Popen([viewer, temp])
+        args = [get_viewer(light=light)]
+        args.extend(options)
+        args.append(temp)
+        proc = subprocess.Popen(args)
         if wait:
             proc.wait()
             rmtemp(temp)
@@ -489,17 +494,20 @@ class Page(Annotatable, Observer):
         XDW_GetPage(self.doc.handle, self.absolute_page() + 1, cp(path))
         return path
 
-    def view(self, light=False, wait=True):
+    def view(self, light=False, wait=True, *options):
         """View page with DocuWorks Viewer (Light).
 
-        light   (bool) force to use DocuWorks Viewer Light.  Note that it will
-                use DocuWorks Viewer if Light version is not avaiable.
-        wait    (bool) wait until viewer stops.  For False, (Popen, path) is
-                returned.  Users should remove the file of path after the Popen
-                object ends.
+        light       (bool) force to use DocuWorks Viewer Light.
+                    Note that DocuWorks Viewer is used if Light version is
+                    not avaiable.
+        wait        (bool) wait until viewer stops.
+                    Given False, (Popen, path) is returned.  Users should
+                    remove the file of path after the Popen object ends.
+        options     optional arguments for DocuWorks Viewer (Light).
+                    See DocuWorks genuine help document.
         """
         pc = PageCollection() + self
-        return pc.view(light=light, wait=wait, flat=True)
+        return pc.view(light=light, wait=wait, flat=True, *options)
 
     def text_regions(self, text,
             ignore_case=False, ignore_width=False, ignore_hirakata=False):

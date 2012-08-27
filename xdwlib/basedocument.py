@@ -397,10 +397,10 @@ class BaseDocument(Subject):
             in_.close()
         self._postprocess(pos, out)
 
-    def view(self, light=False, wait=True):
+    def view(self, light=False, wait=True, *options):
         """View document with DocuWorks Viewer (Light)."""
         pc = PageCollection(self)
-        return pc.view(light=light, wait=wait, flat=True)
+        return pc.view(light=light, wait=wait, flat=True, *options)
 
     def content_text(self, type=None):
         """Get all content text.

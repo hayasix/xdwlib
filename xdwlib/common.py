@@ -114,11 +114,11 @@ def environ(name=None):
     return values
 
 
-def get_viewer(light=False):
+def get_viewer(light=False, lightonly=False):
     """Get pathname of DocuWorks Viewer (Light).
 
-    light   (bool) force to use DocuWorks Viewer Light.  Note that it will
-            use DocuWorks Viewer if Light version is not avaiable.
+    light       (bool) force to use DocuWorks Viewer Light.  Note that
+                DocuWorks Viewer is used if Light version is not avaiable.
     """
     env = environ()
     viewer = env.get("DWVIEWERPATH")
