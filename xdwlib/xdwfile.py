@@ -500,7 +500,7 @@ class XDWFile(object):
                 self_signature(0)  # Update document verification status.
             return object.__getattribute__(self, name)
         self_handle = object.__getattribute__(self, "handle")
-        t, value = XDW_GetDocumentAttributeByNameW(
+        t, value, _ = XDW_GetDocumentAttributeByNameW(
                 self_handle, attribute_name, codepage=CP)
         return makevalue(t, value)
 
