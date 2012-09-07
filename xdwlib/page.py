@@ -430,7 +430,7 @@ class Page(Annotatable, Observer):
         """Clear OCR text."""
         if self.type != "IMAGE":
             raise TypeError("OCR text is available for image pages")
-        XDW_SetOcrData(self.doc.handle, self.absolute_page(), NULL)
+        XDW_SetOcrData(self.doc.handle, self.absolute_page() + 1, NULL)
 
     def set_ocr_text(self, rtlist, charset="SHIFTJIS", half_open=True):
         """Set OCR text.
