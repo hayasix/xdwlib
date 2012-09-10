@@ -210,8 +210,32 @@ class BaseDocument(Subject):
         for p in range(pos, pos + (self.pages - prev_pages)):
             Page(self, p)
 
-    def export_image(self, pos, path, pages=1,
-            dpi=600, color="COLOR", format=None, compress="NORMAL"):
+    def export(self, pos, path=None):
+        """Export page to another document.
+
+        pos     (int) page number; starts with 0
+        path    (str or unicode) pathname to export;
+                given only basename without directory, exported file is
+                placed in the very directory of the original document.
+
+        Returns the actual pathname of generated XDW file, which may be
+        different from `path' argument.  If path is not available,
+        default name "DOCUMENTNAME_Pxx.xdw" will be used.
+        """
+        path = uc(path)
+        if path:
+            path = adjust_path(path)
+        else:
+            path = adjust_path(
+                    u"{0}_P{1}.xdw".format(self.name, pos + 1),
+                    dir=self.dirname())
+        path = derivative_path(path)
+        XDW_GetPage(self.handle, self.absolute_page(pos) + 1, cp(path))
+        return path
+
+    def export_image(self, pos,
+            path=None, pages=1, dpi=600, color="COLOR", format=None,
+            compress="NORMAL"):
         """Export page(s) to image file.
 
         pos         (int or tuple (start stop) in half-open style like slice)
@@ -228,7 +252,9 @@ class BaseDocument(Subject):
                               "MRC_NORMAL" | "MRC_HIGHQUALITY" |
                               "MRC_HIGHCOMPRESS"
 
-        Returns actual pathname of created image file.
+        Returns the actual pathname of generated image file, which may be
+        different from `path' argument.  If path is not available,
+        default name "DOCUMENTNAME_Pxx.bmp" or so will be used.
         """
         path = uc(path)
         if isinstance(pos, (list, tuple)):

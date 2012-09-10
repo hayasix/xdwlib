@@ -483,16 +483,29 @@ class Page(Annotatable, Observer):
         different from `path' argument.  If path is not available,
         default name "DOCUMENTNAME_Pxx.xdw" will be used.
         """
-        path = uc(path)
-        if path:
-            path = adjust_path(path)
-        else:
-            path = adjust_path(
-                    u"{0}_P{1}.xdw".format(self.doc.name, self.pos + 1),
-                    dir=self.doc.dirname())
-        path = derivative_path(path)
-        XDW_GetPage(self.doc.handle, self.absolute_page() + 1, cp(path))
-        return path
+        return self.doc.export(self.pos, path=path)
+
+    def export_image(self,
+            path=None, dpi=600, color="COLOR", format=None, compress="NORMAL"):
+        """Export page to image file.
+
+        path        (str or unicode) pathname to output
+        dpi         (int) 10..600
+        color       "COLOR" | "MONO" | "MONO_HIGHQUALITY"
+        format      "BMP" | "TIFF" | "JPEG" | "PDF"
+        compress    for BMP, not available
+                    for TIFF, "NOCOMPRESS" | "PACKBITS" |
+                              "JPEG | "JPEG_TTN2" | "G4"
+                    for JPEG, "NORMAL" | "HIGHQUALITY" | "HIGHCOMPRESS"
+                    for PDF,  "NORMAL" | "HIGHQUALITY" | "HIGHCOMPRESS" |
+                              "MRC_NORMAL" | "MRC_HIGHQUALITY" |
+                              "MRC_HIGHCOMPRESS"
+
+        Returns actual pathname of created image file.
+        """
+        return self.doc.export_image(self.pos,
+                path=path, pages=1, dpi=dpi, color=color, format=format,
+                compress=compress)
 
     def view(self, light=False, wait=True, *options):
         """View page with DocuWorks Viewer (Light).
