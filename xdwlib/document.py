@@ -42,9 +42,9 @@ def create(input_path=None, output_path=None, **kw):
     if input_path:
         root, ext = os.path.splitext(input_path)
         output_path = derivative_path(output_path or (root + ".xdw"))
-        if ext.upper() == "PDF":
+        if ext.upper() == ".PDF":
             return create_from_pdf(input_path, output_path, **kw)
-        if ext.upper() in ("BMP", "JPG", "JPEG", "TIF", "TIFF"):
+        if ext.upper() in (".BMP", ".JPG", ".JPEG", ".TIF", ".TIFF"):
             try:
                 return create_from_image(input_path, output_path, **kw)
             except Exception as e:
