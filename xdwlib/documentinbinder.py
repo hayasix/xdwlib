@@ -35,7 +35,7 @@ class DocumentInBinder(BaseDocument, Observer):
         docinfo = XDW_GetDocumentInformationInBinder(
                 self.binder.handle, pos + 1)
         self.pages = docinfo.nPages
-        self.original_data = docinfo.nOriginalData
+        self.original_data = docinfo.nOriginalData  # TODO
 
     @property
     def handle(self):

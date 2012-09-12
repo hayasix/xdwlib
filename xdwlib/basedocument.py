@@ -171,6 +171,8 @@ class BaseDocument(Subject):
         size            (Point) in mm; for fitimange "userdef" or "userdef_fit"
                         (int)   1=A3R, 2=A3, 3=A4R, 4=A4, 5=A5R, 6=A5,
                                 7=B4R, 8=B4, 9=B5R, 10=B5
+                        (str or unicode) "A3R" | "A3" | "A4R" | "A4" | "A5R" |
+                                "A5" | "B4R" | "B4" | "B5R" | "B5"
         align           (horiz, vert) where:
                             horiz   "CENTER" | "LEFT" | "RIGHT"
                             vert    "CENTER" | "TOP" | "BOTTOM"
@@ -195,6 +197,8 @@ class BaseDocument(Subject):
         #opt.nZoom = 0
         opt.nZoomDetail = int(zoom * 1000)  # .3f
         # NB. Width and height are valid only for XDW_CREATE_USERDEF(_FIT).
+        if isinstance(size, (int, float, long, basestring)):
+            size = Point(*XDW_SIZE_MM[XDW_SIZE.normalize(size)])
         opt.nWidth, opt.nHeight = map(int, size * 100)  # .2f;
         opt.nHorPos = XDW_CREATE_HPOS.normalize(align[0])
         opt.nVerPos = XDW_CREATE_VPOS.normalize(align[1])
