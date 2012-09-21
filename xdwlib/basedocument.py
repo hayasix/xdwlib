@@ -237,9 +237,9 @@ class BaseDocument(Subject):
         XDW_GetPage(self.handle, self.absolute_page(pos) + 1, cp(path))
         return path
 
-    def export_image(self, pos,
-            path=None, pages=1, dpi=600, color="COLOR", format=None,
-            compress="NORMAL"):
+    def export_image(self, pos, path=None,
+            pages=1, dpi=600, color="COLOR", format=None, compress="NORMAL",
+            direct=False):
         """Export page(s) to image file.
 
         pos         (int or tuple (start stop) in half-open style like slice)
@@ -255,11 +255,24 @@ class BaseDocument(Subject):
                     for PDF,  "NORMAL" | "HIGHQUALITY" | "HIGHCOMPRESS" |
                               "MRC_NORMAL" | "MRC_HIGHQUALITY" |
                               "MRC_HIGHCOMPRESS"
+        direct      (bool) export internal compressed image data directly.
+                    If True:
+                      - pos must be int; pages, dpi, color, format and
+                        compress are ignored.
+                      - Exported image format is recognized with the
+                        extension of returned pathname, which is either
+                        'tiff', 'jpeg' or 'pdf'.
+                      - Annotations and page forms are not included in
+                        the exported image.  Image orientation depends
+                        on the internal state, so check 'degree' attribute
+                        of the page if needed.
 
         Returns the actual pathname of generated image file, which may be
         different from `path' argument.  If path is not available,
         default name "DOCUMENTNAME_Pxx.bmp" or so will be used.
         """
+        if direct:
+            return self._export_direct_image(pos, path)
         path = uc(path)
         if isinstance(pos, (list, tuple)):
             pos, pages = pos
@@ -328,6 +341,20 @@ class BaseDocument(Subject):
         XDW_ConvertPageToImageFile(
                 self.handle, self.absolute_page(pos) + 1, cp(path), opt)
         return path
+
+    def _export_direct_image(self, pos, path=None):
+        pos = self._pos(pos)
+        path = uc(path)
+        if not path:
+            path = u"{0}_P{1}".format(self.name, pos + 1)
+            path = adjust_path(path, dir=self.dirname())
+        path = derivative_path(path)
+        path, _ = os.path.splitext(path)
+        fmt = XDW_GetCompressedPageImage(
+                self.handle, self.absolute_page(pos) + 1, cp(path))
+        new_path = path + "." + XDW_IMAGE_FORMAT[fmt].lower()
+        os.rename(cp(path), cp(new_path))
+        return new_path
 
     def bitmap(self, pos):
         """Returns page image with annotations as a Bitmap object."""

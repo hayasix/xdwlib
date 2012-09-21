@@ -486,7 +486,8 @@ class Page(Annotatable, Observer):
         return self.doc.export(self.pos, path=path)
 
     def export_image(self,
-            path=None, dpi=600, color="COLOR", format=None, compress="NORMAL"):
+            path=None, dpi=600, color="COLOR", format=None, compress="NORMAL",
+            direct=False):
         """Export page to image file.
 
         path        (str or unicode) pathname to output
@@ -500,12 +501,22 @@ class Page(Annotatable, Observer):
                     for PDF,  "NORMAL" | "HIGHQUALITY" | "HIGHCOMPRESS" |
                               "MRC_NORMAL" | "MRC_HIGHQUALITY" |
                               "MRC_HIGHCOMPRESS"
+        direct      (bool) export internal compressed image data directly.
+                    If True:
+                      - dpi, color, format and compress are ignored.
+                      - Exported image format is recognized with the
+                        extension of returned pathname, which is either
+                        'tiff', 'jpeg' or 'pdf'.
+                      - Annotations and page forms are not included in
+                        the exported image.  Image orientation depends
+                        on the internal state, so check 'degree' attribute
+                        of the page if needed.
 
         Returns actual pathname of created image file.
         """
         return self.doc.export_image(self.pos,
                 path=path, pages=1, dpi=dpi, color=color, format=format,
-                compress=compress)
+                compress=compress, direct=direct)
 
     def view(self, light=False, wait=True, *options):
         """View page with DocuWorks Viewer (Light).
