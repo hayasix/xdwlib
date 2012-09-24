@@ -102,8 +102,10 @@ class Binder(Subject, XDWFile):
 
     def __delitem__(self, pos):
         if isinstance(pos, slice):
+            deleted = 0
             for p in range(pos.start, pos.stop, pos.step):
-                self.delete(p)
+                self.delete(p - deleted)
+                deleted += 1
         else:
             self.delete(pos)
 

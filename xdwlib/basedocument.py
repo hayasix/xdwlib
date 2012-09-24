@@ -84,8 +84,10 @@ class BaseDocument(Subject):
     def __delitem__(self, pos):
         if isinstance(pos, slice):
             pos = self._slice(pos)
+            deleted = 0
             for p in range(pos.start, pos.stop, pos.step):
-                self.delete(p)
+                self.delete(p - deleted)
+                deleted += 1
         else:
             self.delete(pos)
 

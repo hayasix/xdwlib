@@ -124,7 +124,7 @@ class PageCollection(list):
         from binder import create_binder
         from xdwfile import xdwopen
         path = derivative_path(adjust_path(uc(path or
-                (self[0].doc.name + ".xdw" if flat else ".xbd"))))
+                (self[0].doc.name + (".xdw" if flat else ".xbd")))))
         if flat:
             path = create_document(output_path=path)
         else:

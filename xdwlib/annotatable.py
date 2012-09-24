@@ -87,8 +87,10 @@ class Annotatable(Subject):
 
     def __delitem__(self, pos):
         if isinstance(pos, slice):
+            deleted = 0
             for p in range(pos.start, pos.stop, pos.step or 1):
-                self.delete(p)
+                self.delete(p - deleted)
+                deleted += 1
         return self.delete(pos)
 
     def __iter__(self):
