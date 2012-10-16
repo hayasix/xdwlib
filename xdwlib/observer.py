@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#vim:fileencoding=cp932:fileformat=dos
+# vim: fileencoding=cp932 fileformat=dos
 
 """observer.py -- implementation for observer pattern
 
@@ -22,7 +22,7 @@ class Subject(object):
         self.observers = dict()
 
     def shift_keys(self, border, delete=False, count=1):
-        for pos in sorted(filter(lambda p: border < p, self.observers.keys()),
+        for pos in sorted([p for p in self.observers.keys() if border < p],
                 reverse=(not delete)):
             gap = -count if delete else count
             self.observers[pos + gap] = self.observers[pos]

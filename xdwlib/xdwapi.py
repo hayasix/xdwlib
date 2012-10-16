@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#vim:fileencoding=cp932:fileformat=dos
+# vim: fileencoding=cp932 fileformat=dos
 
 """xdwapi.py -- raw DocuWorks API
 
@@ -16,7 +16,7 @@ FOR A PARTICULAR PURPOSE.
 
 from ctypes import *
 
-from bitmap import Bitmap
+from .bitmap import Bitmap
 
 
 ######################################################################
@@ -163,14 +163,14 @@ class XDWConst(dict):
     def __init__(self, constants, default=None):
         dict.__init__(self, constants)
         self.constants = constants
-        self.reverse = dict([(v, k) for (k, v) in constants.items()])
+        self.reverse = dict((v, k) for (k, v) in constants.items())
         self.default = default
 
     def inner(self, value):
         return self.reverse.get(str(value).upper(), self.default)
 
     def normalize(self, key_or_value):
-        if isinstance(key_or_value, basestring):
+        if isinstance(key_or_value, (str, bytes)):
             return self.inner(key_or_value)
         return key_or_value
 
@@ -672,18 +672,18 @@ XDW_DOCUMENT_ATTRIBUTE = XDWConst({
         XDW_PROP_COMMENTS           : "%Comments",
         }, default=None)
 
-XDW_PROPW_TITLE                     = u"%Title"
-XDW_PROPW_SUBJECT                   = u"%Subject"
-XDW_PROPW_AUTHOR                    = u"%Author"
-XDW_PROPW_KEYWORDS                  = u"%Keywords"
-XDW_PROPW_COMMENTS                  = u"%Comments"
+XDW_PROPW_TITLE                     = "%Title"
+XDW_PROPW_SUBJECT                   = "%Subject"
+XDW_PROPW_AUTHOR                    = "%Author"
+XDW_PROPW_KEYWORDS                  = "%Keywords"
+XDW_PROPW_COMMENTS                  = "%Comments"
 
 XDW_DOCUMENT_ATTRIBUTE_W = XDWConst({
-        XDW_PROPW_TITLE             : u"%Title",
-        XDW_PROPW_SUBJECT           : u"%Subject",
-        XDW_PROPW_AUTHOR            : u"%Author",
-        XDW_PROPW_KEYWORDS          : u"%Keywords",
-        XDW_PROPW_COMMENTS          : u"%Comments",
+        XDW_PROPW_TITLE             : "%Title",
+        XDW_PROPW_SUBJECT           : "%Subject",
+        XDW_PROPW_AUTHOR            : "%Author",
+        XDW_PROPW_KEYWORDS          : "%Keywords",
+        XDW_PROPW_COMMENTS          : "%Comments",
         }, default=None)
 
 XDW_BINDER_SIZE = XDWConst({
@@ -2248,7 +2248,7 @@ def XDW_MergeXdwFiles(input_paths, files, output_path):
 def XDW_OpenDocumentHandle(path, open_mode):
     """XDW_OpenDocumentHandle(path, open_mode) --> doc_handle"""
     doc_handle = XDW_DOCUMENT_HANDLE()
-    if isinstance(path, unicode):
+    if isinstance(path, str):
         path = path.encode("mbcs")
     TRY(DLL.XDW_OpenDocumentHandle, path, byref(doc_handle), byref(open_mode))
     return doc_handle
@@ -2891,7 +2891,7 @@ def XDW_GetAnnotationCustomAttributeNumber(ann_handle):
 @RAISE
 def XDW_SetAnnotationCustomAttribute(doc_handle, ann_handle, attr_name, attr_type, attr_val):
     """XDW_SetAnnotationCustomAttribute(doc_handle, ann_handle, attr_name, attr_type, attr_val)"""
-    size = len(attr_val) if isinstance(attr_val, basestring) else 0
+    size = len(attr_val) if isinstance(attr_val, str) else 0
     return DLL.XDW_SetAnnotationCustomAttribute(doc_handle, ann_handle, attr_name, attr_type, attr_val, NULL)
 
 

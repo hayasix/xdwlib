@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#vim:fileencoding=cp932:fileformat=dos
+# vim: fileencoding=cp932 fileformat=dos
 
 """annotation.py -- Annotation
 
@@ -15,11 +15,11 @@ FOR A PARTICULAR PURPOSE.
 
 import re
 
-from xdwapi import *
-from common import *
-from observer import *
-from struct import *
-from annotatable import Annotatable
+from .xdwapi import *
+from .common import *
+from .observer import *
+from .struct import *
+from .annotatable import Annotatable
 
 
 __all__ = ("Annotation",)
@@ -80,14 +80,14 @@ class Annotation(Annotatable, Observer):
         while ann is not None:
             parents.insert(0, ann.pos)
             ann = ann.parent
-        return u"{cls}({docname}[{pgpos}][{poslist}])".format(
+        return "{cls}({docname}[{pgpos}][{poslist}])".format(
                 cls=self.__class__.__name__,
                 docname=self.page.doc.name,
                 pgpos=self.page.pos,
                 poslist="][".join(map(str, parents)))
 
     def __str__(self):
-        return u"{0}:{1})".format(repr(self)[:-1], self.type)
+        return "{0}:{1})".format(repr(self)[:-1], self.type)
 
     @staticmethod
     def _unicode_enabled(ann_type):
@@ -105,7 +105,7 @@ class Annotation(Annotatable, Observer):
         return tuple([
                 XDW_GetAnnotationAttributeW(
                         self.handle,
-                        "%{0}Margin".format(d)
+                        cp("%{0}Margin".format(d))
                 )[1] / 100.0 for d in ("Top", "Right", "Bottom", "Left")
                 ])
 
@@ -125,7 +125,7 @@ class Annotation(Annotatable, Observer):
             v = c_int(int(value[i] * 100))
             XDW_SetAnnotationAttributeW(
                     self.page.doc.handle, self.handle,
-                    "%{0}Margin".format(d), XDW_ATYPE_INT, byref(v), 0, 0)
+                    cp("%{0}Margin".format(d)), XDW_ATYPE_INT, byref(v), 0, 0)
 
     @property
     def position(self):
@@ -215,7 +215,7 @@ class Annotation(Annotatable, Observer):
                         0,
                         0)
             elif t == 1:
-                if not isinstance(value, basestring):
+                if not isinstance(value, str):
                     raise ValueError(
                             "text data required, numeric given")
                 if self.is_unicode and unicode_enabled:
@@ -239,7 +239,7 @@ class Annotation(Annotatable, Observer):
     def get_userattr(self, name, default=None):
         """Get annotationwise user defined attribute.
 
-        name        (str or unicode) attribute name
+        name        (str or bytes) attribute name
         default     value to return if no attribute named name exist
 
         Note that user defined attribute consists of simple byte string.
@@ -253,10 +253,13 @@ class Annotation(Annotatable, Observer):
     def set_userattr(self, name, value):
         """Set annotationwise user defined attribute.
 
+        name        (str or bytes) attribute name
+        value       (bytes) value to set
+
         Note that user defined attribute consists of simple byte string.
         If you want to handle values with types, consider set/get_property().
         """
-        if isinstance(name, unicode):
+        if isinstance(name, str):
             name = name.encode(CODEPAGE)
         XDW_SetAnnotationUserAttribute(
                 self.page.doc.handle, self.handle, name, value)
@@ -264,13 +267,12 @@ class Annotation(Annotatable, Observer):
     def has_property(self, name):
         """Test if annotationwise custom user defined property exists.
 
-        name        (str or unicode) name of property
+        name        (str) name of property
 
         Returns True if such property exists, or False if not.
         """
-        if not isinstance(name, basestring):
-            raise TypeError("property name must be str or unicode")
-        name = uc(name)
+        if not isinstance(name, str):
+            raise TypeError("property name must be str")
         try:
             t, v = XDW_GetAnnotationCustomAttributeByName(self.handle, name)
         except InvalidArgError:
@@ -280,17 +282,16 @@ class Annotation(Annotatable, Observer):
     def get_property(self, name, default=None):
         """Get annotationwise custom (i.e. with-type) user defined property.
 
-        name        (str or unicode) name of property
+        name        (str) name of property
                     (int) property order which starts with 0
         default     value to return if no property named name exist
 
-        Type of returned value is unicode, int, bool or datetime.date; if the
-        property has custom type of value, a simple byte string is returned.
+        Type of returned value is str, int, bool or datetime.date; if the
+        property has custom type of value, a simple bytes value is returned.
 
-        Note that previous set_property(str_value) gives unicode.
+        Note that previous set_property(bytes_value) gives str.
         """
-        if isinstance(name, basestring):
-            name = uc(name)
+        if isinstance(name, str):
             try:
                 t, v = XDW_GetAnnotationCustomAttributeByName(
                         self.handle, name)
@@ -298,7 +299,7 @@ class Annotation(Annotatable, Observer):
                 return default
             return makevalue(t, v)
         if not isinstance(name, int):
-            raise TypeError("name must be unicode or int")
+            raise TypeError("name must be str or int")
         # Any custom attribute can be taken by order which starts with 0.
         n = self.properties
         if name < 0:
@@ -316,19 +317,19 @@ class Annotation(Annotatable, Observer):
     def set_property(self, name, value):
         """Set annotationwise custom (i.e. with-type) user defined property.
 
-        name        (str or unicode) name of property
-        value       (str, unicode, int, bool or datetime.date) stored value
+        name        (str) name of property
+        value       (str, bytes, int, bool or datetime.date) stored value
 
         If you want to set other type of value, store a simple byte string.
 
         Note that str value is actually stored in unicode and get_property()
-        will returen unicode.
+        will returen str (i.e., unicode string).
         """
         if value is None:
             self.del_property(name)
             return
-        name = uc(name)  # Force to specify in unicode.
-        if isinstance(value, str):
+        name = uc(name)  # Force to specify in str, not bytes.
+        if isinstance(value, bytes):
             value = uc(value)  # Force to store in unicode.
         t, value = typevalue(value)
         if t != XDW_ATYPE_STRING:
@@ -340,9 +341,9 @@ class Annotation(Annotatable, Observer):
     def del_property(self, name):
         """Delete annotationwise custom (i.e. with-type) user defined property.
 
-        name    (unicode) name of property, or user attribute
+        name    (str) name of property, or user attribute
         """
-        name = uc(name)  # Force to specify in unicode.
+        name = uc(name)  # Force to specify in str, not bytes.
         XDW_SetAnnotationCustomAttribute(
                 self.page.doc.handle, self.handle, name, XDW_ATYPE_INT, NULL)
         self._set_property_count()
@@ -368,9 +369,8 @@ class Annotation(Annotatable, Observer):
     def attributes(self):
         """Returns dict of annotation attribute names and values."""
         tv = XDW_ANNOTATION_TYPE.normalize(self.type)
-        d = dict(
-                (outer_attribute_name(k), getattr(self, k))
-                for (k, v) in XDW_ANNOTATION_ATTRIBUTE.iteritems()
+        d = dict((outer_attribute_name(k), getattr(self, k))
+                for (k, v) in XDW_ANNOTATION_ATTRIBUTE.items()
                 if tv in v[2])
         d["position"] = self.position
         d["size"] = self.size

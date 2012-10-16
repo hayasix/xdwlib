@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# vim: fileencoding=mbcs fileformat=dos
+# vim: fileencoding=cp932 fileformat=dos
 
 """xdwlib.py -- DocuWorks library for Python.
 
@@ -15,6 +15,7 @@ FOR A PARTICULAR PURPOSE.
 
 import sys
 import codecs
+import collections
 
 from xdwlib import xdwopen
 from xdwlib.xdwapi import XDWError, InvalidArgError
@@ -76,7 +77,7 @@ def parse():
 
 def exit(xdwerror, verbose=False):
     if verbose:
-        print xdwerror
+        print(xdwerror)
     sys.exit(xdwerror.code)
 
 
@@ -107,14 +108,14 @@ if __name__ == "__main__":
     for name in options.spec.split(","):
         try:
             text = getattr(doc, name)
-            if callable(text):
+            if isinstance(text, collections.Callable):
                 text = text()
             out.append("%s=%s" % (name, text))
         except KeyError:
             pass
     out = "\n".join(out)
     if options.pipe:
-        print out
+        print(out)
     else:
         if options.encoding.lower() in ("utf8n", "utf-8n"):
             options.encoding = "utf-8-sig"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#vim:fileencoding=cp932:fileformat=dos
+# vim: fileencoding=cp932 fileformat=dos
 
 """documentinbinder.py -- DocumentInBinder
 
@@ -13,10 +13,10 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE.
 """
 
-from xdwapi import *
-from common import *
-from observer import *
-from basedocument import BaseDocument
+from .xdwapi import *
+from .common import *
+from .observer import *
+from .basedocument import BaseDocument
 
 
 __all__ = ("DocumentInBinder",)
@@ -59,7 +59,7 @@ class DocumentInBinder(BaseDocument, Observer):
         self.pages = docinfo.nPages
 
     def __repr__(self):
-        return u"{cls}({name} ({bdoc}[{pos}]){status})".format(
+        return "{cls}({name} ({bdoc}[{pos}]){status})".format(
                 cls=self.__class__.__name__,
                 name=self.name,
                 bdoc=self.binder.name,
@@ -67,8 +67,8 @@ class DocumentInBinder(BaseDocument, Observer):
                 status="" if self.binder.handle else "; CLOSED")
 
     def __str__(self):
-        return (u"{cls}({name} ({bdoc}[{pos}]): "
-                u"{pages} pages, {atts} attachments{status})").format(
+        return ("{cls}({name} ({bdoc}[{pos}]): "
+                "{pages} pages, {atts} attachments{status})").format(
                 cls=self.__class__.__name__,
                 name=self.name,
                 bdoc=self.binder.name,

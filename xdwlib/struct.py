@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#vim:fileencoding=cp932:fileformat=dos
+# vim: fileencoding=cp932 fileformat=dos
 
 """struct.py -- Point and Rect
 
@@ -106,7 +106,7 @@ class Point(object):
     def __ne__(self, pnt):
         return self.x != pnt.x or self.y != pnt.y
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self.x != 0 or self.y != 0
 
     def __neg__(self):

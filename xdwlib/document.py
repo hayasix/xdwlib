@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#vim:fileencoding=cp932:fileformat=dos
+# vim: fileencoding=cp932 fileformat=dos
 
 """document.py -- Document
 
@@ -16,11 +16,11 @@ FOR A PARTICULAR PURPOSE.
 import os
 import time
 
-from xdwapi import *
-from common import *
-from struct import Point
-from xdwfile import XDWFile
-from basedocument import BaseDocument
+from .xdwapi import *
+from .common import *
+from .struct import Point
+from .xdwfile import XDWFile
+from .basedocument import BaseDocument
 
 
 __all__ = (
@@ -51,7 +51,7 @@ def create(input_path=None, output_path=None, **kw):
                 pass  # fall through; processed by respective apps.
         return create_from_app(input_path, output_path, **kw)
     # input_path==None means generating single blank page.
-    output_path = derivative_path(output_path or u"blank.xdw")
+    output_path = derivative_path(output_path or "blank.xdw")
     with open(output_path, "wb") as f:
         f.write(BLANKPAGE)
     return output_path
@@ -179,13 +179,13 @@ class Document(BaseDocument, XDWFile):
         XDWFile.__init__(self, path)
 
     def __repr__(self):
-        return u"{cls}({name}{sts})".format(
+        return "{cls}({name}{sts})".format(
                 cls=self.__class__.__name__,
                 name=self.name,
                 sts="" if self.handle else "; CLOSED")
 
     def __str__(self):
-        return u"{cls}({name}; {pgs} pages, {atts} attachments{sts})".format(
+        return "{cls}({name}; {pgs} pages, {atts} attachments{sts})".format(
                 cls=self.__class__.__name__,
                 name=self.name,
                 pgs=self.pages,

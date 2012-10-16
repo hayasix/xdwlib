@@ -16,10 +16,10 @@ FOR A PARTICULAR PURPOSE.
 import os
 import warnings
 
-from xdwapi import *
-from common import *
-from observer import *
-from struct import *
+from .xdwapi import *
+from .common import *
+from .observer import *
+from .struct import *
 
 
 __all__ = ("Annotatable",)
@@ -94,12 +94,12 @@ class Annotatable(Subject):
         return self.delete(pos)
 
     def __iter__(self):
-        for pos in xrange(self.annotations):
+        for pos in range(self.annotations):
             yield self.annotation(pos)
 
     def annotation(self, pos):
         """Get an annotation by position."""
-        from annotation import Annotation
+        from .annotation import Annotation
         pos = self._pos(pos)
         if pos not in self.observers:
             self.observers[pos] = Annotation(self, pos, parent=self)
@@ -141,7 +141,7 @@ class Annotatable(Subject):
         ann_type    annotation type by inner code
         position    (Point, unit=mm) location to paste
         """
-        from annotation import Annotation
+        from .annotation import Annotation
         ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
         if isinstance(position, (tuple, list)):
             position = Point(*position)

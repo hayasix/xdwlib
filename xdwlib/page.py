@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#vim:fileencoding=cp932:fileformat=dos
+# vim: fileencoding=cp932 fileformat=dos
 
 """page.py -- Page and PageCollection
 
@@ -17,11 +17,11 @@ import os
 import re
 import subprocess
 
-from xdwapi import *
-from common import *
-from observer import *
-from struct import Point, Rect
-from annotatable import Annotatable
+from .xdwapi import *
+from .common import *
+from .observer import *
+from .struct import Point, Rect
+from .annotatable import Annotatable
 
 
 __all__ = ("Page", "PageCollection")
@@ -32,9 +32,9 @@ class PageCollection(list):
     """Page collection i.e. container for pages."""
 
     def __repr__(self):
-        return u"{cls}({seq})".format(
+        return "{cls}({seq})".format(
                 cls=self.__class__.__name__,
-                seq=", ".join(u"{0}[{1}]".format(pg.doc.name, pg.pos)
+                seq=", ".join("{0}[{1}]".format(pg.doc.name, pg.pos)
                         for pg in self))
 
     def __add__(self, y):
@@ -78,7 +78,7 @@ class PageCollection(list):
         NB. Viewing signed pages will raise AccessDeniedError.
         """
         tempdir = os.path.split(mktemp(nofile=True))[0]
-        tmp = os.path.join(tempdir, u"{0}_P{1}.{2}".format(
+        tmp = os.path.join(tempdir, "{0}_P{1}.{2}".format(
                 self[0].doc.name, self[0].pos + 1, "xdw" if flat else "xbd"))
         temp = self.export(tmp, flat=flat, group=group)
         args = [get_viewer(light=light)]
@@ -112,7 +112,7 @@ class PageCollection(list):
     def export(self, path=None, flat=False, group=True):
         """Create a binder or document as a container for page collection.
 
-        path    (unicode) pathname for output
+        path    (str) pathname for output
         flat    (bool) create document instead of binder
         group   (bool) group continuous pages by original document,
                 i.e. create document-in-binder.
@@ -120,9 +120,9 @@ class PageCollection(list):
         Returns actual pathname of generated file, which may be different
         from `path' argument.
         """
-        from document import create as create_document
-        from binder import create_binder
-        from xdwfile import xdwopen
+        from .document import create as create_document
+        from .binder import create_binder
+        from .xdwfile import xdwopen
         path = derivative_path(adjust_path(uc(path or
                 (self[0].doc.name + (".xdw" if flat else ".xbd")))))
         if flat:
@@ -215,15 +215,15 @@ class Page(Annotatable, Observer):
             return "MONO"
 
     def __repr__(self):
-        return u"{cls}({doc}[{pos}])".format(
+        return "{cls}({doc}[{pos}])".format(
                 cls=self.__class__.__name__,
                 doc=self.doc.name,
                 pos=self.pos)
 
     def __str__(self):
-        return (u"Page({doc}[{pos}]; "
-                u"{width:.2f}*{height:.2f}mm, "
-                u"{type}, {anns} annotations)").format(
+        return ("Page({doc}[{pos}]; "
+                "{width:.2f}*{height:.2f}mm, "
+                "{type}, {anns} annotations)").format(
                 doc=self.doc.name,
                 pos=self.pos,
                 width=self.size.x,
@@ -255,7 +255,7 @@ class Page(Annotatable, Observer):
             if form is not None:
                 name = inner_attribute_name(name)
                 doc = Annotatable.__getattribute__(self, "doc")
-                return XDW_GetPageFormAttribute(doc.handle, form, name)
+                return XDW_GetPageFormAttribute(doc.handle, form, cp(name))
         return Annotatable.__getattribute__(self, name)
 
     def __setattr__(self, name, value):
@@ -264,8 +264,10 @@ class Page(Annotatable, Observer):
     def get_userattr(self, name, default=None):
         """Get pagewise user defined attribute.
 
-        name        (str or unicode) attribute name
+        name        (str or bytes) attribute name
         default     value to return if no attribute named name exist
+
+        Returns a bytes value.
         """
         try:
             return XDW_GetPageUserAttribute(
@@ -274,11 +276,13 @@ class Page(Annotatable, Observer):
             return default
 
     def set_userattr(self, name, value):
-        """Set pagewise user defined attribute."""
-        if isinstance(name, unicode):
-            name = name.encode(CODEPAGE)
+        """Set pagewise user defined attribute.
+
+        name        (str or bytes) attribute name
+        value       (bytes) value to set
+        """
         XDW_SetPageUserAttribute(
-                self.doc.handle, self.absolute_page() + 1, name, value)
+                self.doc.handle, self.absolute_page() + 1, cp(name), value)
 
     def update(self, event):
         if not isinstance(event, Notification):
@@ -475,7 +479,7 @@ class Page(Annotatable, Observer):
     def export(self, path=None):
         """Export page to another document.
 
-        path    (str or unicode) pathname to export;
+        path    (str) pathname to export;
                 given only basename without directory, exported file is
                 placed in the very directory of the original document.
 
@@ -490,7 +494,7 @@ class Page(Annotatable, Observer):
             direct=False):
         """Export page to image file.
 
-        path        (str or unicode) pathname to output
+        path        (str) pathname to output
         dpi         (int) 10..600
         color       "COLOR" | "MONO" | "MONO_HIGHQUALITY"
         format      "BMP" | "TIFF" | "JPEG" | "PDF"
@@ -537,6 +541,11 @@ class Page(Annotatable, Observer):
             ignore_case=False, ignore_width=False, ignore_hirakata=False):
         """Search text in page and get regions occupied by them.
 
+        text            (str or bytes)
+        ignore_case     (bool)
+        ignore_width    (bool)
+        ignore_hirakata (bool)
+
         Returns a list of Rect or None (when rect is unavailable).
         Note that Rect is half-open i.e. right-bottom is outside.
         """
@@ -558,7 +567,7 @@ class Page(Annotatable, Observer):
         if-block is not placed, you will get much more but inexact
         elements in result for abbreviated search string.
         """
-        if isinstance(text, unicode):
+        if isinstance(text, str):
             text = text.encode(CODEPAGE)  # TODO: how can we take all unicodes?
         if 255 < len(text):
             raise ValueError("text length must be <= 255")
@@ -570,7 +579,7 @@ class Page(Annotatable, Observer):
                     n = XDW_GetNumberOfRectsInFoundObject(fh)
                 except InvalidArgError as e:
                     break
-                for i in xrange(n):
+                for i in range(n):
                     r, s = XDW_GetRectInFoundObject(fh, i + 1)
                     if s == XDW_FOUND_RECT_STATUS_HIT:
                         # Rect is half open.
@@ -590,10 +599,12 @@ class Page(Annotatable, Observer):
     def re_regions(self, pattern):
         """Search regular expression in page and get regions occupied.
 
+        pattern     (str or regular expression supported by re module)
+
         Returns a list of Rect or None (when rect is unavailable).
         """
-        if isinstance(pattern, basestring):
-            opt = re.LOCALE if isinstance(pattern, str) else re.UNICODE
+        if isinstance(pattern, (str, bytes)):
+            opt = re.LOCALE if isinstance(pattern, bytes) else re.UNICODE
             pattern = re.compile(pattern, opt)
         result = []
         for text in set(pattern.findall(self.fulltext())):

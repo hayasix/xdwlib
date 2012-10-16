@@ -1,5 +1,5 @@
 #!/usr/bin/env python2.6
-#vim:fileencoding=cp932:fileformat=dos
+# vim: fileencoding=cp932 fileformat=dos
 
 """binder.py -- Binder
 
@@ -13,12 +13,12 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE.
 """
 
-from xdwapi import *
-from common import *
-from observer import *
-from xdwfile import XDWFile
-from documentinbinder import DocumentInBinder
-from page import Page, PageCollection
+from .xdwapi import *
+from .common import *
+from .observer import *
+from .xdwfile import XDWFile
+from .documentinbinder import DocumentInBinder
+from .page import Page, PageCollection
 
 
 __all__ = ("Binder", "create_binder")
@@ -75,13 +75,13 @@ class Binder(Subject, XDWFile):
         XDWFile.__init__(self, path)
 
     def __repr__(self):
-        return u"{cls}({name}{sts})".format(
+        return "{cls}({name}{sts})".format(
                 cls=self.__class__.__name__,
                 name=self.name,
                 sts="" if self.handle else "; CLOSED")
 
     def __str__(self):
-        return u"{cls}({name}: {docs} documents{sts})".format(
+        return "{cls}({name}: {docs} documents{sts})".format(
                 cls=self.__class__.__name__,
                 name=self.name,
                 docs=self.documents,
@@ -110,7 +110,7 @@ class Binder(Subject, XDWFile):
             self.delete(pos)
 
     def __iter__(self):
-        for pos in xrange(self.documents):
+        for pos in range(self.documents):
             yield self.document(pos)
 
     @staticmethod

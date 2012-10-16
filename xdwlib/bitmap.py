@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#vim:fileencoding=cp932:fileformat=dos
+# vim: fileencoding=cp932 fileformat=dos
 
 """bitmap.py -- DIB (Device Independent Bitmap), aka BMP
 
@@ -18,6 +18,10 @@ from ctypes import *
 
 
 __all__ = ("Bitmap",)
+
+
+def b(s):
+    return bytes(s, "ascii")
 
 
 class BitmapFileHeader(Structure):
@@ -90,26 +94,26 @@ class Bitmap(object):
 
     @staticmethod
     def _pack16(n):
-        return chr(n & 0xff) + chr((n >> 8) & 0xff)
+        return bytes([n & 0xff, (n >> 8) & 0xff])
 
     @staticmethod
     def _pack32(n):
         s = []
         for _ in range(4):
-            s.append(chr(n & 0xff))
+            s.append(n & 0xff)
             n >>= 8
-        return "".join(s)
+        return bytes(s)
 
     def file_header(self):
         fhs = sizeof(BitmapFileHeader)
         ihs = sizeof(BitmapInfoHeader)
         s = []
-        s.append("BM")
-        s.append(self._pack32(fhs + ihs + self.data_size))
-        s.append(self._pack16(0))
-        s.append(self._pack16(0))
-        s.append(self._pack32(fhs + ihs))
-        return "".join(s)
+        s.extend(b"BM")
+        s.extend(self._pack32(fhs + ihs + self.data_size))
+        s.extend(self._pack16(0))
+        s.extend(self._pack16(0))
+        s.extend(self._pack32(fhs + ihs))
+        return bytes(s)
 
     def info_header(self):
         size = sizeof(BitmapInfoHeader)
@@ -118,12 +122,10 @@ class Bitmap(object):
         return header.raw
 
     def octet_stream(self):
-        return "".join([self.file_header(), self.info_header(), self.data.raw])
+        return self.file_header() + self.info_header() + self.data.raw
 
     def save(self, stream):
-        is_path = isinstance(stream, basestring)
-        if is_path:
-            stream = open(stream, "wb")
+        out = stream if hasattr(stream, "write") else open(stream, "wb")
         stream.write(self.octet_stream())
-        if is_path:
-            stream.close()
+        if not hasattr(stream, "write"):
+            out.close()

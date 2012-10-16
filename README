@@ -32,7 +32,7 @@ System Requirements
 
     - Microsoft Windows (versions compatible with DocuWorks 7.0)
 
-    - Python 2.6
+    - Python 3.3+
 
     - DocuWorks 7.0+ (Japanese version; English version is not tested yet)
 

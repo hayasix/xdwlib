@@ -1,10 +1,10 @@
-#!python.exe
-# vim:fileencoding=utf-8
+#/usr/bin/env/python3
+# vim: fileencoding=cp932 fileformat=dos
 
 from distutils.core import setup
-import py2exe
 
 from xdwlib import __author__, __copyright__, __license__, __version__, __email__
+
 
 setup(
     name="xdwlib",
@@ -26,6 +26,5 @@ Further information is available in Japanese at http://xdwlib.linxs.org/""",
     console=["xdw2text.py",],
     scripts=["xdw2text.py",],
     #data_files=["README", "LICENSE",],
-    options={"py2exe": {"optimize": 1},},
     zipfile="xdwlib.zip",
     )

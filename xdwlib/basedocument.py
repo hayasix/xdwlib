@@ -1,5 +1,5 @@
 #!/usr/bin/env python2.6
-#vim:fileencoding=cp932:fileformat=dos
+# vim: fileencoding=cp932 fileformat=dos
 
 """basedocument.py -- BaseDocument, base class for Document/DocumentInBinder
 
@@ -15,14 +15,14 @@ FOR A PARTICULAR PURPOSE.
 
 import sys
 import os
-from cStringIO import StringIO
+from io import StringIO
 
-from xdwapi import *
-from common import *
-from observer import *
-from struct import Point
-from xdwfile import xdwopen
-from page import Page, PageCollection
+from .xdwapi import *
+from .common import *
+from .observer import *
+from .struct import Point
+from .xdwfile import xdwopen
+from .page import Page, PageCollection
 
 
 __all__ = ("BaseDocument",)
@@ -92,7 +92,7 @@ class BaseDocument(Subject):
             self.delete(pos)
 
     def __iter__(self):
-        for pos in xrange(self.pages):
+        for pos in range(self.pages):
             yield self.page(pos)
 
     def absolute_page(self, pos, append=False):
@@ -131,9 +131,9 @@ class BaseDocument(Subject):
             temp = mktemp(suffix=".xdw", nofile=True)
             pc = PageCollection(obj)
             pc.export(temp, flat=True)
-        elif isinstance(obj, basestring):  # XDW path
+        elif isinstance(obj, str):  # XDW path
             temp = uc(obj)
-            if not temp.lower().endswith(u".xdw"):
+            if not temp.lower().endswith(".xdw"):
                 raise TypeError("binder is not acceptable")
         else:
             raise ValueError("can't insert {0} object".format(obj.__class__))
@@ -143,11 +143,11 @@ class BaseDocument(Subject):
                 cp(temp))
         inslen = XDW_GetDocumentInformation(self.handle).nPages - self.pages
         self.pages += inslen
-        if not isinstance(obj, basestring):
+        if not isinstance(obj, str):
             rmtemp(temp)
         # Check inserted pages in order to attach them to this document and
         # shift observer entries appropriately.
-        for p in xrange(pos, pos + inslen):
+        for p in range(pos, pos + inslen):
             Page(self, p)
 
     def append_image(self, *args, **kw):
@@ -173,7 +173,7 @@ class BaseDocument(Subject):
         size            (Point) in mm; for fitimange "userdef" or "userdef_fit"
                         (int)   1=A3R, 2=A3, 3=A4R, 4=A4, 5=A5R, 6=A5,
                                 7=B4R, 8=B4, 9=B5R, 10=B5
-                        (str or unicode) "A3R" | "A3" | "A4R" | "A4" | "A5R" |
+                        (str) "A3R" | "A3" | "A4R" | "A4" | "A5R" |
                                 "A5" | "B4R" | "B4" | "B5R" | "B5"
         align           (horiz, vert) where:
                             horiz   "CENTER" | "LEFT" | "RIGHT"
@@ -199,9 +199,9 @@ class BaseDocument(Subject):
         #opt.nZoom = 0
         opt.nZoomDetail = int(zoom * 1000)  # .3f
         # NB. Width and height are valid only for XDW_CREATE_USERDEF(_FIT).
-        if isinstance(size, (int, float, long, basestring)):
+        if isinstance(size, (int, float, str)):
             size = Point(*XDW_SIZE_MM[XDW_SIZE.normalize(size)])
-        opt.nWidth, opt.nHeight = map(int, size * 100)  # .2f;
+        opt.nWidth, opt.nHeight = list(map(int, size * 100))  # .2f;
         opt.nHorPos = XDW_CREATE_HPOS.normalize(align[0])
         opt.nVerPos = XDW_CREATE_VPOS.normalize(align[1])
         opt.nMaxPaperSize = XDW_CREATE_MAXPAPERSIZE.normalize(maxpapersize)
@@ -220,7 +220,7 @@ class BaseDocument(Subject):
         """Export page to another document.
 
         pos     (int) page number; starts with 0
-        path    (str or unicode) pathname to export;
+        path    (str) pathname to export;
                 given only basename without directory, exported file is
                 placed in the very directory of the original document.
 
@@ -233,7 +233,7 @@ class BaseDocument(Subject):
             path = adjust_path(path)
         else:
             path = adjust_path(
-                    u"{0}_P{1}.xdw".format(self.name, pos + 1),
+                    "{0}_P{1}.xdw".format(self.name, pos + 1),
                     dir=self.dirname())
         path = derivative_path(path)
         XDW_GetPage(self.handle, self.absolute_page(pos) + 1, cp(path))
@@ -245,7 +245,7 @@ class BaseDocument(Subject):
         """Export page(s) to image file.
 
         pos         (int or tuple (start stop) in half-open style like slice)
-        path        (str or unicode) pathname to output
+        path        (str) pathname to output
         pages       (int)
         dpi         (int) 10..600
         color       "COLOR" | "MONO" | "MONO_HIGHQUALITY"
@@ -287,7 +287,7 @@ class BaseDocument(Subject):
         if format.lower() not in ("bmp", "tiff", "jpeg", "pdf"):
             raise TypeError("image type must be BMP, TIFF, JPEG or PDF.")
         if not path:
-            path = u"{0}_P{1}".format(self.name, pos + 1)
+            path = "{0}_P{1}".format(self.name, pos + 1)
             path = adjust_path(path, dir=self.dirname())
             if 1 < pages:
                 path += "-{0}".format((pos + pages - 1) + 1)
@@ -348,7 +348,7 @@ class BaseDocument(Subject):
         pos = self._pos(pos)
         path = uc(path)
         if not path:
-            path = u"{0}_P{1}".format(self.name, pos + 1)
+            path = "{0}_P{1}".format(self.name, pos + 1)
             path = adjust_path(path, dir=self.dirname())
         path = derivative_path(path)
         path, _ = os.path.splitext(path)
@@ -500,16 +500,16 @@ class BaseDocument(Subject):
     def find(self, pattern, func=None):
         """Find given pattern (text or regex) through document.
 
-        pattern     (str/unicode or regexp supported by re module)
+        pattern     (str or regexp supported by re module)
         func        a function which takes a page and returns text in it
                     (default) lambda pg: pg.fulltext()
         """
         func = func or (lambda pg: pg.fulltext())
-        if isinstance(pattern, (str, unicode)):
+        if isinstance(pattern, str):
             f = lambda pg: pattern in func(pg)
         else:
             f = lambda pg: pattern.search(func(pg))
-        return PageCollection(filter(f, self))
+        return PageCollection([pg for pg in self if f(pg)])
 
     def dirname(self):
         """Abstract method for concrete dirname()."""

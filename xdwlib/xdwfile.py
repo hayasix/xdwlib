@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#vim:fileencoding=cp932:fileformat=dos
+# vim: fileencoding=cp932 fileformat=dos
 
 """xdwfile.py -- DocuWorks-compatible files
 
@@ -18,11 +18,11 @@ import datetime
 import shutil
 import atexit
 
-from xdwapi import *
-from common import *
-from struct import Point
-from timezone import *
-from observer import Subject, Observer
+from .xdwapi import *
+from .common import *
+from .struct import Point
+from .timezone import *
+from .observer import Subject, Observer
 
 
 __all__ = (
@@ -58,8 +58,8 @@ def xdwopen(path, readonly=False, authenticate=True, autosave=False):
 
     Returns Document or Binder object.
     """
-    from document import Document
-    from binder import Binder
+    from .document import Document
+    from .binder import Binder
     path = uc(path)
     XDW_TYPES = {".XDW": Document, ".XBD": Binder}
     ext = os.path.splitext(path)[1].upper()
@@ -389,8 +389,8 @@ class XDWFile(object):
         """Constructor.
 
         Sets the following properties:
-            dir         (unicode) directory part of path
-            name        (unicode) filename without extension
+            dir         (str) directory part of path
+            name        (str) filename without extension
             type        (str) "DOCUMENT" | "BINDER"
             protection  result of protection_info(path)
 
@@ -492,7 +492,7 @@ class XDWFile(object):
         return
 
     def __getattribute__(self, name):
-        attribute_name = unicode(inner_attribute_name(name))
+        attribute_name = inner_attribute_name(name)
         if attribute_name not in XDW_DOCUMENT_ATTRIBUTE_W:
             self_signatures = object.__getattribute__(self, "signatures")
             if name == "status" and self_signatures:
@@ -505,7 +505,7 @@ class XDWFile(object):
         return makevalue(t, value)
 
     def __setattr__(self, name, value):
-        attribute_name = unicode(inner_attribute_name(name))
+        attribute_name = inner_attribute_name(name)
         if attribute_name in XDW_DOCUMENT_ATTRIBUTE_W:
             t, value = typevalue(value)
             XDW_SetDocumentAttributeW(
@@ -523,7 +523,7 @@ class XDWFile(object):
     def get_userattr(self, name, default=None):
         """Get user defined attribute.
 
-        name        (str or unicode) attribute name
+        name        (str or bytes) attribute name
         default     value to return if no attribute named name exist
         """
         try:
@@ -538,12 +538,12 @@ class XDWFile(object):
     def has_property(self, name):
         """Test if user defined property exists.
 
-        name        (str or unicode) name of property
+        name        (str or bytes) name of property
 
         Returns True if such property exists, or False if not.
         """
-        if not isinstance(name, basestring):
-            raise TypeError("property name must be str or unicode")
+        if not isinstance(name, (str, bytes)):
+            raise TypeError("property name must be str or bytes")
         name = uc(name)
         try:
             t, value, _ = XDW_GetDocumentAttributeByNameW(
@@ -555,13 +555,13 @@ class XDWFile(object):
     def get_property(self, name, default=None):
         """Get user defined property.
 
-        name        (str or unicode) name of property, or user attribute
+        name        (str or bytes) name of property, or user attribute
                     (int) property order which starts with 0
         default     value to return if no property named name exist
 
-        Returns a unicode, int, bool or datetime.date.
+        Returns a str, int, bool or datetime.date.
 
-        Note that previous set_property(str_value) gives unicode.
+        Note that previous set_property(bytes_value) gives str (i.e., unicode).
         """
         if isinstance(name, int):
             name, t, value, _ = XDW_GetDocumentAttributeByOrderW(
@@ -577,17 +577,17 @@ class XDWFile(object):
     def set_property(self, name, value):
         """Set user defined property.
 
-        name    (str or unicode) name of property, or user attribute
-        value   (str, unicode, int, bool or datetime.date) stored value
+        name    (str or bytes) name of property, or user attribute
+        value   (str, bytes, int, bool or datetime.date) stored value
 
-        Note that str value is actually stored in unicode and get_property()
-        will returen unicode.
+        Note that bytes value is actually stored in unicode and get_property()
+        will returen str (i.e., unicode).
         """
         name = uc(name)  # Force to specify in unicode.
         if value is None:
             self.del_property(name)
             return
-        if isinstance(value, str):
+        if isinstance(value, bytes):
             value = uc(value)  # Force to store in unicode.
         t, value = typevalue(value)
         if t != XDW_ATYPE_STRING:
@@ -599,7 +599,7 @@ class XDWFile(object):
     def del_property(self, name):
         """Delete user defined property.
 
-        name    (unicode) name of property, or user attribute
+        name    (str or bytes) name of property, or user attribute
         """
         name = uc(name)  # Force to specify in unicode.
         XDW_SetDocumentAttributeW(
@@ -803,14 +803,14 @@ class BaseSignature(object):
         self.dt = dt
 
     def __repr__(self):
-        return  u"{cls}({doc}[{pos}])".format(
+        return  "{cls}({doc}[{pos}])".format(
                 cls=self.__class__.__name__,
                 doc=self.doc.name,
                 pos=self.pos,
                 )
 
     def __str__(self):
-        return  u"{cls}({doc}[{pos}]; page {pgpos}, position {loc}mm)".format(
+        return  "{cls}({doc}[{pos}]; page {pgpos}, position {loc}mm)".format(
                 cls=self.__class__.__name__,
                 doc=self.doc.name,
                 pos=self.pos,
@@ -956,7 +956,7 @@ class PageForm(object):
         self.__dict__["form"] = XDW_PAGEFORM.normalize(form)
 
     def __repr__(self):
-        return u"{cls}({doc}.{attr})".format(
+        return "{cls}({doc}.{attr})".format(
                 cls=self.__class__.__name__,
                 doc=self.doc,
                 attr=outer_attribute_name(XDW_PAGEFORM[self.form]))
@@ -981,7 +981,7 @@ class PageForm(object):
                 value += 1  # 1-based
             value = byref(c_int(value))
             attribute_type = XDW_ATYPE_INT  # TODO: Scaling may be required.
-        elif isinstance(value, basestring):
+        elif isinstance(value, (str, bytes)):
             attribute_type = XDW_ATYPE_STRING
             """TODO: unicode handling.
             Currently Author has no idea to take unicode with ord < 256.
@@ -991,15 +991,14 @@ class PageForm(object):
             if-block is not placed, you will get much more but inexact
             elements in result for abbreviated search string.
             """
-            if isinstance(value, unicode):
-                value = value.encode(CODEPAGE)  # TODO: unicode handling
+            value = cp(value)  # TODO: unicode handling
             if 255 < len(value):
                 raise ValueError("text length must be <= 255")
         # TODO: XDW_ATYPE_OTHER should also be valid.
         else:
             raise TypeError("illegal value " + repr(value))
         XDW_SetPageFormAttribute(self.doc.handle, self.form,
-                attrname, attribute_type, value)
+                cp(attrname), attribute_type, value)
 
     def __getattribute__(self, name):
         attrname = inner_attribute_name(name)
@@ -1007,10 +1006,10 @@ class PageForm(object):
             return object.__getattribute__(self, name)
         self_doc = object.__getattribute__(self, "doc")
         self_form = object.__getattribute__(self, "form")
-        value = XDW_GetPageFormAttribute(self_doc.handle, self_form, attrname)
+        value = XDW_GetPageFormAttribute(self_doc.handle, self_form, cp(attrname))
         attribute_type = XDW_ANNOTATION_ATTRIBUTE[attrname][0]
         if attribute_type == 1:  # string
-            return unicode(value, CODEPAGE)
+            return uc(value)
         value = unpack(value)
         if attrname.endswith("Page"):
             value -= 1  # 0-based
