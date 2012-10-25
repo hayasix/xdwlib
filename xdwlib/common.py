@@ -26,6 +26,7 @@ from timezone import *
 
 
 __all__ = (
+        "PIL_ENABLED",
         "CP", "CODEPAGE", "DEFAULT_TZ",
         "EV_DOC_REMOVED", "EV_DOC_INSERTED",
         "EV_PAGE_REMOVED", "EV_PAGE_INSERTED",
@@ -39,6 +40,16 @@ __all__ = (
         "XDWTemp",
         )
 
+PIL_ENABLED = True
+try:
+    import Image
+except ImportError:
+    try:
+        from PIL import Image
+    except ImportError:
+        PIL_ENABLED = False
+if PIL_ENABLED:
+    __all__ += ("Image",)
 
 PSEP = "\f"  # page separator
 ASEP = "\v"  # annotation separator
@@ -177,9 +188,9 @@ def cp(s):
         return ""
     if isinstance(s, unicode):
         return s.encode(CODEPAGE)
-    if not isinstance(s, str):
-        raise TypeError("str or unicode expected")
-    return s
+    if isinstance(s, str):
+        return s
+    raise TypeError("str or unicode expected")
 
 
 def uc(s):
@@ -188,9 +199,9 @@ def uc(s):
         return u""
     if isinstance(s, str):
         return s.decode(CODEPAGE)
-    if not isinstance(s, unicode):
-        raise TypeError("str or unicode expected")
-    return s
+    if isinstance(s, unicode):
+        return s
+    raise TypeError("str or unicode expected")
 
 
 def derivative_path(path):

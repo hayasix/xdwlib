@@ -402,6 +402,7 @@ class BaseDocument(Subject):
         self.insert_image(pos, imagepath)  # Insert image page.
         if degree:
             self.rotate(pos, degree=degree)
+        self.page(pos).reset_attr()
         self.delete(pos + 1)  # Delete original application page.
         rmtemp(imagepath)
 
@@ -444,9 +445,7 @@ class BaseDocument(Subject):
             XDW_RotatePage(self.handle, abspos + 1, degree)
             return
         # Angle other than 90, 180 or 270 requires some imaging library.
-        try:
-            import Image
-        except ImportError:
+        if not PIL_ENABLED:
             raise NotImplementedError("missing PIL (Python Imaging Library)")
         dpi = int(max(10, min(600, max(self.page(pos).resolution))))
         if strategy == 1:
