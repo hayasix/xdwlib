@@ -27,6 +27,7 @@ from .timezone import *
 
 
 __all__ = (
+        "PIL_ENABLED",
         "CP", "CODEPAGE", "DEFAULT_TZ",
         "EV_DOC_REMOVED", "EV_DOC_INSERTED",
         "EV_PAGE_REMOVED", "EV_PAGE_INSERTED",
@@ -39,6 +40,18 @@ __all__ = (
         "joinf", "flagvalue", "typevalue", "makevalue", "scale", "unpack",
         "XDWTemp",
         )
+
+
+PIL_ENABLED = True
+try:
+    import Image
+except ImportError:
+    try:
+        from PIL import Image
+    except ImportError:
+        PIL_ENABLED = False
+if PIL_ENABLED:
+    __all__ += ("Image",)
 
 
 PSEP = "\f"  # page separator
@@ -179,12 +192,12 @@ def adjust_path(path, dir="", ext=".xdw", coding=None):
 def cp(s):
     """Coerce str into bytes."""
     if not s:
-        return ""
+        return b""
     if isinstance(s, str):
         return s.encode(CODEPAGE)
-    if not isinstance(s, bytes):
-        raise TypeError("str or bytes expected")
-    return s
+    if isinstance(s, bytes):
+        return s
+    raise TypeError("str or bytes expected, {0} given".format(s.__class__))
 
 
 def uc(s):
@@ -193,9 +206,9 @@ def uc(s):
         return ""
     if isinstance(s, bytes):
         return s.decode(CODEPAGE)
-    if not isinstance(s, str):
-        raise TypeError("str or bytes expected")
-    return s
+    if isinstance(s, str):
+        return s
+    raise TypeError("str or bytes expected, {0} given".format(s.__class__))
 
 
 def derivative_path(path):

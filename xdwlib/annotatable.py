@@ -276,7 +276,7 @@ class Annotatable(Subject):
             copy = self.add_polygon(ann.points)
         elif t == XDW_AID_BITMAP:
             if not PIL_ENABLED:
-                warnings.warn("copying bitmap annotation is not supported",
+                warnings.warn("install PIL before copying bitmap annotation",
                         UserWarning, stacklevel=2)
                 return None
             pg = ann.page

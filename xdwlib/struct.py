@@ -59,6 +59,10 @@ class Point(object):
     True
     >>> bool(Point(0, 0))
     False
+    >>> p.rotate(30)
+    Point(-5.00, 8.66)
+    >>> p.rotate(30, origin=Point(10, 10))
+    Point(1.34, 5.00)
     """
 
     def __init__(self, x=0, y=0):
