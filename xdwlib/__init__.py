@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#vim:fileencoding=cp932:fileformat=dos
+# vim: fileencoding=cp932 fileformat=dos
 
 """__init__.py -- initiator for xdwlib, A DocuWorks library for Python.
 
@@ -27,6 +27,6 @@ from annotation import Annotation
 __author__ = "HAYASI Hideki"
 __copyright__ = "Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>"
 __license__ = "ZPL 2.1"
-__version__ = "2.23.1"
+__version__ = "2.23.2"
 __email__ = "linxs@linxs.org"
 __status__ = "Development"

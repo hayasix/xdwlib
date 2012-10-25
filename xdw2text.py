@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# vim: fileencoding=mbcs fileformat=dos
+# vim: fileencoding=cp932 fileformat=dos
 
 """xdwlib.py -- DocuWorks library for Python.
 

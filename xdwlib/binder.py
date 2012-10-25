@@ -1,5 +1,5 @@
 #!/usr/bin/env python2.6
-#vim:fileencoding=cp932:fileformat=dos
+# vim: fileencoding=cp932 fileformat=dos
 
 """binder.py -- Binder
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python2.6
-#vim:fileencoding=cp932:fileformat=dos
+# vim: fileencoding=cp932 fileformat=dos
 
 """basedocument.py -- BaseDocument, base class for Document/DocumentInBinder
 
@@ -104,21 +104,29 @@ class BaseDocument(Subject):
         raise NotImplementedError()
 
     def page(self, pos):
-        """Get a Page."""
+        """Get a Page.
+
+        pos     (int) page number; starts with 0
+
+        Returns a Page object.
+        """
         pos = self._pos(pos)
         if pos not in self.observers:
             self.observers[pos] = Page(self, pos)
         return self.observers[pos]
 
     def append(self, obj):
-        """Append a Page/PageCollection/Document at the end of document."""
+        """Append a Page/PageCollection/Document at the end of document.
+
+        obj     (Page, PageCollection or Document)
+        """
         self.insert(self.pages, obj)
 
     def insert(self, pos, obj):
         """Insert a Page/PageCollection/Document.
 
-        pos     position to insert; starts with 0
-        obj     Page/PageCollection/BaseDocument or path
+        pos     (int) position to insert; starts with 0
+        obj     (Page, PageCollection or BaseDocument or unicode)
         """
         pos = self._pos(pos, append=True)
         if isinstance(obj, Page):
@@ -151,7 +159,10 @@ class BaseDocument(Subject):
             Page(self, p)
 
     def append_image(self, *args, **kw):
-        """Append a page created from image file(s)."""
+        """Append a page created from image file(s).
+
+        See insert_image() for description on arguments.
+        """
         self.insert_image(self.pages, *args, **kw)
 
     def insert_image(self, pos, input_path,
@@ -220,7 +231,7 @@ class BaseDocument(Subject):
         """Export page to another document.
 
         pos     (int) page number; starts with 0
-        path    (str or unicode) pathname to export;
+        path    (unicode) pathname to export;
                 given only basename without directory, exported file is
                 placed in the very directory of the original document.
 
@@ -245,7 +256,7 @@ class BaseDocument(Subject):
         """Export page(s) to image file.
 
         pos         (int or tuple (start stop) in half-open style like slice)
-        path        (str or unicode) pathname to output
+        path        (unicode) pathname to output
         pages       (int)
         dpi         (int) 10..600
         color       "COLOR" | "MONO" | "MONO_HIGHQUALITY"
@@ -359,44 +370,57 @@ class BaseDocument(Subject):
         return new_path
 
     def bitmap(self, pos):
-        """Returns page image with annotations as a Bitmap object."""
+        """Get page image with annotations as a Bitmap object.
+
+        pos     (int) page number; starts with 0
+        """
         return self.page(pos).bitmap()
 
     def delete(self, pos):
-        """Delete a page."""
+        """Delete a page.
+
+        pos     (int) page number; starts with 0
+        """
         pos = self._pos(pos)
         pg = self.page(pos)
         XDW_DeletePage(self.handle, self.absolute_page(pos) + 1)
         self.detach(pg, EV_PAGE_REMOVED)
         self.pages -= 1
 
-    def _preprocess(self, pos):
+    def _preprocess(self, pos, direct=False):
         pg = self.page(pos)
         dpi = int(max(pg.resolution))
         dpi = max(10, min(600, dpi))  # Force 10 <= dpi <= 600.
         color = pg.color_scheme()
         imagepath = mktemp(suffix=".tif", nofile=True)
-        self.export_image(pos, imagepath,
-                dpi=dpi, color=color, format="tiff", compress="nocompress")
-        return imagepath
+        imagepath = self.export_image(pos, imagepath,
+                dpi=dpi, color=color, format="tiff", compress="nocompress",
+                direct=direct)
+        return (imagepath, pg.degree if direct else 0)
 
-    def _postprocess(self, pos, imagepath):
+    def _postprocess(self, pos, imagepath, degree=0):
         self.insert_image(pos, imagepath)  # Insert image page.
+        if degree:
+            self.rotate(pos, degree=degree)
         self.delete(pos + 1)  # Delete original application page.
         rmtemp(imagepath)
 
-    def rasterize(self, pos):
-        """Rasterize; convert an application page into DocuWorks image page."""
+    def rasterize(self, pos, direct=False):
+        """Rasterize; convert an application page into DocuWorks image page.
+
+        pos     (int) page number; starts with 0
+        """
         pos = self._pos(pos)
         if self.page(pos).type != "APPLICATION":
             return
-        imagepath = self._preprocess(pos)
-        self._postprocess(pos, imagepath)
+        imagepath, degree = self._preprocess(pos, direct=direct)
+        self._postprocess(pos, imagepath, degree)
         self.page(pos).reset_attr()
 
-    def rotate(self, pos, degree=0, auto=False, strategy=1):
+    def rotate(self, pos, degree=0, auto=False, direct=False, strategy=1):
         """Rotate page around the center.
 
+        pos     (int)
         degree  (int) rotation angle in clockwise degree
         auto    (bool) automatic rotation for OCR
 
@@ -426,9 +450,11 @@ class BaseDocument(Subject):
             raise NotImplementedError("missing PIL (Python Imaging Library)")
         dpi = int(max(10, min(600, max(self.page(pos).resolution))))
         if strategy == 1:
-            out = in_ = self._preprocess(pos)
+            in_, orig_degree = self._preprocess(pos, direct=direct)
+            out = in_
         elif strategy == 2:
             in_ = StringIO(self.bitmap(pos).octet_stream())
+            orig_degree = 0
             out = mktemp(suffix=".tif", nofile=False)
         else:
             raise ValueError("illegal strategy id " + str(strategy))
@@ -437,10 +463,9 @@ class BaseDocument(Subject):
         canvas_size = int(mm2px(max(self.page(pos).size), dpi) * 1.42)
         canvas = Image.new("RGB", (canvas_size, canvas_size), "#ffffff")
         if strategy == 1:
-            fp = open(in_, "rb")
-            im = Image.open(fp)
-            im.load()
-            fp.close()
+            with open(in_, "rb") as f:
+                im = Image.open(f)
+                im.load()
         else:
             im = Image.open(in_)
         box = tuple((canvas_size - v) / 2 for v in im.size)
@@ -454,7 +479,7 @@ class BaseDocument(Subject):
         canvas.rotate(-degree).crop(box).save(out, "TIFF", resolution=dpi)
         if strategy == 2:
             in_.close()
-        self._postprocess(pos, out)
+        self._postprocess(pos, out, orig_degree)
 
     def view(self, light=False, wait=True, *options):
         """View document with DocuWorks Viewer (Light)."""
@@ -484,17 +509,24 @@ class BaseDocument(Subject):
 
         type    None | "IMAGE" | "APPLICATION"
                 None means both.
+
+        Returns a PageCollection object.
         """
         func = lambda pg: pg.content_text(type=type)
         return self.find(pattern, func=func)
 
     def find_annotation_text(self, pattern):
-        """Find given pattern (text or regex) in all annotation text."""
+        """Find given pattern (text or regex) in all annotation text.
+
+        Returns a PageCollection object.
+        """
         func = lambda pg: pg.annotation_text()
         return self.find(pattern, func=func)
 
     def find_fulltext(self, pattern):
-        """Find given pattern in all content and annotation text."""
+        """Find given pattern in all content and annotation text.
+
+        Returns a PageCollection object."""
         return self.find(pattern)
 
     def find(self, pattern, func=None):
@@ -503,6 +535,8 @@ class BaseDocument(Subject):
         pattern     (str/unicode or regexp supported by re module)
         func        a function which takes a page and returns text in it
                     (default) lambda pg: pg.fulltext()
+
+        Returns a PageCollection object.
         """
         func = func or (lambda pg: pg.fulltext())
         if isinstance(pattern, (str, unicode)):

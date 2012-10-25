@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#vim:fileencoding=cp932:fileformat=dos
+# vim: fileencoding=cp932 fileformat=dos
 
 """common.py -- common utility functions
 

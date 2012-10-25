@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#vim:fileencoding=cp932:fileformat=dos
+# vim: fileencoding=cp932 fileformat=dos
 
 """page.py -- Page and PageCollection
 
@@ -322,7 +322,7 @@ class Page(Annotatable, Observer):
         opt.nColor = XDW_IMAGE_COLORSCHEME.normalize(self.color_scheme())
         return XDW_ConvertPageToImageHandle(self.doc.handle, self.pos + 1, opt)
 
-    def rasterize(self):
+    def rasterize(self, direct=False):
         """Rasterize; convert an application page into DocuWorks image page.
 
         Resolution of converted page is <= 600 dpi even for more precise page.
@@ -333,10 +333,10 @@ class Page(Annotatable, Observer):
         """
         if self.type == "APPLICATION":
             doc, pos = self.doc, self.pos
-            doc.rasterize(pos)
+            doc.rasterize(pos, direct=direct)
             self = doc.page(pos)  # reset
 
-    def rotate(self, degree=0, auto=False):
+    def rotate(self, degree=0, auto=False, direct=False):
         """Rotate page around the center.
 
         degree  (int) rotation angle in clockwise degree
@@ -353,7 +353,7 @@ class Page(Annotatable, Observer):
         if self.type != "IMAGE":
             raise TypeError("rotation is available for image pages")
         doc, pos = self.doc, self.pos
-        doc.rotate(pos, degree=degree, auto=auto)
+        doc.rotate(pos, degree=degree, auto=auto, direct=direct)
         self = doc.page(pos)  # reset
 
     def reduce_noise(self, level="NORMAL"):

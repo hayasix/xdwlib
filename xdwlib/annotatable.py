@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#vim:fileencoding=cp932:fileformat=dos
+# vim: fileencoding=cp932 fileformat=dos
 
 """annotatable.py -- Annotatable, base class for Page and Annotation
 
