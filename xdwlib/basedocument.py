@@ -389,7 +389,6 @@ class BaseDocument(Subject):
 
     def _preprocess(self, pos, direct=False):
         pg = self.page(pos)
-        pg.view()
         dpi = int(max(pg.resolution))
         dpi = max(10, min(600, dpi))  # Force 10 <= dpi <= 600.
         color = pg.color_scheme()

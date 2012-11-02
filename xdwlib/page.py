@@ -37,11 +37,24 @@ class PageCollection(list):
                 seq=", ".join("{0}[{1}]".format(pg.doc.name, pg.pos)
                         for pg in self))
 
+    def __getitem__(self, pos):
+        if isinstance(pos, slice):
+            return PageCollection(list.__getitem__(self, pos))
+        return list.__getitem__(self, pos)
+
     def __add__(self, y):
         if isinstance(y, Page):
             return PageCollection(list.__add__(self, [y]))
         elif isinstance(y, PageCollection):
             return PageCollection(list.__add__(self, y))
+        raise TypeError(
+                "only Page or PageCollection can be added")
+
+    def __radd__(self, y):
+        if isinstance(y, Page):
+            return PageCollection(list.__add__([y], self))
+        elif isinstance(y, PageCollection):
+            return PageCollection(list.__add__(y, self))
         raise TypeError(
                 "only Page or PageCollection can be added")
 
@@ -53,6 +66,17 @@ class PageCollection(list):
         else:
             raise TypeError(
                     "only Page or PageCollection can be added")
+        return self
+
+    def __mul__(self, n):
+        return PageCollection(list.__mul__(self, n))
+
+    __rmul__ = __mul__
+
+    def __imul__(self, n):
+        if n < 1:
+            return PageCollection()
+        self.extend(self * (n - 1))
         return self
 
     def view(self, light=False, wait=True, flat=False, group=True, *options):
