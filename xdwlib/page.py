@@ -34,14 +34,30 @@ class PageCollection(list):
     def __repr__(self):
         return u"{cls}({seq})".format(
                 cls=self.__class__.__name__,
-                seq=", ".join(u"{0}[{1}]".format(pg.doc.name, pg.pos)
-                        for pg in self))
+                seq=", ".join(repr(pg) for pg in self)
+                )
+
+    def __getslice__(self, start, stop):
+        # Just avoid calling list.__getslice__().
+        return self[start:stop:1]
+
+    def __getitem__(self, pos):
+        if isinstance(pos, slice):
+            return PageCollection(list.__getitem__(self, pos))
+        return list.__getitem__(self, pos)
 
     def __add__(self, y):
         if isinstance(y, Page):
             return PageCollection(list.__add__(self, [y]))
         elif isinstance(y, PageCollection):
             return PageCollection(list.__add__(self, y))
+        raise TypeError("only Page or PageCollection can be added")
+
+    def __radd__(self, y):
+        if isinstance(y, Page):
+            return PageCollection(list.__add__([y], self))
+        elif isinstance(y, PageCollection):
+            return PageCollection(list.__add__(y, self))
         raise TypeError(
                 "only Page or PageCollection can be added")
 
@@ -53,6 +69,17 @@ class PageCollection(list):
         else:
             raise TypeError(
                     "only Page or PageCollection can be added")
+        return self
+
+    def __mul__(self, n):
+        return PageCollection(list.__mul__(self, n))
+
+    __rmul__ = __mul__
+
+    def __imul__(self, n):
+        if n < 1:
+            return PageCollection()
+        self.extend(self * (n - 1))
         return self
 
     def view(self, light=False, wait=True, flat=False, group=True, *options):
@@ -97,12 +124,12 @@ class PageCollection(list):
         if len(self) < 2:
             return [self]
         s = [False] + [(x.doc is y.doc) for (x, y) in zip(self[:-1], self[1:])]
-        pc = list(self)
+        pc = PageCollection(self)
         result = []
         try:
             while s:
                 p = s.index(False, 1)
-                result.append(PageCollection(pc[:p]))
+                result.append(pc[:p])
                 del s[:p]
                 del pc[:p]
         except ValueError:
@@ -230,6 +257,29 @@ class Page(Annotatable, Observer):
                 height=self.size.y,
                 type=self.type,
                 anns=self.annotations)
+
+    def __cmp__(self, other):
+        """cmp() for Page instances.
+
+        Rules to determine page order are:
+            1.  For pages in the same BaseDocument, follow their page numbers.
+            2.  Page in Document is less than Page in DocumentInBinder.
+            3.  For DocumentInBinder's in the same Binder,
+                follow their document positions in the Binder.
+            4.  Documents or Binders are compared for their pathnames.
+        """
+        if not isinstance(other, Page):
+            raise TypeError("can only compare to a page")
+        if self.doc is other.doc:
+            return cmp(self.pos, other.pos)
+        in_dib = hasattr(self.doc, "binder")  # DocumentInBinder
+        if self.doc.__class__ is not other.doc.__class__:
+            return +1 if in_dib else -1
+        if in_dib:
+            if self.doc.binder is other.doc.binder:
+                return cmp(self.doc.pos, other.doc.pos)
+            return cmp(self.doc.binder.pathname(), other.doc.binder.pathname())
+        return cmp(self.doc.pathname(), other.doc.pathname())
 
     @staticmethod
     def _split_attrname(name, store=False):
