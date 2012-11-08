@@ -16,6 +16,8 @@ FOR A PARTICULAR PURPOSE.
 import os
 import re
 import subprocess
+import itertools
+from os.path import abspath, split as splitpath, join as joinpath
 
 from xdwapi import *
 from common import *
@@ -25,6 +27,8 @@ from annotatable import Annotatable
 
 
 __all__ = ("Page", "PageCollection")
+
+U0000 = unichr(0)
 
 
 class PageCollection(list):
@@ -104,8 +108,8 @@ class PageCollection(list):
         NB. Attachments are not shown.
         NB. Viewing signed pages will raise AccessDeniedError.
         """
-        tempdir = os.path.split(mktemp(nofile=True))[0]
-        tmp = os.path.join(tempdir, u"{0}_P{1}.{2}".format(
+        tempdir = splitpath(mktemp(nofile=True))[0]
+        tmp = joinpath(tempdir, u"{0}_P{1}.{2}".format(
                 self[0].doc.name, self[0].pos + 1, "xdw" if flat else "xbd"))
         temp = self.export(tmp, flat=flat, group=group)
         args = [get_viewer(light=light)]
@@ -120,21 +124,21 @@ class PageCollection(list):
             return (proc, temp)
 
     def group(self):
-        """Group continuous pages by original document."""
-        if len(self) < 2:
-            return [self]
-        s = [False] + [(x.doc is y.doc) for (x, y) in zip(self[:-1], self[1:])]
-        pc = PageCollection(self)
-        result = []
-        try:
-            while s:
-                p = s.index(False, 1)
-                result.append(pc[:p])
-                del s[:p]
-                del pc[:p]
-        except ValueError:
-            result.append(PageCollection(pc))
-        return result
+        """Make an iterator that returns consecutive page-groups.
+
+        Pages are grouped by belonging BaseDocument object.
+
+        Example:
+            >>> pc = PageCollection([doc1[0], doc1[2]])
+            >>> pc.extend(doc2[1:4])
+            >>> pc
+            PageCollection([doc1[0], doc1[2], doc2[1], doc2[2], doc2[3]])
+            >>> pc.group()
+            [PageCollection(Page(doc1[0]), Page(doc1[2]), PageCollection(Page(
+            doc2[1]), Page(doc2[2]), Page(doc2[3]))]
+        """
+        for g in itertools.groupby(self, lambda pg: pg.doc):
+            yield PageCollection(g[1])
 
     def export(self, path=None, flat=False, group=True):
         """Create a binder or document as a container for page collection.
@@ -158,22 +162,22 @@ class PageCollection(list):
             path = create_binder(path)
         doc = xdwopen(path)
         temp = mktemp()
-        tempdir = os.path.split(temp)[0]
+        tempdir = splitpath(temp)[0]
         if flat:
             for pg in self:
-                tmp = pg.export(os.path.join(tempdir, pg.doc.name + ".xdw"))
+                tmp = pg.export(joinpath(tempdir, pg.doc.name + ".xdw"))
                 doc.append(tmp)
                 os.remove(tmp)
             del doc[0]  # Delete the initial blank page.
         elif group:
             for pc in self.group():
-                tmp = os.path.join(tempdir, pc[0].doc.name + ".xdw")
+                tmp = joinpath(tempdir, pc[0].doc.name + ".xdw")
                 tmp = pc.export(tmp, flat=True)
                 doc.append(tmp)
                 os.remove(tmp)
         else:
             for pos, pg in enumerate(self):
-                tmp = os.path.join(tempdir,
+                tmp = joinpath(tempdir,
                         "{0}_P{1}.xdw".format(pg.doc.name, pg.pos + 1))
                 tmp = pg.export(tmp)
                 doc.append(tmp)
@@ -258,6 +262,12 @@ class Page(Annotatable, Observer):
                 type=self.type,
                 anns=self.annotations)
 
+    @staticmethod
+    def _cmppath(*docs):  # for narrow Python build
+        return cmp(*[
+                abspath(joinpath(doc.dir, doc.name)).replace(os.sep, U0000)
+                for doc in docs])
+
     def __cmp__(self, other):
         """cmp() for Page instances.
 
@@ -278,8 +288,8 @@ class Page(Annotatable, Observer):
         if in_dib:
             if self.doc.binder is other.doc.binder:
                 return cmp(self.doc.pos, other.doc.pos)
-            return cmp(self.doc.binder.pathname(), other.doc.binder.pathname())
-        return cmp(self.doc.pathname(), other.doc.pathname())
+            return self._cmppath(self.doc.binder, other.doc.binder)
+        return self._cmppath(self.doc, other.doc)
 
     @staticmethod
     def _split_attrname(name, store=False):
