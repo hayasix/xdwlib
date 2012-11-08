@@ -256,28 +256,25 @@ class Page(Annotatable, Observer):
                 type=self.type,
                 anns=self.annotations)
 
-    def __eq__(self, other):
-        if not isinstance(other, Page):
-            raise TypeError("can only compare to a page")
-        return self.__cmp__(other) == 0
+    def __eq__(self, other): return self._cmp(other) == 0
+    def __ne__(self, other): return self._cmp(other) != 0
+    def __lt__(self, other): return self._cmp(other) < 0
+    def __gt__(self, other): return self._cmp(other) > 0
+    def __le__(self, other): return self._cmp(other) <= 0
+    def __ge__(self, other): return self._cmp(other) >= 0
 
-    def __lt__(self, other):
-        if not isinstance(other, Page):
-            raise TypeError("can only compare to a page")
-        return self.__cmp__(other) < 0
+    @staticmethod
+    def _cmpvalue(a, b):
+        return 0 if a == b else (-1 if a < b else 1)
 
     @staticmethod
     def _cmppath(*docs):  # for narrow Python build
-        return cmp(*[
+        return _cmpvalue(*[
                 abspath(joinpath(doc.dir, doc.name)).replace(os.sep, U0000)
                 for doc in docs])
 
-    @staticmethod
-    def _cmp(a, b):
-        return 0 if a == b else (-1 if a < b else 1)
-
-    def __cmp__(self, other):
-        """cmp() for Page instances.
+    def _cmp(self, other):
+        """Substitute for __cmp__(), which is no longer supported.
 
         Rules to determine page order are:
             1.  For pages in the same BaseDocument, follow their page numbers.
@@ -289,13 +286,13 @@ class Page(Annotatable, Observer):
         if not isinstance(other, Page):
             raise TypeError("can only compare to a page")
         if self.doc is other.doc:
-            return self._cmp(self.pos, other.pos)
+            return self._cmpvalue(self.pos, other.pos)
         in_dib = hasattr(self.doc, "binder")  # DocumentInBinder
         if self.doc.__class__ is not other.doc.__class__:
             return +1 if in_dib else -1
         if in_dib:
             if self.doc.binder is other.doc.binder:
-                return self._cmp(self.doc.pos, other.doc.pos)
+                return self._cmpvalue(self.doc.pos, other.doc.pos)
             return self._cmppath(self.doc.binder, other.doc.binder)
         return self._cmppath(self.doc, other.doc)
 
