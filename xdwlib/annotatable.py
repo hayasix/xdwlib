@@ -286,7 +286,7 @@ class Annotatable(Subject):
                 pg.doc.export_image(pg.pos, imagepath,
                         dpi=dpi, format="bmp", compress="nocompress")
                 lt, rb = ann.position, ann.position + ann.size
-                rect = [int(mm2px(v, dpi)) for v in (lt.x, lt.y, rb.x, rb.y)]
+                rect = [int(round(mm2px(v, dpi))) for v in (lt.x, lt.y, rb.x, rb.y)]
                 Image.open(imagepath).crop(rect).save(imagepath, "BMP")
                 # PIL BmpImagePlugin sets resolution to 1, so fix it.
                 self._fix_bmp_resolution(imagepath, dpi)
@@ -325,7 +325,7 @@ class Annotatable(Subject):
         path    (str) pathname of Windows Bitmap file
         dpi     (int) resolution in DPI
         """
-        ppm = int(dpi * mm2in(1000))
+        ppm = int(round(dpi * mm2in(1000)))
         ppms = []
         for _ in range(4):
             ppms.append(chr(ppm & 0xff))
