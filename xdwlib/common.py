@@ -172,17 +172,37 @@ def adjust_path(path, dir="", ext=".xdw", coding=None):
     """Build a new pathname with filename and directory name.
 
     path    (str) pathname
-            Full pathname is acceptable as well as bare filename (basename);
-            only its basename is taken.
-    dir     (str) directory part of new pathname
-            If dir is given, directory part of path is ignored.
+            Full pathname is acceptable as well as bare filename (basename).
+    dir     (unicode) replacement directory
     ext     (str) default extension to append if original path has no one
-    coding  (str) encoding of the result; None = str
-    """
+    coding  (str) encoding of the result as bytes; None = str (don't encode)
+
+    Returns a full pathname.
+
+    Example:
+
+    >>> import os; os.getcwd()
+    'C:\\your\\favorite\\directory'
+    >>> adjust_path('')
+    ''
+    >>> adjust_path('example.xdw')
+    'C:\\your\\favorite\\directory\\example.xdw'
+    >>> adjust_path('example.xdw', dir='C:\\another\\directory')
+    'C:\\another\\directory\\example.xdw'
+    >>> adjust_path('C:\\your\\favorite\\directory\\example.xdw',
+    ...     dir='C:\\another\\directory')
+    'C:\\another\\directory\\example.xdw'
+    >>> adjust_path('example.xdw', dir='C:\\another\\directory', ext='.pdf')
+    'C:\\another\\directory\\example.xdw'
+    >>> adjust_path('example', dir='C:\\another\\directory', ext='.pdf')
+    'C:\\another\\directory\\example.pdf'
+     """
+    if not (path or dir):
+        return ""
     directory, basename = os.path.split(path)
     directory = dir or directory or os.getcwd()
     path = os.path.abspath(os.path.join(directory, basename))
-    if not os.path.splitext(basename)[1]:
+    if basename and not os.path.splitext(basename)[1]:
         path += "." + ext.lstrip(".")
     if coding and isinstance(path, str):
         path = path.encode(coding)

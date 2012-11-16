@@ -38,10 +38,11 @@ def create(input_path=None, output_path=None, **kw):
     Returns actual pathname of generated document, which may be different
     from `output_path' argument.
     """
-    input_path, output_path = uc(input_path), uc(output_path)
+    input_path = adjust_path(uc(input_path))
+    root, ext = os.path.splitext(input_path)
+    output_path = adjust_path(uc(output_path or root), ext=".xdw")
     if input_path:
-        root, ext = os.path.splitext(input_path)
-        output_path = derivative_path(output_path or (root + ".xdw"))
+        output_path = derivative_path(output_path)
         if ext.upper() == ".PDF":
             return create_from_pdf(input_path, output_path, **kw)
         if ext.upper() in (".BMP", ".JPG", ".JPEG", ".TIF", ".TIFF"):
@@ -51,7 +52,7 @@ def create(input_path=None, output_path=None, **kw):
                 pass  # fall through; processed by respective apps.
         return create_from_app(input_path, output_path, **kw)
     # input_path==None means generating single blank page.
-    output_path = derivative_path(output_path or "blank.xdw")
+    output_path = derivative_path(adjust_path(output_path or u"blank.xdw"))
     with open(output_path, "wb") as f:
         f.write(BLANKPAGE)
     return output_path
@@ -85,9 +86,10 @@ def create_from_image(input_path, output_path=None,
     Returns actual pathname of generated document, which may be different
     from `output_path' argument.
     """
-    input_path, output_path = uc(input_path), uc(output_path)
+    input_path = adjust_path(uc(input_path))
     root, ext = os.path.splitext(input_path)
-    output_path = derivative_path(output_path or (root + ".xdw"))
+    output_path = adjust_path(uc(output_path or root), ext=".xdw")
+    output_path = derivative_path(output_path)
     opt = XDW_CREATE_OPTION_EX2()
     opt.nFitImage = XDW_CREATE_FITIMAGE.normalize(fitimage)
     opt.nCompress = XDW_COMPRESS.normalize(compress)
@@ -113,9 +115,10 @@ def create_from_pdf(input_path, output_path=None):
     Returns actual pathname of generated document, which may be different
     from `output_path' argument.
     """
-    input_path, output_path = uc(input_path), uc(output_path)
+    input_path = adjust_path(uc(input_path))
     root, ext = os.path.splitext(input_path)
-    output_path = derivative_path(output_path or (root + ".xdw"))
+    output_path = adjust_path(uc(output_path or root), ext=".xdw")
+    output_path = derivative_path(output_path)
     try:
         XDW_CreateXdwFromImagePdfFile(cp(input_path), cp(output_path))
     except Exception as e:
@@ -135,9 +138,10 @@ def create_from_app(input_path, output_path=None,
     Returns actual pathname of generated document, which may be different
     from `output_path' argument.
     """
-    input_path, output_path = uc(input_path), uc(output_path)
+    input_path = adjust_path(uc(input_path))
     root, ext = os.path.splitext(input_path)
-    output_path = derivative_path(output_path or (root + ".xdw"))
+    output_path = adjust_path(uc(output_path or root), ext=".xdw")
+    output_path = derivative_path(output_path)
     handle = XDW_BeginCreationFromAppFile(
             cp(input_path), cp(output_path), bool(attachment))
     st = time.time()
@@ -163,9 +167,10 @@ def merge(input_paths, output_path=None):
     Returns actual pathname of generated document, which may be different
     from `output_path' argument.
     """
-    input_paths = [uc(path) for path in input_paths]
+    input_paths = [adjust_path(uc(path)) for path in input_paths]
     root, ext = os.path.splitext(input_paths[0])
-    output_path = derivative_path(output_path or (root + ".xdw"))
+    output_path = adjust_path(uc(output_path or root), ext=".xdw")
+    output_path = derivative_path(output_path)
     XDW_MergeXdwFiles(cp(input_paths), cp(output_path))
     return output_path
 

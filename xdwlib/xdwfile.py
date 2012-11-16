@@ -75,9 +75,10 @@ def create_sfx(input_path, output_path=None):
 
     Returns pathname of generated sfx executable file.
     """
-    input_path, output_path = uc(input_path), uc(output_path)
-    output_path = derivative_path(
-            os.path.splitext(output_path or input_path)[0] + ".exe")
+    input_path = adjust_path(uc(input_path))
+    root, ext = os.path.splitext(input_path)
+    output_path = adjust_path(uc(output_path or root), ext=".exe")
+    output_path = derivative_path(output_path)
     XDW_CreateSfxDocument(cp(input_path), cp(output_path))
     return output_path
 
@@ -87,28 +88,32 @@ def extract_sfx(input_path, output_path=None):
 
     Returns pathname of generated document/binder file.
     """
-    input_path, output_path = uc(input_path), uc(output_path)
-    root = os.path.splitext(output_path or input_path)[0]
-    output_path = derivative_path(root + ".xdw")  # for now
+    input_path = adjust_path(uc(input_path))
+    root, ext = os.path.splitext(input_path)
+    output_path = adjust_path(uc(output_path or root), ext=".xdw")
+    output_path = derivative_path(output_path)
     XDW_ExtractFromSfxDocument(cp(input_path), cp(output_path))
     # Created file can be either document or binder.  We have to examine
     # which type of file was generated and rename if needed.
     doc = xdwopen(output_path, readonly=True)
     doctype = doc.type
     doc.close()
-    if doctype == XDW_DT_BINDER:
-        orig, output_path = output_path, derivative_path(root + ".xbd")
-        os.rename(orig, output_path)
-    return output_path
-
+    if doctype == XDW_DT_DOCUMENT:
+        return output_path
+    # Binder
+    binder_path = derivative_path(os.path.splitext(output_path)[0] + ".xbd")
+    os.rename(output_path, binder_path)
+    return binder_path
 
 def optimize(input_path, output_path=None):
     """Optimize document/binder file.
 
     Returns pathname of optimized document/binder file.
     """
-    input_path, output_path = uc(input_path), uc(output_path)
-    output_path = derivative_path(output_path or input_path)
+    input_path = adjust_path(uc(input_path))
+    root, ext = os.path.splitext(input_path)
+    output_path = adjust_path(uc(output_path or root), ext=ext)
+    output_path = derivative_path(output_path)
     XDW_OptimizeDocument(cp(input_path), cp(output_path))
     return output_path
 
@@ -118,8 +123,10 @@ def copy(input_path, output_path=None):
 
     Returns pathname of copied file.
     """
-    input_path, output_path = uc(input_path), uc(output_path)
-    output_path = derivative_path(output_path or input_path)
+    input_path = adjust_path(uc(input_path))
+    root, ext = os.path.splitext(input_path)
+    output_path = adjust_path(uc(output_path or root), ext=ext)
+    output_path = derivative_path(output_path)
     shutil.copyfile(input_path, output_path)
     return output_path
 
@@ -133,6 +140,7 @@ def protection_info(path):
     permission      allowed operation(s); comma separated list of
                     "EDIT_DOCUMENT", "EDIT_ANNOTATION", "PRINT" and "COPY"
     """
+    path = adjust_path(uc(path))
     info = XDW_GetProtectionInformation(cp(path))
     protect_type = XDW_PROTECT[info.nProtectType]
     permission = flagvalue(XDW_PERM, info.nPermission, store=False)
@@ -165,8 +173,10 @@ def protect(input_path,
 
     Returns pathname of protected file.
     """
-    input_path, output_path = uc(input_path), uc(output_path)
-    output_path = derivative_path(output_path or input_path)
+    input_path = adjust_path(uc(input_path))
+    root, ext = os.path.splitext(input_path)
+    output_path = adjust_path(uc(output_path or root), ext=ext)
+    output_path = derivative_path(output_path)
     protect_option = XDW_PROTECT_OPTION()
     protect_option.nAuthMode = XDW_AUTH.normalize(auth)
     protect_type = XDW_PROTECT.normalize(protect_type)
@@ -218,8 +228,10 @@ def unprotect(input_path, output_path=None, auth="NONE"):
     NB. Only PKI-based or DocuWorks-builtin-stamp-based protected files are
         processed.  Password-based protected files are beyond xdwlib.
     """
-    input_path, output_path = uc(input_path), uc(output_path)
-    output_path = derivative_path(output_path or input_path)
+    input_path = adjust_path(uc(input_path))
+    root, ext = os.path.splitext(input_path)
+    output_path = adjust_path(uc(output_path or root), ext=ext)
+    output_path = derivative_path(output_path)
     if protection_info(input_path)[0] not in ("PKI", "STAMP"):
         raise ValueError("only PKI- or STAMP-protected file is acceptable")
     auth = XDW_AUTH.normalize(auth)
@@ -246,8 +258,10 @@ def sign(input_path,
 
     Returns pathname of signed file.
     """
-    input_path, output_path = uc(input_path), uc(output_path)
-    output_path = derivative_path(output_path or input_path)
+    input_path = adjust_path(uc(input_path))
+    root, ext = os.path.splitext(input_path)
+    output_path = adjust_path(uc(output_path or root), ext=ext)
+    output_path = derivative_path(output_path)
     opt = XDW_SIGNATURE_OPTION_V5()
     opt.nPage = page + 1
     opt.nHorPos, opt.nVerPos = ((position or Point(0, 0)) * 100).int()
