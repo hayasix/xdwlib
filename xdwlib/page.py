@@ -29,6 +29,7 @@ from annotatable import Annotatable
 __all__ = ("Page", "PageCollection")
 
 U0000 = unichr(0)
+XDWRES = 100.0  # XDWAPI resolution is 1/100 mm.
 
 
 class PageCollection(list):
@@ -38,8 +39,7 @@ class PageCollection(list):
     def __repr__(self):
         return u"{cls}({seq})".format(
                 cls=self.__class__.__name__,
-                seq=", ".join(repr(pg) for pg in self)
-                )
+                seq=", ".join(repr(pg) for pg in self))
 
     def __getslice__(self, start, stop):
         # Just avoid calling list.__getslice__().
@@ -62,8 +62,7 @@ class PageCollection(list):
             return PageCollection(list.__add__([y], self))
         elif isinstance(y, PageCollection):
             return PageCollection(list.__add__(y, self))
-        raise TypeError(
-                "only Page or PageCollection can be added")
+        raise TypeError("only Page or PageCollection can be added")
 
     def __iadd__(self, y):
         if isinstance(y, Page):
@@ -71,8 +70,7 @@ class PageCollection(list):
         elif isinstance(y, PageCollection):
             self.extend(y)
         else:
-            raise TypeError(
-                    "only Page or PageCollection can be added")
+            raise TypeError("only Page or PageCollection can be added")
         return self
 
     def __mul__(self, n):
@@ -202,9 +200,7 @@ class Page(Annotatable, Observer):
         abspos = self.doc.absolute_page(self.pos)
         pginfo = XDW_GetPageInformation(
                 self.doc.handle, abspos + 1, extend=True)
-        self.size = Point(
-                pginfo.nWidth / 100.0,
-                pginfo.nHeight / 100.0)  # float, in mm
+        self.size = Point(pginfo.nWidth / XDWRES, pginfo.nHeight / XDWRES)  # float, in mm
         # XDW_PGT_FROMIMAGE/FROMAPPL/NULL
         self.type = XDW_PAGE_TYPE[pginfo.nPageType]
         self.resolution = Point(
@@ -214,8 +210,8 @@ class Page(Annotatable, Observer):
         self.annotations = pginfo.nAnnotations
         self.degree = pginfo.nDegree
         self.original_size = Point(
-                pginfo.nOrgWidth / 100.0,
-                pginfo.nOrgHeight / 100.0)  # mm
+                pginfo.nOrgWidth / XDWRES,
+                pginfo.nOrgHeight / XDWRES)  # mm
         self.original_resolution = Point(
                 Page.norm_res(pginfo.nOrgHorRes),
                 Page.norm_res(pginfo.nOrgVerRes))  # dpi
@@ -636,8 +632,8 @@ class Page(Annotatable, Observer):
                         # Rect is half open.
                         r.right += 1
                         r.bottom += 1
-                        r = Rect(r.left / 100.0, r.top / 100.0,
-                                r.right / 100.0, r.bottom / 100.0)
+                        r = Rect(r.left / XDWRES, r.top / XDWRES,
+                                r.right / XDWRES, r.bottom / XDWRES)
                         r = r.half_open()
                     else:
                         r = None  # Actually rect is not available.
