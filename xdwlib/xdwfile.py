@@ -588,16 +588,20 @@ class XDWFile(object):
             return default
         return makevalue(t, value)
 
-    def set_property(self, name, value):
+    def set_property(self, name, value, update=True):
         """Set user defined property.
 
-        name    (str or bytes) name of property, or user attribute
-        value   (str, bytes, int, bool or datetime.date) stored value
+        name        (str or bytes) name of property, or user attribute
+        value       (str, bytes, int, bool or datetime.date) stored value
+                    (None) delete property if update==False
+        update      (bool) False=don't update value if exists already
 
         Note that bytes value is actually stored in unicode and get_property()
         will returen str (i.e., unicode).
         """
         name = uc(name)  # Force to specify in unicode.
+        if not update and self.get_property(name) is not None:
+            return
         if value is None:
             self.del_property(name)
             return
@@ -613,7 +617,7 @@ class XDWFile(object):
     def del_property(self, name):
         """Delete user defined property.
 
-        name    (str or bytes) name of property, or user attribute
+        name        (str or bytes) name of property, or user attribute
         """
         name = uc(name)  # Force to specify in unicode.
         XDW_SetDocumentAttributeW(
@@ -637,7 +641,7 @@ class XDWFile(object):
     def update_pageform(self, sync=False):
         """Update page form.
 
-        sync    (bool) also update pageforms for documents in binder
+        sync        (bool) also update pageforms for documents in binder
         """
         sync = XDW_PAGEFORM_REMOVE if sync else XDW_PAGEFORM_STAY
         XDW_UpdatePageForm(self.handle, sync)
@@ -645,7 +649,7 @@ class XDWFile(object):
     def delete_pageform(self, sync=False):
         """Delete page form.
 
-        sync    (bool) also delete pageforms for documents in binder
+        sync        (bool) also delete pageforms for documents in binder
         """
         sync = XDW_PAGEFORM_REMOVE if sync else XDW_PAGEFORM_STAY
         XDW_RemovePageForm(self.handle, sync)

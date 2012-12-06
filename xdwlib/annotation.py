@@ -319,16 +319,20 @@ class Annotation(Annotatable, Observer):
 
         name        (str) name of property
         value       (str, bytes, int, bool or datetime.date) stored value
+                    (None) delete property if update==False
+        update      (bool) False=don't update value if exists already
 
         If you want to set other type of value, store a simple byte string.
 
         Note that str value is actually stored in unicode and get_property()
         will returen str (i.e., unicode string).
         """
+        name = uc(name)  # Force to specify in str, not bytes.
+        if not update and self.get_property(name) is not None:
+            return
         if value is None:
             self.del_property(name)
             return
-        name = uc(name)  # Force to specify in str, not bytes.
         if isinstance(value, bytes):
             value = uc(value)  # Force to store in unicode.
         t, value = typevalue(value)
@@ -341,7 +345,7 @@ class Annotation(Annotatable, Observer):
     def del_property(self, name):
         """Delete annotationwise custom (i.e. with-type) user defined property.
 
-        name    (str) name of property, or user attribute
+        name        (str) name of property, or user attribute
         """
         name = uc(name)  # Force to specify in str, not bytes.
         XDW_SetAnnotationCustomAttribute(
