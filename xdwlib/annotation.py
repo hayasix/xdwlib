@@ -313,21 +313,25 @@ class Annotation(Annotatable, Observer):
         """Set self.properties to the number of custom attributes."""
         self.properties = XDW_GetAnnotationCustomAttributeNumber(self.handle)
 
-    def set_property(self, name, value):
+    def set_property(self, name, value, update=True):
         """Set annotationwise custom (i.e. with-type) user defined property.
 
         name        (str or unicode) name of property
         value       (str, unicode, int, bool or datetime.date) stored value
+                    (None) delete property if update==False
+        update      (bool) False=don't update value if exists already
 
         If you want to set other type of value, store a simple byte string.
 
         Note that str value is actually stored in unicode and get_property()
         will returen unicode.
         """
+        name = uc(name)  # Force to specify in unicode.
+        if not update and self.get_property(name) is not None:
+            return
         if value is None:
             self.del_property(name)
             return
-        name = uc(name)  # Force to specify in unicode.
         if isinstance(value, str):
             value = uc(value)  # Force to store in unicode.
         t, value = typevalue(value)
