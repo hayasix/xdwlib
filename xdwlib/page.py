@@ -102,24 +102,28 @@ class PageCollection(list):
         Returns (proc, temp) if wait is False, where:
                 proc    subprocess.Popen object
                 temp    pathname of temporary file to view.
+        In this case, you should remove this file and its parent dir after use.
 
         NB. Attachments are not shown.
         NB. Viewing signed pages will raise AccessDeniedError.
         """
-        tempdir = splitpath(mktemp(nofile=True))[0]
-        tmp = joinpath(tempdir, u"{0}_P{1}.{2}".format(
-                self[0].doc.name, self[0].pos + 1, "xdw" if flat else "xbd"))
-        temp = self.export(tmp, flat=flat, group=group)
+        temp = XDWTemp()
+        temp.path = self.export(
+                joinpath(temp.dir, u"{0}_P{1}.{2}".format(
+                        self[0].doc.name,
+                        self[0].pos + 1,
+                        "xdw" if flat else "xbd")),
+                flat=flat, group=group)
         args = [get_viewer(light=light)]
         args.extend(options)
-        args.append(temp)
+        args.append(temp.path)
         proc = subprocess.Popen(args)
         if wait:
             proc.wait()
-            rmtemp(temp)
+            temp.close()
             return None
         else:
-            return (proc, temp)
+            return (proc, temp.path)
 
     def group(self):
         """Make an iterator that returns consecutive page-groups.
@@ -158,31 +162,29 @@ class PageCollection(list):
             path = create_document(output_path=path)
         else:
             path = create_binder(path)
-        doc = xdwopen(path)
-        temp = mktemp()
-        tempdir = splitpath(temp)[0]
-        if flat:
-            for pg in self:
-                tmp = pg.export(joinpath(tempdir, pg.doc.name + ".xdw"))
-                doc.append(tmp)
-                os.remove(tmp)
-            del doc[0]  # Delete the initial blank page.
-        elif group:
-            for pc in self.group():
-                tmp = joinpath(tempdir, pc[0].doc.name + ".xdw")
-                tmp = pc.export(tmp, flat=True)
-                doc.append(tmp)
-                os.remove(tmp)
-        else:
-            for pos, pg in enumerate(self):
-                tmp = joinpath(tempdir,
-                        "{0}_P{1}.xdw".format(pg.doc.name, pg.pos + 1))
-                tmp = pg.export(tmp)
-                doc.append(tmp)
-                os.remove(tmp)
-        rmtemp(temp)
-        doc.save()
-        doc.close()
+        with xdwopen(path) as doc:
+            with XDWTemp() as temp:
+                if flat:
+                    for pg in self:
+                        tmp = joinpath(temp.dir, pg.doc.name + ".xdw")
+                        tmp = pg.export(tmp)
+                        doc.append(tmp)
+                        os.remove(tmp)
+                    del doc[0]  # Delete the initial blank page.
+                elif group:
+                    for pc in self.group():
+                        tmp = joinpath(temp.dir, pc[0].doc.name + ".xdw")
+                        tmp = pc.export(tmp, flat=True)
+                        doc.append(tmp)
+                        os.remove(tmp)
+                else:
+                    for pos, pg in enumerate(self):
+                        tmp = joinpath(temp.dir, "{0}_P{1}.xdw".format(
+                                                 pg.doc.name, pg.pos + 1))
+                        tmp = pg.export(tmp)
+                        doc.append(tmp)
+                        os.remove(tmp)
+            doc.save()
         return path
 
 

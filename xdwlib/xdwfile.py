@@ -401,7 +401,7 @@ class XDWFile(object):
         VALID_DOCUMENT_HANDLES.remove(handle)
 
     def __init__(self, path):
-        """Constructor.
+        """Initiator.
 
         Sets the following properties:
             dir         (unicode) directory part of path
@@ -805,7 +805,7 @@ class BaseSignature(object):
     """Base class for StampSignature and PKISignature."""
 
     def __init__(self, doc, pos, pagepos, position, size, dt):
-        """Constructor.
+        """Initiator.
 
         doc             Document/Binder
         pos             position in signature list of doc; starts with 0
@@ -857,7 +857,7 @@ class StampSignature(BaseSignature):
             memo="",
             status=None,
             ):
-        """Constructor.
+        """Initiator.
 
         doc             Document/Binder
         pos             position in signature list of doc; starts with 0
@@ -898,7 +898,7 @@ class PKISignature(BaseSignature):
             verification_type=None,
             status=None,
             ):
-        """Constructor.
+        """Initiator.
 
         doc             Document/Binder
         pos             position in signature list of doc; starts with 0
