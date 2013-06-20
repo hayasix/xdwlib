@@ -125,20 +125,20 @@ class BaseDocument(Subject):
     def insert(self, pos, obj):
         """Insert a Page/PageCollection/Document.
 
-        pos     position to insert; starts with 0
-        obj     Page/PageCollection/BaseDocument or path
+        pos     (int) position to insert; starts with 0
+        obj     (Page, PageCollection, BaseDocument or str)
         """
         pos = self._pos(pos, append=True)
         if isinstance(obj, Page):
-            temp = mktemp(suffix=".xdw", nofile=True)
-            obj.export(temp)
+            temp = XDWTemp()
+            obj.export(temp.path)
         elif isinstance(obj, PageCollection):
-            temp = mktemp(suffix=".xdw", nofile=True)
-            obj.export(temp, flat=True)
+            temp = XDWTemp()
+            obj.export(temp.path, flat=True)
         elif isinstance(obj, BaseDocument):
-            temp = mktemp(suffix=".xdw", nofile=True)
+            temp = XDWTemp()
             pc = PageCollection(obj)
-            pc.export(temp, flat=True)
+            pc.export(temp.path, flat=True)
         elif isinstance(obj, str):  # XDW path
             temp = uc(obj)
             if not temp.lower().endswith(".xdw"):
@@ -148,11 +148,11 @@ class BaseDocument(Subject):
         XDW_InsertDocument(
                 self.handle,
                 self.absolute_page(pos, append=True) + 1,
-                cp(temp))
+                cp(temp if isinstance(temp, str) else temp.path))
         inslen = XDW_GetDocumentInformation(self.handle).nPages - self.pages
         self.pages += inslen
         if not isinstance(obj, str):
-            rmtemp(temp)
+            temp.close()
         # Check inserted pages in order to attach them to this document and
         # shift observer entries appropriately.
         for p in range(pos, pos + inslen):
@@ -392,19 +392,19 @@ class BaseDocument(Subject):
         dpi = int(max(pg.resolution))
         dpi = max(10, min(600, dpi))  # Force 10 <= dpi <= 600.
         color = pg.color_scheme()
-        imagepath = mktemp(suffix=".tif", nofile=True)
-        imagepath = self.export_image(pos, imagepath,
+        temp = XDWTemp(suffix=".tif")
+        temp.path = self.export_image(pos, temp.path,
                 dpi=dpi, color=color, format="tiff", compress="nocompress",
                 direct=direct)
-        return (imagepath, pg.degree if direct else 0)
+        return (temp, pg.degree if direct else 0)
 
-    def _postprocess(self, pos, imagepath, degree=0):
-        self.insert_image(pos, imagepath)  # Insert image page.
+    def _postprocess(self, pos, temp, degree=0):
+        self.insert_image(pos, temp.path)  # Insert image page.
         if degree:
             self.rotate(pos, degree=degree)
         self.page(pos).reset_attr()
         self.delete(pos + 1)  # Delete original application page.
-        rmtemp(imagepath)
+        temp.close()
 
     def rasterize(self, pos, direct=False):
         """Rasterize; convert an application page into DocuWorks image page.
@@ -414,8 +414,8 @@ class BaseDocument(Subject):
         pos = self._pos(pos)
         if self.page(pos).type != "APPLICATION":
             return
-        imagepath, degree = self._preprocess(pos, direct=direct)
-        self._postprocess(pos, imagepath, degree)
+        temp, degree = self._preprocess(pos, direct=direct)
+        self._postprocess(pos, temp, degree)
         self.page(pos).reset_attr()
 
     def rotate(self, pos, degree=0, auto=False, direct=False, strategy=1):
@@ -449,12 +449,12 @@ class BaseDocument(Subject):
             raise NotImplementedError("missing PIL (Python Imaging Library)")
         dpi = int(max(10, min(600, max(self.page(pos).resolution))))
         if strategy == 1:
-            in_, orig_degree = self._preprocess(pos, direct=direct)
-            out = in_
+            out, orig_degree = self._preprocess(pos, direct=direct)
+            in_ = out.path
         elif strategy == 2:
             in_ = StringIO(self.bitmap(pos).octet_stream())
             orig_degree = 0
-            out = mktemp(suffix=".tif", nofile=False)
+            out = XDWTemp(suffix=".tif")
         else:
             raise ValueError("illegal strategy id " + str(strategy))
         # To rotate naturally, we need white background with sqrt(2) times
@@ -467,8 +467,7 @@ class BaseDocument(Subject):
                 im.load()
         else:
             im = Image.open(in_)
-        im.load()
-        box = tuple(int((canvas_size - v) / 2) for v in im.size)
+        box = tuple((canvas_size - v) / 2 for v in im.size)
         box += tuple((canvas_size - v) for v in box)
         while True:  # Quick hack for PIL lazy reading from file.
             try:
@@ -476,7 +475,7 @@ class BaseDocument(Subject):
             except IOError:
                 continue
             break
-        canvas.rotate(-degree).crop(box).save(out, "TIFF", resolution=dpi)
+        canvas.rotate(-degree).crop(box).save(out.path, "TIFF", resolution=dpi)
         if strategy == 2:
             in_.close()
         self._postprocess(pos, out, orig_degree)
@@ -543,7 +542,7 @@ class BaseDocument(Subject):
             f = lambda pg: pattern in func(pg)
         else:
             f = lambda pg: pattern.search(func(pg))
-        return PageCollection([pg for pg in self if f(pg)])
+        return PageCollection(filter(f, self))
 
     def dirname(self):
         """Abstract method for concrete dirname()."""

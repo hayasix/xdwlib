@@ -36,7 +36,7 @@ __all__ = (
         "mm2in", "in2mm", "mm2px", "px2mm",
         "environ", "get_viewer",
         "inner_attribute_name", "outer_attribute_name",
-        "adjust_path", "cp", "uc", "derivative_path", "mktemp", "rmtemp",
+        "adjust_path", "cp", "uc", "derivative_path",
         "joinf", "flagvalue", "typevalue", "makevalue", "scale", "unpack",
         "XDWTemp",
         )
@@ -173,7 +173,7 @@ def adjust_path(path, dir="", ext=".xdw", coding=None):
 
     path    (str) pathname
             Full pathname is acceptable as well as bare filename (basename).
-    dir     (unicode) replacement directory
+    dir     (str) replacement directory
     ext     (str) default extension to append if original path has no one
     coding  (str) encoding of the result as bytes; None = str (don't encode)
 
@@ -246,20 +246,6 @@ def derivative_path(path):
         n += 1
         derivative = "{0}-{1}{2}".format(root, n, ext)
     return derivative
-
-
-def mktemp(suffix=".xdw", prefix="", nofile=False):
-    fd, temp = mkstemp(suffix=suffix, prefix=prefix, dir=mkdtemp())
-    os.close(fd)
-    if nofile:
-        os.remove(temp)  # Directory is not removed.
-    return temp
-
-
-def rmtemp(path):
-    if os.path.exists(path):
-        os.remove(path)
-    os.rmdir(os.path.split(path)[0])
 
 
 def flagvalue(table, value, store=True):
@@ -339,37 +325,67 @@ def unpack(s):
 
 class XDWTemp(object):
 
-    """Temporary XDW file with optional single blank page."""
+    """Reusable pathname for a temporary file.
 
-    def __init__(self, suffix=".xdw", dir=None, blank_page=False):
-        args = [suffix, "", dir] if dir else [suffix]
-        self.fd, self.path = mkstemp(*args)
-        if blank_page:
-            os.write(self.fd, BLANKPAGE)
+    Unlike tempfile.TemporaryFile, XDWTemp() provides a valid temporary
+    pathname in a actually existing temporary directory.  Why XDWTemp()
+    does not supply an existing file is that DocuWorks cannot handle
+    shared files, even if it gets the write access.
+
+    Technically, XDWTemp() creates a temporary directory in the standard
+    temporary directory, like $TEMP or %TEMP%, creates a temporary file,
+    delete the file immediately and returns the pathname of the deleted
+    temporary file.  Uniqueness of the pathname of the temporary file is
+    assured by its parent directory name.
+
+    Example:
+
+        temp = XDWTemp()  # Creates $TEMP/tmp-dir
+        some_xdw_page.export(temp.path)  # Creates $TEMP/tmp-dir/tmp-file
+        do_some_work(temp.path)
+        temp.close()  # Deletes $TEMP/tmp-dir/tmp-file and $TEMP/tmp-dir
+
+    or shortly,
+
+        with XDWTemp() as temp:
+            some_xdw_page.export(temp.path)
+            do_some_work(temp.path)
+
+    CAUTION: If XDWTemp object is deleted before close(), the associated
+             temporary directory and file will still remain.
+
+    ATTRIBUTES
+    ----------
+
+    path        (str) pathname of temporary file
+    dir         (str) temporary directory name = os.path.split(path)[0]
+    """
+
+    def __init__(self, suffix=".xdw", prefix=""):
+        """Initiator.
+
+        suffix      (str) suffix of temporary file
+        prefix      (str) prefix of temporary file
+        """
+        fd, path = mkstemp(suffix=suffix, prefix=prefix, dir=mkdtemp())
+        os.close(fd)
+        os.remove(path)  # Directory is not removed.
+        self.path = path
+        self.dir = os.path.split(path)[0]
+
+    def close(self):
+        """Remove temporary file and directory."""
+        if os.path.exists(self.path):
+            os.remove(self.path)
+        try:
+            os.rmdir(self.dir)
+        except Exception as e:
+            sys.stderr.write("""\
+{0}:xdwlib:can't delete temporary directory '{1}'\n""".format(
+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.dir))
 
     def __enter__(self):
         return self
 
-    def __exit__(self):
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
-
-    def __del__(self):
-        try:
-            os.fdopen(self.fd).close()
-        except:
-            pass
-        os.remove(self.path)
-
-    def close(self):
-        os.fdopen(self.fd).close()
-
-    def seek(self, pos, how=0):
-        """Change read/write pointer in the temporary file.
-
-        pos     position in stream by bytes
-        how     base; 0=top, 1=current, 2=bottom
-        """
-        os.lseek(self.fd, pos, how)
-
-    def read(self, size):
-        return os.read(self.fd, size)

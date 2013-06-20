@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#vim:fileencoding=cp932:fileformat=dos
+# vim: fileencoding=cp932 fileformat=dos
 
 """annotatable.py -- Annotatable, base class for Page and Annotation
 
@@ -281,26 +281,24 @@ class Annotatable(Subject):
                 return None
             pg = ann.page
             dpi = max(pg.resolution)
+            lt, rb = ann.position, ann.position + ann.size
+            rect = [int(round(mm2px(v, dpi))) for v in (lt.x, lt.y, rb.x, rb.y)]
             if strategy == 1:
-                imagepath = mktemp(suffix=".bmp", nofile=True)
-                pg.doc.export_image(pg.pos, imagepath,
-                        dpi=dpi, format="bmp", compress="nocompress")
-                lt, rb = ann.position, ann.position + ann.size
-                rect = [int(round(mm2px(v, dpi))) for v in (lt.x, lt.y, rb.x, rb.y)]
-                Image.open(imagepath).crop(rect).save(imagepath, "BMP")
-                # PIL BmpImagePlugin sets resolution to 1, so fix it.
-                self._fix_bmp_resolution(imagepath, dpi)
+                with XDWTemp(suffix=".bmp") as temp:
+                    pg.doc.export_image(pg.pos, temp.path,
+                            dpi=dpi, format="bmp", compress="nocompress")
+                    Image.open(temp.path).crop(rect).save(temp.path, "BMP")
+                    # PIL BmpImagePlugin sets resolution to 1, so fix it.
+                    self._fix_bmp_resolution(temp.path, dpi)
             elif strategy == 2:
-                in_ = StringIO(pg.doc.bitmap(pg.pos).octet_stream())
-                imagepath = mktemp(suffix=".tif", nofile=True)
-                Image.open(in_).crop(rect).\
-                        save(imagepath, "TIFF", resolution=dpi)
-                in_.close()
+                with XDWTemp(suffix=".tif") as temp:
+                    in_ = StringIO(pg.doc.bitmap(pg.pos).octet_stream())
+                    Image.open(in_).crop(rect).\
+                            save(temp.path, "TIFF", resolution=dpi)
+                    in_.close()
             else:
                 raise ValueError("illegal strategy")
-            copy = self.add(t, position=ann.position,
-                    szImagePath=imagepath)
-            rmtemp(imagepath)
+            copy = self.add(t, position=ann.position, szImagePath=temp.path)
         elif t in (XDW_AID_RECEIVEDSTAMP, XDW_AID_CUSTOM):
             warnings.warn(
                     "copying {0} annotation is not supported".format(ann.type),
