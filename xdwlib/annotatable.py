@@ -178,6 +178,8 @@ class Annotatable(Subject):
 
         Note that `position' attribute is determined automatically.
         """
+        if 2 < len(points):
+            raise ValueError("> 2 points given; consider add_lines()")
         points = relative_points(points)
         return self.add(XDW_AID_STRAIGHTLINE, points[0],
                 nHorVec=(points[1].x * 100), nVerVec=(points[1].y * 100))
@@ -240,6 +242,8 @@ class Annotatable(Subject):
             c_points[i].y = int(p.y * 100)
         return self.add(XDW_AID_MARKER, _POSITION,  # position is dummy
                 nCounts=len(points), pPoints=c_points)
+
+    add_lines = add_marker  # add a series of straight lines
 
     def add_polygon(self, points=_POINTS):
         """Paste a polygon annotation.

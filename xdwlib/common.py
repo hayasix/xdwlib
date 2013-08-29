@@ -318,9 +318,48 @@ def unpack(s):
 
 class XDWTemp(object):
 
-    """Prepare a reusable pathname for a temporary file."""
+    """Reusable pathname for a temporary file.
+
+    Unlike tempfile.TemporaryFile, XDWTemp() provides a valid temporary
+    pathname in a actually existing temporary directory.  Why XDWTemp()
+    does not supply an existing file is that DocuWorks cannot handle
+    shared files, even if it gets the write access.
+
+    Technically, XDWTemp() creates a temporary directory in the standard
+    temporary directory, like $TEMP or %TEMP%, creates a temporary file,
+    delete the file immediately and returns the pathname of the deleted
+    temporary file.  Uniqueness of the pathname of the temporary file is
+    assured by its parent directory name.
+
+    Example:
+
+        temp = XDWTemp()  # Creates $TEMP/tmp-dir
+        some_xdw_page.export(temp.path)  # Creates $TEMP/tmp-dir/tmp-file
+        do_some_work(temp.path)
+        temp.close()  # Deletes $TEMP/tmp-dir/tmp-file and $TEMP/tmp-dir
+
+    or shortly,
+
+        with XDWTemp() as temp:
+            some_xdw_page.export(temp.path)
+            do_some_work(temp.path)
+
+    CAUTION: If XDWTemp object is deleted before close(), the associated
+             temporary directory and file will still remain.
+
+    ATTRIBUTES
+    ----------
+
+    path        (str) pathname of temporary file
+    dir         (str) temporary directory name = os.path.split(path)[0]
+    """
 
     def __init__(self, suffix=".xdw", prefix=""):
+        """Initiator.
+
+        suffix      (str or unicode) suffix of temporary file
+        prefix      (str or unicode) prefix of temporary file
+        """
         fd, path = mkstemp(suffix=suffix, prefix=prefix, dir=mkdtemp())
         os.close(fd)
         os.remove(path)  # Directory is not removed.
@@ -328,6 +367,7 @@ class XDWTemp(object):
         self.dir = os.path.split(path)[0]
 
     def close(self):
+        """Remove temporary file and directory."""
         if os.path.exists(self.path):
             os.remove(self.path)
         try:

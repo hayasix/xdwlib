@@ -412,7 +412,7 @@ class Page(Annotatable, Observer):
             raise TypeError("rotation is available for image pages")
         doc, pos = self.doc, self.pos
         doc.rotate(pos, degree=degree, auto=auto, direct=direct)
-        self = doc.page(pos)  # reset
+        self.reset_attr()
 
     def reduce_noise(self, level="NORMAL"):
         """Process page by noise reduction engine.

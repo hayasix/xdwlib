@@ -14,7 +14,7 @@ FOR A PARTICULAR PURPOSE.
 """
 
 from struct import Point, Rect
-from common import environ
+from common import environ, XDWTemp
 from xdwfile import xdwopen, optimize, copy, create_sfx, extract_sfx
 from xdwfile import protection_info, protect, unprotect, sign
 from document import Document, create, merge
@@ -27,6 +27,6 @@ from annotation import Annotation
 __author__ = "HAYASI Hideki"
 __copyright__ = "Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>"
 __license__ = "ZPL 2.1"
-__version__ = "2.24.6"
+__version__ = "2.24.7"
 __email__ = "linxs@linxs.org"
 __status__ = "Development"
