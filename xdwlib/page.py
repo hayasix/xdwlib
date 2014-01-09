@@ -19,11 +19,12 @@ import subprocess
 import itertools
 from os.path import abspath, split as splitpath, join as joinpath
 
-from xdwapi import *
-from common import *
-from observer import *
-from struct import Point, Rect
-from annotatable import Annotatable
+from .xdwapi import *
+from .common import *
+from .xdwtemp import XDWTemp
+from .observer import *
+from .struct import Point, Rect
+from .annotatable import Annotatable
 
 
 __all__ = ("Page", "PageCollection")

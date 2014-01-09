@@ -13,10 +13,10 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE.
 """
 
-from xdwapi import *
-from common import *
-from observer import *
-from basedocument import BaseDocument
+from .xdwapi import *
+from .common import *
+from .observer import *
+from .basedocument import BaseDocument
 
 
 __all__ = ("DocumentInBinder",)

@@ -16,14 +16,13 @@ FOR A PARTICULAR PURPOSE.
 import sys
 import os
 import re
-from tempfile import mkstemp, mkdtemp
 import base64
 import time
 import datetime
 
-from xdwapi import *
-from observer import *
-from timezone import *
+from .xdwapi import *
+from .observer import *
+from .timezone import *
 
 
 __all__ = (
@@ -38,7 +37,6 @@ __all__ = (
         "inner_attribute_name", "outer_attribute_name",
         "adjust_path", "cp", "uc", "derivative_path",
         "joinf", "flagvalue", "typevalue", "makevalue", "scale", "unpack",
-        "XDWTemp",
         )
 
 PIL_ENABLED = True
@@ -314,71 +312,3 @@ def unpack(s):
         n <<= 8
         n += ord(c)
     return n
-
-
-class XDWTemp(object):
-
-    """Reusable pathname for a temporary file.
-
-    Unlike tempfile.TemporaryFile, XDWTemp() provides a valid temporary
-    pathname in a actually existing temporary directory.  Why XDWTemp()
-    does not supply an existing file is that DocuWorks cannot handle
-    shared files, even if it gets the write access.
-
-    Technically, XDWTemp() creates a temporary directory in the standard
-    temporary directory, like $TEMP or %TEMP%, creates a temporary file,
-    delete the file immediately and returns the pathname of the deleted
-    temporary file.  Uniqueness of the pathname of the temporary file is
-    assured by its parent directory name.
-
-    Example:
-
-        temp = XDWTemp()  # Creates $TEMP/tmp-dir
-        some_xdw_page.export(temp.path)  # Creates $TEMP/tmp-dir/tmp-file
-        do_some_work(temp.path)
-        temp.close()  # Deletes $TEMP/tmp-dir/tmp-file and $TEMP/tmp-dir
-
-    or shortly,
-
-        with XDWTemp() as temp:
-            some_xdw_page.export(temp.path)
-            do_some_work(temp.path)
-
-    CAUTION: If XDWTemp object is deleted before close(), the associated
-             temporary directory and file will still remain.
-
-    ATTRIBUTES
-    ----------
-
-    path        (str) pathname of temporary file
-    dir         (str) temporary directory name = os.path.split(path)[0]
-    """
-
-    def __init__(self, suffix=".xdw", prefix=""):
-        """Initiator.
-
-        suffix      (str or unicode) suffix of temporary file
-        prefix      (str or unicode) prefix of temporary file
-        """
-        fd, path = mkstemp(suffix=suffix, prefix=prefix, dir=mkdtemp())
-        os.close(fd)
-        os.remove(path)  # Directory is not removed.
-        self.path = path
-        self.dir = os.path.split(path)[0]
-
-    def close(self):
-        """Remove temporary file and directory."""
-        if os.path.exists(self.path):
-            os.remove(self.path)
-        try:
-            os.rmdir(self.dir)
-        except Exception as e:
-            sys.stderr.write("""\
-{0}:xdwlib:can't delete temporary directory '{1}'\n""".format(
-datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.dir))
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()

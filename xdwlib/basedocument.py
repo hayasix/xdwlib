@@ -17,12 +17,13 @@ import sys
 import os
 from cStringIO import StringIO
 
-from xdwapi import *
-from common import *
-from observer import *
-from struct import Point
-from xdwfile import xdwopen
-from page import Page, PageCollection
+from .xdwapi import *
+from .common import *
+from .xdwtemp import XDWTemp
+from .observer import *
+from .struct import Point
+from .xdwfile import xdwopen
+from .page import Page, PageCollection
 
 
 __all__ = ("BaseDocument",)

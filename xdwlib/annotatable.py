@@ -16,10 +16,11 @@ FOR A PARTICULAR PURPOSE.
 import os
 import warnings
 
-from xdwapi import *
-from common import *
-from observer import *
-from struct import *
+from .xdwapi import *
+from .common import *
+from .xdwtemp import XDWTemp
+from .observer import *
+from .struct import *
 
 
 __all__ = ("Annotatable",)

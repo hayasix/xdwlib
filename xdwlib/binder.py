@@ -13,12 +13,12 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE.
 """
 
-from xdwapi import *
-from common import *
-from observer import *
-from xdwfile import XDWFile
-from documentinbinder import DocumentInBinder
-from page import Page, PageCollection
+from .xdwapi import *
+from .common import *
+from .observer import *
+from .xdwfile import XDWFile
+from .documentinbinder import DocumentInBinder
+from .page import Page, PageCollection
 
 
 __all__ = ("Binder", "create_binder")

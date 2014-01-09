@@ -16,11 +16,11 @@ FOR A PARTICULAR PURPOSE.
 import os
 import time
 
-from xdwapi import *
-from common import *
-from struct import Point
-from xdwfile import XDWFile
-from basedocument import BaseDocument
+from .xdwapi import *
+from .common import *
+from .struct import Point
+from .xdwfile import XDWFile
+from .basedocument import BaseDocument
 
 
 __all__ = (

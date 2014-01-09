@@ -15,11 +15,11 @@ FOR A PARTICULAR PURPOSE.
 
 import re
 
-from xdwapi import *
-from common import *
-from observer import *
-from struct import *
-from annotatable import Annotatable
+from .xdwapi import *
+from .common import *
+from .observer import *
+from .struct import *
+from .annotatable import Annotatable
 
 
 __all__ = ("Annotation",)

@@ -18,11 +18,11 @@ import datetime
 import shutil
 import atexit
 
-from xdwapi import *
-from common import *
-from struct import Point
-from timezone import *
-from observer import Subject, Observer
+from .xdwapi import *
+from .common import *
+from .struct import Point
+from .timezone import *
+from .observer import Subject, Observer
 
 
 __all__ = (
