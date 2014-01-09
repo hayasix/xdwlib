@@ -2237,12 +2237,11 @@ def XDW_AddSystemFolder(index):
 
 
 @RAISE
-def XDW_MergeXdwFiles(input_paths, files, output_path):
-    """XDW_MergeXdwFiles(input_paths, files, output_path)"""
-    input_paths = c_char_p() * len(input_paths)
-    for i in range(len(input_paths)):
-        input_paths[i] = byref(input_paths[i])
-    return DLL.XDW_MergeXdwFiles(input_paths, files, output_path, NULL)
+def XDW_MergeXdwFiles(input_paths, output_path):
+    """XDW_MergeXdwFiles(input_paths, output_path)"""
+    n = len(input_paths)
+    _input_paths = (c_char_p * n)(*input_paths)
+    return DLL.XDW_MergeXdwFiles(ptr(_input_paths), n, output_path, NULL)
 
 
 def XDW_OpenDocumentHandle(path, open_mode):
