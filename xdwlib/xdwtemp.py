@@ -62,14 +62,17 @@ class XDWTemp(object):
     def __init__(self, suffix=".xdw", prefix=""):
         """Initiator.
 
-        suffix      (str or unicode) suffix of temporary file
-        prefix      (str or unicode) prefix of temporary file
+        suffix      (str or unicode) suffix of temporary file name
+        prefix      (str or unicode) prefix of temporary file name
         """
         fd, path = mkstemp(suffix=suffix, prefix=prefix, dir=mkdtemp())
         os.close(fd)
         os.remove(path)  # Directory is not removed.
         self.path = path
         self.dir = os.path.split(path)[0]
+
+    def __del__(self):
+        self.close()
 
     def close(self):
         """Remove temporary file and directory."""
