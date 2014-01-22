@@ -81,9 +81,10 @@ class XDWTemp(object):
         try:
             os.rmdir(self.dir)
         except Exception as e:
+            import time
             sys.stderr.write("""\
 {0}:xdwlib:can't delete temporary directory '{1}'\n""".format(
-datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.dir))
+time.strftime("%Y-%m-%d %H:%M:%S"), self.dir))
 
     def __enter__(self):
         return self
