@@ -44,14 +44,17 @@ except NameError:
 @atexit.register
 def atexithandler():
     """Close all files and perform finalization before finishing process."""
-    if VALID_DOCUMENT_HANDLES:
+    try:
         for handle in VALID_DOCUMENT_HANDLES:
             try:
                 XDW_CloseDocumentHandle(handle)
             except:
                 continue
             VALID_DOCUMENT_HANDLES.remove(handle)
-    XDW_Finalize()
+        XDW_Finalize()
+    except Exception as e:
+        sys.stderr.write("{0}:xdwlib:error on exit:{1}\n""".format(
+                datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), e))
 
 
 def xdwopen(path, readonly=False, authenticate=True, autosave=False):
