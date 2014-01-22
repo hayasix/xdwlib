@@ -72,7 +72,8 @@ class XDWTemp(object):
         self.dir = os.path.split(path)[0]
 
     def __del__(self):
-        self.close()
+        if os.path.exists(self.dir):
+            self.close()
 
     def close(self):
         """Remove temporary file and directory."""
