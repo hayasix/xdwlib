@@ -44,12 +44,13 @@ except NameError:
 @atexit.register
 def atexithandler():
     """Close all files and perform finalization before finishing process."""
-    for handle in VALID_DOCUMENT_HANDLES:
-        try:
-            XDW_CloseDocumentHandle(handle)
-        except:
-            continue
-        VALID_DOCUMENT_HANDLES.remove(handle)
+    if VALID_DOCUMENT_HANDLES:
+        for handle in VALID_DOCUMENT_HANDLES:
+            try:
+                XDW_CloseDocumentHandle(handle)
+            except:
+                continue
+            VALID_DOCUMENT_HANDLES.remove(handle)
     XDW_Finalize()
 
 
