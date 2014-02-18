@@ -591,14 +591,23 @@ class Page(Annotatable, Observer):
         light       (bool) force to use DocuWorks Viewer Light.
                     Note that DocuWorks Viewer is used if Light version is
                     not avaiable.
-        wait        (bool) wait until viewer stops.
-                    Given False, (Popen, path) is returned.  Users should
-                    remove the file of path after the Popen object ends.
+        wait        (bool) wait until viewer stops and get annotation info
         options     optional arguments for DocuWorks Viewer (Light).
                     See DocuWorks genuine help document.
+
+        If wait is True, returns a sequence of annotation regions regardless
+        of annotation types, e.g. [Rect(...), Rect(...), ...].
+
+        If wait is False, returns (proc, path) where:
+                proc    subprocess.Popen object
+                path    pathname of temporary file to view
+        In this case, you should remove temp and its parent dir after use.
         """
         pc = PageCollection() + self
-        return pc.view(light=light, wait=wait, flat=True, *options)
+        r = pc.view(light=light, wait=wait, flat=True, *options)
+        if wait:
+            return r[0] if r else []
+        return r
 
     def text_regions(self, text,
             ignore_case=False, ignore_width=False, ignore_hirakata=False):
