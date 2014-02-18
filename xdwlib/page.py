@@ -91,24 +91,27 @@ class PageCollection(list):
         light       (bool) force to use DocuWorks Viewer Light.
                     Note that DocuWorks Viewer is used if Light version is
                     not avaiable.
-        wait        (bool) wait until viewer stops.
-                    Given False, (proc, temp) is returned.  Users should
-                    remove the file of path after the Popen object ends.
+        wait        (bool) wait until viewer stops and get annotation info
         flat        (bool) combine pages into a single document.
         group       (bool) group continuous pages by original document,
                     i.e. create document-in-binder.
         options     optional arguments for DocuWorks Viewer (Light).
                     See DocuWorks genuine help document.
 
-        Returns (proc, temp) if wait is False, where:
+        If wait is True, returns a dict, each key is page pos and value is
+        a sequence of annotation regions regardless of annotation types,
+        e.g. {0: [Rect(...), Rect(...), ...], 1: [...], ...}.  Note that
+        pages without annotations are ignored.
+
+        If wait is False, returns (proc, path) where:
                 proc    subprocess.Popen object
-                temp    pathname of temporary file to view.
-        In this case, you should remove this file and its parent dir after use.
+                path    pathname of temporary file to view
+        In this case, you should remove temp and its parent dir after use.
 
         NB. Attachments are not shown.
         NB. Viewing signed pages will raise AccessDeniedError.
         """
-        temp = XDWTemp()
+        temp = XDWTemp(autoclose=wait)
         temp.path = self.export(
                 joinpath(temp.dir, u"{0}_P{1}.{2}".format(
                         self[0].doc.name,
@@ -119,12 +122,17 @@ class PageCollection(list):
         args.extend(options)
         args.append(temp.path)
         proc = subprocess.Popen(args)
-        if wait:
-            proc.wait()
-            temp.close()
-            return None
-        else:
+        if not wait:
             return (proc, temp.path)
+        from .xdwfile import xdwopen
+        proc.wait()
+        doc = xdwopen(temp.path)
+        _r = lambda ann: Rect(ann.position, ann.position + ann.size)
+        r = [(p, [_r(a) for a in doc.page(p)]) for p in xrange(doc.pages)
+                                                if doc.page(p).annotations]
+        doc.close()
+        temp.close()
+        return dict(r)
 
     def group(self):
         """Make an iterator that returns consecutive page-groups.
@@ -154,9 +162,9 @@ class PageCollection(list):
         Returns actual pathname of generated file, which may be different
         from `path' argument.
         """
-        from document import create as create_document
-        from binder import create_binder
-        from xdwfile import xdwopen
+        from .document import create as create_document
+        from .binder import create_binder
+        from .xdwfile import xdwopen
         path = derivative_path(adjust_path(uc(path or
                 (self[0].doc.name + (".xdw" if flat else ".xbd")))))
         if flat:

@@ -100,7 +100,7 @@ class Annotatable(Subject):
 
     def annotation(self, pos):
         """Get an annotation by position."""
-        from annotation import Annotation
+        from .annotation import Annotation
         pos = self._pos(pos)
         if pos not in self.observers:
             self.observers[pos] = Annotation(self, pos, parent=self)
@@ -142,7 +142,7 @@ class Annotatable(Subject):
         ann_type    annotation type by inner code
         position    (Point, unit=mm) location to paste
         """
-        from annotation import Annotation
+        from .annotation import Annotation
         ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
         if isinstance(position, (tuple, list)):
             position = Point(*position)

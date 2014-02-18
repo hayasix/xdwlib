@@ -30,7 +30,7 @@ __all__ = (
         "StampSignature", "PKISignature",
         "xdwopen", "create_sfx", "extract_sfx", "optimize", "copy",
         "protection_info", "protect", "unprotect", "sign",
-        "VALID_DOCUMENT_HANDLES", "close_all",
+        "VALID_DOCUMENT_HANDLES",
         )
 
 
@@ -58,8 +58,8 @@ def xdwopen(path, readonly=False, authenticate=True, autosave=False):
 
     Returns Document or Binder object.
     """
-    from document import Document
-    from binder import Binder
+    from .document import Document
+    from .binder import Binder
     path = uc(path)
     XDW_TYPES = {".XDW": Document, ".XBD": Binder}
     ext = os.path.splitext(path)[1].upper()
