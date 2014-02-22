@@ -822,16 +822,16 @@ class BaseSignature(object):
         self.dt = dt
 
     def __repr__(self):
-        return  u"{cls}({doc}[{pos}])".format(
+        return  "{cls}({doc}[{pos}])".format(
                 cls=self.__class__.__name__,
-                doc=self.doc.name,
+                doc=cp(self.doc.name),
                 pos=self.pos,
                 )
 
     def __str__(self):
-        return  u"{cls}({doc}[{pos}]; page {pgpos}, position {loc}mm)".format(
+        return  "{cls}({doc}[{pos}]; page {pgpos}, position {loc}mm)".format(
                 cls=self.__class__.__name__,
-                doc=self.doc.name,
+                doc=cp(self.doc.name),
                 pos=self.pos,
                 pgpos=self.pagepos,
                 loc="({0:.2f}, {1:.2f})".format(*self.position),
@@ -975,9 +975,9 @@ class PageForm(object):
         self.__dict__["form"] = XDW_PAGEFORM.normalize(form)
 
     def __repr__(self):
-        return u"{cls}({doc}.{attr})".format(
+        return "{cls}({doc}.{attr})".format(
                 cls=self.__class__.__name__,
-                doc=self.doc,
+                doc=cp(self.doc.name),
                 attr=outer_attribute_name(XDW_PAGEFORM[self.form]))
 
     @property

@@ -75,15 +75,15 @@ class Binder(Subject, XDWFile):
         XDWFile.__init__(self, path)
 
     def __repr__(self):
-        return u"{cls}({name}{sts})".format(
+        return "{cls}({name}{sts})".format(
                 cls=self.__class__.__name__,
-                name=self.name,
+                name=cp(self.name),
                 sts="" if self.handle else "; CLOSED")
 
     def __str__(self):
-        return u"{cls}({name}: {docs} documents{sts})".format(
+        return "{cls}({name}: {docs} documents{sts})".format(
                 cls=self.__class__.__name__,
-                name=self.name,
+                name=cp(self.name),
                 docs=self.documents,
                 sts="" if self.handle else "; CLOSED")
 

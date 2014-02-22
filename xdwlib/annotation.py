@@ -80,14 +80,14 @@ class Annotation(Annotatable, Observer):
         while ann is not None:
             parents.insert(0, ann.pos)
             ann = ann.parent
-        return u"{cls}({docname}[{pgpos}][{poslist}])".format(
+        return "{cls}({docname}[{pgpos}][{poslist}])".format(
                 cls=self.__class__.__name__,
-                docname=self.page.doc.name,
+                docname=cp(self.page.doc.name),
                 pgpos=self.page.pos,
                 poslist="][".join(map(str, parents)))
 
     def __str__(self):
-        return u"{0}:{1})".format(repr(self)[:-1], self.type)
+        return "{0}:{1})".format(repr(self)[:-1], self.type)
 
     @staticmethod
     def _unicode_enabled(ann_type):

@@ -2,7 +2,10 @@
 # vim:fileencoding=utf-8
 
 from distutils.core import setup
-import py2exe
+try:
+    import py2exe
+except ImportError:
+    pass
 
 from xdwlib import __author__, __copyright__, __license__, __version__, __email__
 

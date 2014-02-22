@@ -38,7 +38,7 @@ class PageCollection(list):
     """Page collection i.e. container for pages."""
 
     def __repr__(self):
-        return u"{cls}({seq})".format(
+        return "{cls}({seq})".format(
                 cls=self.__class__.__name__,
                 seq=", ".join(repr(pg) for pg in self))
 
@@ -121,7 +121,7 @@ class PageCollection(list):
         args = [get_viewer(light=light)]
         args.extend(options)
         args.append(temp.path)
-        proc = subprocess.Popen(args)
+        proc = subprocess.Popen(map(cp, args))
         if not wait:
             return (proc, temp.path)
         from .xdwfile import xdwopen
@@ -253,16 +253,16 @@ class Page(Annotatable, Observer):
             return "MONO"
 
     def __repr__(self):
-        return u"{cls}({doc}[{pos}])".format(
+        return "{cls}({doc}[{pos}])".format(
                 cls=self.__class__.__name__,
-                doc=self.doc.name,
+                doc=cp(self.doc.name),
                 pos=self.pos)
 
     def __str__(self):
-        return (u"Page({doc}[{pos}]; "
-                u"{width:.2f}*{height:.2f}mm, "
-                u"{type}, {anns} annotations)").format(
-                doc=self.doc.name,
+        return ("Page({doc}[{pos}]; "
+                "{width:.2f}*{height:.2f}mm, "
+                "{type}, {anns} annotations)").format(
+                doc=cp(self.doc.name),
                 pos=self.pos,
                 width=self.size.x,
                 height=self.size.y,

@@ -59,19 +59,19 @@ class DocumentInBinder(BaseDocument, Observer):
         self.pages = docinfo.nPages
 
     def __repr__(self):
-        return u"{cls}({name} ({bdoc}[{pos}]){status})".format(
+        return "{cls}({name} ({bdoc}[{pos}]){status})".format(
                 cls=self.__class__.__name__,
-                name=self.name,
-                bdoc=self.binder.name,
+                name=cp(self.name),
+                bdoc=cp(self.binder.name),
                 pos=self.pos,
                 status="" if self.binder.handle else "; CLOSED")
 
     def __str__(self):
-        return (u"{cls}({name} ({bdoc}[{pos}]): "
-                u"{pages} pages, {atts} attachments{status})").format(
+        return ("{cls}({name} ({bdoc}[{pos}]): "
+                "{pages} pages, {atts} attachments{status})").format(
                 cls=self.__class__.__name__,
-                name=self.name,
-                bdoc=self.binder.name,
+                name=cp(self.name),
+                bdoc=cp(self.binder.name),
                 pos=self.pos,
                 pages=self.pages,
                 atts=self.original_data,
