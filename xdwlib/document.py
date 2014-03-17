@@ -171,7 +171,7 @@ def merge(input_paths, output_path=None):
     root, ext = os.path.splitext(input_paths[0])
     output_path = adjust_path(uc(output_path or root), ext=".xdw")
     output_path = derivative_path(output_path)
-    XDW_MergeXdwFiles(cp(input_paths), cp(output_path))
+    XDW_MergeXdwFiles(map(cp, input_paths), cp(output_path))
     return output_path
 
 
