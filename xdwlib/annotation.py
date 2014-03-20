@@ -424,7 +424,7 @@ class Annotation(Annotatable, Observer):
         elif self.type == "LINK":
             return getattr(self, XDW_ATN_Caption)
         elif self.type == "STAMP":
-            return "{0} <DATE> {1}".format(
+            return u"{0} <DATE> {1}".format(
                     getattr(self, XDW_ATN_TopField),
                     getattr(self, XDW_ATN_BottomField))
         return None

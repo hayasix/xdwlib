@@ -99,9 +99,11 @@ class PageCollection(list):
                     See DocuWorks genuine help document.
 
         If wait is True, returns a dict, each key is page pos and value is
-        a sequence of annotation regions regardless of annotation types,
-        e.g. {0: [Rect(...), Rect(...), ...], 1: [...], ...}.  Note that
-        pages without annotations are ignored.
+        a sequence of annotation information i.e.:
+            {0: [(Rect(...), TYPE, TEXT), ...], 1: [...], ...}
+                where:  TYPE=Annotation.type  # e.g. 'TEXT', 'LINK' or 'STAMP'
+                        TEXT=Annotation.content_text()
+        Note that pages without annotations are ignored.
 
         If wait is False, returns (proc, path) where:
                 proc    subprocess.Popen object
@@ -128,8 +130,8 @@ class PageCollection(list):
         proc.wait()
         doc = xdwopen(temp.path)
         _r = lambda ann: Rect(ann.position, ann.position + ann.size)
-        r = [(p, [_r(a) for a in doc.page(p)]) for p in xrange(doc.pages)
-                                                if doc.page(p).annotations]
+        r = [(p, [(_r(a), a.type, a.content_text()) for a in doc.page(p)])
+                for p in xrange(doc.pages) if doc.page(p).annotations]
         doc.close()
         temp.close()
         return dict(r)
