@@ -99,15 +99,17 @@ class PageCollection(list):
                     See DocuWorks genuine help document.
 
         If wait is True, returns a dict, each key is page pos and value is
-        a sequence of annotation information i.e.:
-            {0: [(Rect(...), TYPE, TEXT), ...], 1: [...], ...}
-                where:  TYPE=Annotation.type  # e.g. 'TEXT', 'LINK' or 'STAMP'
-                        TEXT=Annotation.content_text()
+        a list of AnnotationCache objects i.e.:
+
+            {0: [ann_cache, ann_cache, ...], 1: [...], ...}
+
         Note that pages without annotations are ignored.
 
         If wait is False, returns (proc, path) where:
+
                 proc    subprocess.Popen object
-                path    pathname of temporary file to view
+                path    pathname of temporary file being viewed
+
         In this case, you should remove temp and its parent dir after use.
 
         NB. Attachments are not shown.
@@ -127,10 +129,10 @@ class PageCollection(list):
         if not wait:
             return (proc, temp.path)
         from .xdwfile import xdwopen
+        from .annotation import AnnotationCache
         proc.wait()
         doc = xdwopen(temp.path)
-        _r = lambda ann: Rect(ann.position, ann.position + ann.size)
-        r = [(p, [(_r(a), a.type, a.content_text()) for a in doc.page(p)])
+        r = [(p, [AnnotationCache(ann) for ann in doc.page(p)])
                 for p in xrange(doc.pages) if doc.page(p).annotations]
         doc.close()
         temp.close()
@@ -597,12 +599,13 @@ class Page(Annotatable, Observer):
         options     optional arguments for DocuWorks Viewer (Light).
                     See DocuWorks genuine help document.
 
-        If wait is True, returns a sequence of annotation regions regardless
-        of annotation types, e.g. [Rect(...), Rect(...), ...].
+        If wait is True, returns a list of AnnotationCache objects.
 
         If wait is False, returns (proc, path) where:
+
                 proc    subprocess.Popen object
-                path    pathname of temporary file to view
+                path    pathname of temporary file begin viewed
+
         In this case, you should remove temp and its parent dir after use.
         """
         pc = PageCollection() + self

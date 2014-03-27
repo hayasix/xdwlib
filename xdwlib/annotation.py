@@ -22,7 +22,7 @@ from .struct import *
 from .annotatable import Annotatable
 
 
-__all__ = ("Annotation",)
+__all__ = ("Annotation", "AnnotationCache")
 
 
 def absolute_points(points):
@@ -31,6 +31,74 @@ def absolute_points(points):
         return points
     p0 = points[0]
     return tuple([p0] + [p0 + p for p in points[1:]])
+
+
+class AnnotationCache(object):
+
+    """Annotation cache.
+
+    This class is used to keep copies of annotation information.
+
+    Annotation's type and attributes, such as text, fore_color, fill_style,
+    points, position and size, will be kept as read-only.  Note that custom
+    user defined properties and user defined attributes are not supported.
+    """
+
+    def __init__(self, arg, **kw):
+        """Initiator.
+
+        __init__(ann) or __init__(type, **kw)
+        """
+        _set = object.__setattr__
+        if isinstance(arg, basestring):
+            assert "position" in kw and "size" in kw
+            _set(self, "_t", arg.upper())
+            _set(self, "_a", kw)
+        else:
+            assert len(kw) == 0
+            _set(self, "_t", arg.type)
+            _set(self, "_a", arg.attributes())
+
+    def __repr__(self):
+        return ("{cls}('{typ}', {attr})").format(
+                cls=self.__class__.__name__,
+                typ=self._t,
+                attr=", ".join("{k}={v}".format(k=k, v=repr(self._a[k]))
+                                            for k in sorted(self._a)))
+
+    def __getattribute__(self, name):
+        _get = object.__getattribute__
+        try:
+            return _get(self, "_a")[name]
+        except KeyError:
+            return _get(self, name)
+
+    def __setattr__(self, name, value):
+        raise AttributeError("assignment is not supported for {0}".format(
+                                self.__class__.__name__))
+
+    def rect(self):
+        """Returns display region for handiness."""
+        return Rect(self.position, self.position + self.size)
+
+    @property
+    def type(self):
+        return self._t
+
+    def content_text(self):
+        """Returns content text of annotation cache."""
+        if self._t == "TEXT":
+            return self.text
+        elif self._t == "LINK":
+            return self.caption
+        elif self._t == "STAMP":
+            return u"{top} <DATE> {bottom}".format(
+                    top=self.top_field, bottom=self.bottom_field)
+        else:
+            return None
+
+    def attributes(self):
+        return self._a
 
 
 class Annotation(Annotatable, Observer):

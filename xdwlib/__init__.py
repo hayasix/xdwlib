@@ -22,12 +22,12 @@ from .document import Document, create, merge
 from .binder import Binder, create_binder
 from .documentinbinder import DocumentInBinder
 from .page import Page, PageCollection
-from .annotation import Annotation
+from .annotation import Annotation, AnnotationCache
 
 
 __author__ = "HAYASI Hideki"
 __copyright__ = "Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>"
 __license__ = "ZPL 2.1"
-__version__ = "2.26.0"
+__version__ = "2.27.0"
 __email__ = "linxs@linxs.org"
 __status__ = "Development"
