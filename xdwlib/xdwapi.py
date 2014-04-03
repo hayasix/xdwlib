@@ -87,14 +87,17 @@ class XDWError(Exception):
     def __init__(self, message=""):
         Exception.__init__(self, message)
         self.code = self.__class__.e
-        self.msg = XDW_ERROR_MESSAGES.get(self.code, "XDW_E_UNDEFINED")
-
-    def __str__(self):
-        return "{0} ({1:08X})".format(self.msg, _uint32(self.code))
+        major = XDW_ERROR_MESSAGES.get(self.code, "XDW_E_UNDEFINED")
+        if message:
+            self.message = "{0} ({1:08X}) {2}".format(major, _uint32(self.code), message)
+        else:
+            self.message = "{0} ({1:08X})".format(major, _uint32(self.code))
 
     def __repr__(self):
-        return self.msg
+        return self.message
 
+    def __str__(self):
+        return self.message
 
 class NotInstalledError(XDWError): e = XDW_E_NOT_INSTALLED
 class InfoNotFoundError(XDWError): e = XDW_E_INFO_NOT_FOUND
@@ -2094,8 +2097,8 @@ XDW_AID_INITIAL_DATA = {
         XDW_AID_PAGEFORM        : None,
         XDW_AID_OLE             : None,
         XDW_AID_BITMAP          : XDW_AA_BITMAP_INITIAL_DATA,
-        XDW_AID_RECEIVEDSTAMP   : None,
-        XDW_AID_CUSTOM          : None,
+        XDW_AID_RECEIVEDSTAMP   : XDW_AA_RECEIVEDSTAMP_INITIAL_DATA,
+        XDW_AID_CUSTOM          : XDW_AA_CUSTOM_INITIAL_DATA,
         XDW_AID_TITLE           : None,
         XDW_AID_GROUP           : None,
         }
@@ -2430,7 +2433,6 @@ def XDW_SetAnnotationPosition(doc_handle, ann_handle, hpos, vpos):
     """XDW_SetAnnotationPosition(doc_handle, ann_handle, hpos, vpos)"""
     pass
 
-
 @APPEND(NULL)
 def XDW_CreateSfxDocument(input_path, output_path):
     """XDW_CreateSfxDocument(input_path, output_path)"""
@@ -2693,7 +2695,6 @@ def XDW_AddAnnotationOnParentAnnotation(doc_handle, ann_handle, ann_type, hpos, 
     return new_ann_handle
 
 
-@RAISE
 def XDW_SignDocument(input_path, output_path, option, module_option):
     """XDW_SignDocument(input_path, output_path, option, module_option)"""
     module_status = XDW_SIGNATURE_MODULE_STATUS()
@@ -2703,7 +2704,7 @@ def XDW_SignDocument(input_path, output_path, option, module_option):
         if module_status.nSignatureType == XDW_SIGNATURE_STAMP:
             msg = XDW_SIGNATURE_STAMP_ERROR[module_status.nErrorStatus]
         else:
-            msg = XDW_SIGNATURE_PIK_ERROR[module_status.nErrorStatus]
+            msg = XDW_SIGNATURE_PKI_ERROR[module_status.nErrorStatus]
         raise SignatureModuleError(msg)
     return 0
 
@@ -2751,17 +2752,15 @@ def XDW_GetSignatureInformation(doc_handle, pos):
         return (signature_info, module_info)
 
 
-@RAISE
-def XDW_UpdateSignatureStatus(doc_handle, pos, module_option, module_status):
-    """XDW_UpdateSignatureStatus(doc_handle, pos, module_option, module_status)"""
-    # The 3rd argument, module_option, should currently be specified as NULL.
+def XDW_UpdateSignatureStatus(doc_handle, pos):
+    """XDW_UpdateSignatureStatus(doc_handle, pos) --> (signature_type, error_status)"""
     module_status = XDW_SIGNATURE_MODULE_STATUS()
     try:
         TRY(DLL.XDW_UpdateSignatureStatus, doc_handle, pos, NULL, NULL, ptr(module_status))
     except SignatureModuleError as e:
         raise SignatureModuleError("signature type {0}, error status {1}".format(module_status.nSignatureType, module_status.nErrorStatus))
     # Note that signature information (XDW_GetSignatureInformation()) may be altered.
-    return 0
+    return module_status
 
 
 @RAISE

@@ -141,6 +141,7 @@ class Annotatable(Subject):
 
         ann_type    annotation type by inner code
         position    (Point, unit=mm) location to paste
+        **kw        initial data; varies by ann_type
         """
         from .annotation import Annotation
         ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
@@ -263,7 +264,7 @@ class Annotatable(Subject):
         """Copy an annotation with the same position and attributes.
 
         BITMAP can be copied, but it takes great time to process image.
-        CUSTOM and RECEIVEDSTAMP are not copyable.
+        PAGEFORM, OLE, CUSTOM and RECEIVEDSTAMP are not copyable.
         """
         t = XDW_ANNOTATION_TYPE.normalize(ann.type)
         if t == XDW_AID_TEXT:
@@ -279,6 +280,8 @@ class Annotatable(Subject):
             copy = self.add_marker(ann.points)
         elif t == XDW_AID_POLYGON:
             copy = self.add_polygon(ann.points)
+        elif t == XDW_AID_LINK:
+            copy = self.add_link(position=ann.position)
         elif t == XDW_AID_BITMAP:
             if not PIL_ENABLED:
                 warnings.warn("copying bitmap annotation is not supported",
@@ -304,7 +307,7 @@ class Annotatable(Subject):
             else:
                 raise ValueError("illegal strategy")
             copy = self.add(t, position=ann.position, szImagePath=temp.path)
-        elif t in (XDW_AID_RECEIVEDSTAMP, XDW_AID_CUSTOM):
+        else:  # XDW_AID_PAGEFORM, XDW_AID_OLE, XDW_AID_RECEIVEDSTAMP, XDW_AID_CUSTOM
             warnings.warn(
                     "copying {0} annotation is not supported".format(ann.type),
                     DeprecationWarning, stacklevel=2)

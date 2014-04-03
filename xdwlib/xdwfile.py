@@ -248,13 +248,13 @@ def sign(input_path,
         output_path=None,
         page=0,
         position=None,
-        type_="STAMP",
+        type="STAMP",
         certificate=None):
     """Sign i.e. place a signature on document/binder page.
 
     page            page number to paste signature on; starts with 0
     position        (Point) position to paste signature on; default=(0, 0)
-    type_           "STAMP" | "PKI"
+    type            "STAMP" | "PKI"
     certificate     certificate in DER (RFC3280) formatted str; valid for PKI
 
     Returns pathname of signed file.
@@ -266,11 +266,10 @@ def sign(input_path,
     opt = XDW_SIGNATURE_OPTION_V5()
     opt.nPage = page + 1
     opt.nHorPos, opt.nVerPos = ((position or Point(0, 0)) * 100).int()
-    opt.nSignatureType = XDW_SIGNATURE.normalize(type_)
-    type_ = XDW_SIGNATURE.normalize(type_)
-    if type_ == XDW_SIGNATURE_STAMP:
+    opt.nSignatureType = XDW_SIGNATURE.normalize(type)
+    if opt.nSignatureType == XDW_SIGNATURE_STAMP:
         modopt = None
-    else:  # type_ == XDW_SIGNATURE_PKI
+    else:  # opt.nSignatureType == XDW_SIGNATURE_PKI
         modopt = XDW_SIGNATURE_MODULE_OPTION_PKI()
         modopt.pSignerCert = ptr(cert)
         modopt.nSignerCertSize = len(cert)
@@ -742,7 +741,7 @@ class XDWFile(object):
             output_path=None,
             page=0,
             position=None,
-            type_="STAMP",
+            type="STAMP",
             certificate=None):
         """Sign i.e. attach signature.
 
@@ -754,7 +753,7 @@ class XDWFile(object):
         NB. self.save() is performed internally.
         """
         return self._process(sign, output_path=output_path, page=page,
-                lposition=position, type_=type_, certificate=certificate)
+                position=position, type=type, certificate=certificate)
 
     def protect(self,
             output_path=None,
@@ -840,10 +839,16 @@ class BaseSignature(object):
     def update(self):
         """Update signature status.
 
-        Note that the result of XDW_GetSignatureInformation() and therefore
-        self.doc.status may be altered.
+        Returns (signature_type, error_status).
+
+        N.B. self.doc.status may be altered.
         """
-        XDW_UpdateSignatureStatus(self.doc.handle, self.pos + 1)
+        status = XDW_UpdateSignatureStatus(self.doc.handle, self.pos + 1)
+        return (XDW_SIGNATURE[status.nSignatureType],
+                {
+                    XDW_SIGNATURE_STAMP: XDW_SIGNATURE_STAMP_ERROR,
+                    XDW_SIGNATURE_PKI: XDW_SIGNATURE_PKI_ERROR,
+                }[status.nSignatureType][status.nErrorStatus])
 
 
 class StampSignature(BaseSignature):
