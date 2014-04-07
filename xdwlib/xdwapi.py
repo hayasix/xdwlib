@@ -2233,6 +2233,14 @@ def XDW_GetInformation(index):
     pass
 
 
+# Stop running immediately if the fatal version is running.
+if XDW_GetInformation(XDW_GI_VERSION) == "8.0.3":
+    raise SystemExit("""\
+THIS VERSION OF DOCUWORKS HAS A FATAL ERROR THAT MAY CAUSE MASSIVE DATA LOSS.
+CONSULT YOUR SYSTEM ADMINISTRATOR AS SOON AS POSSIBLE.
+PROGRAM STOPS RUNNING TO AVOID ANY ACCIDENT.""")
+
+
 @APPEND(NULL)
 def XDW_AddSystemFolder(index):
     """XDW_AddSystemFolder(index)"""
