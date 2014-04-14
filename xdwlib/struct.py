@@ -170,6 +170,8 @@ class Rect(object):
     >>> r = Rect(Point(0, 10), Point(20, 30))
     >>> r.size()
     Point(20.00, 20.00)
+    >>> r == Rect(position=(0, 10), size=(20, 20))
+    True
     >>> r.shift(Point(15, 25))
     Rect(15.00, 35.00, 35.00, 55.00)
     >>> r * 2
@@ -182,10 +184,16 @@ class Rect(object):
     True
     >>> r != Rect(0, 10, 20, 30)
     False
+    >>> r.position()
+    Point(0.00, 10.00)
+    >>> r.size()
+    Point(20.00, 20.00)
+    >>> r.position_and_size()
+    (Point(0.00, 10.00), Point(20.00, 20.00))
     """
 
     def __init__(self, *args, **kw):
-        left = top = right = bottom = 0
+        left = top = right = bottom = width = height = None
         half_open = True
         if args:
             if len(args) == 2:
@@ -205,10 +213,13 @@ class Rect(object):
                     right = v
                 elif k in ("BOTTOM", "B"):
                     bottom = v
-                elif k in ("LEFTTOP", "LT"):
+                elif k in ("LEFTTOP", "LT", "POSITION"):
                     left, top = v
                 elif k in ("RIGHTBOTTOM", "RB"):
                     right, bottom = v
+                elif k == "SIZE":
+                    width, height = v
+                    right, bottom = left + width, top + height
                 elif k == "HALF_OPEN":
                     half_open = v
                 else:
