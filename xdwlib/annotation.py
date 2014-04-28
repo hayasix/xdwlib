@@ -22,7 +22,7 @@ from .struct import *
 from .annotatable import Annotatable
 
 
-__all__ = ("Annotation",)
+__all__ = ("Annotation", "AnnotationCache")
 
 
 def absolute_points(points):
@@ -31,6 +31,74 @@ def absolute_points(points):
         return points
     p0 = points[0]
     return tuple([p0] + [p0 + p for p in points[1:]])
+
+
+class AnnotationCache(object):
+
+    """Annotation cache.
+
+    This class is used to keep copies of annotation information.
+
+    Annotation's type and attributes, such as text, fore_color, fill_style,
+    points, position and size, will be kept as read-only.  Note that custom
+    user defined properties and user defined attributes are not supported.
+    """
+
+    def __init__(self, arg, **kw):
+        """Initiator.
+
+        __init__(ann) or __init__(type, **kw)
+        """
+        _set = object.__setattr__
+        if isinstance(arg, str):
+            assert "position" in kw and "size" in kw
+            _set(self, "_t", arg.upper())
+            _set(self, "_a", kw)
+        else:
+            assert len(kw) == 0
+            _set(self, "_t", arg.type)
+            _set(self, "_a", arg.attributes())
+
+    def __repr__(self):
+        return ("{cls}('{typ}', {attr})").format(
+                cls=self.__class__.__name__,
+                typ=self._t,
+                attr=", ".join("{k}={v}".format(k=k, v=repr(self._a[k]))
+                                            for k in sorted(self._a)))
+
+    def __getattribute__(self, name):
+        _get = object.__getattribute__
+        try:
+            return _get(self, "_a")[name]
+        except KeyError:
+            return _get(self, name)
+
+    def __setattr__(self, name, value):
+        raise AttributeError("assignment is not supported for {0}".format(
+                                self.__class__.__name__))
+
+    def rect(self):
+        """Returns display region for handiness."""
+        return Rect(self.position, self.position + self.size)
+
+    @property
+    def type(self):
+        return self._t
+
+    def content_text(self):
+        """Returns content text of annotation cache."""
+        if self._t == "TEXT":
+            return self.text
+        elif self._t == "LINK":
+            return self.caption
+        elif self._t == "STAMP":
+            return "{top} <DATE> {bottom}".format(
+                    top=self.top_field, bottom=self.bottom_field)
+        else:
+            return None
+
+    def attributes(self):
+        return self._a
 
 
 class Annotation(Annotatable, Observer):
@@ -171,9 +239,9 @@ class Annotation(Annotatable, Observer):
         data_type, value, text_type = XDW_GetAnnotationAttributeW(
                 self_handle, attrname, codepage=CP)
         if data_type == XDW_ATYPE_INT:
-            if self_type == "STICKEY" and attrname.endswith("Color"):
+            if self_type == "STICKEY" and attrname.endswith(b"Color"):
                 return XDW_COLOR_FUSEN[value]
-            elif self_type == "LINK" and attrname.endswith("XdwPage"):
+            elif self_type == "LINK" and attrname.endswith(b"XdwPage"):
                 return value - 1  # So, -1 for profile view.
             return scale(attrname, value, store=False)
         elif data_type == XDW_ATYPE_STRING:
@@ -191,9 +259,9 @@ class Annotation(Annotatable, Observer):
             raise AttributeError(
                     "Points of polygon or marker cannot be updated.")
         if attrname in XDW_ANNOTATION_ATTRIBUTE:
-            if self.type == "STICKEY" and attrname.endswith("Color"):
+            if self.type == "STICKEY" and attrname.endswith(b"Color"):
                 value = XDW_COLOR_FUSEN.normalize(value)
-            elif self.type == "LINK" and attrname.endswith("Page"):
+            elif self.type == "LINK" and attrname.endswith(b"Page"):
                 value += 1  # So, specify -1 for profile view.
             t, unit, limited = XDW_ANNOTATION_ATTRIBUTE[attrname]
             anntype = XDW_ANNOTATION_TYPE.inner(self.type)
@@ -259,20 +327,17 @@ class Annotation(Annotatable, Observer):
         Note that user defined attribute consists of simple byte string.
         If you want to handle values with types, consider set/get_property().
         """
-        if isinstance(name, str):
-            name = name.encode(CODEPAGE)
         XDW_SetAnnotationUserAttribute(
-                self.page.doc.handle, self.handle, name, value)
+                self.page.doc.handle, self.handle, cp(name), value)
 
     def has_property(self, name):
         """Test if annotationwise custom user defined property exists.
 
-        name        (str) name of property
+        name        (str or bytes) name of property
 
         Returns True if such property exists, or False if not.
         """
-        if not isinstance(name, str):
-            raise TypeError("property name must be str")
+        name = cp(name)
         try:
             t, v = XDW_GetAnnotationCustomAttributeByName(self.handle, name)
         except InvalidArgError:
@@ -282,7 +347,7 @@ class Annotation(Annotatable, Observer):
     def get_property(self, name, default=None):
         """Get annotationwise custom (i.e. with-type) user defined property.
 
-        name        (str) name of property
+        name        (str or bytes) name of property
                     (int) property order which starts with 0
         default     value to return if no property named name exist
 
@@ -291,7 +356,8 @@ class Annotation(Annotatable, Observer):
 
         Note that previous set_property(bytes_value) gives str.
         """
-        if isinstance(name, str):
+        if isinstance(name, (str, bytes)):
+            name = cp(name)
             try:
                 t, v = XDW_GetAnnotationCustomAttributeByName(
                         self.handle, name)
@@ -299,9 +365,9 @@ class Annotation(Annotatable, Observer):
                 return default
             return makevalue(t, v)
         if not isinstance(name, int):
-            raise TypeError("name must be str or int")
+            raise TypeError("name must be str, bytes or int")
         # Any custom attribute can be taken by order which starts with 0.
-        n = self.properties
+        n = self.propertie
         if name < 0:
             name += n
         if not (0 <= name < n):
@@ -317,7 +383,7 @@ class Annotation(Annotatable, Observer):
     def set_property(self, name, value):
         """Set annotationwise custom (i.e. with-type) user defined property.
 
-        name        (str) name of property
+        name        (str or bytes) name of property
         value       (str, bytes, int, bool or datetime.date) stored value
                     (None) delete property if update==False
         update      (bool) False=don't update value if exists already
@@ -327,7 +393,7 @@ class Annotation(Annotatable, Observer):
         Note that str value is actually stored in unicode and get_property()
         will returen str (i.e., unicode string).
         """
-        name = uc(name)  # Force to specify in str, not bytes.
+        name = cp(name)
         if not update and self.get_property(name) is not None:
             return
         if value is None:
@@ -345,9 +411,9 @@ class Annotation(Annotatable, Observer):
     def del_property(self, name):
         """Delete annotationwise custom (i.e. with-type) user defined property.
 
-        name        (str) name of property, or user attribute
+        name        (str or bytes) name of property, or user attribute
         """
-        name = uc(name)  # Force to specify in str, not bytes.
+        name = cp(name)
         XDW_SetAnnotationCustomAttribute(
                 self.page.doc.handle, self.handle, name, XDW_ATYPE_INT, NULL)
         self._set_property_count()
@@ -373,7 +439,7 @@ class Annotation(Annotatable, Observer):
     def attributes(self):
         """Returns dict of annotation attribute names and values."""
         tv = XDW_ANNOTATION_TYPE.normalize(self.type)
-        d = dict((outer_attribute_name(k), getattr(self, k))
+        d = dict((outer_attribute_name(k), getattr(self, uc(k)))
                 for (k, v) in XDW_ANNOTATION_ATTRIBUTE.items()
                 if tv in v[2])
         d["position"] = self.position
@@ -467,7 +533,7 @@ class Annotation(Annotatable, Observer):
         `observers' (list) attribute, so nothing is required after such change.
 
         Example (suppose there are 9 annotations in the page):
-        >>> for ann in pg: print ann.type
+        >>> for ann in pg: print(ann.type)
         ...
         TEXT
         TEXT
@@ -490,7 +556,7 @@ class Annotation(Annotatable, Observer):
         88.87, 82.35)))
         >>> # Notice ann.pos is replaced automatically.
         ...
-        >>> for ann in pg: print ann.type
+        >>> for ann in pg: print(ann.type)
         ...
         TEXT
         TEXT

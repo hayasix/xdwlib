@@ -140,6 +140,7 @@ class Annotatable(Subject):
 
         ann_type    annotation type by inner code
         position    (Point, unit=mm) location to paste
+        **kw        initial data; varies by ann_type
         """
         from .annotation import Annotation
         ann_type = XDW_ANNOTATION_TYPE.normalize(ann_type)
@@ -153,84 +154,158 @@ class Annotatable(Subject):
         return ann
 
     def add_text(self, position=_POSITION, **kw):
-        """Paste a text annotation."""
+        """Paste a text annotation.
+
+        position    (Point, unit=mm)
+        kw          (dict) initial attributes
+        """
         ann = self.add(XDW_AID_TEXT, position)
         for k, v in kw.items():
             setattr(ann, k, v)
         return ann
 
     def add_link(self, position=_POSITION, **kw):
-        """Paste a link annotation."""
+        """Paste a link annotation.
+
+        position    (Point, unit=mm)
+        kw          (dict) initial attributes
+        """
         ann = self.add(XDW_AID_LINK, position)
         for k, v in kw.items():
             setattr(ann, k, v)
         return ann
 
-    def add_stickey(self, position=_POSITION, size=_SIZE):
-        """Paste a stickey annotation."""
+    def add_stickey(self, position=_POSITION, size=_SIZE, **kw):
+        """Paste a stickey annotation.
+
+        position    (Point, unit=mm)
+        size        (Point, unit=mm)
+        kw          (dict) initial attributes
+        """
         if size.x < MIN_FUSEN_SIZE or size.y < MIN_FUSEN_SIZE:
             raise ValueError(FUSEN_TOO_SMALL)
-        return self.add(XDW_AID_FUSEN, position,
+        ann = self.add(XDW_AID_FUSEN, position,
                 nWidth=(size.x * 100), nHeight=(size.y * 100))
+        for k, v in kw.items():
+            setattr(ann, k, v)
+        return ann
 
-    def add_line(self, points=_POINTS[:2]):
+    def add_line(self, points=_POINTS[:2], **kw):
         """Paste a straight line annotation.
+
+        points      (2-element sequence of Point, unit=mm)
+        kw          (dict) initial attributes
 
         Note that `position' attribute is determined automatically.
         """
         points = relative_points(points)
-        return self.add(XDW_AID_STRAIGHTLINE, points[0],
+        ann = self.add(XDW_AID_STRAIGHTLINE, points[0],
                 nHorVec=(points[1].x * 100), nVerVec=(points[1].y * 100))
+        for k, v in kw.items():
+            setattr(ann, k, v)
+        return ann
 
     add_straightline = add_line
 
-    def add_rectangle(self, rect=_RECT):
-        """Paste a rectangular annotation."""
+    def add_rectangle(self, rect=_RECT, **kw):
+        """Paste a rectangular annotation.
+
+        rect        (Rect, unit=mm)
+        kw          (dict) initial attributes
+        """
         position, size = rect.position_and_size()
         if size.x < MIN_ANN_SIZE or size.y < MIN_ANN_SIZE:
             raise ValueError(ANN_TOO_SMALL)
-        return self.add(XDW_AID_RECTANGLE, position,
+        ann = self.add(XDW_AID_RECTANGLE, position,
                 nWidth=(size.x * 100), nHeight=(size.y * 100))
+        for k, v in kw.items():
+            setattr(ann, k, v)
+        return ann
 
     add_rect = add_rectangle
 
-    def add_arc(self, rect=_RECT):
-        """Paste an ellipse annotation."""
+    def add_arc(self, rect=_RECT, **kw):
+        """Paste an ellipse annotation.
+
+        rect        (Rect, unit=mm)
+        kw          (dict) initial attributes
+        """
         position, size = rect.position_and_size()
         if size.x < MIN_ANN_SIZE or size.y < MIN_ANN_SIZE:
             raise ValueError(ANN_TOO_SMALL)
-        return self.add(XDW_AID_ARC, position,
+        ann = self.add(XDW_AID_ARC, position,
                 nWidth=(size.x * 100), nHeight=(size.y * 100))
+        for k, v in kw.items():
+            setattr(ann, k, v)
+        return ann
 
     add_ellipse = add_arc
 
-    def add_bitmap(self, position=_POSITION, path=None):
-        """Paste an image annotation."""
-        return self.add(XDW_AID_BITMAP, position, szImagePath=path)
+    def add_bitmap(self, position=_POSITION, path=None, **kw):
+        """Paste an image annotation.
 
-    def add_stamp(self, position=_POSITION, width=_WIDTH):
-        """Paste a (date) stamp annotation."""
-        return self.add(XDW_AID_STAMP, position,
+        position    (Point, unit=mm)
+        path        (str or unicode) pathname of a image file
+        kw          (dict) initial attributes
+        """
+        ann = self.add(XDW_AID_BITMAP, position, szImagePath=path)
+        for k, v in kw.items():
+            setattr(ann, k, v)
+        return ann
+
+    def add_stamp(self, position=_POSITION, width=_WIDTH, **kw):
+        """Paste a (date) stamp annotation.
+
+        position    (Point, unit=mm)
+        width       (float, unit=mm)
+        kw          (dict) initial attributes
+        """
+        ann = self.add(XDW_AID_STAMP, position,
                 nWidth=(width * 100))
+        for k, v in kw.items():
+            setattr(ann, k, v)
+        return ann
+
 
     '''
-    def add_receivedstamp(self, position=_POSITION, width=_WIDTH):
-        """Paste a received stamp annotation."""
-        return self.add(XDW_AID_RECEIVEDSTAMP, position,
+    def add_receivedstamp(self, position=_POSITION, width=_WIDTH, **kw):
+        """Paste a received stamp annotation.
+
+        position    (Point, unit=mm)
+        width       (float, unit=mm)
+        kw          (dict) initial attributes
+        """
+        ann = self.add(XDW_AID_RECEIVEDSTAMP, position,
                 nWidth=(width * 100))
+        for k, v in kw.items():
+            setattr(ann, k, v)
+        return ann
 
     def add_custom(self, position=_POSITION,
-                size=_SIZE, guid="???", data="???"):
-        """Paste a custom specification annotation."""
-        return self.add(XDW_AID_CUSTOM, position,
+                size=_SIZE, guid="???", data="???", **kw):
+        """Paste a custom specification annotation.
+
+        position    (Point, unit=mm)
+        size        (Point, unit=mm)
+        guid        (str)
+        data        (str)
+        kw          (dict) initial attributes
+        """
+        ann = self.add(XDW_AID_CUSTOM, position,
                 nWidth=(size.x * 100), nHeight=(size.y * 100),
                 lpszGuid=guid,
                 nCustomDataSize=len(data), pCustomData=data)
+        for k, v in kw.items():
+            setattr(ann, k, v)
+        return ann
     '''
 
-    def add_marker(self, points=_POINTS):
+    def add_marker(self, points=_POINTS, **kw):
         """Paste a marker annotation.
 
+        points      (sequence of Point, unit=mm)
+        kw          (dict) initial attributes
+
         Note that `position' attribute is determined automatically.
         """
         points = relative_points(points)
@@ -238,12 +313,18 @@ class Annotatable(Subject):
         for i, p in enumerate(points):
             c_points[i].x = int(p.x * 100)
             c_points[i].y = int(p.y * 100)
-        return self.add(XDW_AID_MARKER, _POSITION,  # position is dummy
+        ann = self.add(XDW_AID_MARKER, _POSITION,  # position is dummy
                 nCounts=len(points), pPoints=c_points)
+        for k, v in kw.items():
+            setattr(ann, k, v)
+        return ann
 
-    def add_polygon(self, points=_POINTS):
+    def add_polygon(self, points=_POINTS, **kw):
         """Paste a polygon annotation.
 
+        points      (sequence of Point, unit=mm)
+        kw          (dict) initial attributes
+
         Note that `position' attribute is determined automatically.
         """
         points = relative_points(points)
@@ -251,14 +332,19 @@ class Annotatable(Subject):
         for i, p in enumerate(points):
             c_points[i].x = int(p.x * 100)
             c_points[i].y = int(p.y * 100)
-        return self.add(XDW_AID_POLYGON, _POSITION,  # position is dummy
+        ann = self.add(XDW_AID_POLYGON, _POSITION,  # position is dummy
                 nCounts=len(points), pPoints=c_points)
+        for k, v in kw.items():
+            setattr(ann, k, v)
+        return ann
 
     def copy_annotation(self, ann, strategy=1):
         """Copy an annotation with the same position and attributes.
 
+        ann         (Annotation)
+
         BITMAP can be copied, but it takes great time to process image.
-        CUSTOM and RECEIVEDSTAMP are not copyable.
+        PAGEFORM, OLE, CUSTOM and RECEIVEDSTAMP are not copyable.
         """
         t = XDW_ANNOTATION_TYPE.normalize(ann.type)
         if t == XDW_AID_TEXT:
@@ -274,6 +360,8 @@ class Annotatable(Subject):
             copy = self.add_marker(ann.points)
         elif t == XDW_AID_POLYGON:
             copy = self.add_polygon(ann.points)
+        elif t == XDW_AID_LINK:
+            copy = self.add_link(position=ann.position)
         elif t == XDW_AID_BITMAP:
             if not PIL_ENABLED:
                 warnings.warn("install PIL before copying bitmap annotation",
@@ -299,7 +387,7 @@ class Annotatable(Subject):
             else:
                 raise ValueError("illegal strategy")
             copy = self.add(t, position=ann.position, szImagePath=temp.path)
-        elif t in (XDW_AID_RECEIVEDSTAMP, XDW_AID_CUSTOM):
+        else:  # XDW_AID_PAGEFORM, XDW_AID_OLE, XDW_AID_RECEIVEDSTAMP, XDW_AID_CUSTOM
             warnings.warn(
                     "copying {0} annotation is not supported".format(ann.type),
                     DeprecationWarning, stacklevel=2)
@@ -339,7 +427,10 @@ class Annotatable(Subject):
         raise NotImplementedError()
 
     def delete(self, pos):
-        """Remove an annotation."""
+        """Remove an annotation.
+
+        pos         (int) annotation position in page
+        """
         pos = self._pos(pos)
         ann = self.annotation(pos)
         self._delete(ann)
@@ -351,7 +442,10 @@ class Annotatable(Subject):
         raise NotImplementedError()
 
     def annotation_text(self, recursive=True):
-        """Get text in child/descendant annotations."""
+        """Get text in child/descendant annotations.
+
+        recursive   (bool) get content text of descendants also
+        """
         result = []
         for ann in self:
             result.append(ann.content_text())

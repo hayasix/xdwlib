@@ -2,6 +2,10 @@
 # vim: fileencoding=cp932 fileformat=dos
 
 from distutils.core import setup
+try:
+    import py2exe
+except ImportError:
+    pass
 
 from xdwlib import __author__, __copyright__, __license__, __version__, __email__
 

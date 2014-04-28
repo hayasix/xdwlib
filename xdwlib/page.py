@@ -21,6 +21,7 @@ from os.path import abspath, split as splitpath, join as joinpath
 
 from .xdwapi import *
 from .common import *
+from .xdwtemp import XDWTemp
 from .observer import *
 from .struct import Point, Rect
 from .annotatable import Annotatable
@@ -86,23 +87,31 @@ class PageCollection(list):
         light       (bool) force to use DocuWorks Viewer Light.
                     Note that DocuWorks Viewer is used if Light version is
                     not avaiable.
-        wait        (bool) wait until viewer stops.
-                    Given False, (proc, temp) is returned.  Users should
-                    remove the file of path after the Popen object ends.
+        wait        (bool) wait until viewer stops and get annotation info
         flat        (bool) combine pages into a single document.
         group       (bool) group continuous pages by original document,
                     i.e. create document-in-binder.
         options     optional arguments for DocuWorks Viewer (Light).
                     See DocuWorks genuine help document.
 
-        Returns (proc, temp) if wait is False, where:
+        If wait is True, returns a dict, each key is page pos and value is
+        a list of AnnotationCache objects i.e.:
+
+            {0: [ann_cache, ann_cache, ...], 1: [...], ...}
+
+        Note that pages without annotations are ignored.
+
+        If wait is False, returns (proc, path) where:
+
                 proc    subprocess.Popen object
-                temp    pathname of temporary file to view.
+                path    pathname of temporary file being viewed
+
+        In this case, you should remove temp and its parent dir after use.
 
         NB. Attachments are not shown.
         NB. Viewing signed pages will raise AccessDeniedError.
         """
-        temp = XDWTemp()
+        temp = XDWTemp(autoclose=wait)
         temp.path = self.export(
                 joinpath(temp.dir, "{0}_P{1}.{2}".format(
                         self[0].doc.name,
@@ -113,12 +122,17 @@ class PageCollection(list):
         args.extend(options)
         args.append(temp.path)
         proc = subprocess.Popen(args)
-        if wait:
-            proc.wait()
-            temp.close()
-            return None
-        else:
+        if not wait:
             return (proc, temp.path)
+        from .xdwfile import xdwopen
+        from .annotation import AnnotationCache
+        proc.wait()
+        doc = xdwopen(temp.path)
+        r = [(p, [AnnotationCache(ann) for ann in doc.page(p)])
+                for p in range(doc.pages) if doc.page(p).annotations]
+        doc.close()
+        temp.close()
+        return dict(r)
 
     def group(self):
         """Make an iterator that returns consecutive page-groups.
@@ -594,14 +608,24 @@ class Page(Annotatable, Observer):
         light       (bool) force to use DocuWorks Viewer Light.
                     Note that DocuWorks Viewer is used if Light version is
                     not avaiable.
-        wait        (bool) wait until viewer stops.
-                    Given False, (Popen, path) is returned.  Users should
-                    remove the file of path after the Popen object ends.
+        wait        (bool) wait until viewer stops and get annotation info
         options     optional arguments for DocuWorks Viewer (Light).
                     See DocuWorks genuine help document.
+
+        If wait is True, returns a list of AnnotationCache objects.
+
+        If wait is False, returns (proc, path) where:
+
+                proc    subprocess.Popen object
+                path    pathname of temporary file begin viewed
+
+        In this case, you should remove temp and its parent dir after use.
         """
         pc = PageCollection() + self
-        return pc.view(light=light, wait=wait, flat=True, *options)
+        r = pc.view(light=light, wait=wait, flat=True, *options)
+        if wait:
+            return r[0] if r else []
+        return r
 
     def text_regions(self, text,
             ignore_case=False, ignore_width=False, ignore_hirakata=False):

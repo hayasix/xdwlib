@@ -87,13 +87,17 @@ class XDWError(Exception):
     def __init__(self, message=""):
         Exception.__init__(self, message)
         self.code = self.__class__.e
-        self.msg = XDW_ERROR_MESSAGES.get(self.code, "XDW_E_UNDEFINED")
-
-    def __str__(self):
-        return "{0} ({1:08X})".format(self.msg, _uint32(self.code))
+        major = XDW_ERROR_MESSAGES.get(self.code, "XDW_E_UNDEFINED")
+        if message:
+            self.message = "{0} ({1:08X}) {2}".format(major, _uint32(self.code), message)
+        else:
+            self.message = "{0} ({1:08X})".format(major, _uint32(self.code))
 
     def __repr__(self):
-        return self.msg
+        return self.message
+
+    def __str__(self):
+        return self.message
 
 
 class NotInstalledError(XDWError): e = XDW_E_NOT_INSTALLED
@@ -658,11 +662,11 @@ XDW_DOCUMENT_TYPE = XDWConst({
         XDW_DT_BINDER               : "BINDER",
         }, default=XDW_DT_DOCUMENT)
 
-XDW_PROP_TITLE                      = "%Title"
-XDW_PROP_SUBJECT                    = "%Subject"
-XDW_PROP_AUTHOR                     = "%Author"
-XDW_PROP_KEYWORDS                   = "%Keywords"
-XDW_PROP_COMMENTS                   = "%Comments"
+XDW_PROP_TITLE                      = b"%Title"
+XDW_PROP_SUBJECT                    = b"%Subject"
+XDW_PROP_AUTHOR                     = b"%Author"
+XDW_PROP_KEYWORDS                   = b"%Keywords"
+XDW_PROP_COMMENTS                   = b"%Comments"
 
 XDW_DOCUMENT_ATTRIBUTE = XDWConst({
         XDW_PROP_TITLE              : "%Title",
@@ -672,11 +676,11 @@ XDW_DOCUMENT_ATTRIBUTE = XDWConst({
         XDW_PROP_COMMENTS           : "%Comments",
         }, default=None)
 
-XDW_PROPW_TITLE                     = "%Title"
-XDW_PROPW_SUBJECT                   = "%Subject"
-XDW_PROPW_AUTHOR                    = "%Author"
-XDW_PROPW_KEYWORDS                  = "%Keywords"
-XDW_PROPW_COMMENTS                  = "%Comments"
+XDW_PROPW_TITLE                     = b"%Title"
+XDW_PROPW_SUBJECT                   = b"%Subject"
+XDW_PROPW_AUTHOR                    = b"%Author"
+XDW_PROPW_KEYWORDS                  = b"%Keywords"
+XDW_PROPW_COMMENTS                  = b"%Comments"
 
 XDW_DOCUMENT_ATTRIBUTE_W = XDWConst({
         XDW_PROPW_TITLE             : "%Title",
@@ -1033,87 +1037,87 @@ XDW_STARCH_ACTION = XDWConst({
         XDW_STARCH_OFF              : "OFF",
         }, default=XDW_STARCH)
 
-XDW_ATN_Text                        = "%Text"
-XDW_ATN_FontName                    = "%FontName"
-XDW_ATN_FontStyle                   = "%FontStyle"
-XDW_ATN_FontSize                    = "%FontSize"
-XDW_ATN_ForeColor                   = "%ForeColor"
-XDW_ATN_FontPitchAndFamily          = "%FontPitchAndFamily"
-XDW_ATN_FontCharSet                 = "%FontCharSet"
-XDW_ATN_BackColor                   = "%BackColor"
-XDW_ATN_Caption                     = "%Caption"
-XDW_ATN_Url                         = "%Url"
-XDW_ATN_XdwPath                     = "%XdwPath"
-XDW_ATN_ShowIcon                    = "%ShowIcon"
-XDW_ATN_LinkType                    = "%LinkType"
-XDW_ATN_XdwPage                     = "%XdwPage"
-XDW_ATN_Tooltip                     = "%Tooltip"
-XDW_ATN_Tooltip_String              = "%TooltipString"
+XDW_ATN_Text                        = b"%Text"
+XDW_ATN_FontName                    = b"%FontName"
+XDW_ATN_FontStyle                   = b"%FontStyle"
+XDW_ATN_FontSize                    = b"%FontSize"
+XDW_ATN_ForeColor                   = b"%ForeColor"
+XDW_ATN_FontPitchAndFamily          = b"%FontPitchAndFamily"
+XDW_ATN_FontCharSet                 = b"%FontCharSet"
+XDW_ATN_BackColor                   = b"%BackColor"
+XDW_ATN_Caption                     = b"%Caption"
+XDW_ATN_Url                         = b"%Url"
+XDW_ATN_XdwPath                     = b"%XdwPath"
+XDW_ATN_ShowIcon                    = b"%ShowIcon"
+XDW_ATN_LinkType                    = b"%LinkType"
+XDW_ATN_XdwPage                     = b"%XdwPage"
+XDW_ATN_Tooltip                     = b"%Tooltip"
+XDW_ATN_Tooltip_String              = b"%TooltipString"
 XDW_ATN_TooltipString               = XDW_ATN_Tooltip_String            # alias
-XDW_ATN_XdwPath_Relative            = "%XdwPathRelative"
+XDW_ATN_XdwPath_Relative            = b"%XdwPathRelative"
 XDW_ATN_XdwPathRelative             = XDW_ATN_XdwPath_Relative          # alias
-XDW_ATN_XdwLink                     = "%XdwLink"
-XDW_ATN_LinkAtn_Title               = "%LinkAtnTitle"
+XDW_ATN_XdwLink                     = b"%XdwLink"
+XDW_ATN_LinkAtn_Title               = b"%LinkAtnTitle"
 XDW_ATN_LinkAtnTitle                = XDW_ATN_LinkAtn_Title             # alias
-XDW_ATN_OtherFilePath               = "%OtherFilePath"
-XDW_ATN_OtherFilePath_Relative      = "%OtherFilePathRelative"
+XDW_ATN_OtherFilePath               = b"%OtherFilePath"
+XDW_ATN_OtherFilePath_Relative      = b"%OtherFilePathRelative"
 XDW_ATN_OtherFilePathRelative       = XDW_ATN_OtherFilePath_Relative    # alias
-XDW_ATN_MailAddress                 = "%MailAddress"
-XDW_ATN_BorderStyle                 = "%BorderStyle"
-XDW_ATN_BorderWidth                 = "%BorderWidth"
-XDW_ATN_BorderColor                 = "%BorderColor"
-XDW_ATN_BorderTransparent           = "%BorderTransparent"
-XDW_ATN_BorderType                  = "%BorderType"
-XDW_ATN_FillStyle                   = "%FillStyle"
-XDW_ATN_FillColor                   = "%FillColor"
-XDW_ATN_FillTransparent             = "%FillTransparent"
-XDW_ATN_ArrowheadType               = "%ArrowheadType"
-XDW_ATN_ArrowheadStyle              = "%ArrowheadStyle"
-XDW_ATN_WordWrap                    = "%WordWrap"
-XDW_ATN_TextDirection               = "%TextDirection"
-XDW_ATN_TextOrientation             = "%TextOrientation"
-XDW_ATN_LineSpace                   = "%LineSpace"
-XDW_ATN_AutoResize                  = "%AutoResize"
-XDW_ATN_Invisible                   = "%Invisible"
-XDW_ATN_PageFrom                    = "%PageFrom"
-XDW_ATN_XdwNameInXbd                = "%XdwNameInXbd"
-XDW_ATN_TopField                    = "%TopField"
-XDW_ATN_BottomField                 = "%BottomField"
-XDW_ATN_DateStyle                   = "%DateStyle"
-XDW_ATN_YearField                   = "%YearField"
-XDW_ATN_MonthField                  = "%MonthField"
-XDW_ATN_DayField                    = "%DayField"
-XDW_ATN_BasisYearStyle              = "%BasisYearStyle"
-XDW_ATN_BasisYear                   = "%BasisYear"
-XDW_ATN_DateField_FirstChar         = "%DateFieldFirstChar"
+XDW_ATN_MailAddress                 = b"%MailAddress"
+XDW_ATN_BorderStyle                 = b"%BorderStyle"
+XDW_ATN_BorderWidth                 = b"%BorderWidth"
+XDW_ATN_BorderColor                 = b"%BorderColor"
+XDW_ATN_BorderTransparent           = b"%BorderTransparent"
+XDW_ATN_BorderType                  = b"%BorderType"
+XDW_ATN_FillStyle                   = b"%FillStyle"
+XDW_ATN_FillColor                   = b"%FillColor"
+XDW_ATN_FillTransparent             = b"%FillTransparent"
+XDW_ATN_ArrowheadType               = b"%ArrowheadType"
+XDW_ATN_ArrowheadStyle              = b"%ArrowheadStyle"
+XDW_ATN_WordWrap                    = b"%WordWrap"
+XDW_ATN_TextDirection               = b"%TextDirection"
+XDW_ATN_TextOrientation             = b"%TextOrientation"
+XDW_ATN_LineSpace                   = b"%LineSpace"
+XDW_ATN_AutoResize                  = b"%AutoResize"
+XDW_ATN_Invisible                   = b"%Invisible"
+XDW_ATN_PageFrom                    = b"%PageFrom"
+XDW_ATN_XdwNameInXbd                = b"%XdwNameInXbd"
+XDW_ATN_TopField                    = b"%TopField"
+XDW_ATN_BottomField                 = b"%BottomField"
+XDW_ATN_DateStyle                   = b"%DateStyle"
+XDW_ATN_YearField                   = b"%YearField"
+XDW_ATN_MonthField                  = b"%MonthField"
+XDW_ATN_DayField                    = b"%DayField"
+XDW_ATN_BasisYearStyle              = b"%BasisYearStyle"
+XDW_ATN_BasisYear                   = b"%BasisYear"
+XDW_ATN_DateField_FirstChar         = b"%DateFieldFirstChar"
 XDW_ATN_DateFieldFirstChar          = XDW_ATN_DateField_FirstChar       # alias
-XDW_ATN_Alignment                   = "%Alignment"
-XDW_ATN_LeftRightMargin             = "%LeftRightMargin"
-XDW_ATN_TopBottomMargin             = "%TopBottomMargin"
-XDW_ATN_VerPosition                 = "%VerPosition"
-XDW_ATN_StartingNumber              = "%StartingNumber"
-XDW_ATN_Digit                       = "%Digit"
-XDW_ATN_PageRange                   = "%PageRange"
-XDW_ATN_BeginningPage               = "%BeginningPage"
-XDW_ATN_EndingPage                  = "%EndingPage"
-XDW_ATN_Zoom                        = "%Zoom"
-XDW_ATN_ImageFile                   = "%ImageFile"
-XDW_ATN_Points                      = "%Points"
-XDW_ATN_DateFormat                  = "%DateFormat"
-XDW_ATN_DateOrder                   = "%DateOrder"
-XDW_ATN_TextSpacing                 = "%Spacing"
-XDW_ATN_TextTopMargin               = "%TopMargin"
-XDW_ATN_TextLeftMargin              = "%LeftMargin"
-XDW_ATN_TextBottomMargin            = "%BottomMargin"
-XDW_ATN_TextRightMargin             = "%RightMargin"
-XDW_ATN_TextAutoResizeHeight        = "%AutoResizeHeight"
+XDW_ATN_Alignment                   = b"%Alignment"
+XDW_ATN_LeftRightMargin             = b"%LeftRightMargin"
+XDW_ATN_TopBottomMargin             = b"%TopBottomMargin"
+XDW_ATN_VerPosition                 = b"%VerPosition"
+XDW_ATN_StartingNumber              = b"%StartingNumber"
+XDW_ATN_Digit                       = b"%Digit"
+XDW_ATN_PageRange                   = b"%PageRange"
+XDW_ATN_BeginningPage               = b"%BeginningPage"
+XDW_ATN_EndingPage                  = b"%EndingPage"
+XDW_ATN_Zoom                        = b"%Zoom"
+XDW_ATN_ImageFile                   = b"%ImageFile"
+XDW_ATN_Points                      = b"%Points"
+XDW_ATN_DateFormat                  = b"%DateFormat"
+XDW_ATN_DateOrder                   = b"%DateOrder"
+XDW_ATN_TextSpacing                 = b"%Spacing"
+XDW_ATN_TextTopMargin               = b"%TopMargin"
+XDW_ATN_TextLeftMargin              = b"%LeftMargin"
+XDW_ATN_TextBottomMargin            = b"%BottomMargin"
+XDW_ATN_TextRightMargin             = b"%RightMargin"
+XDW_ATN_TextAutoResizeHeight        = b"%AutoResizeHeight"
 XDW_ATN_TopMargin                   = XDW_ATN_TextTopMargin             # alias
 XDW_ATN_LeftMargin                  = XDW_ATN_TextLeftMargin            # alias
 XDW_ATN_BottomMargin                = XDW_ATN_TextBottomMargin          # alias
 XDW_ATN_RightMargin                 = XDW_ATN_TextRightMargin           # alias
 XDW_ATN_AutoResizeHeight            = XDW_ATN_TextAutoResizeHeight
-XDW_ATN_GUID                        = "%CustomAnnGuid"
-XDW_ATN_CustomData                  = "%CustomAnnCustomData"
+XDW_ATN_GUID                        = b"%CustomAnnGuid"
+XDW_ATN_CustomData                  = b"%CustomAnnCustomData"
 XDW_ATN_CustomAnnGuid               = XDW_ATN_GUID                      # alias
 XDW_ATN_CustomAnnCustomData         = XDW_ATN_CustomData                # alias
 
@@ -2094,8 +2098,8 @@ XDW_AID_INITIAL_DATA = {
         XDW_AID_PAGEFORM        : None,
         XDW_AID_OLE             : None,
         XDW_AID_BITMAP          : XDW_AA_BITMAP_INITIAL_DATA,
-        XDW_AID_RECEIVEDSTAMP   : None,
-        XDW_AID_CUSTOM          : None,
+        XDW_AID_RECEIVEDSTAMP   : XDW_AA_RECEIVEDSTAMP_INITIAL_DATA,
+        XDW_AID_CUSTOM          : XDW_AA_CUSTOM_INITIAL_DATA,
         XDW_AID_TITLE           : None,
         XDW_AID_GROUP           : None,
         }
@@ -2228,6 +2232,14 @@ def ATTR(by_order=False, widechar=False, custom=False):
 def XDW_GetInformation(index):
     """XDW_GetInformation(index)"""
     pass
+
+
+# Stop running immediately if the fatal version is running.
+if XDW_GetInformation(XDW_GI_VERSION) == "8.0.3":
+    raise SystemExit("""\
+THIS VERSION OF DOCUWORKS HAS A FATAL ERROR THAT MAY CAUSE MASSIVE DATA LOSS.
+CONSULT YOUR SYSTEM ADMINISTRATOR AS SOON AS POSSIBLE.
+PROGRAM STOPS RUNNING TO AVOID ANY ACCIDENT.""")
 
 
 @APPEND(NULL)
@@ -2703,7 +2715,7 @@ def XDW_SignDocument(input_path, output_path, option, module_option):
         if module_status.nSignatureType == XDW_SIGNATURE_STAMP:
             msg = XDW_SIGNATURE_STAMP_ERROR[module_status.nErrorStatus]
         else:
-            msg = XDW_SIGNATURE_PIK_ERROR[module_status.nErrorStatus]
+            msg = XDW_SIGNATURE_PKI_ERROR[module_status.nErrorStatus]
         raise SignatureModuleError(msg)
     return 0
 
@@ -2761,7 +2773,7 @@ def XDW_UpdateSignatureStatus(doc_handle, pos, module_option, module_status):
     except SignatureModuleError as e:
         raise SignatureModuleError("signature type {0}, error status {1}".format(module_status.nSignatureType, module_status.nErrorStatus))
     # Note that signature information (XDW_GetSignatureInformation()) may be altered.
-    return 0
+    return module_status
 
 
 @RAISE
@@ -2916,7 +2928,7 @@ def XDW_GetAnnotationAttributeW(ann_handle, attr_name, codepage=932):
     elif data_type == XDW_ATYPE_STRING:
         attr_val = create_unicode_buffer(size)
     else:  # data_type == 2
-        count = size / sizeof(XDW_POINT)
+        count = int(size / sizeof(XDW_POINT))
         attr_val = (XDW_POINT * count)()
     TRY(DLL.XDW_GetAnnotationAttributeW, ann_handle, attr_name, byref(attr_val), size, byref(text_type), codepage, NULL)
     if data_type == XDW_ATYPE_INT:

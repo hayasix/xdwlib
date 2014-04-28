@@ -52,7 +52,7 @@ def create(input_path=None, output_path=None, **kw):
                 pass  # fall through; processed by respective apps.
         return create_from_app(input_path, output_path, **kw)
     # input_path==None means generating single blank page.
-    output_path = derivative_path(adjust_path(output_path or u"blank.xdw"))
+    output_path = derivative_path(adjust_path(output_path or "blank.xdw"))
     with open(output_path, "wb") as f:
         f.write(BLANKPAGE)
     return output_path
@@ -171,7 +171,7 @@ def merge(input_paths, output_path=None):
     root, ext = os.path.splitext(input_paths[0])
     output_path = adjust_path(uc(output_path or root), ext=".xdw")
     output_path = derivative_path(output_path)
-    XDW_MergeXdwFiles(cp(input_paths), cp(output_path))
+    XDW_MergeXdwFiles(map(cp, input_paths), cp(output_path))
     return output_path
 
 

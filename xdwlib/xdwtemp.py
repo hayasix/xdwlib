@@ -49,27 +49,35 @@ class XDWTemp(object):
             some_xdw_page.export(temp.path)
             do_some_work(temp.path)
 
-    CAUTION: If XDWTemp object is deleted before close(), the associated
-             temporary directory and file will still remain.
+    By default, each XDWTemp object is purged with the associated
+    temporary directory and file deleted automatically (auto-close).
+    To avoid this action, specify autoclose=False on generation.
 
     ATTRIBUTES
     ----------
 
     path        (str) pathname of temporary file
     dir         (str) temporary directory name = os.path.split(path)[0]
+    autoclose   (bool) call close() automatically before destruction
     """
 
-    def __init__(self, suffix=".xdw", prefix=""):
+    def __init__(self, suffix=".xdw", prefix="", autoclose=True):
         """Initiator.
 
-        suffix      (str or unicode) suffix of temporary file
-        prefix      (str or unicode) prefix of temporary file
+        suffix      (str or unicode) suffix of temporary file name
+        prefix      (str or unicode) prefix of temporary file name
+        autoclose   (bool) call close() automatically before destruction
         """
         fd, path = mkstemp(suffix=suffix, prefix=prefix, dir=mkdtemp())
         os.close(fd)
         os.remove(path)  # Directory is not removed.
         self.path = path
         self.dir = os.path.split(path)[0]
+        self.autoclose = autoclose
+
+    def __del__(self):
+        if self.autoclose and os.path.exists(self.dir):
+            self.close()
 
     def close(self):
         """Remove temporary file and directory."""
@@ -78,9 +86,10 @@ class XDWTemp(object):
         try:
             os.rmdir(self.dir)
         except Exception as e:
+            import time
             sys.stderr.write("""\
 {0}:xdwlib:can't delete temporary directory '{1}'\n""".format(
-datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.dir))
+time.strftime("%Y-%m-%d %H:%M:%S"), self.dir))
 
     def __enter__(self):
         return self

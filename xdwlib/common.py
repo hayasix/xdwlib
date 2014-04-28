@@ -15,7 +15,6 @@ FOR A PARTICULAR PURPOSE.
 
 import os
 import re
-from tempfile import mkstemp, mkdtemp
 import base64
 import time
 import datetime
@@ -153,15 +152,20 @@ def joinf(sep, seq):
 
 def inner_attribute_name(name):
     """Get XDWAPI style attribute name e.g. font_name --> %FontName"""
-    if name.startswith("%"):
+    if isinstance(name, bytes):
         return name
+    if name.startswith("%"):
+        return cp(name)
     if "A" <= name[0] <= "Z":
-        return "%" + name
-    return "%" + "".join([s.capitalize() for s in name.split("_")])
+        return cp("%" + name)
+    return cp("%" + "".join([s.capitalize() for s in name.split("_")]))
 
 
 def outer_attribute_name(name):
     """Get xdwlib style attribute name e.g. %FontName --> font_name"""
+    if isinstance(name, str):
+        return name
+    name = uc(name)
     if not name.startswith("%"):
         return name
     return re.sub("([A-Z])", r"_\1", name[1:])[1:].lower()

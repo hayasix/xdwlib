@@ -30,7 +30,7 @@ __all__ = (
         "StampSignature", "PKISignature",
         "xdwopen", "create_sfx", "extract_sfx", "optimize", "copy",
         "protection_info", "protect", "unprotect", "sign",
-        "VALID_DOCUMENT_HANDLES", "close_all",
+        "VALID_DOCUMENT_HANDLES",
         )
 
 
@@ -51,6 +51,48 @@ def atexithandler():
             continue
         VALID_DOCUMENT_HANDLES.remove(handle)
     XDW_Finalize()
+
+
+def view(path, light=False, wait=True,
+        page=0, document=None, fullscreen=False, zoom=0):
+    """View document.
+
+    path        (str or unicode)
+    light       (bool) force to use DocuWorks Viewer Light.
+                Note that DocuWorks Viewer is used if Light version is
+                not avaiable.
+    wait        (bool) wait until viewer stops
+    page        (int) page number to view
+    document    (unicode) document name in binder if required
+    fullscreen  (bool) view in full screen (presentation mode)
+    zoom        (int) in 10-1600 percent; 0 means 100%
+                (str) 'WIDTH' | 'HEIGHT' | 'PAGE'
+    """
+    import subprocess
+    path = cp(path)
+    if os.path.splitext(path)[1].upper() not in (".XDW", ".XBD"):
+        raise BadFormatError("extension must be .xdw or .xbd")
+    if page is None:
+        page = 0
+    args = [get_viewer(light=light), path, "/n" + str(page + 1)]
+    if document:
+        args.append('/i"' + cp(document) + '"')
+    if fullscreen:
+        args.append("/f")
+    if isinstance(zoom, (int, float)) and zoom:
+        if zoom and not (10 <= zoom <= 1600):
+            raise ValueError("10..1600% is valid, {0} given".format(zoom))
+        args.append("/m{0}".format(int(zoom)))
+    elif isinstance(zoom, basestring):
+        if zoom.upper() not in ("WIDTH", "HEIGHT", "PAGE"):
+            raise ValueError(("int, 'WIDTH', 'HEIGHT' or 'PAGE' is valid"
+                              "for window size, {0} given").format(repr(zoom)))
+        args.append("/m{0}".format(zoom[0].lower()))
+    print(" ".join('"'+arg+'"' if " " in arg else arg for arg in args))
+    proc = subprocess.Popen(args)
+    if not wait:
+        return (proc, path)
+    proc.wait()
 
 
 def xdwopen(path, readonly=False, authenticate=True, autosave=False):
@@ -247,13 +289,13 @@ def sign(input_path,
         output_path=None,
         page=0,
         position=None,
-        type_="STAMP",
+        type="STAMP",
         certificate=None):
     """Sign i.e. place a signature on document/binder page.
 
     page            page number to paste signature on; starts with 0
     position        (Point) position to paste signature on; default=(0, 0)
-    type_           "STAMP" | "PKI"
+    type            "STAMP" | "PKI"
     certificate     certificate in DER (RFC3280) formatted str; valid for PKI
 
     Returns pathname of signed file.
@@ -265,11 +307,11 @@ def sign(input_path,
     opt = XDW_SIGNATURE_OPTION_V5()
     opt.nPage = page + 1
     opt.nHorPos, opt.nVerPos = ((position or Point(0, 0)) * 100).int()
-    opt.nSignatureType = XDW_SIGNATURE.normalize(type_)
-    type_ = XDW_SIGNATURE.normalize(type_)
-    if type_ == XDW_SIGNATURE_STAMP:
+    opt.nSignatureType = XDW_SIGNATURE.normalize(type)
+    type = XDW_SIGNATURE.normalize(type)
+    if type == XDW_SIGNATURE_STAMP:
         modopt = None
-    else:  # type_ == XDW_SIGNATURE_PKI
+    else:  # opt.nSignatureType == XDW_SIGNATURE_PKI
         modopt = XDW_SIGNATURE_MODULE_OPTION_PKI()
         modopt.pSignerCert = ptr(cert)
         modopt.nSignerCertSize = len(cert)
@@ -741,7 +783,7 @@ class XDWFile(object):
             output_path=None,
             page=0,
             position=None,
-            type_="STAMP",
+            type="STAMP",
             certificate=None):
         """Sign i.e. attach signature.
 
@@ -753,7 +795,7 @@ class XDWFile(object):
         NB. self.save() is performed internally.
         """
         return self._process(sign, output_path=output_path, page=page,
-                lposition=position, type_=type_, certificate=certificate)
+                lposition=position, type=type, certificate=certificate)
 
     def protect(self,
             output_path=None,
@@ -839,10 +881,16 @@ class BaseSignature(object):
     def update(self):
         """Update signature status.
 
-        Note that the result of XDW_GetSignatureInformation() and therefore
-        self.doc.status may be altered.
+        Returns (signature_type, error_status).
+
+        N.B. self.doc.status may be altered.
         """
-        XDW_UpdateSignatureStatus(self.doc.handle, self.pos + 1)
+        status = XDW_UpdateSignatureStatus(self.doc.handle, self.pos + 1)
+        return (XDW_SIGNATURE[status.nSignatureType],
+                {
+                    XDW_SIGNATURE_STAMP: XDW_SIGNATURE_STAMP_ERROR,
+                    XDW_SIGNATURE_PKI: XDW_SIGNATURE_PKI_ERROR,
+                }[status.nSignatureType][status.nErrorStatus])
 
 
 class StampSignature(BaseSignature):
