@@ -171,8 +171,9 @@ class PageCollection(list):
         from .binder import create_binder
         from .xdwfile import xdwopen
         path = path or self[0].doc.name + ".xdw"
-        path = derivative_path(adjust_path(uc(path)))
+        path = adjust_path(uc(path))
         path = os.path.splitext(path)[0] + (".xdw" if flat else ".xbd")
+        path = derivative_path(path)
         path = create(output_path=path) if flat else create_binder(path)
         with xdwopen(path) as doc:
             with XDWTemp() as temp:
