@@ -164,17 +164,16 @@ class PageCollection(list):
                 i.e. create document-in-binder.
 
         Returns actual pathname of generated file, which may be different
-        from `path' argument.
+        from `path' argument.  Extension will be `.xdw' if flat=True,
+        otherwise `.xbd'.
         """
-        from .document import create as create_document
+        from .document import create
         from .binder import create_binder
         from .xdwfile import xdwopen
-        path = derivative_path(adjust_path(uc(path or
-                (self[0].doc.name + (".xdw" if flat else ".xbd")))))
-        if flat:
-            path = create_document(output_path=path)
-        else:
-            path = create_binder(path)
+        path = path or self[0].doc.name + ".xdw"
+        path = derivative_path(adjust_path(uc(path)))
+        path = os.path.splitext(path)[0] + (".xdw" if flat else ".xbd")
+        path = create(output_path=path) if flat else create_binder(path)
         with xdwopen(path) as doc:
             with XDWTemp() as temp:
                 if flat:
