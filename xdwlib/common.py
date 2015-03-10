@@ -233,10 +233,10 @@ def derivative_path(path):
         return path
     root, ext = os.path.splitext(path)
     n = 2
-    derivative = "{0}-{1}{2}".format(root, n, ext)
+    derivative = u"{0}-{1}{2}".format(root, n, ext)
     while os.path.exists(derivative):
         n += 1
-        derivative = "{0}-{1}{2}".format(root, n, ext)
+        derivative = u"{0}-{1}{2}".format(root, n, ext)
     return derivative
 
 
