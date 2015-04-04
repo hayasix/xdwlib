@@ -1,5 +1,5 @@
-#!/usr/bin/env python2.6
-# vim: fileencoding=cp932 fileformat=dos
+#!/usr/bin/env python3
+# vim: set fileencoding=utf-8 fileformat=unix :
 
 """binder.py -- Binder
 
@@ -29,7 +29,7 @@ def create_binder(path, color="RED", size="FREE", coding=CODEPAGE):
 
     Returns actual pathname.
     """
-    path = derivative_path(uc(path))
+    path = derivative_path(path)
     data = XDW_BINDER_INITIAL_DATA()
     data.nBinderColor = XDW_BINDER_COLOR.normalize(color)
     data.nBinderSize = XDW_BINDER_SIZE.normalize(size)
@@ -176,7 +176,7 @@ class Binder(Subject, XDWFile):
     def content_text(self, type=None):
         """Get all content text.
 
-        type    None | "IMAGE" | "APPLICATION"
+        type    None | 'IMAGE' | 'APPLICATION'
                 None means both.
         """
         return joinf(PSEP, [doc.content_text(type=type) for doc in self])

@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-# vim: fileencoding=cp932 fileformat=dos
+#!/usr/bin/env python3
+# vim: set fileencoding=utf-8 fileformat=unix :
 
 """common.py -- common utility functions
 
@@ -109,24 +109,17 @@ px2mm = lambda v, dpi: v / dpi * INCH
 
 def environ(name=None):
     """DocuWorks environment information."""
+    it = XDW_GI_DWDESK_FILENAME_DIGITS
     if name:
         value = XDW_GetInformation(XDW_ENVIRON.normalize(name))
-        if name == XDW_ENVIRON[XDW_GI_DWDESK_FILENAME_DIGITS]:
-            value = ord(value)
-        else:
-            value = uc(value)
-        return value
+        return ord(value) if name == XDW_ENVIRON[it] else uc(value)
     values = dict()
     for k, v in XDW_ENVIRON.items():
         try:
             value = XDW_GetInformation(k)
-            if k == XDW_GI_DWDESK_FILENAME_DIGITS:
-                value = ord(value)
-            else:
-                value = uc(value)
-            values[v] = value
+            values[v] = ord(value) if k == it else uc(value)
         except InfoNotFoundError as e:
-                continue
+            continue
     return values
 
 

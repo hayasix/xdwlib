@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-# vim: fileencoding=cp932 fileformat=dos
+#!/usr/bin/env python3
+# vim: set fileencoding=utf-8 fileformat=unix :
 
 """xdwapi.py -- raw DocuWorks API
 
@@ -2112,6 +2112,8 @@ DLL = windll.LoadLibrary("xdwapi.dll")
 
 ### decorators and utility functions
 
+from functools import wraps
+
 NULL = None  # or POINTER(c_int)()
 
 
@@ -2120,6 +2122,7 @@ def ptr(obj):
 
 
 def RAISE(api):
+    @wraps(api)
     def apifunc(*args):
         result = api(*args)
         if result & 0x80000000:
@@ -2139,6 +2142,7 @@ def APPEND(*ext, **kw):
     NB. Decorated function must be of the same name as XDWAPI's one.
     """
     def deco(api):
+        @wraps(api)
         def func(*args, **kw):
             args = list(args)
             if "codepage" in kw:
@@ -2154,6 +2158,7 @@ def STRING(api):
 
     NB. Decorated function must be of the same name as XDWAPI's one.
     """
+    @wraps(api)
     def func(*args):
         args = list(args)
         args.extend([NULL, 0, NULL])
@@ -2187,6 +2192,7 @@ def ATTR(by_order=False, widechar=False, custom=False):
     NB. Decorated function must be of the same name as XDWAPI's one.
     """
     def deco(api):
+        @wraps(api)
         def func(*args, **kw):
             args = list(args)
             codepage = kw.get("codepage", 932)

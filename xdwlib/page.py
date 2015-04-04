@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-# vim: fileencoding=cp932 fileformat=dos
+#!/usr/bin/env python3
+# vim: set fileencoding=utf-8 fileformat=unix :
 
 """page.py -- Page and PageCollection
 
@@ -165,8 +165,8 @@ class PageCollection(list):
         from .document import create as create_document
         from .binder import create_binder
         from .xdwfile import xdwopen
-        path = derivative_path(adjust_path(uc(path or
-                (self[0].doc.name + (".xdw" if flat else ".xbd")))))
+        path = derivative_path(adjust_path(path or
+                (self[0].doc.name + (".xdw" if flat else ".xbd"))))
         if flat:
             path = create_document(output_path=path)
         else:
@@ -443,7 +443,7 @@ class Page(Annotatable, Observer):
     def reduce_noise(self, level="NORMAL"):
         """Process page by noise reduction engine.
 
-        level   "NORMAL" | "WEAK" | "STRONG"
+        level   'NORMAL' | 'WEAK' | 'STRONG'
         """
         if self.type != "IMAGE" or self.color_scheme() != "MONO":
             raise TypeError("noise reduction is for monochrome image pages")
@@ -467,17 +467,17 @@ class Page(Annotatable, Observer):
             ):
         """Process page by OCR engine.
 
-        engine          "DEFAULT" | "WINREADER PRO"
-        strategy        "STANDARD" | "SPEED" | "ACCURACY"
-        proprocessing   "SPEED" | "ACCURACY"
-        noise_reduction "NONE" | "NORMAL" | "WEAK" | "STRONG"
+        engine          'DEFAULT' | 'WINREADER PRO'
+        strategy        'STANDARD' | 'SPEED' | 'ACCURACY'
+        proprocessing   'SPEED' | 'ACCURACY'
+        noise_reduction 'NONE' | 'NORMAL' | 'WEAK' | 'STRONG'
         deskew          (bool)
-        form            "AUTO" | "TABLE" | "WRITING"
-        column          "AUTO" | "HORIZONTAL_SINGLE" | "HORIZONTAL_MULTI"
-                               | "VERTICAL_SINGLE"   | "VERTICAL_MULTI"
+        form            'AUTO' | 'TABLE' | 'WRITING'
+        column          'AUTO' | 'HORIZONTAL_SINGLE' | 'HORIZONTAL_MULTI'
+                               | 'VERTICAL_SINGLE'   | 'VERTICAL_MULTI'
         rects           (list of Rect)
-        language        "AUTO" | "JAPANESE" | "ENGLISH"
-        main_language   "BALANCED" | "JAPANESE" | "ENGLISH"
+        language        'AUTO' | 'JAPANESE' | 'ENGLISH'
+        main_language   'BALANCED' | 'JAPANESE' | 'ENGLISH'
         use_ascii       (bool)
         insert_space    (bool)
         verbose         (bool)
@@ -576,15 +576,15 @@ class Page(Annotatable, Observer):
 
         path        (str) pathname to output
         dpi         (int) 10..600
-        color       "COLOR" | "MONO" | "MONO_HIGHQUALITY"
-        format      "BMP" | "TIFF" | "JPEG" | "PDF"
+        color       'COLOR' | 'MONO' | 'MONO_HIGHQUALITY'
+        format      'BMP' | 'TIFF' | 'JPEG' | 'PDF'
         compress    for BMP, not available
-                    for TIFF, "NOCOMPRESS" | "PACKBITS" |
-                              "JPEG | "JPEG_TTN2" | "G4"
-                    for JPEG, "NORMAL" | "HIGHQUALITY" | "HIGHCOMPRESS"
-                    for PDF,  "NORMAL" | "HIGHQUALITY" | "HIGHCOMPRESS" |
-                              "MRC_NORMAL" | "MRC_HIGHQUALITY" |
-                              "MRC_HIGHCOMPRESS"
+                    for TIFF, 'NOCOMPRESS' | 'PACKBITS' |
+                              'JPEG | 'JPEG_TTN2' | 'G4'
+                    for JPEG, 'NORMAL' | 'HIGHQUALITY' | 'HIGHCOMPRESS'
+                    for PDF,  'NORMAL' | 'HIGHQUALITY' | 'HIGHCOMPRESS' |
+                              'MRC_NORMAL' | 'MRC_HIGHQUALITY' |
+                              'MRC_HIGHCOMPRESS'
         direct      (bool) export internal compressed image data directly.
                     If True:
                       - dpi, color, format and compress are ignored.

@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-# vim: fileencoding=cp932 fileformat=dos
+#!/usr/bin/env python3
+# vim: set fileencoding=utf-8 fileformat=unix :
 
 """documentinbinder.py -- DocumentInBinder
 
@@ -49,8 +49,8 @@ class DocumentInBinder(BaseDocument, Observer):
     @name.setter
     def name(self, value):
         XDW_SetDocumentNameInBinderW(
-                self.binder.handle, self.pos + 1, uc(value),
-                XDW_TEXT_MULTIBYTE, CP)
+                self.binder.handle, self.pos + 1, value,
+                XDW_TEXT_UNICODE_IFNECESSARY, CP)
 
     def update_pages(self):
         """Concrete method over update_pages()."""

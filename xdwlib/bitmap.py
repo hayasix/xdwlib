@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-# vim: fileencoding=cp932 fileformat=dos
+#!/usr/bin/env python3
+# vim: set fileencoding=utf-8 fileformat=unix :
 
 """bitmap.py -- DIB (Device Independent Bitmap), aka BMP
 
@@ -18,10 +18,6 @@ from ctypes import *
 
 
 __all__ = ("Bitmap",)
-
-
-def b(s):
-    return bytes(s, "ascii")
 
 
 class BitmapFileHeader(Structure):

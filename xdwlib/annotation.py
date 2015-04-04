@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-# vim: fileencoding=cp932 fileformat=dos
+#!/usr/bin/env python3
+# vim: set fileencoding=utf-8 fileformat=unix :
 
 """annotation.py -- Annotation
 
@@ -289,13 +289,13 @@ class Annotation(Annotatable, Observer):
                 if self.is_unicode and unicode_enabled:
                     texttype = XDW_TEXT_UNICODE
                 else:
-                    texttype = XDW_TEXT_MULTIBYTE
+                    texttype = XDW_TEXT_UNICODE_IFNECESSARY
                 XDW_SetAnnotationAttributeW(
                         self.page.doc.handle,
                         self.handle,
                         attrname,
                         XDW_ATYPE_STRING,
-                        uc(value),
+                        value,
                         texttype,
                         codepage=CP)
             else:
@@ -367,7 +367,7 @@ class Annotation(Annotatable, Observer):
         if not isinstance(name, int):
             raise TypeError("name must be str, bytes or int")
         # Any custom attribute can be taken by order which starts with 0.
-        n = self.propertie
+        n = self.properties
         if name < 0:
             name += n
         if not (0 <= name < n):

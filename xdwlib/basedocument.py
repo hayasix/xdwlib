@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# vim: fileencoding=cp932 fileformat=dos
+# vim: set fileencoding=utf-8 fileformat=unix :
 
 """basedocument.py -- BaseDocument, base class for Document/DocumentInBinder
 
@@ -140,7 +140,7 @@ class BaseDocument(Subject):
             pc = PageCollection(obj)
             pc.export(temp.path, flat=True)
         elif isinstance(obj, str):  # XDW path
-            temp = uc(obj)
+            temp = obj
             if not temp.lower().endswith(".xdw"):
                 raise TypeError("binder is not acceptable")
         else:
@@ -175,25 +175,24 @@ class BaseDocument(Subject):
             ):
         """Insert a page created from image file(s).
 
-        fitimage        "FITDEF" | "FIT" | "FITDEF_DIVIDEBMP" |
-                        "USERDEF" | "USERDEF_FIT"
-        compress        "NORMAL" | "LOSSLESS" |
-                        "HIGHQUALITY" | "HIGHCOMPRESS" |
-                        "MRC_NORMAL" | "MRC_HIGHQUALITY" | "MRC_HIGHCOMPRESS"
+        fitimage        'FITDEF' | 'FIT' | 'FITDEF_DIVIDEBMP' |
+                        'USERDEF' | 'USERDEF_FIT'
+        compress        'NORMAL' | 'LOSSLESS' |
+                        'HIGHQUALITY' | 'HIGHCOMPRESS' |
+                        'MRC_NORMAL' | 'MRC_HIGHQUALITY' | 'MRC_HIGHCOMPRESS'
         zoom            (float) in percent; 0 means 100%.  < 1/1000 is ignored.
-        size            (Point) in mm; for fitimange "userdef" or "userdef_fit"
+        size            (Point) in mm; for fitimange 'userdef' or 'userdef_fit'
                         (int)   1=A3R, 2=A3, 3=A4R, 4=A4, 5=A5R, 6=A5,
                                 7=B4R, 8=B4, 9=B5R, 10=B5
-                        (str) "A3R" | "A3" | "A4R" | "A4" | "A5R" |
-                                "A5" | "B4R" | "B4" | "B5R" | "B5"
+                        (str) 'A3R' | 'A3' | 'A4R' | 'A4' | 'A5R' |
+                                'A5' | 'B4R' | 'B4' | 'B5R' | 'B5'
         align           (horiz, vert) where:
-                            horiz   "CENTER" | "LEFT" | "RIGHT"
-                            vert    "CENTER" | "TOP" | "BOTTOM"
-        maxpapersize    "DEFAULT" | "A3" | "2A0"
+                            horiz   'CENTER' | 'LEFT' | 'RIGHT'
+                            vert    'CENTER' | 'TOP' | 'BOTTOM'
+        maxpapersize    'DEFAULT' | 'A3' | '2A0'
         """
         prev_pages = self.pages
         pos = self._pos(pos, append=True)
-        input_path = uc(input_path)
         opt = XDW_CREATE_OPTION_EX2()
         opt.nFitImage = XDW_CREATE_FITIMAGE.normalize(fitimage)
         opt.nCompress = XDW_COMPRESS.normalize(compress)
@@ -239,7 +238,6 @@ class BaseDocument(Subject):
         different from `path' argument.  If path is not available,
         default name "DOCUMENTNAME_Pxx.xdw" will be used.
         """
-        path = uc(path)
         if path:
             path = adjust_path(path)
         else:
@@ -259,15 +257,15 @@ class BaseDocument(Subject):
         path        (str) pathname to output
         pages       (int)
         dpi         (int) 10..600
-        color       "COLOR" | "MONO" | "MONO_HIGHQUALITY"
-        format      "BMP" | "TIFF" | "JPEG" | "PDF"
+        color       'COLOR' | 'MONO' | 'MONO_HIGHQUALITY'
+        format      'BMP' | 'TIFF' | 'JPEG' | 'PDF'
         compress    for BMP, not available
-                    for TIFF, "NOCOMPRESS" | "PACKBITS" |
-                              "JPEG | "JPEG_TTN2" | "G4"
-                    for JPEG, "NORMAL" | "HIGHQUALITY" | "HIGHCOMPRESS"
-                    for PDF,  "NORMAL" | "HIGHQUALITY" | "HIGHCOMPRESS" |
-                              "MRC_NORMAL" | "MRC_HIGHQUALITY" |
-                              "MRC_HIGHCOMPRESS"
+                    for TIFF, 'NOCOMPRESS' | 'PACKBITS' |
+                              'JPEG | 'JPEG_TTN2' | 'G4'
+                    for JPEG, 'NORMAL' | 'HIGHQUALITY' | 'HIGHCOMPRESS'
+                    for PDF,  'NORMAL' | 'HIGHQUALITY' | 'HIGHCOMPRESS' |
+                              'MRC_NORMAL' | 'MRC_HIGHQUALITY' |
+                              'MRC_HIGHCOMPRESS'
         direct      (bool) export internal compressed image data directly.
                     If True:
                       - pos must be int; pages, dpi, color, format and
@@ -282,11 +280,10 @@ class BaseDocument(Subject):
 
         Returns the actual pathname of generated image file, which may be
         different from `path' argument.  If path is not available,
-        default name "DOCUMENTNAME_Pxx.bmp" or so will be used.
+        default name 'DOCUMENTNAME_Pxx.bmp' or so will be used.
         """
         if direct:
             return self._export_direct_image(pos, path)
-        path = uc(path)
         if isinstance(pos, (list, tuple)):
             pos, pages = pos
             pages -= pos
@@ -357,7 +354,6 @@ class BaseDocument(Subject):
 
     def _export_direct_image(self, pos, path=None):
         pos = self._pos(pos)
-        path = uc(path)
         if not path:
             path = "{0}_P{1}".format(self.name, pos + 1)
             path = adjust_path(path, dir=self.dirname())
@@ -366,7 +362,7 @@ class BaseDocument(Subject):
         fmt = XDW_GetCompressedPageImage(
                 self.handle, self.absolute_page(pos) + 1, cp(path))
         new_path = path + "." + XDW_IMAGE_FORMAT[fmt].lower()
-        os.rename(cp(path), cp(new_path))
+        os.rename(path, new_path)
         return new_path
 
     def bitmap(self, pos):
@@ -488,7 +484,7 @@ class BaseDocument(Subject):
     def content_text(self, type=None):
         """Get all content text.
 
-        type    None | "IMAGE" | "APPLICATION"
+        type    None | 'IMAGE' | 'APPLICATION'
                 None means both.
         """
         return joinf(PSEP, [pg.content_text(type=type) for pg in self])
@@ -506,7 +502,7 @@ class BaseDocument(Subject):
     def find_content_text(self, pattern, type=None):
         """Find given pattern (text or regex) in all content text.
 
-        type    None | "IMAGE" | "APPLICATION"
+        type    None | 'IMAGE' | 'APPLICATION'
                 None means both.
 
         Returns a PageCollection object.
