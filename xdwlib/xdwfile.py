@@ -976,7 +976,7 @@ class PKISignature(BaseSignature):
                         'REVOKE_INTERMEDIATE_CERTIFICATE' |
                         'INVLIAD_SIGNATURE' | 'INVALID_USAGE' |
                         'UNDEFINED_ERROR'
-        '''
+        """
         BaseSignature.__init__(self, doc, pos, pagepos, position, size, dt)
         self.module = module
         self.subjectdn = subjectdn[:511]  # max. 511 bytes

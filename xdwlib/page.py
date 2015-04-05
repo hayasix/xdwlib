@@ -94,8 +94,8 @@ class PageCollection(list):
         options     optional arguments for DocuWorks Viewer (Light).
                     See DocuWorks genuine help document.
 
-        If wait is True, returns a dict, each key is page pos and value is
-        a list of AnnotationCache objects i.e.:
+        If wait is True, returns a dict, each key of which is the page pos
+        and the value is a list of AnnotationCache objects i.e.:
 
             {0: [ann_cache, ann_cache, ...], 1: [...], ...}
 

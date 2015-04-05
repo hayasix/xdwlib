@@ -477,7 +477,32 @@ class BaseDocument(Subject):
         self._postprocess(pos, out, orig_degree)
 
     def view(self, light=False, wait=True, *options):
-        """View document with DocuWorks Viewer (Light)."""
+        """View document with DocuWorks Viewer (Light).
+
+        light       (bool) force to use DocuWorks Viewer Light.
+                    Note that DocuWorks Viewer is used if Light version is
+                    not avaiable.
+        wait        (bool) wait until viewer stops and get annotation info
+        options     optional arguments for DocuWorks Viewer (Light).
+                    See DocuWorks genuine help document.
+
+        If wait is True, returns a dict, each key of which is the page pos
+        and the value is a list of AnnotationCache objects i.e.:
+
+            {0: [ann_cache, ann_cache, ...], 1: [...], ...}
+
+        Note that pages without annotations are ignored.
+
+        If wait is False, returns (proc, path) where:
+
+                proc    subprocess.Popen object
+                path    pathname of temporary file being viewed
+
+        In this case, you should remove temp and its parent dir after use.
+
+        NB. Attachments are not shown.
+        NB. Viewing signed pages will raise AccessDeniedError.
+        """
         pc = PageCollection(self)
         return pc.view(light=light, wait=wait, flat=True, *options)
 
