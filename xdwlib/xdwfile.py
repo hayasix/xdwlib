@@ -53,42 +53,39 @@ def atexithandler():
     XDW_Finalize()
 
 
-def view(path, light=False, wait=True,
-        page=0, document=None, fullscreen=False, zoom=0):
+def view(path, light=False, wait=True, page=0, fullscreen=False, zoom=0):
     """View document.
 
-    path        (str or unicode)
+    path        (str)
     light       (bool) force to use DocuWorks Viewer Light.
                 Note that DocuWorks Viewer is used if Light version is
                 not avaiable.
     wait        (bool) wait until viewer stops
     page        (int) page number to view
-    document    (unicode) document name in binder if required
     fullscreen  (bool) view in full screen (presentation mode)
     zoom        (int) in 10-1600 percent; 0 means 100%
                 (str) 'WIDTH' | 'HEIGHT' | 'PAGE'
     """
     import subprocess
-    path = cp(path)
     if os.path.splitext(path)[1].upper() not in (".XDW", ".XBD"):
         raise BadFormatError("extension must be .xdw or .xbd")
-    if page is None:
-        page = 0
-    args = [get_viewer(light=light), path, "/n" + str(page + 1)]
-    if document:
-        args.append('/i"' + cp(document) + '"')
+    args = [get_viewer(light=light), path]
+    if page:
+        args.append("/n{0}".format(page + 1))
     if fullscreen:
         args.append("/f")
     if isinstance(zoom, (int, float)) and zoom:
         if zoom and not (10 <= zoom <= 1600):
-            raise ValueError("10..1600% is valid, {0} given".format(zoom))
+            raise ValueError("10..1600(%) is valid, {0} given".format(zoom))
         args.append("/m{0}".format(int(zoom)))
-    elif isinstance(zoom, basestring):
+    elif isinstance(zoom, str):
         if zoom.upper() not in ("WIDTH", "HEIGHT", "PAGE"):
             raise ValueError(("int, 'WIDTH', 'HEIGHT' or 'PAGE' is valid"
                               "for window size, {0} given").format(repr(zoom)))
         args.append("/m{0}".format(zoom[0].lower()))
-    print(" ".join('"'+arg+'"' if " " in arg else arg for arg in args))
+    elif zoom:
+        raise ValueError("10..1600(%) or WIDTH/HEIGHT/PAGE is valid for zoom, "
+                        "{0} given".format(zoom))
     proc = subprocess.Popen(args)
     if not wait:
         return (proc, path)

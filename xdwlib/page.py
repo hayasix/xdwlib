@@ -81,7 +81,8 @@ class PageCollection(list):
         self.extend(self * (n - 1))
         return self
 
-    def view(self, light=False, wait=True, flat=False, group=True, *options):
+    def view(self, light=False, wait=True, flat=False, group=True,
+            page=0, fullscreen=False, zoom=0):
         """View pages with DocuWorks Viewer (Light).
 
         light       (bool) force to use DocuWorks Viewer Light.
@@ -91,8 +92,10 @@ class PageCollection(list):
         flat        (bool) combine pages into a single document.
         group       (bool) group continuous pages by original document,
                     i.e. create document-in-binder.
-        options     optional arguments for DocuWorks Viewer (Light).
-                    See DocuWorks genuine help document.
+        page        (int) page number to view
+        fullscreen  (bool) view in full screen (presentation mode)
+        zoom        (int) in 10-1600 percent; 0 means 100%
+                    (str) 'WIDTH' | 'HEIGHT' | 'PAGE'
 
         If wait is True, returns a dict, each key of which is the page pos
         and the value is a list of AnnotationCache objects i.e.:
@@ -118,9 +121,24 @@ class PageCollection(list):
                         self[0].pos + 1,
                         "xdw" if flat else "xbd")),
                 flat=flat, group=group)
-        args = [get_viewer(light=light)]
-        args.extend(options)
-        args.append(temp.path)
+        args = [get_viewer(light=light), temp.path]
+        if page:
+            args.append("/n{0}".format(page + 1))
+        if fullscreen:
+            args.append("/f")
+        if isinstance(zoom, (int, float)) and zoom:
+            if zoom and not (10 <= zoom <= 1600):
+                raise ValueError("10..1600(%) is valid, {0} given".format(zoom))
+            args.append("/m{0}".format(int(zoom)))
+        elif isinstance(zoom, str):
+            if zoom.upper() not in ("WIDTH", "HEIGHT", "PAGE"):
+                raise ValueError((
+                        "int, 'WIDTH', 'HEIGHT' or 'PAGE' is valid"
+                        "for window size, {0} given").format(repr(zoom)))
+            args.append("/m{0}".format(zoom[0].lower()))
+        elif zoom:
+            raise ValueError("10..1600(%) or W/H/P is valid for zoom, "
+                            "{0} given".format(zoom))
         proc = subprocess.Popen(args)
         if not wait:
             return (proc, temp.path)
@@ -602,15 +620,16 @@ class Page(Annotatable, Observer):
                 path=path, pages=1, dpi=dpi, color=color, format=format,
                 compress=compress, direct=direct)
 
-    def view(self, light=False, wait=True, *options):
+    def view(self, light=False, wait=True, fullscreen=False, zoom=0):
         """View page with DocuWorks Viewer (Light).
 
         light       (bool) force to use DocuWorks Viewer Light.
                     Note that DocuWorks Viewer is used if Light version is
                     not avaiable.
         wait        (bool) wait until viewer stops and get annotation info
-        options     optional arguments for DocuWorks Viewer (Light).
-                    See DocuWorks genuine help document.
+        fullscreen  (bool) view in full screen (presentation mode)
+        zoom        (int) in 10-1600 percent; 0 means 100%
+                    (str) 'WIDTH' | 'HEIGHT' | 'PAGE'
 
         If wait is True, returns a list of AnnotationCache objects.
 
@@ -622,7 +641,8 @@ class Page(Annotatable, Observer):
         In this case, you should remove temp and its parent dir after use.
         """
         pc = PageCollection() + self
-        r = pc.view(light=light, wait=wait, flat=True, *options)
+        r = pc.view(light=light, wait=wait, flat=True,
+                    fullscreen=fullscreen, zoom=zoom)
         if wait:
             return r[0] if r else []
         return r

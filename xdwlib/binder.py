@@ -165,15 +165,17 @@ class Binder(Subject, XDWFile):
         self.detach(doc, EV_DOC_REMOVED)
         self.documents -= 1
 
-    def view(self, light=False, wait=True, *options):
+    def view(self, light=False, wait=True, page=0, fullscreen=False, zoom=0):
         """View binder with DocuWorks Viewer (Light).
 
         light       (bool) force to use DocuWorks Viewer Light.
                     Note that DocuWorks Viewer is used if Light version is
                     not avaiable.
         wait        (bool) wait until viewer stops and get annotation info
-        options     optional arguments for DocuWorks Viewer (Light).
-                    See DocuWorks genuine help document.
+        page        (int) page number to view
+        fullscreen  (bool) view in full screen (presentation mode)
+        zoom        (int) in 10-1600 percent; 0 means 100%
+                    (str) 'WIDTH' | 'HEIGHT' | 'PAGE'
 
         If wait is True, returns a dict, each key of which is the absolute
         page pos and the value is a list of AnnotationCache objects i.e.:
@@ -195,8 +197,8 @@ class Binder(Subject, XDWFile):
         pc = PageCollection()
         for doc in self:
             pc += PageCollection(doc)
-        return pc.view(
-                light=light, wait=wait, flat=False, group=True, *options)
+        return pc.view(light=light, wait=wait, flat=False, group=True,
+                        page=page, fullscreen=fullscreen, zoom=zoom)
 
     def content_text(self, type=None):
         """Get all content text.
