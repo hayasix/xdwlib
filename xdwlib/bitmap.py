@@ -122,6 +122,6 @@ class Bitmap(object):
 
     def save(self, stream):
         out = stream if hasattr(stream, "write") else open(stream, "wb")
-        stream.write(self.octet_stream())
+        out.write(self.octet_stream())
         if not hasattr(stream, "write"):
             out.close()

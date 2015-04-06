@@ -18,6 +18,7 @@ import warnings
 
 from .xdwapi import *
 from .common import *
+from .xdwtemp import XDWTemp
 from .observer import *
 from .struct import *
 
@@ -198,6 +199,8 @@ class Annotatable(Subject):
 
         Note that `position' attribute is determined automatically.
         """
+        if 2 < len(points):
+            raise ValueError("> 2 points given; consider add_lines()")
         points = relative_points(points)
         ann = self.add(XDW_AID_STRAIGHTLINE, points[0],
                 nHorVec=(points[1].x * 100), nVerVec=(points[1].y * 100))
@@ -266,7 +269,6 @@ class Annotatable(Subject):
             setattr(ann, k, v)
         return ann
 
-
     '''
     def add_receivedstamp(self, position=_POSITION, width=_WIDTH, **kw):
         """Paste a received stamp annotation.
@@ -319,6 +321,8 @@ class Annotatable(Subject):
             setattr(ann, k, v)
         return ann
 
+    add_lines = add_marker  # add a series of straight lines
+
     def add_polygon(self, points=_POINTS, **kw):
         """Paste a polygon annotation.
 
@@ -364,7 +368,7 @@ class Annotatable(Subject):
             copy = self.add_link(position=ann.position)
         elif t == XDW_AID_BITMAP:
             if not PIL_ENABLED:
-                warnings.warn("install PIL before copying bitmap annotation",
+                warnings.warn("install Pillow before copying bitmap annotation",
                         UserWarning, stacklevel=2)
                 return None
             pg = ann.page

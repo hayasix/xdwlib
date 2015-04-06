@@ -178,7 +178,8 @@ class PageCollection(list):
                 i.e. create document-in-binder.
 
         Returns actual pathname of generated file, which may be different
-        from `path' argument.
+        from `path' argument.  Extension will be `.xdw' if flat=True,
+        otherwise `.xbd'.
         """
         from .document import create as create_document
         from .binder import create_binder

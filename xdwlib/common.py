@@ -192,7 +192,7 @@ def adjust_path(path, dir="", ext=".xdw", coding=None):
     'C:\\another\\directory\\example.xdw'
     >>> adjust_path('example', dir='C:\\another\\directory', ext='.pdf')
     'C:\\another\\directory\\example.pdf'
-     """
+    """
     if not (path or dir):
         return ""
     directory, basename = os.path.split(path)

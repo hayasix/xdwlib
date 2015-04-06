@@ -333,11 +333,10 @@ class Annotation(Annotatable, Observer):
     def has_property(self, name):
         """Test if annotationwise custom user defined property exists.
 
-        name        (str or bytes) name of property
+        name        (str) name of property
 
         Returns True if such property exists, or False if not.
         """
-        name = cp(name)
         try:
             t, v = XDW_GetAnnotationCustomAttributeByName(self.handle, name)
         except InvalidArgError:
@@ -347,7 +346,7 @@ class Annotation(Annotatable, Observer):
     def get_property(self, name, default=None):
         """Get annotationwise custom (i.e. with-type) user defined property.
 
-        name        (str or bytes) name of property
+        name        (str) name of property
                     (int) property order which starts with 0
         default     value to return if no property named name exist
 
@@ -356,8 +355,7 @@ class Annotation(Annotatable, Observer):
 
         Note that previous set_property(bytes_value) gives str.
         """
-        if isinstance(name, (str, bytes)):
-            name = cp(name)
+        if isinstance(name, str):
             try:
                 t, v = XDW_GetAnnotationCustomAttributeByName(
                         self.handle, name)
@@ -365,7 +363,7 @@ class Annotation(Annotatable, Observer):
                 return default
             return makevalue(t, v)
         if not isinstance(name, int):
-            raise TypeError("name must be str, bytes or int")
+            raise TypeError("name must be str or int")
         # Any custom attribute can be taken by order which starts with 0.
         n = self.properties
         if name < 0:
@@ -380,10 +378,10 @@ class Annotation(Annotatable, Observer):
         """Set self.properties to the number of custom attributes."""
         self.properties = XDW_GetAnnotationCustomAttributeNumber(self.handle)
 
-    def set_property(self, name, value):
+    def set_property(self, name, value, update=True):
         """Set annotationwise custom (i.e. with-type) user defined property.
 
-        name        (str or bytes) name of property
+        name        (str) name of property
         value       (str, bytes, int, bool or datetime.date) stored value
                     (None) delete property if update==False
         update      (bool) False=don't update value if exists already
@@ -393,7 +391,6 @@ class Annotation(Annotatable, Observer):
         Note that str value is actually stored in unicode and get_property()
         will returen str (i.e., unicode string).
         """
-        name = cp(name)
         if not update and self.get_property(name) is not None:
             return
         if value is None:
@@ -411,9 +408,8 @@ class Annotation(Annotatable, Observer):
     def del_property(self, name):
         """Delete annotationwise custom (i.e. with-type) user defined property.
 
-        name        (str or bytes) name of property, or user attribute
+        name        (str) name of property, or user attribute
         """
-        name = cp(name)
         XDW_SetAnnotationCustomAttribute(
                 self.page.doc.handle, self.handle, name, XDW_ATYPE_INT, NULL)
         self._set_property_count()
