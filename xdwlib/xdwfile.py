@@ -619,15 +619,23 @@ class XDWFile(object):
 
         Note that previous set_property(bytes_value) gives str (i.e., unicode).
         """
-        if isinstance(name, int):
+        if isinstance(name, str):
+            try:
+                t, value, _ = XDW_GetDocumentAttributeByNameW(
+                        self.handle, name, codepage=CP)
+            except InvalidArgError:
+                return default
+        elif isinstance(name, int):
+            n = self.properties
+            if name < 0:
+                name += n
+            if not( 0 <= name < n):
+                raise IndexError("attribute order out of range [0, %d)" % n)
             name, t, value, _ = XDW_GetDocumentAttributeByOrderW(
-                    self.handle, name + 1)
+                                            self.handle, name + 1)
             return (name, makevalue(t, value))
-        try:
-            t, value, _ = XDW_GetDocumentAttributeByNameW(
-                    self.handle, name, codepage=CP)
-        except InvalidArgError:
-            return default
+        else:
+            raise TypeError("name must be str or int")
         return makevalue(t, value)
 
     def set_property(self, name, value, update=True):

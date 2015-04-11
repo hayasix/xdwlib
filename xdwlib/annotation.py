@@ -310,9 +310,11 @@ class Annotation(Annotatable, Observer):
         name        (str or bytes) attribute name
         default     value to return if no attribute named name exist
 
-        Note that user defined attribute consists of simple byte string.
-        If you want to handle values with types, consider set/get_property().
+        Note that a user defined attribute holds a simple byte string.
+        To handle values with types, consider set/get_property().
         """
+        if not isinstance(name, (str, bytes)):
+            raise TypeError("user attribute name must be str or bytes")
         try:
             return XDW_GetAnnotationUserAttribute(self.handle, cp(name))
         except InvalidArgError:
@@ -324,9 +326,13 @@ class Annotation(Annotatable, Observer):
         name        (str or bytes) attribute name
         value       (bytes) value to set
 
-        Note that user defined attribute consists of simple byte string.
-        If you want to handle values with types, consider set/get_property().
+        Note that a user defined attribute holds a simple byte string.
+        To handle values with types, consider set/get_property().
         """
+        if not isinstance(name, (str, bytes)):
+            raise TypeError("user attribute name must be str or bytes")
+        if not isinstance(value, bytes):
+            raise TypeError("user attribute value must be bytes")
         XDW_SetAnnotationUserAttribute(
                 self.page.doc.handle, self.handle, cp(name), value)
 
@@ -362,16 +368,17 @@ class Annotation(Annotatable, Observer):
             except InvalidArgError:
                 return default
             return makevalue(t, v)
-        if not isinstance(name, int):
+        elif isinstance(name, int):
+            # Any custom attribute can be taken by order which starts with 0.
+            n = self.properties
+            if name < 0:
+                name += n
+            if not (0 <= name < n):
+                raise IndexError("attribute order out of range [0, %d)" % n)
+            name, t, value = XDW_GetAnnotationCustomAttributeByOrder(
+                                                self.handle, name + 1)[:3]
+        else:
             raise TypeError("name must be str or int")
-        # Any custom attribute can be taken by order which starts with 0.
-        n = self.properties
-        if name < 0:
-            name += n
-        if not (0 <= name < n):
-            raise IndexError("attribute order out of range [0, %d)" % n)
-        name, t, value = \
-                XDW_GetAnnotationCustomAttributeByOrder(self.handle, name + 1)
         return (name, makevalue(t, value))
 
     def _set_property_count(self):
