@@ -1417,6 +1417,10 @@ XDW_ANNOTATION_ATTRIBUTE = {
 
 XDW_HGLOBAL = c_void_p
 XDW_WCHAR = c_wchar
+XDW_DOCUMENT_HANDLE = c_void_p
+XDW_CREATE_HANDLE = c_void_p
+XDW_ANNOTATION_HANDLE = c_void_p
+XDW_FOUND_HANDLE = c_void_p
 
 
 class SizedStructure(Structure):
@@ -1430,23 +1434,6 @@ class ResizedStructure(SizedStructure):
     def __init__(self):
         SizedStructure.__init__(self)
         self.common.nSize = sizeof(self)
-
-
-class XDW_DOCUMENT_HANDLE(Structure):
-    _fields_ = [("dummy", c_int), ]
-
-
-class XDW_CREATE_HANDLE(Structure):
-    _fields_ = [("dummy", c_int), ]
-
-
-class XDW_ANNOTATION_HANDLE(Structure):
-    _fields_ = [("dummy", c_int), ]
-
-
-class XDW_FOUND_HANDLE(Structure):
-    _fields_ = [("dummy", c_int), ]
-
 
 class XDW_RECT(Structure):
     _fields_ = [
@@ -1623,8 +1610,8 @@ XDW_SIZEOF_LINKROOTFOLDER = 256
 class XDW_LINKROOTFOLDER_INFO(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
-     ("szPath", c_char * XDW_SIZEOF_LINKROOTFOLDER),
-     ("szLinkRootFolderName", c_char * XDW_SIZEOF_LINKROOTFOLDER),
+        ("szPath", c_char * XDW_SIZEOF_LINKROOTFOLDER),
+        ("szLinkRootFolderName", c_char * XDW_SIZEOF_LINKROOTFOLDER),
         ]
 
 
