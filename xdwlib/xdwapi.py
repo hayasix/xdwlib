@@ -2180,6 +2180,7 @@ def UNICODE(api):
 
     N.B. Decorated function must be of the same name as XDWAPI's one.
     """
+    @wraps(api)
     def func(*args):
         args = list(args)
         args.extend([NULL, 0, NULL])
@@ -2192,6 +2193,10 @@ def UNICODE(api):
 
 
 def ATTR(byorder=False, widename=False, multitype=False, widevalue=False):
+    """Decorator to get document attribute via XDWAPI.
+
+    N.B. Decorated function must be of the same name as XDWAPI's one.
+    """
     def deco(api):
         @wraps(api)
         def func(*args, **kw):
@@ -2474,8 +2479,7 @@ def XDW_SucceedAttribute(doc_handle, file_path, document, succession): pass
 def XDW_GetPageFormAttribute(doc_handle, page_form, attr_name): pass
 
 @APPEND(0, NULL)
-def XDW_SetPageFormAttribute(doc_handle, page_form, attr_name, attr_type, attr_val):
-    pass
+def XDW_SetPageFormAttribute(doc_handle, page_form, attr_name, attr_type, attr_val): pass
 
 @APPEND(NULL)
 def XDW_UpdatePageForm(doc_handle, other_page_form): pass
@@ -2557,8 +2561,7 @@ def XDW_GetSignatureInformation(doc_handle, pos):
 
 @RAISE
 def XDW_UpdateSignatureStatus(doc_handle, pos, module_option, module_status):
-    """XDW_UpdateSignatureStatus(doc_handle, pos, module_option, module_status)"""
-    # The 3rd argument, module_option, should currently be specified as NULL.
+    """The 3rd argument, module_option, should currently be specified as NULL."""
     module_status = XDW_SIGNATURE_MODULE_STATUS()
     try:
         TRY(DLL.XDW_UpdateSignatureStatus, doc_handle, pos, NULL, NULL, ptr(module_status))

@@ -93,11 +93,6 @@ as an annotation::
             ann = pg.add_text(position=position, text=datestamp)
             ann.fore_color = "red"
 
-Xdwlib is also delivered via Python Package Index (PyPI).  You can install
-the newest version of xdwlib by issuing::
-
-    easy_install xdwlib
-
 
 Reporting bugs
 ==============
