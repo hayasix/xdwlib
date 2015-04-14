@@ -19,25 +19,27 @@ Report problems with this release to xdwlib@linxs.org.
 License
 -------
 
+Copyright (C) 2010 HAYASI Hideki <xdwlib@linxs.org>.  All rights reserved.
+
 Xdwlib is provided under The Zope Public License (ZPL) Version 2.1, which is
 included in 'LICENSE'.  Send your feedback about the license to
 xdwlib@linxs.org.
 
 
-Installing xdwlib
-=================
+Installation
+============
 
 System Requirements
 -------------------
 
     - Microsoft Windows (versions compatible with DocuWorks 7.0)
 
-    - Python 2.6
+    - Python 2.6+
 
     - DocuWorks 7.0+ (Japanese version; English version is not tested yet)
 
-Installation
-------------
+Install from archive
+--------------------
 
 Set PATH environment variable properly and issue the following command::
 
@@ -45,13 +47,49 @@ Set PATH environment variable properly and issue the following command::
 
 This will install xdwlib in $PYTHONPATH/xdwlib.
 
-Installation via PyPI
----------------------
+Install from PyPI
+-----------------
 
-Xdwlib is also delivered via Python Package Index (PyPI).  You can install
-the newest version of xdwlib by issuing::
+Xdwlib is also delivered via Python Package Index (PyPI).  The latest
+version of xdwlib will be installed by issuing::
 
-    easy_install xdwlib
+    pip install xdwlib
+
+If you have installed older version of xdwlib already, try::
+
+    pip install --upgrade xdwlib
+
+Optional Modules
+----------------
+
+Xdwlib works with PIL (Python Imaging Library) if available,
+to rotate pages for desired degrees other than right angles, and to copy
+bitmap annotations.
+
+Install PIL by issuing::
+
+    pip install pil
+
+Typical Use
+===========
+
+The following code will appy OCR and paste a date stamp on every page
+as an annotation::
+
+    import time
+
+    from xdwlib import xdwopen, Point
+
+    ...
+
+    with xdwopen(PATHNAME, autosave=True) as doc:
+        position = Point(pg.size - 100, pg.size - 20)
+        datestamp = time.strftime("%Y-%m-%d")
+        for pg in doc:
+            pg.rotate(auto=True)
+            pg.ocr(strategy="accuracy")
+            ann = pg.add_text(position=position, text=datestamp)
+            ann.fore_color = "red"
 
 
 Reporting bugs
