@@ -2221,11 +2221,11 @@ def ATTR(byorder=False, widename=False, multitype=False, widevalue=False):
             args.append(NULL)
             size = TRY(getattr(DLL, api.__name__), *args)
             # Pass 2 - read the actual value.
-            if attrtype.value == XDW_ATYPE_INT:
+            if attrtype.value in (XDW_ATYPE_INT, XDW_ATYPE_DATE, XDW_ATYPE_BOOL, XDW_ATYPE_OCTS):
                 attrvalue = c_int()
             elif attrtype.value == XDW_ATYPE_STRING:
                 attrvalue = create_buffer(multitype and widename or widevalue)(size)
-            else:  # attrtype.value == XDW_ATYPE_OTHER:
+            else:  # if attrtype.value == XDW_ATYPE_OTHER:
                 attrvalue = (XDW_POINT * int(size / sizeof(XDW_POINT)))()
             if widevalue:
                 args[-5:-3] = [byref(attrvalue), size]
