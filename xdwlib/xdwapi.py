@@ -2250,6 +2250,31 @@ def ATTR(byorder=False, widename=False, multitype=False, widevalue=False):
 @STRING
 def XDW_GetInformation(index): pass
 
+
+_XDWVER_ = int(XDW_GetInformation(XDW_GI_VERSION).decode("ascii").split(".")[0])
+
+
+def XDWVERSION(ver):
+    """Decorator to indicate if the following function is valid or not."""
+    def deco(api):
+        if _XDWVER_ <= ver:
+            @wraps(api)
+            def func(*args):
+                api(*args)
+            return func
+        else:
+            @wraps(api)
+            def func(*args):
+                raise NotImplementedError
+            return func
+    return deco
+
+
+@XDWVERSION(8)
+@UNICODE
+def XDW_GetInformationW(index): pass
+
+
 # Stop running immediately if the fatal version is running.
 if XDW_GetInformation(XDW_GI_VERSION) == "8.0.3":
     raise SystemExit("""\
@@ -2266,7 +2291,20 @@ def XDW_MergeXdwFiles(input_paths, output_path):
     _input_paths = (c_char_p * n)(*input_paths)
     return DLL.XDW_MergeXdwFiles(ptr(_input_paths), n, output_path, NULL)
 
+@XDWVERSION(8)
+@RAISE
+def XDW_MergeXdwFilesW(input_paths, output_path):
+    n = len(input_paths)
+    _input_paths = (c_wchar_p * n)(*input_paths)
+    return DLL.XDW_MergeXdwFilesW(ptr(_input_paths), n, output_path, NULL)
+
 def XDW_OpenDocumentHandle(path, open_mode):
+    doc_handle = XDW_DOCUMENT_HANDLE()
+    TRY(DLL.XDW_OpenDocumentHandle, path, byref(doc_handle), byref(open_mode))
+    return doc_handle
+
+@XDWVERSION(8)
+def XDW_OpenDocumentHandleW(path, open_mode):
     doc_handle = XDW_DOCUMENT_HANDLE()
     TRY(DLL.XDW_OpenDocumentHandle, path, byref(doc_handle), byref(open_mode))
     return doc_handle
@@ -2285,6 +2323,10 @@ def XDW_GetPageInformation(doc_handle, page, extend=False):
 @APPEND(NULL)
 def XDW_GetPageImage(doc_handle, page, output_path): pass
 
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_GetPageImageW(doc_handle, page, output_path): pass
+
 @APPEND(NULL)
 def XDW_GetPageText(doc_handle, page, output_path): pass
 
@@ -2292,8 +2334,17 @@ def XDW_GetPageText(doc_handle, page, output_path): pass
 def XDW_ConvertPageToImageFile(doc_handle, page, output_path, img_option):
     return DLL.XDW_ConvertPageToImageFile(doc_handle, page, output_path, byref(img_option))
 
+@XDWVERSION(8)
+@RAISE
+def XDW_ConvertPageToImageFileW(doc_handle, page, output_path, img_option):
+    return DLL.XDW_ConvertPageToImageFileW(doc_handle, page, output_path, byref(img_option))
+
 @APPEND(NULL)
 def XDW_GetPage(doc_handle, page, output_path): pass
+
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_GetPageW(doc_handle, page, output_path): pass
 
 @APPEND(NULL)
 def XDW_DeletePage(doc_handle, page): pass
@@ -2308,11 +2359,20 @@ def XDW_SaveDocument(doc_handle): pass
 def XDW_CreateXdwFromImageFile(input_path, output_path, cre_option):
     return DLL.XDW_CreateXdwFromImageFile(input_path, output_path, byref(cre_option))
 
+@XDWVERSION(8)
+@RAISE
+def XDW_CreateXdwFromImageFileW(input_path, output_path, cre_option):
+    return DLL.XDW_CreateXdwFromImageFile(input_path, output_path, byref(cre_option))
+
 @QUERY(XDW_ORGDATA_INFO, NULL)
 def XDW_GetOriginalDataInformation(doc_handle, org_dat): pass
 
 @APPEND(NULL)
 def XDW_GetOriginalData(doc_handle, org_dat, output_path): pass
+
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_GetOriginalDataW(doc_handle, org_dat, output_path): pass
 
 @APPEND(NULL)
 def XDW_InsertOriginalData(doc_handle, org_dat, input_path): pass
@@ -2322,6 +2382,10 @@ def XDW_DeleteOriginalData(doc_handle, org_dat): pass
 
 @QUERY(XDW_CREATE_HANDLE, NULL)
 def XDW_BeginCreationFromAppFile(input_path, output_path, with_org): pass
+
+@XDWVERSION(8)
+@QUERY(XDW_CREATE_HANDLE, NULL)
+def XDW_BeginCreationFromAppFileW(input_path, output_path, with_org): pass
 
 @APPEND(NULL)
 def XDW_EndCreationFromAppFile(cre_handle): pass
@@ -2365,8 +2429,16 @@ def XDW_SetAnnotationPosition(doc_handle, ann_handle, hpos, vpos): pass
 @APPEND(NULL)
 def XDW_CreateSfxDocument(input_path, output_path): pass
 
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_CreateSfxDocumentW(input_path, output_path): pass
+
 @APPEND(NULL)
 def XDW_ExtractFromSfxDocument(input_path, output_path): pass
+
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_ExtractFromSfxDocumentW(input_path, output_path): pass
 
 def XDW_ConvertPageToImageHandle(doc_handle, page, img_option):
     handle = XDW_HGLOBAL()
@@ -2411,8 +2483,16 @@ def XDW_ShowOrHideAnnotations(doc_handle, show_annotations): pass
 @APPEND(NULL)
 def XDW_GetCompressedPageImage(doc_handle, page, output_path): pass
 
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_GetCompressedPageImageW(doc_handle, page, output_path): pass
+
 @APPEND(NULL)
 def XDW_InsertDocument(doc_handle, page, input_path): pass
+
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_InsertDocumentW(doc_handle, page, input_path): pass
 
 @RAISE
 def XDW_ApplyOcr(doc_handle, page, ocr_engine, option):
@@ -2425,11 +2505,20 @@ def XDW_RotatePageAuto(doc_handle, page): pass
 def XDW_CreateBinder(output_path, binder_init_dat):
     return DLL.XDW_CreateBinder(output_path, ptr(binder_init_dat), NULL)
 
+@XDWVERSION(8)
+@RAISE
+def XDW_CreateBinderW(output_path, binder_init_dat):
+    return DLL.XDW_CreateBinder(output_path, ptr(binder_init_dat), NULL)
+
 @APPEND(NULL)
 def XDW_InsertDocumentToBinder(doc_handle, pos, input_path): pass
 
 @APPEND(NULL)
 def XDW_GetDocumentFromBinder(doc_handle, pos, output_path): pass
+
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_GetDocumentFromBinderW(doc_handle, pos, output_path): pass
 
 @APPEND(NULL)
 def XDW_DeleteDocumentInBinder(doc_handle, pos): pass
@@ -2452,12 +2541,26 @@ def XDW_GetPageColorInformation(doc_handle, page): pass
 @APPEND(NULL)
 def XDW_OptimizeDocument(input_path, output_path): pass
 
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_OptimizeDocumentW(input_path, output_path): pass
+
 @RAISE
 def XDW_ProtectDocument(input_path, output_path, protect_type, module_option, protect_option):
     return DLL.XDW_ProtectDocument(input_path, output_path, protect_type, byref(module_option), byref(protect_option))
 
+@XDWVERSION(8)
+@RAISE
+def XDW_ProtectDocumentW(input_path, output_path, protect_type, module_option, protect_option):
+    return DLL.XDW_ProtectDocument(input_path, output_path, protect_type, byref(module_option), byref(protect_option))
+
 @RAISE
 def XDW_CreateXdwFromImageFileAndInsertDocument(doc_handle, page, input_path, create_option):
+    return DLL.XDW_CreateXdwFromImageFileAndInsertDocument(doc_handle, page, input_path, byref(create_option), NULL)
+
+@XDWVERSION(8)
+@RAISE
+def XDW_CreateXdwFromImageFileAndInsertDocumentW(doc_handle, page, input_path, create_option):
     return DLL.XDW_CreateXdwFromImageFileAndInsertDocument(doc_handle, page, input_path, byref(create_option), NULL)
 
 @APPEND(NULL)
@@ -2475,6 +2578,10 @@ def XDW_SetDocumentAttribute(doc_handle, attr_name, attr_type, attr_val): pass
 @APPEND(NULL)
 def XDW_SucceedAttribute(doc_handle, file_path, document, succession): pass
 
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_SucceedAttributeW(doc_handle, file_path, document, succession): pass
+
 @STRING
 def XDW_GetPageFormAttribute(doc_handle, page_form, attr_name): pass
 
@@ -2490,8 +2597,23 @@ def XDW_RemovePageForm(doc_handle, other_page_form): pass
 @QUERY(XDW_LINKROOTFOLDER_INFO, NULL)
 def XDW_GetLinkRootFolderInformation(order): pass
 
+class XDW_LINKROOTFOLDER_INFOW(SizedStructure):
+    _fields_ = [
+        ("nSize", c_int),
+        ("szPath", c_wchar * XDW_SIZEOF_LINKROOTFOLDER),
+        ("szLinkRootFolderName", c_wchar * XDW_SIZEOF_LINKROOTFOLDER),
+        ]
+
+@XDWVERSION(8)
+@QUERY(XDW_LINKROOTFOLDER_INFOW, NULL)
+def XDW_GetLinkRootFolderInformationW(order): pass
+
 @APPEND(NULL)
 def XDW_GetLinkRootFolderNumber(): pass
+
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_GetLinkRootFolderNumberW(): pass
 
 # Undocumented API in DocuWorksTM Development Tool Kit 7.1
 # int XDWAPI XDW_GetPageTextInformation(XDW_DOCUMENT_HANDLE handle, int nPage, void* pInfo, void* reserved);
@@ -2511,6 +2633,20 @@ def XDW_AddAnnotationOnParentAnnotation(doc_handle, ann_handle, ann_type, hpos, 
 
 @RAISE
 def XDW_SignDocument(input_path, output_path, option, module_option):
+    module_status = XDW_SIGNATURE_MODULE_STATUS()
+    try:
+        TRY(DLL.XDW_SignDocument, input_path, output_path, ptr(option), ptr(module_option), NULL, ptr(module_status))
+    except SignatureModuleError as e:
+        if module_status.nSignatureType == XDW_SIGNATURE_STAMP:
+            msg = XDW_SIGNATURE_STAMP_ERROR[module_status.nErrorStatus]
+        else:
+            msg = XDW_SIGNATURE_PKI_ERROR[module_status.nErrorStatus]
+        raise SignatureModuleError(msg)
+    return 0
+
+@XDWVERSION(8)
+@RAISE
+def XDW_SignDocumentW(input_path, output_path, option, module_option):
     module_status = XDW_SIGNATURE_MODULE_STATUS()
     try:
         TRY(DLL.XDW_SignDocument, input_path, output_path, ptr(option), ptr(module_option), NULL, ptr(module_status))
@@ -2574,6 +2710,11 @@ def XDW_UpdateSignatureStatus(doc_handle, pos, module_option, module_status):
 def XDW_GetOcrImage(doc_handle, page, output_path, img_option):
     return DLL.XDW_GetOcrImage(doc_handle, page, output_path, byref(img_option), NULL)
 
+@XDWVERSION(8)
+@RAISE
+def XDW_GetOcrImageW(doc_handle, page, output_path, img_option):
+    return DLL.XDW_GetOcrImage(doc_handle, page, output_path, byref(img_option), NULL)
+
 def XDW_SetOcrData(doc_handle, page, ocr_textinfo):
     TRY(DLL.XDW_SetOcrData, doc_handle, page, byref(ocr_textinfo) if ocr_textinfo else NULL, NULL)
 
@@ -2629,8 +2770,17 @@ def XDW_StarchAnnotation(doc_handle, ann_handle, starch): pass
 def XDW_ReleaseProtectionOfDocument(input_path, output_path, release_protection_option):
     return DLL.XDW_ReleaseProtectionOfDocument(input_path, output_path, byref(release_protection_option))
 
+@XDWVERSION(8)
+@RAISE
+def XDW_ReleaseProtectionOfDocumentW(input_path, output_path, release_protection_option):
+    return DLL.XDW_ReleaseProtectionOfDocument(input_path, output_path, byref(release_protection_option))
+
 @QUERY(XDW_PROTECTION_INFO, NULL)
 def XDW_GetProtectionInformation(input_path): pass
+
+@XDWVERSION(8)
+@QUERY(XDW_PROTECTION_INFO, NULL)
+def XDW_GetProtectionInformationW(input_path): pass
 
 @ATTR(widename=True, multitype=True)
 def XDW_GetAnnotationCustomAttributeByName(ann_handle, attr_name): pass
@@ -2687,3 +2837,23 @@ def XDW_GetOriginalDataInformationW(doc_handle, org_data, codepage=932):
     orgdata_infow = XDW_ORGDATA_INFOW()
     TRY(DLL.XDW_GetOriginalDataInformationW, doc_handle, org_data, byref(orgdata_infow), byref(text_type), codepage, NULL)
     return (orgdata_infow, text_type.value)  # N.B. orgdata_infow.nDate is UTC Unix time.
+
+@XDWVERSION(8)
+@QUERY(XDW_ANNOTATION_HANDLE, NULL)
+def XDW_AddAnnotationFromAnnFile(doc_handle, ann_file_path, index, page, ann_handle, hpos, vpos): pass
+
+@XDWVERSION(8)
+@QUERY(XDW_ANNOTATION_HANDLE, NULL)
+def XDW_AddAnnotationFromAnnFileW(doc_handle, ann_file_path, index, page, ann_handle, hpos, vpos): pass
+
+@XDWVERSION(8)
+def XDW_GroupAnnotations(doc_handle, page, ann_handle, indexes):
+    new_ann_handle = XDW_ANNOTATION_HANDLE()
+    count = len(indexes)
+    indexlist = (c_int * count)(*indexes)
+    TRY(DLL.XDW_GroupAnnotations, doc_handle, page, ann_handle, byref(indexlist), count, byref(new_ann_handle), NULL)
+    return new_ann_handle
+
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_UnGroupAnnotation(doc_handle, ann_handle): pass

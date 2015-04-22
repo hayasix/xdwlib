@@ -123,6 +123,14 @@ def environ(name=None):
     return values
 
 
+def linkfolders():
+    result = dict()
+    for i in range(XDW_GetLinkRootFolderNumber()):
+        info = XDW_GetLinkRootFolderInformation(i + 1)
+        result[info.szLinkRootFolderName.decode(CODEPAGE)] = info.szPath.decode(CODEPAGE)
+    return result
+
+
 def get_viewer(light=False, lightonly=False):
     """Get pathname of DocuWorks Viewer (Light).
 
