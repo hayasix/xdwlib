@@ -117,7 +117,10 @@ def create_sfx(input_path, output_path=None):
     root, ext = os.path.splitext(input_path)
     output_path = adjust_path(output_path or root, ext=".exe")
     output_path = derivative_path(output_path)
-    XDW_CreateSfxDocument(cp(input_path), cp(output_path))
+    if XDWVER < 8:
+        XDW_CreateSfxDocument(cp(input_path), cp(output_path))
+    else:
+        XDW_CreateSfxDocumentW(input_path, output_path)
     return output_path
 
 
@@ -130,7 +133,10 @@ def extract_sfx(input_path, output_path=None):
     root, ext = os.path.splitext(input_path)
     output_path = adjust_path(output_path or root, ext=".xdw")
     output_path = derivative_path(output_path)
-    XDW_ExtractFromSfxDocument(cp(input_path), cp(output_path))
+    if XDWVER < 8:
+        XDW_ExtractFromSfxDocument(cp(input_path), cp(output_path))
+    else:
+        XDW_ExtractFromSfxDocumentW(input_path, output_path)
     # Created file can be either document or binder.  We have to examine
     # which type of file was generated and rename if needed.
     doc = xdwopen(output_path, readonly=True)
@@ -153,7 +159,10 @@ def optimize(input_path, output_path=None):
     root, ext = os.path.splitext(input_path)
     output_path = adjust_path(output_path or root, ext=ext)
     output_path = derivative_path(output_path)
-    XDW_OptimizeDocument(cp(input_path), cp(output_path))
+    if XDWVER < 8:
+        XDW_OptimizeDocument(cp(input_path), cp(output_path))
+    else:
+        XDW_OptimizeDocumentW(input_path, output_path)
     return output_path
 
 
@@ -180,7 +189,10 @@ def protection_info(path):
                     'EDIT_DOCUMENT', 'EDIT_ANNOTATION', 'PRINT' and 'COPY'
     """
     path = adjust_path(path)
-    info = XDW_GetProtectionInformation(cp(path))
+    if XDWVER < 8:
+        info = XDW_GetProtectionInformation(cp(path))
+    else:
+        info = XDW_GetProtectionInformationW(path)
     protect_type = XDW_PROTECT[info.nProtectType]
     permission = flagvalue(XDW_PERM, info.nPermission, store=False)
     return (protect_type, permission)
@@ -247,8 +259,12 @@ def protect(input_path,
     else:
         raise ValueError("protect_type must be PASSWORD, PASSWORD128 or PKI")
     try:
-        XDW_ProtectDocument(cp(input_path), cp(output_path),
-                protect_type, opt, protect_option)
+        if XDWVER < 8:
+            XDW_ProtectDocument(cp(input_path), cp(output_path),
+                    protect_type, opt, protect_option)
+        else:
+            XDW_ProtectDocumentW(input_path, output_path,
+                    protect_type, opt, protect_option)
     except ProtectModuleError as e:
         msg = XDW_SECURITY_PKI_ERROR[opt.nErrorStatus]
         if 0 <= opt.nFirstErrorCert:
@@ -278,7 +294,10 @@ def unprotect(input_path, output_path=None, auth="NONE"):
         raise ValueError("auth must be NODIALOGUE or CONDITIONAL")
     opt = XDW_RELEASE_PROTECTION_OPTION()
     opt.nAuthMode = auth
-    XDW_ReleaseProtectionOfDocument(cp(input_path), cp(output_path), opt)
+    if XDWVER < 8:
+        XDW_ReleaseProtectionOfDocument(cp(input_path), cp(output_path), opt)
+    else:
+        XDW_ReleaseProtectionOfDocumentW(input_path, output_path, opt)
     return output_path
 
 
@@ -312,7 +331,10 @@ def sign(input_path,
         modopt = XDW_SIGNATURE_MODULE_OPTION_PKI()
         modopt.pSignerCert = ptr(cert)
         modopt.nSignerCertSize = len(cert)
-    XDW_SignDocument(cp(input_path), cp(output_path), opt, modopt)
+    if XDWVER < 8:
+        XDW_SignDocument(cp(input_path), cp(output_path), opt, modopt)
+    else:
+        XDW_SignDocumentW(input_path, output_path, opt, modopt)
     return output_path
 
 
@@ -469,7 +491,10 @@ class XDWFile(object):
             open_mode.nAuthMode = XDW_AUTH_NODIALOGUE
         else:
             open_mode.nAuthMode = XDW_AUTH_NONE
-        self.handle = XDW_OpenDocumentHandle(cp(self.pathname()), open_mode)
+        if XDWVER < 8:
+            self.handle = XDW_OpenDocumentHandle(cp(self.pathname()), open_mode)
+        else:
+            self.handle = XDW_OpenDocumentHandleW(self.pathname(), open_mode)
         self.register()
         # Set document properties.
         docinfo = XDW_GetDocumentInformation(self.handle)
@@ -580,7 +605,10 @@ class XDWFile(object):
         default     value to return if no attribute named name exist
         """
         try:
-            return XDW_GetUserAttribute(self.handle, cp(name))
+            if XDWVER < 8:
+                return XDW_GetUserAttribute(self.handle, cp(name))
+            else:
+                return XDW_GetUserAttributeW(self.handle, name)
         except InvalidArgError:
             return default
 
@@ -590,7 +618,10 @@ class XDWFile(object):
         name        (str or bytes) attribute name in OEM encoding
         value       (str or bytes) attribute value in OEM encoding
         """
-        XDW_SetUserAttribute(self.handle, cp(name), value)
+        if XDWVER < 8:
+            XDW_SetUserAttribute(self.handle, cp(name), value)
+        else:
+            XDW_SetUserAttributeW(self.handle, name, value)
 
     def has_property(self, name):
         """Test if user defined property exists.

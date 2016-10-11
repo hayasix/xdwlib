@@ -146,10 +146,16 @@ class BaseDocument(Subject):
                 raise TypeError("binder is not acceptable")
         else:
             raise ValueError("can't insert {0} object".format(obj.__class__))
-        XDW_InsertDocument(
-                self.handle,
-                self.absolute_page(pos, append=True) + 1,
-                cp(temp if isinstance(temp, str) else temp.path))
+        if XDWVER < 8:
+            XDW_InsertDocument(
+                    self.handle,
+                    self.absolute_page(pos, append=True) + 1,
+                    cp(temp if isinstance(temp, str) else temp.path))
+        else:
+            XDW_InsertDocumentW(
+                    self.handle,
+                    self.absolute_page(pos, append=True) + 1,
+                    temp if isinstance(temp, str) else temp.path)
         inslen = XDW_GetDocumentInformation(self.handle).nPages - self.pages
         self.pages += inslen
         if not isinstance(obj, str):
@@ -216,11 +222,18 @@ class BaseDocument(Subject):
         opt.nHorPos = XDW_CREATE_HPOS.normalize(align[0])
         opt.nVerPos = XDW_CREATE_VPOS.normalize(align[1])
         opt.nMaxPaperSize = XDW_CREATE_MAXPAPERSIZE.normalize(maxpapersize)
-        XDW_CreateXdwFromImageFileAndInsertDocument(
-                self.handle,
-                self.absolute_page(pos, append=True) + 1,
-                cp(input_path),
-                opt)
+        if XDWVER < 8:
+            XDW_CreateXdwFromImageFileAndInsertDocument(
+                    self.handle,
+                    self.absolute_page(pos, append=True) + 1,
+                    cp(input_path),
+                    opt)
+        else:
+            XDW_CreateXdwFromImageFileAndInsertDocumentW(
+                    self.handle,
+                    self.absolute_page(pos, append=True) + 1,
+                    input_path,
+                    opt)
         self.update_pages()
         # Check inserted pages in order to attach them to this document and
         # shift observer entries appropriately.
@@ -246,7 +259,10 @@ class BaseDocument(Subject):
                     "{0}_P{1}.xdw".format(self.name, pos + 1),
                     dir=self.dirname())
         path = derivative_path(path)
-        XDW_GetPage(self.handle, self.absolute_page(pos) + 1, cp(path))
+        if XDWVER < 8:
+            XDW_GetPage(self.handle, self.absolute_page(pos) + 1, cp(path))
+        else:
+            XDW_GetPage(self.handle, self.absolute_page(pos) + 1, path)
         return path
 
     def export_image(self, pos, path=None,
@@ -349,8 +365,12 @@ class BaseDocument(Subject):
             # Compression method option is deprecated.
             dopt.nConvertMethod = XDW_CONVERT_MRC_OS
             opt.pDetailOption = cast(pointer(dopt), c_void_p)
-        XDW_ConvertPageToImageFile(
-                self.handle, self.absolute_page(pos) + 1, cp(path), opt)
+        if XDWVER < 8:
+            XDW_ConvertPageToImageFile(
+                    self.handle, self.absolute_page(pos) + 1, cp(path), opt)
+        else:
+            XDW_ConvertPageToImageFileW(
+                    self.handle, self.absolute_page(pos) + 1, path, opt)
         return path
 
     def _export_direct_image(self, pos, path=None):
@@ -360,8 +380,12 @@ class BaseDocument(Subject):
             path = adjust_path(path, dir=self.dirname())
         path = derivative_path(path)
         path, _ = os.path.splitext(path)
-        fmt = XDW_GetCompressedPageImage(
-                self.handle, self.absolute_page(pos) + 1, cp(path))
+        if XDWVER < 8:
+            fmt = XDW_GetCompressedPageImage(
+                    self.handle, self.absolute_page(pos) + 1, cp(path))
+        else:
+            fmt = XDW_GetCompressedPageImageW(
+                    self.handle, self.absolute_page(pos) + 1, path)
         new_path = path + "." + XDW_IMAGE_FORMAT[fmt].lower()
         os.rename(path, new_path)
         return new_path

@@ -105,7 +105,10 @@ def create_from_image(input_path, output_path=None,
     opt.nHorPos = XDW_CREATE_HPOS.normalize(align[0])
     opt.nVerPos = XDW_CREATE_VPOS.normalize(align[1])
     opt.nMaxPaperSize = XDW_CREATE_MAXPAPERSIZE.normalize(maxpapersize)
-    XDW_CreateXdwFromImageFile(cp(input_path), cp(output_path), opt)
+    if XDWVER < 8:
+        XDW_CreateXdwFromImageFile(cp(input_path), cp(output_path), opt)
+    else:
+        XDW_CreateXdwFromImageFileW(input_path, output_path, opt)
     return output_path
 
 
@@ -120,7 +123,10 @@ def create_from_pdf(input_path, output_path=None):
     output_path = adjust_path(output_path or root, ext=".xdw")
     output_path = derivative_path(output_path)
     try:
-        XDW_CreateXdwFromImagePdfFile(cp(input_path), cp(output_path))
+        if XDWVER < 8:
+            XDW_CreateXdwFromImagePdfFile(cp(input_path), cp(output_path))
+        else:
+            XDW_CreateXdwFromImagePdfFileW(input_path, output_path)
     except Exception as e:
         # If PDF is not compatible with DocuWorks, try to handle it
         # with the system-defined application program.
@@ -142,8 +148,12 @@ def create_from_app(input_path, output_path=None,
     root, ext = os.path.splitext(input_path)
     output_path = adjust_path(output_path or root, ext=".xdw")
     output_path = derivative_path(output_path)
-    handle = XDW_BeginCreationFromAppFile(
-            cp(input_path), cp(output_path), bool(attachment))
+    if XDWVER < 8:
+        handle = XDW_BeginCreationFromAppFile(
+                cp(input_path), cp(output_path), bool(attachment))
+    else:
+        handle = XDW_BeginCreationFromAppFileW(
+                input_path, output_path, bool(attachment))
     st = time.time()
     try:
         while True:
@@ -171,7 +181,10 @@ def merge(input_paths, output_path=None):
     root, ext = os.path.splitext(input_paths[0])
     output_path = adjust_path(output_path or root, ext=".xdw")
     output_path = derivative_path(output_path)
-    XDW_MergeXdwFiles(map(cp, input_paths), cp(output_path))
+    if XDWVER < 8:
+        XDW_MergeXdwFiles(map(cp, input_paths), cp(output_path))
+    else:
+        XDW_MergeXdwFilesW(input_paths, output_path)
     return output_path
 
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.3
+#!/usr/bin/env python3
 # vim: set fileencoding=utf-8 fileformat=unix :
 
 """xdwlib.py -- DocuWorks library for Python.

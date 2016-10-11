@@ -2251,13 +2251,13 @@ def ATTR(byorder=False, widename=False, multitype=False, widevalue=False):
 def XDW_GetInformation(index): pass
 
 
-_XDWVER_ = int(XDW_GetInformation(XDW_GI_VERSION).decode("ascii").split(".")[0])
+XDWVER = int(XDW_GetInformation(XDW_GI_VERSION).decode("ascii").split(".")[0])
 
 
 def XDWVERSION(ver):
     """Decorator to indicate if the following function is valid or not."""
     def deco(api):
-        if _XDWVER_ <= ver:
+        if XDWVER <= ver:
             @wraps(api)
             def func(*args):
                 api(*args)

@@ -33,7 +33,10 @@ def create_binder(path, color="RED", size="FREE", coding=CODEPAGE):
     data = XDW_BINDER_INITIAL_DATA()
     data.nBinderColor = XDW_BINDER_COLOR.normalize(color)
     data.nBinderSize = XDW_BINDER_SIZE.normalize(size)
-    XDW_CreateBinder(cp(path), data)
+    if XDWVER < 8:
+        XDW_CreateBinder(cp(path), data)
+    else:
+        XDW_CreateBinderW(path, data)
     return path
 
 
@@ -152,7 +155,10 @@ class Binder(Subject, XDWFile):
     def insert(self, pos, path):
         """Insert a document by path ."""
         pos = self._pos(pos, append=True)
-        XDW_InsertDocumentToBinder(self.handle, pos + 1, cp(path))
+        if XDWVER < 8:
+            XDW_InsertDocumentToBinder(self.handle, pos + 1, cp(path))
+        else:
+            XDW_InsertDocumentToBinderW(self.handle, pos + 1, path)
         self.documents += 1
         doc = self.document(pos)
         self.attach(doc, EV_DOC_INSERTED)
