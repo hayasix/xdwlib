@@ -2257,10 +2257,10 @@ XDWVER = int(XDW_GetInformation(XDW_GI_VERSION).decode("ascii").split(".")[0])
 def XDWVERSION(ver):
     """Decorator to indicate if the following function is valid or not."""
     def deco(api):
-        if XDWVER <= ver:
+        if ver <= XDWVER:
             @wraps(api)
             def func(*args):
-                api(*args)
+                return api(*args)
             return func
         else:
             @wraps(api)
@@ -2306,7 +2306,7 @@ def XDW_OpenDocumentHandle(path, open_mode):
 @XDWVERSION(8)
 def XDW_OpenDocumentHandleW(path, open_mode):
     doc_handle = XDW_DOCUMENT_HANDLE()
-    TRY(DLL.XDW_OpenDocumentHandle, path, byref(doc_handle), byref(open_mode))
+    TRY(DLL.XDW_OpenDocumentHandleW, path, byref(doc_handle), byref(open_mode))
     return doc_handle
 
 @APPEND(NULL)

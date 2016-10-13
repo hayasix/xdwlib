@@ -262,7 +262,7 @@ class BaseDocument(Subject):
         if XDWVER < 8:
             XDW_GetPage(self.handle, self.absolute_page(pos) + 1, cp(path))
         else:
-            XDW_GetPage(self.handle, self.absolute_page(pos) + 1, path)
+            XDW_GetPageW(self.handle, self.absolute_page(pos) + 1, path)
         return path
 
     def export_image(self, pos, path=None,
