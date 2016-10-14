@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-# vim: fileencoding=cp932 fileformat=dos
+#!/usr/bin/env python3
+# vim: set fileencoding=utf-8 fileformat=unix :
 
 """xdwfile.py -- DocuWorks-compatible files
 
@@ -53,42 +53,39 @@ def atexithandler():
     XDW_Finalize()
 
 
-def view(path, light=False, wait=True,
-        page=0, document=None, fullscreen=False, zoom=0):
+def view(path, light=False, wait=True, page=0, fullscreen=False, zoom=0):
     """View document.
 
-    path        (str or unicode)
+    path        (str)
     light       (bool) force to use DocuWorks Viewer Light.
                 Note that DocuWorks Viewer is used if Light version is
                 not avaiable.
     wait        (bool) wait until viewer stops
     page        (int) page number to view
-    document    (unicode) document name in binder if required
     fullscreen  (bool) view in full screen (presentation mode)
     zoom        (int) in 10-1600 percent; 0 means 100%
                 (str) 'WIDTH' | 'HEIGHT' | 'PAGE'
     """
     import subprocess
-    path = cp(path)
     if os.path.splitext(path)[1].upper() not in (".XDW", ".XBD"):
         raise BadFormatError("extension must be .xdw or .xbd")
-    if page is None:
-        page = 0
-    args = [get_viewer(light=light), path, "/n" + str(page + 1)]
-    if document:
-        args.append('/i"' + cp(document) + '"')
+    args = [get_viewer(light=light), path]
+    if page:
+        args.append("/n{0}".format(page + 1))
     if fullscreen:
         args.append("/f")
     if isinstance(zoom, (int, float)) and zoom:
         if zoom and not (10 <= zoom <= 1600):
-            raise ValueError("10..1600% is valid, {0} given".format(zoom))
+            raise ValueError("10..1600(%) is valid, {0} given".format(zoom))
         args.append("/m{0}".format(int(zoom)))
-    elif isinstance(zoom, basestring):
+    elif isinstance(zoom, str):
         if zoom.upper() not in ("WIDTH", "HEIGHT", "PAGE"):
             raise ValueError(("int, 'WIDTH', 'HEIGHT' or 'PAGE' is valid"
                               "for window size, {0} given").format(repr(zoom)))
         args.append("/m{0}".format(zoom[0].lower()))
-    print " ".join('"'+arg+'"' if " " in arg else arg for arg in args)
+    elif zoom:
+        raise ValueError("10..1600(%) or WIDTH/HEIGHT/PAGE is valid for zoom, "
+                        "{0} given".format(zoom))
     proc = subprocess.Popen(args)
     if not wait:
         return (proc, path)
@@ -102,7 +99,6 @@ def xdwopen(path, readonly=False, authenticate=True, autosave=False):
     """
     from .document import Document
     from .binder import Binder
-    path = uc(path)
     XDW_TYPES = {".XDW": Document, ".XBD": Binder}
     ext = os.path.splitext(path)[1].upper()
     if ext not in XDW_TYPES:
@@ -117,11 +113,14 @@ def create_sfx(input_path, output_path=None):
 
     Returns pathname of generated sfx executable file.
     """
-    input_path = adjust_path(uc(input_path))
+    input_path = adjust_path(input_path)
     root, ext = os.path.splitext(input_path)
-    output_path = adjust_path(uc(output_path or root), ext=".exe")
+    output_path = adjust_path(output_path or root, ext=".exe")
     output_path = derivative_path(output_path)
-    XDW_CreateSfxDocument(cp(input_path), cp(output_path))
+    if XDWVER < 8:
+        XDW_CreateSfxDocument(cp(input_path), cp(output_path))
+    else:
+        XDW_CreateSfxDocumentW(input_path, output_path)
     return output_path
 
 
@@ -130,11 +129,14 @@ def extract_sfx(input_path, output_path=None):
 
     Returns pathname of generated document/binder file.
     """
-    input_path = adjust_path(uc(input_path))
+    input_path = adjust_path(input_path)
     root, ext = os.path.splitext(input_path)
-    output_path = adjust_path(uc(output_path or root), ext=".xdw")
+    output_path = adjust_path(output_path or root, ext=".xdw")
     output_path = derivative_path(output_path)
-    XDW_ExtractFromSfxDocument(cp(input_path), cp(output_path))
+    if XDWVER < 8:
+        XDW_ExtractFromSfxDocument(cp(input_path), cp(output_path))
+    else:
+        XDW_ExtractFromSfxDocumentW(input_path, output_path)
     # Created file can be either document or binder.  We have to examine
     # which type of file was generated and rename if needed.
     doc = xdwopen(output_path, readonly=True)
@@ -153,11 +155,14 @@ def optimize(input_path, output_path=None):
 
     Returns pathname of optimized document/binder file.
     """
-    input_path = adjust_path(uc(input_path))
+    input_path = adjust_path(input_path)
     root, ext = os.path.splitext(input_path)
-    output_path = adjust_path(uc(output_path or root), ext=ext)
+    output_path = adjust_path(output_path or root, ext=ext)
     output_path = derivative_path(output_path)
-    XDW_OptimizeDocument(cp(input_path), cp(output_path))
+    if XDWVER < 8:
+        XDW_OptimizeDocument(cp(input_path), cp(output_path))
+    else:
+        XDW_OptimizeDocumentW(input_path, output_path)
     return output_path
 
 
@@ -166,9 +171,9 @@ def copy(input_path, output_path=None):
 
     Returns pathname of copied file.
     """
-    input_path = adjust_path(uc(input_path))
+    input_path = adjust_path(input_path)
     root, ext = os.path.splitext(input_path)
-    output_path = adjust_path(uc(output_path or root), ext=ext)
+    output_path = adjust_path(output_path or root, ext=ext)
     output_path = derivative_path(output_path)
     shutil.copyfile(input_path, output_path)
     return output_path
@@ -178,13 +183,16 @@ def protection_info(path):
     """Get protection information on a document/binder.
 
     Returns (protect_type, permission) where:
-    protect_type    "PASSWORD" | "PASSWORD128" | "PKI" | "STAMP" |
-                    "CONTEXT_SERVICE"
+    protect_type    'PASSWORD' | 'PASSWORD128' | 'PKI' | 'STAMP' |
+                    'CONTEXT_SERVICE'
     permission      allowed operation(s); comma separated list of
-                    "EDIT_DOCUMENT", "EDIT_ANNOTATION", "PRINT" and "COPY"
+                    'EDIT_DOCUMENT', 'EDIT_ANNOTATION', 'PRINT' and 'COPY'
     """
-    path = adjust_path(uc(path))
-    info = XDW_GetProtectionInformation(cp(path))
+    path = adjust_path(path)
+    if XDWVER < 8:
+        info = XDW_GetProtectionInformation(cp(path))
+    else:
+        info = XDW_GetProtectionInformationW(path)
     protect_type = XDW_PROTECT[info.nProtectType]
     permission = flagvalue(XDW_PERM, info.nPermission, store=False)
     return (protect_type, permission)
@@ -197,12 +205,12 @@ def protect(input_path,
         **options):
     """Generate protected document/binder.
 
-    protect_type    "PASSWORD" | "PASSWORD128" | "PKI"
-    auth            "NONE" | "NODIALOGUE" | "CONDITIONAL"
+    protect_type    'PASSWORD' | 'PASSWORD128' | 'PKI'
+    auth            'NONE' | 'NODIALOGUE' | 'CONDITIONAL'
 
     **options for PASSWORD and PASSWORD128:
     permission      allowed operation(s); comma separated list of
-                    "EDIT_DOCUMENT", "EDIT_ANNOTATION", "PRINT" and "COPY"
+                    'EDIT_DOCUMENT', 'EDIT_ANNOTATION', 'PRINT' and 'COPY'
     password        password to open document/binder, or None
     fullaccess      password to open document/binder with full-access
                     privilege, or None
@@ -210,15 +218,15 @@ def protect(input_path,
 
     **options for PKI:
     permission      allowed operation(s); comma separated list of
-                    "EDIT_DOCUMENT", "EDIT_ANNOTATION", "PRINT" and "COPY"
+                    'EDIT_DOCUMENT', 'EDIT_ANNOTATION', 'PRINT' and 'COPY'
     certificates    list of certificates in DER (RFC3280) formatted str
     fullaccesscerts list of certificates in DER (RFC3280) formatted str
 
     Returns pathname of protected file.
     """
-    input_path = adjust_path(uc(input_path))
+    input_path = adjust_path(input_path)
     root, ext = os.path.splitext(input_path)
-    output_path = adjust_path(uc(output_path or root), ext=ext)
+    output_path = adjust_path(output_path or root, ext=ext)
     output_path = derivative_path(output_path)
     protect_option = XDW_PROTECT_OPTION()
     protect_option.nAuthMode = XDW_AUTH.normalize(auth)
@@ -251,8 +259,12 @@ def protect(input_path,
     else:
         raise ValueError("protect_type must be PASSWORD, PASSWORD128 or PKI")
     try:
-        XDW_ProtectDocument(cp(input_path), cp(output_path),
-                protect_type, opt, protect_option)
+        if XDWVER < 8:
+            XDW_ProtectDocument(cp(input_path), cp(output_path),
+                    protect_type, opt, protect_option)
+        else:
+            XDW_ProtectDocumentW(input_path, output_path,
+                    protect_type, opt, protect_option)
     except ProtectModuleError as e:
         msg = XDW_SECURITY_PKI_ERROR[opt.nErrorStatus]
         if 0 <= opt.nFirstErrorCert:
@@ -264,16 +276,16 @@ def protect(input_path,
 def unprotect(input_path, output_path=None, auth="NONE"):
     """Release protection on document/binder.
 
-    auth            "NODIALOGUE" | "CONDITIONAL"
+    auth            'NODIALOGUE' | 'CONDITIONAL'
 
     Returns pathname of unprotected file.
 
     NB. Only PKI-based or DocuWorks-builtin-stamp-based protected files are
         processed.  Password-based protected files are beyond xdwlib.
     """
-    input_path = adjust_path(uc(input_path))
+    input_path = adjust_path(input_path)
     root, ext = os.path.splitext(input_path)
-    output_path = adjust_path(uc(output_path or root), ext=ext)
+    output_path = adjust_path(output_path or root, ext=ext)
     output_path = derivative_path(output_path)
     if protection_info(input_path)[0] not in ("PKI", "STAMP"):
         raise ValueError("only PKI- or STAMP-protected file is acceptable")
@@ -282,7 +294,10 @@ def unprotect(input_path, output_path=None, auth="NONE"):
         raise ValueError("auth must be NODIALOGUE or CONDITIONAL")
     opt = XDW_RELEASE_PROTECTION_OPTION()
     opt.nAuthMode = auth
-    XDW_ReleaseProtectionOfDocument(cp(input_path), cp(output_path), opt)
+    if XDWVER < 8:
+        XDW_ReleaseProtectionOfDocument(cp(input_path), cp(output_path), opt)
+    else:
+        XDW_ReleaseProtectionOfDocumentW(input_path, output_path, opt)
     return output_path
 
 
@@ -296,26 +311,30 @@ def sign(input_path,
 
     page            page number to paste signature on; starts with 0
     position        (Point) position to paste signature on; default=(0, 0)
-    type            "STAMP" | "PKI"
+    type            'STAMP' | 'PKI'
     certificate     certificate in DER (RFC3280) formatted str; valid for PKI
 
     Returns pathname of signed file.
     """
-    input_path = adjust_path(uc(input_path))
+    input_path = adjust_path(input_path)
     root, ext = os.path.splitext(input_path)
-    output_path = adjust_path(uc(output_path or root), ext=ext)
+    output_path = adjust_path(output_path or root, ext=ext)
     output_path = derivative_path(output_path)
     opt = XDW_SIGNATURE_OPTION_V5()
     opt.nPage = page + 1
     opt.nHorPos, opt.nVerPos = ((position or Point(0, 0)) * 100).int()
     opt.nSignatureType = XDW_SIGNATURE.normalize(type)
-    if opt.nSignatureType == XDW_SIGNATURE_STAMP:
+    type = XDW_SIGNATURE.normalize(type)
+    if type == XDW_SIGNATURE_STAMP:
         modopt = None
     else:  # opt.nSignatureType == XDW_SIGNATURE_PKI
         modopt = XDW_SIGNATURE_MODULE_OPTION_PKI()
         modopt.pSignerCert = ptr(cert)
         modopt.nSignerCertSize = len(cert)
-    XDW_SignDocument(cp(input_path), cp(output_path), opt, modopt)
+    if XDWVER < 8:
+        XDW_SignDocument(cp(input_path), cp(output_path), opt, modopt)
+    else:
+        XDW_SignDocumentW(input_path, output_path, opt, modopt)
     return output_path
 
 
@@ -445,15 +464,15 @@ class XDWFile(object):
         """Initiator.
 
         Sets the following properties:
-            dir         (unicode) directory part of path
-            name        (unicode) filename without extension
-            type        (str) "DOCUMENT" | "BINDER"
+            dir         (str) directory part of path
+            name        (str) filename without extension
+            type        (str) 'DOCUMENT' | 'BINDER'
             protection  result of protection_info(path)
 
         NB. value of `type' may be changed after actual open().
         """
         self.signatures = None  # hack
-        self.dir, self.name = os.path.split(uc(path))
+        self.dir, self.name = os.path.split(path)
         self.name, ext = os.path.splitext(self.name)
         self.type = {".xdw": "DOCUMENT", ".xbd": "BINDER"}.get(
                 ext.lower(), "DOCUMENT")
@@ -472,7 +491,10 @@ class XDWFile(object):
             open_mode.nAuthMode = XDW_AUTH_NODIALOGUE
         else:
             open_mode.nAuthMode = XDW_AUTH_NONE
-        self.handle = XDW_OpenDocumentHandle(cp(self.pathname()), open_mode)
+        if XDWVER < 8:
+            self.handle = XDW_OpenDocumentHandle(cp(self.pathname()), open_mode)
+        else:
+            self.handle = XDW_OpenDocumentHandleW(self.pathname(), open_mode)
         self.register()
         # Set document properties.
         docinfo = XDW_GetDocumentInformation(self.handle)
@@ -548,7 +570,7 @@ class XDWFile(object):
         return
 
     def __getattribute__(self, name):
-        attribute_name = unicode(inner_attribute_name(name))
+        attribute_name = inner_attribute_name(name)
         if attribute_name not in XDW_DOCUMENT_ATTRIBUTE_W:
             self_signatures = object.__getattribute__(self, "signatures")
             if name == "status" and self_signatures:
@@ -561,12 +583,12 @@ class XDWFile(object):
         return makevalue(t, value)
 
     def __setattr__(self, name, value):
-        attribute_name = unicode(inner_attribute_name(name))
+        attribute_name = inner_attribute_name(name)
         if attribute_name in XDW_DOCUMENT_ATTRIBUTE_W:
             t, value = typevalue(value)
             XDW_SetDocumentAttributeW(
                     self.handle, attribute_name, t, value,
-                    XDW_TEXT_MULTIBYTE, codepage=CP)
+                    XDW_TEXT_UNICODE_IFNECESSARY, codepage=CP)
             return
         object.__setattr__(self, name, value)
 
@@ -579,31 +601,40 @@ class XDWFile(object):
     def get_userattr(self, name, default=None):
         """Get user defined attribute.
 
-        name        (str or unicode) attribute name
+        name        (str or bytes) attribute name in OEM encoding
         default     value to return if no attribute named name exist
         """
         try:
-            return XDW_GetUserAttribute(self.handle, cp(name))
+            if XDWVER < 8:
+                return XDW_GetUserAttribute(self.handle, cp(name))
+            else:
+                return XDW_GetUserAttributeW(self.handle, name)
         except InvalidArgError:
             return default
 
     def set_userattr(self, name, value):
-        """Set user defined attribute."""
-        XDW_SetUserAttribute(self.handle, cp(name), value)
+        """Set user defined attribute.
+
+        name        (str or bytes) attribute name in OEM encoding
+        value       (str or bytes) attribute value in OEM encoding
+        """
+        if XDWVER < 8:
+            XDW_SetUserAttribute(self.handle, cp(name), value)
+        else:
+            XDW_SetUserAttributeW(self.handle, name, value)
 
     def has_property(self, name):
         """Test if user defined property exists.
 
-        name        (str or unicode) name of property
+        name        (str) name of property
 
         Returns True if such property exists, or False if not.
         """
-        if not isinstance(name, basestring):
-            raise TypeError("property name must be str or unicode")
-        name = uc(name)
+        if not isinstance(name, str):
+            raise TypeError("property name must be str")
         try:
             t, value, _ = XDW_GetDocumentAttributeByNameW(
-                    self.handle, uc(name), codepage=CP)
+                    self.handle, name, codepage=CP)
         except InvalidArgError:
             return False
         return True
@@ -611,60 +642,66 @@ class XDWFile(object):
     def get_property(self, name, default=None):
         """Get user defined property.
 
-        name        (str or unicode) name of property, or user attribute
+        name        (str) name of property, or user attribute
                     (int) property order which starts with 0
         default     value to return if no property named name exist
 
-        Returns a unicode, int, bool or datetime.date.
+        Returns a str, int, bool or datetime.date.
 
-        Note that previous set_property(str_value) gives unicode.
+        Note that previous set_property(bytes_value) gives str (i.e., unicode).
         """
-        if isinstance(name, int):
+        if isinstance(name, str):
+            try:
+                t, value, _ = XDW_GetDocumentAttributeByNameW(
+                        self.handle, name, codepage=CP)
+            except InvalidArgError:
+                return default
+        elif isinstance(name, int):
+            n = self.properties
+            if name < 0:
+                name += n
+            if not( 0 <= name < n):
+                raise IndexError("attribute order out of range [0, %d)" % n)
             name, t, value, _ = XDW_GetDocumentAttributeByOrderW(
-                    self.handle, name + 1)
+                                            self.handle, name + 1)
             return (name, makevalue(t, value))
-        try:
-            t, value, _ = XDW_GetDocumentAttributeByNameW(
-                    self.handle, uc(name), codepage=CP)
-        except InvalidArgError:
-            return default
+        else:
+            raise TypeError("name must be str or int")
         return makevalue(t, value)
 
     def set_property(self, name, value, update=True):
         """Set user defined property.
 
-        name        (str or unicode) name of property, or user attribute
-        value       (str, unicode, int, bool or datetime.date) stored value
+        name        (str) name of property, or user attribute
+        value       (str, bytes, int, bool or datetime.date) stored value
                     (None) delete property if update==False
         update      (bool) False=don't update value if exists already
 
-        Note that str value is actually stored in unicode and get_property()
-        will returen unicode.
+        Note that bytes value is actually stored in unicode and get_property()
+        will returen str (i.e., unicode str).
         """
-        name = uc(name)  # Force to specify in unicode.
         if not update and self.get_property(name) is not None:
             return
         if value is None:
             self.del_property(name)
             return
-        if isinstance(value, str):
+        if isinstance(value, bytes):
             value = uc(value)  # Force to store in unicode.
         t, value = typevalue(value)
         if t != XDW_ATYPE_STRING:
             value = byref(value)
         XDW_SetDocumentAttributeW(
-                self.handle, name, t, value, XDW_TEXT_MULTIBYTE, codepage=CP)
+                self.handle, name, t, value, XDW_TEXT_UNICODE_IFNECESSARY, codepage=CP)
         self._set_property_count()
 
     def del_property(self, name):
         """Delete user defined property.
 
-        name        (unicode) name of property, or user attribute
+        name        (str) name of property, or user attribute
         """
-        name = uc(name)  # Force to specify in unicode.
         XDW_SetDocumentAttributeW(
                 self.handle, name, XDW_ATYPE_INT, NULL,
-                XDW_TEXT_MULTIBYTE, codepage=CP)
+                XDW_TEXT_UNICODE_IFNECESSARY, codepage=CP)
         self._set_property_count()
 
     hasprop = has_property
@@ -865,14 +902,14 @@ class BaseSignature(object):
     def __repr__(self):
         return  "{cls}({doc}[{pos}])".format(
                 cls=self.__class__.__name__,
-                doc=cp(self.doc.name),
+                doc=self.doc.name,
                 pos=self.pos,
                 )
 
     def __str__(self):
         return  "{cls}({doc}[{pos}]; page {pgpos}, position {loc}mm)".format(
                 cls=self.__class__.__name__,
-                doc=cp(self.doc.name),
+                doc=self.doc.name,
                 pos=self.pos,
                 pgpos=self.pagepos,
                 loc="({0:.2f}, {1:.2f})".format(*self.position),
@@ -967,15 +1004,15 @@ class PKISignature(BaseSignature):
                         format
         memo            (str)
         signing_time    (datetime.datetime)
-        verification_type   "LOW" | "MID_LOCAL" | "MID_NETWORK" |
-                            "HIGH_LOCAL" | "HIGH_NETWORK"
-        status          "UNKNOWN" | "OK" | "NO_ROOT_CERTIFICATE" |
-                        "NO_REVOCATION_CHECK" | OUT_OF_VALIDITY" |
-                        "OUT_OF_VALIDITY_AT_SIGNED_TIME |
-                        "REVOKE_CERTIFICATE" |
-                        "REVOKE_INTERMEDIATE_CERTIFICATE" |
-                        "INVLIAD_SIGNATURE" | "INVALID_USAGE" |
-                        "UNDEFINED_ERROR"
+        verification_type   'LOW' | 'MID_LOCAL' | 'MID_NETWORK' |
+                            'HIGH_LOCAL' | 'HIGH_NETWORK'
+        status          'UNKNOWN' | 'OK' | 'NO_ROOT_CERTIFICATE' |
+                        'NO_REVOCATION_CHECK' | OUT_OF_VALIDITY' |
+                        'OUT_OF_VALIDITY_AT_SIGNED_TIME |
+                        'REVOKE_CERTIFICATE' |
+                        'REVOKE_INTERMEDIATE_CERTIFICATE' |
+                        'INVLIAD_SIGNATURE' | 'INVALID_USAGE' |
+                        'UNDEFINED_ERROR'
         """
         BaseSignature.__init__(self, doc, pos, pagepos, position, size, dt)
         self.module = module
@@ -1024,7 +1061,7 @@ class PageForm(object):
     def __repr__(self):
         return "{cls}({doc}.{attr})".format(
                 cls=self.__class__.__name__,
-                doc=cp(self.doc.name),
+                doc=self.doc,
                 attr=outer_attribute_name(XDW_PAGEFORM[self.form]))
 
     @property
@@ -1047,7 +1084,7 @@ class PageForm(object):
                 value += 1  # 1-based
             value = byref(c_int(value))
             attribute_type = XDW_ATYPE_INT  # TODO: Scaling may be required.
-        elif isinstance(value, basestring):
+        elif isinstance(value, (str, bytes)):
             attribute_type = XDW_ATYPE_STRING
             """TODO: unicode handling.
             Currently Author has no idea to take unicode with ord < 256.
@@ -1057,15 +1094,14 @@ class PageForm(object):
             if-block is not placed, you will get much more but inexact
             elements in result for abbreviated search string.
             """
-            if isinstance(value, unicode):
-                value = value.encode(CODEPAGE)  # TODO: unicode handling
+            value = cp(value)  # TODO: unicode handling
             if 255 < len(value):
                 raise ValueError("text length must be <= 255")
         # TODO: XDW_ATYPE_OTHER should also be valid.
         else:
             raise TypeError("illegal value " + repr(value))
         XDW_SetPageFormAttribute(self.doc.handle, self.form,
-                attrname, attribute_type, value)
+                cp(attrname), attribute_type, value)
 
     def __getattribute__(self, name):
         attrname = inner_attribute_name(name)
@@ -1073,10 +1109,10 @@ class PageForm(object):
             return object.__getattribute__(self, name)
         self_doc = object.__getattribute__(self, "doc")
         self_form = object.__getattribute__(self, "form")
-        value = XDW_GetPageFormAttribute(self_doc.handle, self_form, attrname)
+        value = XDW_GetPageFormAttribute(self_doc.handle, self_form, cp(attrname))
         attribute_type = XDW_ANNOTATION_ATTRIBUTE[attrname][0]
         if attribute_type == 1:  # string
-            return unicode(value, CODEPAGE)
+            return uc(value)
         value = unpack(value)
         if attrname.endswith("Page"):
             value -= 1  # 0-based
@@ -1085,7 +1121,7 @@ class PageForm(object):
     def update(self, sync=False):
         """Update page form.
 
-        sync        (bool) also update pageforms for documents in binder
+        sync    (bool) also update pageforms for documents in binder
         """
         sync = XDW_PAGEFORM_REMOVE if sync else XDW_PAGEFORM_STAY
         XDW_UpdatePageForm(self.doc.handle, sync)
@@ -1093,7 +1129,7 @@ class PageForm(object):
     def delete(self, sync=False):
         """Delete page form.
 
-        sync        (bool) also delete pageforms for documents in binder
+        sync    (bool) also delete pageforms for documents in binder
         """
         sync = XDW_PAGEFORM_REMOVE if sync else XDW_PAGEFORM_STAY
         XDW_RemovePageForm(self.doc.handle, sync)

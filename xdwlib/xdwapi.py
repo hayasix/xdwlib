@@ -1,5 +1,5 @@
-#!/usr/bin/env python2
-# vim: fileencoding=cp932 fileformat=dos
+#!/usr/bin/env python3
+# vim: set fileencoding=utf-8 fileformat=unix :
 
 """xdwapi.py -- raw DocuWorks API
 
@@ -174,7 +174,7 @@ class XDWConst(dict):
         return self.reverse.get(str(value).upper(), self.default)
 
     def normalize(self, key_or_value):
-        if isinstance(key_or_value, basestring):
+        if isinstance(key_or_value, (str, bytes)):
             return self.inner(key_or_value)
         return key_or_value
 
@@ -662,11 +662,11 @@ XDW_DOCUMENT_TYPE = XDWConst({
         XDW_DT_BINDER               : "BINDER",
         }, default=XDW_DT_DOCUMENT)
 
-XDW_PROP_TITLE                      = "%Title"
-XDW_PROP_SUBJECT                    = "%Subject"
-XDW_PROP_AUTHOR                     = "%Author"
-XDW_PROP_KEYWORDS                   = "%Keywords"
-XDW_PROP_COMMENTS                   = "%Comments"
+XDW_PROP_TITLE                      = b"%Title"
+XDW_PROP_SUBJECT                    = b"%Subject"
+XDW_PROP_AUTHOR                     = b"%Author"
+XDW_PROP_KEYWORDS                   = b"%Keywords"
+XDW_PROP_COMMENTS                   = b"%Comments"
 
 XDW_DOCUMENT_ATTRIBUTE = XDWConst({
         XDW_PROP_TITLE              : "%Title",
@@ -676,18 +676,18 @@ XDW_DOCUMENT_ATTRIBUTE = XDWConst({
         XDW_PROP_COMMENTS           : "%Comments",
         }, default=None)
 
-XDW_PROPW_TITLE                     = u"%Title"
-XDW_PROPW_SUBJECT                   = u"%Subject"
-XDW_PROPW_AUTHOR                    = u"%Author"
-XDW_PROPW_KEYWORDS                  = u"%Keywords"
-XDW_PROPW_COMMENTS                  = u"%Comments"
+XDW_PROPW_TITLE                     = b"%Title"
+XDW_PROPW_SUBJECT                   = b"%Subject"
+XDW_PROPW_AUTHOR                    = b"%Author"
+XDW_PROPW_KEYWORDS                  = b"%Keywords"
+XDW_PROPW_COMMENTS                  = b"%Comments"
 
 XDW_DOCUMENT_ATTRIBUTE_W = XDWConst({
-        XDW_PROPW_TITLE             : u"%Title",
-        XDW_PROPW_SUBJECT           : u"%Subject",
-        XDW_PROPW_AUTHOR            : u"%Author",
-        XDW_PROPW_KEYWORDS          : u"%Keywords",
-        XDW_PROPW_COMMENTS          : u"%Comments",
+        XDW_PROPW_TITLE             : "%Title",
+        XDW_PROPW_SUBJECT           : "%Subject",
+        XDW_PROPW_AUTHOR            : "%Author",
+        XDW_PROPW_KEYWORDS          : "%Keywords",
+        XDW_PROPW_COMMENTS          : "%Comments",
         }, default=None)
 
 XDW_BINDER_SIZE = XDWConst({
@@ -1037,87 +1037,87 @@ XDW_STARCH_ACTION = XDWConst({
         XDW_STARCH_OFF              : "OFF",
         }, default=XDW_STARCH)
 
-XDW_ATN_Text                        = "%Text"
-XDW_ATN_FontName                    = "%FontName"
-XDW_ATN_FontStyle                   = "%FontStyle"
-XDW_ATN_FontSize                    = "%FontSize"
-XDW_ATN_ForeColor                   = "%ForeColor"
-XDW_ATN_FontPitchAndFamily          = "%FontPitchAndFamily"
-XDW_ATN_FontCharSet                 = "%FontCharSet"
-XDW_ATN_BackColor                   = "%BackColor"
-XDW_ATN_Caption                     = "%Caption"
-XDW_ATN_Url                         = "%Url"
-XDW_ATN_XdwPath                     = "%XdwPath"
-XDW_ATN_ShowIcon                    = "%ShowIcon"
-XDW_ATN_LinkType                    = "%LinkType"
-XDW_ATN_XdwPage                     = "%XdwPage"
-XDW_ATN_Tooltip                     = "%Tooltip"
-XDW_ATN_Tooltip_String              = "%TooltipString"
+XDW_ATN_Text                        = b"%Text"
+XDW_ATN_FontName                    = b"%FontName"
+XDW_ATN_FontStyle                   = b"%FontStyle"
+XDW_ATN_FontSize                    = b"%FontSize"
+XDW_ATN_ForeColor                   = b"%ForeColor"
+XDW_ATN_FontPitchAndFamily          = b"%FontPitchAndFamily"
+XDW_ATN_FontCharSet                 = b"%FontCharSet"
+XDW_ATN_BackColor                   = b"%BackColor"
+XDW_ATN_Caption                     = b"%Caption"
+XDW_ATN_Url                         = b"%Url"
+XDW_ATN_XdwPath                     = b"%XdwPath"
+XDW_ATN_ShowIcon                    = b"%ShowIcon"
+XDW_ATN_LinkType                    = b"%LinkType"
+XDW_ATN_XdwPage                     = b"%XdwPage"
+XDW_ATN_Tooltip                     = b"%Tooltip"
+XDW_ATN_Tooltip_String              = b"%TooltipString"
 XDW_ATN_TooltipString               = XDW_ATN_Tooltip_String            # alias
-XDW_ATN_XdwPath_Relative            = "%XdwPathRelative"
+XDW_ATN_XdwPath_Relative            = b"%XdwPathRelative"
 XDW_ATN_XdwPathRelative             = XDW_ATN_XdwPath_Relative          # alias
-XDW_ATN_XdwLink                     = "%XdwLink"
-XDW_ATN_LinkAtn_Title               = "%LinkAtnTitle"
+XDW_ATN_XdwLink                     = b"%XdwLink"
+XDW_ATN_LinkAtn_Title               = b"%LinkAtnTitle"
 XDW_ATN_LinkAtnTitle                = XDW_ATN_LinkAtn_Title             # alias
-XDW_ATN_OtherFilePath               = "%OtherFilePath"
-XDW_ATN_OtherFilePath_Relative      = "%OtherFilePathRelative"
+XDW_ATN_OtherFilePath               = b"%OtherFilePath"
+XDW_ATN_OtherFilePath_Relative      = b"%OtherFilePathRelative"
 XDW_ATN_OtherFilePathRelative       = XDW_ATN_OtherFilePath_Relative    # alias
-XDW_ATN_MailAddress                 = "%MailAddress"
-XDW_ATN_BorderStyle                 = "%BorderStyle"
-XDW_ATN_BorderWidth                 = "%BorderWidth"
-XDW_ATN_BorderColor                 = "%BorderColor"
-XDW_ATN_BorderTransparent           = "%BorderTransparent"
-XDW_ATN_BorderType                  = "%BorderType"
-XDW_ATN_FillStyle                   = "%FillStyle"
-XDW_ATN_FillColor                   = "%FillColor"
-XDW_ATN_FillTransparent             = "%FillTransparent"
-XDW_ATN_ArrowheadType               = "%ArrowheadType"
-XDW_ATN_ArrowheadStyle              = "%ArrowheadStyle"
-XDW_ATN_WordWrap                    = "%WordWrap"
-XDW_ATN_TextDirection               = "%TextDirection"
-XDW_ATN_TextOrientation             = "%TextOrientation"
-XDW_ATN_LineSpace                   = "%LineSpace"
-XDW_ATN_AutoResize                  = "%AutoResize"
-XDW_ATN_Invisible                   = "%Invisible"
-XDW_ATN_PageFrom                    = "%PageFrom"
-XDW_ATN_XdwNameInXbd                = "%XdwNameInXbd"
-XDW_ATN_TopField                    = "%TopField"
-XDW_ATN_BottomField                 = "%BottomField"
-XDW_ATN_DateStyle                   = "%DateStyle"
-XDW_ATN_YearField                   = "%YearField"
-XDW_ATN_MonthField                  = "%MonthField"
-XDW_ATN_DayField                    = "%DayField"
-XDW_ATN_BasisYearStyle              = "%BasisYearStyle"
-XDW_ATN_BasisYear                   = "%BasisYear"
-XDW_ATN_DateField_FirstChar         = "%DateFieldFirstChar"
+XDW_ATN_MailAddress                 = b"%MailAddress"
+XDW_ATN_BorderStyle                 = b"%BorderStyle"
+XDW_ATN_BorderWidth                 = b"%BorderWidth"
+XDW_ATN_BorderColor                 = b"%BorderColor"
+XDW_ATN_BorderTransparent           = b"%BorderTransparent"
+XDW_ATN_BorderType                  = b"%BorderType"
+XDW_ATN_FillStyle                   = b"%FillStyle"
+XDW_ATN_FillColor                   = b"%FillColor"
+XDW_ATN_FillTransparent             = b"%FillTransparent"
+XDW_ATN_ArrowheadType               = b"%ArrowheadType"
+XDW_ATN_ArrowheadStyle              = b"%ArrowheadStyle"
+XDW_ATN_WordWrap                    = b"%WordWrap"
+XDW_ATN_TextDirection               = b"%TextDirection"
+XDW_ATN_TextOrientation             = b"%TextOrientation"
+XDW_ATN_LineSpace                   = b"%LineSpace"
+XDW_ATN_AutoResize                  = b"%AutoResize"
+XDW_ATN_Invisible                   = b"%Invisible"
+XDW_ATN_PageFrom                    = b"%PageFrom"
+XDW_ATN_XdwNameInXbd                = b"%XdwNameInXbd"
+XDW_ATN_TopField                    = b"%TopField"
+XDW_ATN_BottomField                 = b"%BottomField"
+XDW_ATN_DateStyle                   = b"%DateStyle"
+XDW_ATN_YearField                   = b"%YearField"
+XDW_ATN_MonthField                  = b"%MonthField"
+XDW_ATN_DayField                    = b"%DayField"
+XDW_ATN_BasisYearStyle              = b"%BasisYearStyle"
+XDW_ATN_BasisYear                   = b"%BasisYear"
+XDW_ATN_DateField_FirstChar         = b"%DateFieldFirstChar"
 XDW_ATN_DateFieldFirstChar          = XDW_ATN_DateField_FirstChar       # alias
-XDW_ATN_Alignment                   = "%Alignment"
-XDW_ATN_LeftRightMargin             = "%LeftRightMargin"
-XDW_ATN_TopBottomMargin             = "%TopBottomMargin"
-XDW_ATN_VerPosition                 = "%VerPosition"
-XDW_ATN_StartingNumber              = "%StartingNumber"
-XDW_ATN_Digit                       = "%Digit"
-XDW_ATN_PageRange                   = "%PageRange"
-XDW_ATN_BeginningPage               = "%BeginningPage"
-XDW_ATN_EndingPage                  = "%EndingPage"
-XDW_ATN_Zoom                        = "%Zoom"
-XDW_ATN_ImageFile                   = "%ImageFile"
-XDW_ATN_Points                      = "%Points"
-XDW_ATN_DateFormat                  = "%DateFormat"
-XDW_ATN_DateOrder                   = "%DateOrder"
-XDW_ATN_TextSpacing                 = "%Spacing"
-XDW_ATN_TextTopMargin               = "%TopMargin"
-XDW_ATN_TextLeftMargin              = "%LeftMargin"
-XDW_ATN_TextBottomMargin            = "%BottomMargin"
-XDW_ATN_TextRightMargin             = "%RightMargin"
-XDW_ATN_TextAutoResizeHeight        = "%AutoResizeHeight"
+XDW_ATN_Alignment                   = b"%Alignment"
+XDW_ATN_LeftRightMargin             = b"%LeftRightMargin"
+XDW_ATN_TopBottomMargin             = b"%TopBottomMargin"
+XDW_ATN_VerPosition                 = b"%VerPosition"
+XDW_ATN_StartingNumber              = b"%StartingNumber"
+XDW_ATN_Digit                       = b"%Digit"
+XDW_ATN_PageRange                   = b"%PageRange"
+XDW_ATN_BeginningPage               = b"%BeginningPage"
+XDW_ATN_EndingPage                  = b"%EndingPage"
+XDW_ATN_Zoom                        = b"%Zoom"
+XDW_ATN_ImageFile                   = b"%ImageFile"
+XDW_ATN_Points                      = b"%Points"
+XDW_ATN_DateFormat                  = b"%DateFormat"
+XDW_ATN_DateOrder                   = b"%DateOrder"
+XDW_ATN_TextSpacing                 = b"%Spacing"
+XDW_ATN_TextTopMargin               = b"%TopMargin"
+XDW_ATN_TextLeftMargin              = b"%LeftMargin"
+XDW_ATN_TextBottomMargin            = b"%BottomMargin"
+XDW_ATN_TextRightMargin             = b"%RightMargin"
+XDW_ATN_TextAutoResizeHeight        = b"%AutoResizeHeight"
 XDW_ATN_TopMargin                   = XDW_ATN_TextTopMargin             # alias
 XDW_ATN_LeftMargin                  = XDW_ATN_TextLeftMargin            # alias
 XDW_ATN_BottomMargin                = XDW_ATN_TextBottomMargin          # alias
 XDW_ATN_RightMargin                 = XDW_ATN_TextRightMargin           # alias
 XDW_ATN_AutoResizeHeight            = XDW_ATN_TextAutoResizeHeight
-XDW_ATN_GUID                        = "%CustomAnnGuid"
-XDW_ATN_CustomData                  = "%CustomAnnCustomData"
+XDW_ATN_GUID                        = b"%CustomAnnGuid"
+XDW_ATN_CustomData                  = b"%CustomAnnCustomData"
 XDW_ATN_CustomAnnGuid               = XDW_ATN_GUID                      # alias
 XDW_ATN_CustomAnnCustomData         = XDW_ATN_CustomData                # alias
 
@@ -2250,6 +2250,31 @@ def ATTR(byorder=False, widename=False, multitype=False, widevalue=False):
 @STRING
 def XDW_GetInformation(index): pass
 
+
+XDWVER = int(XDW_GetInformation(XDW_GI_VERSION).decode("ascii").split(".")[0])
+
+
+def XDWVERSION(ver):
+    """Decorator to indicate if the following function is valid or not."""
+    def deco(api):
+        if ver <= XDWVER:
+            @wraps(api)
+            def func(*args):
+                return api(*args)
+            return func
+        else:
+            @wraps(api)
+            def func(*args):
+                raise NotImplementedError
+            return func
+    return deco
+
+
+@XDWVERSION(8)
+@UNICODE
+def XDW_GetInformationW(index): pass
+
+
 # Stop running immediately if the fatal version is running.
 if XDW_GetInformation(XDW_GI_VERSION) == "8.0.3":
     raise SystemExit("""\
@@ -2266,10 +2291,22 @@ def XDW_MergeXdwFiles(input_paths, output_path):
     _input_paths = (c_char_p * n)(*input_paths)
     return DLL.XDW_MergeXdwFiles(ptr(_input_paths), n, output_path, NULL)
 
+@XDWVERSION(8)
+@RAISE
+def XDW_MergeXdwFilesW(input_paths, output_path):
+    n = len(input_paths)
+    _input_paths = (c_wchar_p * n)(*input_paths)
+    return DLL.XDW_MergeXdwFilesW(ptr(_input_paths), n, output_path, NULL)
+
 def XDW_OpenDocumentHandle(path, open_mode):
     doc_handle = XDW_DOCUMENT_HANDLE()
-    path = path.encode("mbcs") if isinstance(path, unicode) else path
     TRY(DLL.XDW_OpenDocumentHandle, path, byref(doc_handle), byref(open_mode))
+    return doc_handle
+
+@XDWVERSION(8)
+def XDW_OpenDocumentHandleW(path, open_mode):
+    doc_handle = XDW_DOCUMENT_HANDLE()
+    TRY(DLL.XDW_OpenDocumentHandleW, path, byref(doc_handle), byref(open_mode))
     return doc_handle
 
 @APPEND(NULL)
@@ -2286,6 +2323,10 @@ def XDW_GetPageInformation(doc_handle, page, extend=False):
 @APPEND(NULL)
 def XDW_GetPageImage(doc_handle, page, output_path): pass
 
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_GetPageImageW(doc_handle, page, output_path): pass
+
 @APPEND(NULL)
 def XDW_GetPageText(doc_handle, page, output_path): pass
 
@@ -2293,8 +2334,17 @@ def XDW_GetPageText(doc_handle, page, output_path): pass
 def XDW_ConvertPageToImageFile(doc_handle, page, output_path, img_option):
     return DLL.XDW_ConvertPageToImageFile(doc_handle, page, output_path, byref(img_option))
 
+@XDWVERSION(8)
+@RAISE
+def XDW_ConvertPageToImageFileW(doc_handle, page, output_path, img_option):
+    return DLL.XDW_ConvertPageToImageFileW(doc_handle, page, output_path, byref(img_option))
+
 @APPEND(NULL)
 def XDW_GetPage(doc_handle, page, output_path): pass
+
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_GetPageW(doc_handle, page, output_path): pass
 
 @APPEND(NULL)
 def XDW_DeletePage(doc_handle, page): pass
@@ -2309,11 +2359,20 @@ def XDW_SaveDocument(doc_handle): pass
 def XDW_CreateXdwFromImageFile(input_path, output_path, cre_option):
     return DLL.XDW_CreateXdwFromImageFile(input_path, output_path, byref(cre_option))
 
+@XDWVERSION(8)
+@RAISE
+def XDW_CreateXdwFromImageFileW(input_path, output_path, cre_option):
+    return DLL.XDW_CreateXdwFromImageFile(input_path, output_path, byref(cre_option))
+
 @QUERY(XDW_ORGDATA_INFO, NULL)
 def XDW_GetOriginalDataInformation(doc_handle, org_dat): pass
 
 @APPEND(NULL)
 def XDW_GetOriginalData(doc_handle, org_dat, output_path): pass
+
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_GetOriginalDataW(doc_handle, org_dat, output_path): pass
 
 @APPEND(NULL)
 def XDW_InsertOriginalData(doc_handle, org_dat, input_path): pass
@@ -2323,6 +2382,10 @@ def XDW_DeleteOriginalData(doc_handle, org_dat): pass
 
 @QUERY(XDW_CREATE_HANDLE, NULL)
 def XDW_BeginCreationFromAppFile(input_path, output_path, with_org): pass
+
+@XDWVERSION(8)
+@QUERY(XDW_CREATE_HANDLE, NULL)
+def XDW_BeginCreationFromAppFileW(input_path, output_path, with_org): pass
 
 @APPEND(NULL)
 def XDW_EndCreationFromAppFile(cre_handle): pass
@@ -2338,7 +2401,7 @@ def XDW_GetUserAttribute(doc_handle, attr_name): pass
 
 @RAISE
 def XDW_SetUserAttribute(doc_handle, attr_name, attr_val):
-    return DLL.XDW_SetUserAttribute(doc_handle, attr_name, attr_val, len(attr_val or ""), NULL)
+    return DLL.XDW_SetUserAttribute(doc_handle, attr_name, attr_val, len(attr_val or b""), NULL)
 
 @QUERY(XDW_ANNOTATION_INFO, NULL)
 def XDW_GetAnnotationInformation(doc_handle, page, parent_ann_handle, index): pass
@@ -2366,8 +2429,16 @@ def XDW_SetAnnotationPosition(doc_handle, ann_handle, hpos, vpos): pass
 @APPEND(NULL)
 def XDW_CreateSfxDocument(input_path, output_path): pass
 
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_CreateSfxDocumentW(input_path, output_path): pass
+
 @APPEND(NULL)
 def XDW_ExtractFromSfxDocument(input_path, output_path): pass
+
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_ExtractFromSfxDocumentW(input_path, output_path): pass
 
 def XDW_ConvertPageToImageHandle(doc_handle, page, img_option):
     handle = XDW_HGLOBAL()
@@ -2401,7 +2472,7 @@ def XDW_GetPageUserAttribute(doc_handle, page, attr_name): pass
 
 @RAISE
 def XDW_SetPageUserAttribute(doc_handle, page, attr_name, attr_val):
-    return DLL.XDW_SetPageUserAttribute(doc_handle, page, attr_name, attr_val, len(attr_val or ""), NULL)
+    return DLL.XDW_SetPageUserAttribute(doc_handle, page, attr_name, attr_val, len(attr_val or b""), NULL)
 
 @APPEND(NULL)
 def XDW_ReducePageNoise(doc_handle, page, level): pass
@@ -2412,8 +2483,16 @@ def XDW_ShowOrHideAnnotations(doc_handle, show_annotations): pass
 @APPEND(NULL)
 def XDW_GetCompressedPageImage(doc_handle, page, output_path): pass
 
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_GetCompressedPageImageW(doc_handle, page, output_path): pass
+
 @APPEND(NULL)
 def XDW_InsertDocument(doc_handle, page, input_path): pass
+
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_InsertDocumentW(doc_handle, page, input_path): pass
 
 @RAISE
 def XDW_ApplyOcr(doc_handle, page, ocr_engine, option):
@@ -2426,11 +2505,20 @@ def XDW_RotatePageAuto(doc_handle, page): pass
 def XDW_CreateBinder(output_path, binder_init_dat):
     return DLL.XDW_CreateBinder(output_path, ptr(binder_init_dat), NULL)
 
+@XDWVERSION(8)
+@RAISE
+def XDW_CreateBinderW(output_path, binder_init_dat):
+    return DLL.XDW_CreateBinder(output_path, ptr(binder_init_dat), NULL)
+
 @APPEND(NULL)
 def XDW_InsertDocumentToBinder(doc_handle, pos, input_path): pass
 
 @APPEND(NULL)
 def XDW_GetDocumentFromBinder(doc_handle, pos, output_path): pass
+
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_GetDocumentFromBinderW(doc_handle, pos, output_path): pass
 
 @APPEND(NULL)
 def XDW_DeleteDocumentInBinder(doc_handle, pos): pass
@@ -2453,12 +2541,26 @@ def XDW_GetPageColorInformation(doc_handle, page): pass
 @APPEND(NULL)
 def XDW_OptimizeDocument(input_path, output_path): pass
 
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_OptimizeDocumentW(input_path, output_path): pass
+
 @RAISE
 def XDW_ProtectDocument(input_path, output_path, protect_type, module_option, protect_option):
     return DLL.XDW_ProtectDocument(input_path, output_path, protect_type, byref(module_option), byref(protect_option))
 
+@XDWVERSION(8)
+@RAISE
+def XDW_ProtectDocumentW(input_path, output_path, protect_type, module_option, protect_option):
+    return DLL.XDW_ProtectDocument(input_path, output_path, protect_type, byref(module_option), byref(protect_option))
+
 @RAISE
 def XDW_CreateXdwFromImageFileAndInsertDocument(doc_handle, page, input_path, create_option):
+    return DLL.XDW_CreateXdwFromImageFileAndInsertDocument(doc_handle, page, input_path, byref(create_option), NULL)
+
+@XDWVERSION(8)
+@RAISE
+def XDW_CreateXdwFromImageFileAndInsertDocumentW(doc_handle, page, input_path, create_option):
     return DLL.XDW_CreateXdwFromImageFileAndInsertDocument(doc_handle, page, input_path, byref(create_option), NULL)
 
 @APPEND(NULL)
@@ -2476,6 +2578,10 @@ def XDW_SetDocumentAttribute(doc_handle, attr_name, attr_type, attr_val): pass
 @APPEND(NULL)
 def XDW_SucceedAttribute(doc_handle, file_path, document, succession): pass
 
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_SucceedAttributeW(doc_handle, file_path, document, succession): pass
+
 @STRING
 def XDW_GetPageFormAttribute(doc_handle, page_form, attr_name): pass
 
@@ -2491,8 +2597,23 @@ def XDW_RemovePageForm(doc_handle, other_page_form): pass
 @QUERY(XDW_LINKROOTFOLDER_INFO, NULL)
 def XDW_GetLinkRootFolderInformation(order): pass
 
+class XDW_LINKROOTFOLDER_INFOW(SizedStructure):
+    _fields_ = [
+        ("nSize", c_int),
+        ("szPath", c_wchar * XDW_SIZEOF_LINKROOTFOLDER),
+        ("szLinkRootFolderName", c_wchar * XDW_SIZEOF_LINKROOTFOLDER),
+        ]
+
+@XDWVERSION(8)
+@QUERY(XDW_LINKROOTFOLDER_INFOW, NULL)
+def XDW_GetLinkRootFolderInformationW(order): pass
+
 @APPEND(NULL)
 def XDW_GetLinkRootFolderNumber(): pass
+
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_GetLinkRootFolderNumberW(): pass
 
 # Undocumented API in DocuWorksTM Development Tool Kit 7.1
 # int XDWAPI XDW_GetPageTextInformation(XDW_DOCUMENT_HANDLE handle, int nPage, void* pInfo, void* reserved);
@@ -2512,6 +2633,20 @@ def XDW_AddAnnotationOnParentAnnotation(doc_handle, ann_handle, ann_type, hpos, 
 
 @RAISE
 def XDW_SignDocument(input_path, output_path, option, module_option):
+    module_status = XDW_SIGNATURE_MODULE_STATUS()
+    try:
+        TRY(DLL.XDW_SignDocument, input_path, output_path, ptr(option), ptr(module_option), NULL, ptr(module_status))
+    except SignatureModuleError as e:
+        if module_status.nSignatureType == XDW_SIGNATURE_STAMP:
+            msg = XDW_SIGNATURE_STAMP_ERROR[module_status.nErrorStatus]
+        else:
+            msg = XDW_SIGNATURE_PKI_ERROR[module_status.nErrorStatus]
+        raise SignatureModuleError(msg)
+    return 0
+
+@XDWVERSION(8)
+@RAISE
+def XDW_SignDocumentW(input_path, output_path, option, module_option):
     module_status = XDW_SIGNATURE_MODULE_STATUS()
     try:
         TRY(DLL.XDW_SignDocument, input_path, output_path, ptr(option), ptr(module_option), NULL, ptr(module_status))
@@ -2575,6 +2710,11 @@ def XDW_UpdateSignatureStatus(doc_handle, pos, module_option, module_status):
 def XDW_GetOcrImage(doc_handle, page, output_path, img_option):
     return DLL.XDW_GetOcrImage(doc_handle, page, output_path, byref(img_option), NULL)
 
+@XDWVERSION(8)
+@RAISE
+def XDW_GetOcrImageW(doc_handle, page, output_path, img_option):
+    return DLL.XDW_GetOcrImage(doc_handle, page, output_path, byref(img_option), NULL)
+
 def XDW_SetOcrData(doc_handle, page, ocr_textinfo):
     TRY(DLL.XDW_SetOcrData, doc_handle, page, byref(ocr_textinfo) if ocr_textinfo else NULL, NULL)
 
@@ -2589,7 +2729,6 @@ def XDW_GetDocumentAttributeByOrderInBinder(doc_handle, pos, order): pass
 
 #int XDWAPI XDW_GetTMInfo(doc_handle, void* pTMInfo, int nTMInfoSize, void* reserved);
 #int XDWAPI XDW_SetTMInfo(doc_handle, const void* pTMInfo, int nTMInfoSize, void* reserved);
-
 
 @APPEND(NULL)
 def XDW_CreateXdwFromImagePdfFile(input_path, output_path): pass
@@ -2622,7 +2761,7 @@ def XDW_GetAnnotationUserAttribute(ann_handle, attr_name): pass
 
 @RAISE
 def XDW_SetAnnotationUserAttribute(doc_handle, ann_handle, attr_name, attr_val):
-    return DLL.XDW_SetAnnotationUserAttribute(doc_handle, ann_handle, attr_name, attr_val, len(attr_val or ""), NULL)
+    return DLL.XDW_SetAnnotationUserAttribute(doc_handle, ann_handle, attr_name, attr_val, len(attr_val or b""), NULL)
 
 @APPEND(NULL)
 def XDW_StarchAnnotation(doc_handle, ann_handle, starch): pass
@@ -2631,8 +2770,17 @@ def XDW_StarchAnnotation(doc_handle, ann_handle, starch): pass
 def XDW_ReleaseProtectionOfDocument(input_path, output_path, release_protection_option):
     return DLL.XDW_ReleaseProtectionOfDocument(input_path, output_path, byref(release_protection_option))
 
+@XDWVERSION(8)
+@RAISE
+def XDW_ReleaseProtectionOfDocumentW(input_path, output_path, release_protection_option):
+    return DLL.XDW_ReleaseProtectionOfDocument(input_path, output_path, byref(release_protection_option))
+
 @QUERY(XDW_PROTECTION_INFO, NULL)
 def XDW_GetProtectionInformation(input_path): pass
+
+@XDWVERSION(8)
+@QUERY(XDW_PROTECTION_INFO, NULL)
+def XDW_GetProtectionInformationW(input_path): pass
 
 @ATTR(widename=True, multitype=True)
 def XDW_GetAnnotationCustomAttributeByName(ann_handle, attr_name): pass
@@ -2689,3 +2837,23 @@ def XDW_GetOriginalDataInformationW(doc_handle, org_data, codepage=932):
     orgdata_infow = XDW_ORGDATA_INFOW()
     TRY(DLL.XDW_GetOriginalDataInformationW, doc_handle, org_data, byref(orgdata_infow), byref(text_type), codepage, NULL)
     return (orgdata_infow, text_type.value)  # N.B. orgdata_infow.nDate is UTC Unix time.
+
+@XDWVERSION(8)
+@QUERY(XDW_ANNOTATION_HANDLE, NULL)
+def XDW_AddAnnotationFromAnnFile(doc_handle, ann_file_path, index, page, ann_handle, hpos, vpos): pass
+
+@XDWVERSION(8)
+@QUERY(XDW_ANNOTATION_HANDLE, NULL)
+def XDW_AddAnnotationFromAnnFileW(doc_handle, ann_file_path, index, page, ann_handle, hpos, vpos): pass
+
+@XDWVERSION(8)
+def XDW_GroupAnnotations(doc_handle, page, ann_handle, indexes):
+    new_ann_handle = XDW_ANNOTATION_HANDLE()
+    count = len(indexes)
+    indexlist = (c_int * count)(*indexes)
+    TRY(DLL.XDW_GroupAnnotations, doc_handle, page, ann_handle, byref(indexlist), count, byref(new_ann_handle), NULL)
+    return new_ann_handle
+
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_UnGroupAnnotation(doc_handle, ann_handle): pass

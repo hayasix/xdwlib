@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-# vim: fileencoding=cp932 fileformat=dos
+#!/usr/bin/env python3
+# vim: set fileencoding=utf-8 fileformat=unix :
 
 """page.py -- Page and PageCollection
 
@@ -29,7 +29,7 @@ from .annotatable import Annotatable
 
 __all__ = ("Page", "PageCollection")
 
-U0000 = unichr(0)
+U0000 = chr(0)
 XDWRES = 100.0  # XDWAPI resolution is 1/100 mm.
 
 
@@ -41,10 +41,6 @@ class PageCollection(list):
         return "{cls}({seq})".format(
                 cls=self.__class__.__name__,
                 seq=", ".join(repr(pg) for pg in self))
-
-    def __getslice__(self, start, stop):
-        # Just avoid calling list.__getslice__().
-        return self[start:stop:1]
 
     def __getitem__(self, pos):
         if isinstance(pos, slice):
@@ -85,7 +81,8 @@ class PageCollection(list):
         self.extend(self * (n - 1))
         return self
 
-    def view(self, light=False, wait=True, flat=False, group=True, *options):
+    def view(self, light=False, wait=True, flat=False, group=True,
+            page=0, fullscreen=False, zoom=0):
         """View pages with DocuWorks Viewer (Light).
 
         light       (bool) force to use DocuWorks Viewer Light.
@@ -95,8 +92,10 @@ class PageCollection(list):
         flat        (bool) combine pages into a single document.
         group       (bool) group continuous pages by original document,
                     i.e. create document-in-binder.
-        options     optional arguments for DocuWorks Viewer (Light).
-                    See DocuWorks genuine help document.
+        page        (int) page number to view
+        fullscreen  (bool) view in full screen (presentation mode)
+        zoom        (int) in 10-1600 percent; 0 means 100%
+                    (str) 'WIDTH' | 'HEIGHT' | 'PAGE'
 
         If wait is True, returns a dict, each key of which is the page pos
         and the value is a list of AnnotationCache objects i.e.:
@@ -117,15 +116,30 @@ class PageCollection(list):
         """
         temp = XDWTemp(autoclose=wait)
         temp.path = self.export(
-                joinpath(temp.dir, u"{0}_P{1}.{2}".format(
+                joinpath(temp.dir, "{0}_P{1}.{2}".format(
                         self[0].doc.name,
                         self[0].pos + 1,
                         "xdw" if flat else "xbd")),
                 flat=flat, group=group)
-        args = [get_viewer(light=light)]
-        args.extend(options)
-        args.append(temp.path)
-        proc = subprocess.Popen(map(cp, args))
+        args = [get_viewer(light=light), temp.path]
+        if page:
+            args.append("/n{0}".format(page + 1))
+        if fullscreen:
+            args.append("/f")
+        if isinstance(zoom, (int, float)) and zoom:
+            if zoom and not (10 <= zoom <= 1600):
+                raise ValueError("10..1600(%) is valid, {0} given".format(zoom))
+            args.append("/m{0}".format(int(zoom)))
+        elif isinstance(zoom, str):
+            if zoom.upper() not in ("WIDTH", "HEIGHT", "PAGE"):
+                raise ValueError((
+                        "int, 'WIDTH', 'HEIGHT' or 'PAGE' is valid"
+                        "for window size, {0} given").format(repr(zoom)))
+            args.append("/m{0}".format(zoom[0].lower()))
+        elif zoom:
+            raise ValueError("10..1600(%) or W/H/P is valid for zoom, "
+                            "{0} given".format(zoom))
+        proc = subprocess.Popen(args)
         if not wait:
             return (proc, temp.path)
         from .xdwfile import xdwopen
@@ -133,7 +147,7 @@ class PageCollection(list):
         proc.wait()
         doc = xdwopen(temp.path)
         r = [(p, [AnnotationCache(ann) for ann in doc.page(p)])
-                for p in xrange(doc.pages) if doc.page(p).annotations]
+                for p in range(doc.pages) if doc.page(p).annotations]
         doc.close()
         temp.close()
         return dict(r)
@@ -158,7 +172,7 @@ class PageCollection(list):
     def export(self, path=None, flat=False, group=True):
         """Create a binder or document as a container for page collection.
 
-        path    (unicode) pathname for output
+        path    (str) pathname for output
         flat    (bool) create document instead of binder
         group   (bool) group continuous pages by original document,
                 i.e. create document-in-binder.
@@ -167,14 +181,15 @@ class PageCollection(list):
         from `path' argument.  Extension will be `.xdw' if flat=True,
         otherwise `.xbd'.
         """
-        from .document import create
+        from .document import create as create_document
         from .binder import create_binder
         from .xdwfile import xdwopen
-        path = path or self[0].doc.name + ".xdw"
-        path = adjust_path(uc(path))
-        path = os.path.splitext(path)[0] + (".xdw" if flat else ".xbd")
-        path = derivative_path(path)
-        path = create(output_path=path) if flat else create_binder(path)
+        path = derivative_path(adjust_path(path or
+                (self[0].doc.name + (".xdw" if flat else ".xbd"))))
+        if flat:
+            path = create_document(output_path=path)
+        else:
+            path = create_binder(path)
         with xdwopen(path) as doc:
             with XDWTemp() as temp:
                 if flat:
@@ -215,7 +230,9 @@ class Page(Annotatable, Observer):
         abspos = self.doc.absolute_page(self.pos)
         pginfo = XDW_GetPageInformation(
                 self.doc.handle, abspos + 1, extend=True)
-        self.size = Point(pginfo.nWidth / XDWRES, pginfo.nHeight / XDWRES)  # float, in mm
+        self.size = Point(
+                pginfo.nWidth / XDWRES,
+                pginfo.nHeight / XDWRES)  # float, in mm
         # XDW_PGT_FROMIMAGE/FROMAPPL/NULL
         self.type = XDW_PAGE_TYPE[pginfo.nPageType]
         self.resolution = Point(
@@ -259,28 +276,39 @@ class Page(Annotatable, Observer):
     def __repr__(self):
         return "{cls}({doc}[{pos}])".format(
                 cls=self.__class__.__name__,
-                doc=cp(self.doc.name),
+                doc=self.doc.name,
                 pos=self.pos)
 
     def __str__(self):
         return ("Page({doc}[{pos}]; "
                 "{width:.2f}*{height:.2f}mm, "
                 "{type}, {anns} annotations)").format(
-                doc=cp(self.doc.name),
+                doc=self.doc.name,
                 pos=self.pos,
                 width=self.size.x,
                 height=self.size.y,
                 type=self.type,
                 anns=self.annotations)
 
+    def __eq__(self, other): return self._cmp(other) == 0
+    def __ne__(self, other): return self._cmp(other) != 0
+    def __lt__(self, other): return self._cmp(other) < 0
+    def __gt__(self, other): return self._cmp(other) > 0
+    def __le__(self, other): return self._cmp(other) <= 0
+    def __ge__(self, other): return self._cmp(other) >= 0
+
+    @staticmethod
+    def _cmpvalue(a, b):
+        return 0 if a == b else (-1 if a < b else 1)
+
     @staticmethod
     def _cmppath(*docs):  # for narrow Python build
-        return cmp(*[
+        return _cmpvalue(*[
                 abspath(joinpath(doc.dir, doc.name)).replace(os.sep, U0000)
                 for doc in docs])
 
-    def __cmp__(self, other):
-        """cmp() for Page instances.
+    def _cmp(self, other):
+        """Substitute for __cmp__(), which is no longer supported.
 
         Rules to determine page order are:
             1.  For pages in the same BaseDocument, follow their page numbers.
@@ -292,13 +320,13 @@ class Page(Annotatable, Observer):
         if not isinstance(other, Page):
             raise TypeError("can only compare to a page")
         if self.doc is other.doc:
-            return cmp(self.pos, other.pos)
+            return self._cmpvalue(self.pos, other.pos)
         in_dib = hasattr(self.doc, "binder")  # DocumentInBinder
         if self.doc.__class__ is not other.doc.__class__:
             return +1 if in_dib else -1
         if in_dib:
             if self.doc.binder is other.doc.binder:
-                return cmp(self.doc.pos, other.doc.pos)
+                return self._cmpvalue(self.doc.pos, other.doc.pos)
             return self._cmppath(self.doc.binder, other.doc.binder)
         return self._cmppath(self.doc, other.doc)
 
@@ -326,7 +354,7 @@ class Page(Annotatable, Observer):
             if form is not None:
                 name = inner_attribute_name(name)
                 doc = Annotatable.__getattribute__(self, "doc")
-                return XDW_GetPageFormAttribute(doc.handle, form, name)
+                return XDW_GetPageFormAttribute(doc.handle, form, cp(name))
         return Annotatable.__getattribute__(self, name)
 
     def __setattr__(self, name, value):
@@ -335,8 +363,10 @@ class Page(Annotatable, Observer):
     def get_userattr(self, name, default=None):
         """Get pagewise user defined attribute.
 
-        name        (str or unicode) attribute name
+        name        (str or bytes) attribute name
         default     value to return if no attribute named name exist
+
+        Returns a bytes value.
         """
         try:
             return XDW_GetPageUserAttribute(
@@ -345,11 +375,13 @@ class Page(Annotatable, Observer):
             return default
 
     def set_userattr(self, name, value):
-        """Set pagewise user defined attribute."""
-        if isinstance(name, unicode):
-            name = name.encode(CODEPAGE)
+        """Set pagewise user defined attribute.
+
+        name        (str or bytes) attribute name
+        value       (bytes) value to set
+        """
         XDW_SetPageUserAttribute(
-                self.doc.handle, self.absolute_page() + 1, name, value)
+                self.doc.handle, self.absolute_page() + 1, cp(name), value)
 
     def update(self, event):
         if not isinstance(event, Notification):
@@ -430,7 +462,7 @@ class Page(Annotatable, Observer):
     def reduce_noise(self, level="NORMAL"):
         """Process page by noise reduction engine.
 
-        level   "NORMAL" | "WEAK" | "STRONG"
+        level   'NORMAL' | 'WEAK' | 'STRONG'
         """
         if self.type != "IMAGE" or self.color_scheme() != "MONO":
             raise TypeError("noise reduction is for monochrome image pages")
@@ -454,17 +486,17 @@ class Page(Annotatable, Observer):
             ):
         """Process page by OCR engine.
 
-        engine          "DEFAULT" | "WINREADER PRO"
-        strategy        "STANDARD" | "SPEED" | "ACCURACY"
-        proprocessing   "SPEED" | "ACCURACY"
-        noise_reduction "NONE" | "NORMAL" | "WEAK" | "STRONG"
+        engine          'DEFAULT' | 'WINREADER PRO'
+        strategy        'STANDARD' | 'SPEED' | 'ACCURACY'
+        proprocessing   'SPEED' | 'ACCURACY'
+        noise_reduction 'NONE' | 'NORMAL' | 'WEAK' | 'STRONG'
         deskew          (bool)
-        form            "AUTO" | "TABLE" | "WRITING"
-        column          "AUTO" | "HORIZONTAL_SINGLE" | "HORIZONTAL_MULTI"
-                               | "VERTICAL_SINGLE"   | "VERTICAL_MULTI"
+        form            'AUTO' | 'TABLE' | 'WRITING'
+        column          'AUTO' | 'HORIZONTAL_SINGLE' | 'HORIZONTAL_MULTI'
+                               | 'VERTICAL_SINGLE'   | 'VERTICAL_MULTI'
         rects           (list of Rect)
-        language        "AUTO" | "JAPANESE" | "ENGLISH"
-        main_language   "BALANCED" | "JAPANESE" | "ENGLISH"
+        language        'AUTO' | 'JAPANESE' | 'ENGLISH'
+        main_language   'BALANCED' | 'JAPANESE' | 'ENGLISH'
         use_ascii       (bool)
         insert_space    (bool)
         verbose         (bool)
@@ -546,7 +578,7 @@ class Page(Annotatable, Observer):
     def export(self, path=None):
         """Export page to another document.
 
-        path    (str or unicode) pathname to export;
+        path    (str) pathname to export;
                 given only basename without directory, exported file is
                 placed in the very directory of the original document.
 
@@ -561,17 +593,17 @@ class Page(Annotatable, Observer):
             direct=False):
         """Export page to image file.
 
-        path        (str or unicode) pathname to output
+        path        (str) pathname to output
         dpi         (int) 10..600
-        color       "COLOR" | "MONO" | "MONO_HIGHQUALITY"
-        format      "BMP" | "TIFF" | "JPEG" | "PDF"
+        color       'COLOR' | 'MONO' | 'MONO_HIGHQUALITY'
+        format      'BMP' | 'TIFF' | 'JPEG' | 'PDF'
         compress    for BMP, not available
-                    for TIFF, "NOCOMPRESS" | "PACKBITS" |
-                              "JPEG | "JPEG_TTN2" | "G4"
-                    for JPEG, "NORMAL" | "HIGHQUALITY" | "HIGHCOMPRESS"
-                    for PDF,  "NORMAL" | "HIGHQUALITY" | "HIGHCOMPRESS" |
-                              "MRC_NORMAL" | "MRC_HIGHQUALITY" |
-                              "MRC_HIGHCOMPRESS"
+                    for TIFF, 'NOCOMPRESS' | 'PACKBITS' |
+                              'JPEG | 'JPEG_TTN2' | 'G4'
+                    for JPEG, 'NORMAL' | 'HIGHQUALITY' | 'HIGHCOMPRESS'
+                    for PDF,  'NORMAL' | 'HIGHQUALITY' | 'HIGHCOMPRESS' |
+                              'MRC_NORMAL' | 'MRC_HIGHQUALITY' |
+                              'MRC_HIGHCOMPRESS'
         direct      (bool) export internal compressed image data directly.
                     If True:
                       - dpi, color, format and compress are ignored.
@@ -589,15 +621,16 @@ class Page(Annotatable, Observer):
                 path=path, pages=1, dpi=dpi, color=color, format=format,
                 compress=compress, direct=direct)
 
-    def view(self, light=False, wait=True, *options):
+    def view(self, light=False, wait=True, fullscreen=False, zoom=0):
         """View page with DocuWorks Viewer (Light).
 
         light       (bool) force to use DocuWorks Viewer Light.
                     Note that DocuWorks Viewer is used if Light version is
                     not avaiable.
         wait        (bool) wait until viewer stops and get annotation info
-        options     optional arguments for DocuWorks Viewer (Light).
-                    See DocuWorks genuine help document.
+        fullscreen  (bool) view in full screen (presentation mode)
+        zoom        (int) in 10-1600 percent; 0 means 100%
+                    (str) 'WIDTH' | 'HEIGHT' | 'PAGE'
 
         If wait is True, returns a list of AnnotationCache objects.
 
@@ -609,7 +642,8 @@ class Page(Annotatable, Observer):
         In this case, you should remove temp and its parent dir after use.
         """
         pc = PageCollection() + self
-        r = pc.view(light=light, wait=wait, flat=True, *options)
+        r = pc.view(light=light, wait=wait, flat=True,
+                    fullscreen=fullscreen, zoom=zoom)
         if wait:
             return r[0] if r else []
         return r
@@ -617,6 +651,11 @@ class Page(Annotatable, Observer):
     def text_regions(self, text,
             ignore_case=False, ignore_width=False, ignore_hirakata=False):
         """Search text in page and get regions occupied by them.
+
+        text            (str or bytes)
+        ignore_case     (bool)
+        ignore_width    (bool)
+        ignore_hirakata (bool)
 
         Returns a list of Rect or None (when rect is unavailable).
         Note that Rect is half-open i.e. right-bottom is outside.
@@ -639,7 +678,7 @@ class Page(Annotatable, Observer):
         if-block is not placed, you will get much more but inexact
         elements in result for abbreviated search string.
         """
-        if isinstance(text, unicode):
+        if isinstance(text, str):
             text = text.encode(CODEPAGE)  # TODO: how can we take all unicodes?
         if 255 < len(text):
             raise ValueError("text length must be <= 255")
@@ -651,7 +690,7 @@ class Page(Annotatable, Observer):
                     n = XDW_GetNumberOfRectsInFoundObject(fh)
                 except InvalidArgError as e:
                     break
-                for i in xrange(n):
+                for i in range(n):
                     r, s = XDW_GetRectInFoundObject(fh, i + 1)
                     if s == XDW_FOUND_RECT_STATUS_HIT:
                         # Rect is half open.
@@ -671,10 +710,12 @@ class Page(Annotatable, Observer):
     def re_regions(self, pattern):
         """Search regular expression in page and get regions occupied.
 
+        pattern     (str or regular expression supported by re module)
+
         Returns a list of Rect or None (when rect is unavailable).
         """
-        if isinstance(pattern, basestring):
-            opt = re.LOCALE if isinstance(pattern, str) else re.UNICODE
+        if isinstance(pattern, (str, bytes)):
+            opt = re.LOCALE if isinstance(pattern, bytes) else re.UNICODE
             pattern = re.compile(pattern, opt)
         result = []
         for text in set(pattern.findall(self.fulltext())):

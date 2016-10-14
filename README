@@ -2,14 +2,16 @@
 Xdwlib README
 =============
 
+2016-10-11  HAYASI Hideki <linxs@linxs.org>
+
 
 Welcome to the xdwlib source release
 ====================================
 
 Xdwlib is a DocuWorks library for Python.
 
-This document provides some general information about xdwlib source release
-and provides links to other documents.
+This document provides some general information about xdwlib source
+release and provides links to other documents.
 
 General xdwlib information is available at https://launchpad.net/xdwlib/.
 Japanese document is also available at http://xdwlib.linxs.org/.
@@ -19,11 +21,11 @@ Report problems with this release to xdwlib@linxs.org.
 License
 -------
 
-Copyright (C) 2010 HAYASI Hideki <xdwlib@linxs.org>.  All rights reserved.
+(C) 2010 HAYASI Hideki
 
-Xdwlib is provided under The Zope Public License (ZPL) Version 2.1, which is
-included in 'LICENSE'.  Send your feedback about the license to
-xdwlib@linxs.org.
+Xdwlib is provided under The Zope Public License (ZPL) Version 2.1,
+which is included in 'LICENSE'.  Send your feedback about the license
+to xdwlib@linxs.org.
 
 
 Installation
@@ -32,18 +34,18 @@ Installation
 System Requirements
 -------------------
 
-    - Microsoft Windows (versions compatible with DocuWorks 7.0)
+    - Microsoft Windows (versions compatible with DocuWorks 7 and 8)
 
-    - Python 2.6+
+    - Python 3.3+ (32bit)  N.B. 64bit version is not tested.
 
-    - DocuWorks 7.0+ (Japanese version; English version is not tested yet)
+    - DocuWorks 7.0+ (Japanese version; English version is not tested)
 
 Install from archive
 --------------------
 
 Set PATH environment variable properly and issue the following command::
 
-    python setup.py install
+    python3 setup.py install
 
 This will install xdwlib in $PYTHONPATH/xdwlib.
 
@@ -53,22 +55,42 @@ Install from PyPI
 Xdwlib is also delivered via Python Package Index (PyPI).  The latest
 version of xdwlib will be installed by issuing::
 
-    pip install xdwlib
+    pip3 install xdwlib
 
 If you have installed older version of xdwlib already, try::
 
-    pip install --upgrade xdwlib
+    pip3 install --upgrade xdwlib
 
 Optional Modules
 ----------------
 
-Xdwlib works with PIL (Python Imaging Library) if available,
+PIL (Python Imaging Library)
+''''''''''''''''''''''''''''
+
+Xdwlib has been working with PIL (Python Imaging Library) if available,
 to rotate pages for desired degrees other than right angles, and to copy
-bitmap annotations.
+bitmap annotations.  Unfortunately the original PIL has not been ported
+on Python 3 yet.
 
-Install PIL by issuing::
+There is an alternative library called `Pillow` which will be a good
+substitution.  Install Pillow by issuing::
 
-    pip install pil
+    pip3 install pillow
+
+cx_Freeze
+'''''''''
+
+The attached command line tool ``xdw2text.py`` can be compiled to .exe
+with cx_Freeze package, a popular successor of py2exe.  To build your
+own ``xdw2text.exe``, try::
+
+    pip3 install cx_Freeze
+    python3 setup.py build
+
+If you find any difficulties during installation of cx_Freeze on Python
+3.5+, check::
+
+    http://stackoverflow.com/questions/32963057/is-there-a-py2exe-version-thats-compatible-with-python-3-5
 
 Typical Use
 ===========

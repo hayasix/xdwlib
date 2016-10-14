@@ -1,13 +1,15 @@
-#!python.exe
-# vim:fileencoding=utf-8
+#!/usr/bin/env python3
+# vim: set fileencoding=utf-8 fileformat=unix :
 
+import sys
 from distutils.core import setup
-try:
-    import py2exe
-except ImportError:
-    pass
 
 from xdwlib import __author__, __copyright__, __license__, __version__, __email__
+
+
+if sys.platform != "win32":
+    sys.stderr.write("xdwlib runs on win32 only.")
+    sys.exit(0)
 
 setup(
     name="xdwlib",
@@ -25,10 +27,23 @@ You can read brief description with Python's lovely help() function.
 Further information is available in Japanese at http://xdwlib.linxs.org/""",
     license=__license__,
     platforms=["win32",],
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Environment :: Console',
+        'Intended Audience :: End Users/Desktop',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: Zope Public License',
+        'Operating System :: Microsoft :: Windows',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Topic :: Office/Business',
+        'Topic :: Documentation',
+        ],
     packages=["xdwlib",],
-    console=["xdw2text.py",],
-    scripts=["xdw2text.py",],
+    #install_requires=["pillow>=3.3.3",],
     #data_files=["README", "LICENSE",],
-    options={"py2exe": {"optimize": 1},},
     zipfile="xdwlib.zip",
     )

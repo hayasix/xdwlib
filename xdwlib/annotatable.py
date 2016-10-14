@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-# vim: fileencoding=cp932 fileformat=dos
+#!/usr/bin/env python3
+# vim: set fileencoding=utf-8 fileformat=unix :
 
 """annotatable.py -- Annotatable, base class for Page and Annotation
 
@@ -95,7 +95,7 @@ class Annotatable(Subject):
         return self.delete(pos)
 
     def __iter__(self):
-        for pos in xrange(self.annotations):
+        for pos in range(self.annotations):
             yield self.annotation(pos)
 
     def annotation(self, pos):
@@ -368,7 +368,7 @@ class Annotatable(Subject):
             copy = self.add_link(position=ann.position)
         elif t == XDW_AID_BITMAP:
             if not PIL_ENABLED:
-                warnings.warn("copying bitmap annotation is not supported",
+                warnings.warn("install Pillow before copying bitmap annotation",
                         UserWarning, stacklevel=2)
                 return None
             pg = ann.page

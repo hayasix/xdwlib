@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-# vim: fileencoding=cp932 fileformat=dos
+#!/usr/bin/env python3
+# vim: set fileencoding=utf-8 fileformat=unix :
 
 """document.py -- Document
 
@@ -38,9 +38,9 @@ def create(input_path=None, output_path=None, **kw):
     Returns actual pathname of generated document, which may be different
     from `output_path' argument.
     """
-    input_path = adjust_path(uc(input_path))
+    input_path = adjust_path(input_path)
     root, ext = os.path.splitext(input_path)
-    output_path = adjust_path(uc(output_path or root), ext=".xdw")
+    output_path = adjust_path(output_path or root, ext=".xdw")
     if input_path:
         output_path = derivative_path(output_path)
         if ext.upper() == ".PDF":
@@ -52,7 +52,7 @@ def create(input_path=None, output_path=None, **kw):
                 pass  # fall through; processed by respective apps.
         return create_from_app(input_path, output_path, **kw)
     # input_path==None means generating single blank page.
-    output_path = derivative_path(adjust_path(output_path or u"blank.xdw"))
+    output_path = derivative_path(adjust_path(output_path or "blank.xdw"))
     with open(output_path, "wb") as f:
         f.write(BLANKPAGE)
     return output_path
@@ -68,27 +68,27 @@ def create_from_image(input_path, output_path=None,
         ):
     """XDW generator from image file.
 
-    fitimage        "FITDEF" | "FIT" | "FITDEF_DIVIDEBMP" |
-                    "USERDEF" | "USERDEF_FIT"
-    compress        "NORMAL" | "LOSSLESS" | "NOCOMPRESS" |
-                    "HIGHQUALITY" | "HIGHCOMPRESS" |
-                    "JPEG" | "JPEG_TTN2" | "PACKBITS" | "G4" |
-                    "MRC_NORMAL" | "MRC_HIGHQUALITY" | "MRC_HIGHCOMPRESS"
+    fitimage        'FITDEF' | 'FIT' | 'FITDEF_DIVIDEBMP' |
+                    'USERDEF' | 'USERDEF_FIT'
+    compress        'NORMAL' | 'LOSSLESS' | 'NOCOMPRESS' |
+                    'HIGHQUALITY' | 'HIGHCOMPRESS' |
+                    'JPEG' | 'JPEG_TTN2' | 'PACKBITS' | 'G4' |
+                    'MRC_NORMAL' | 'MRC_HIGHQUALITY' | 'MRC_HIGHCOMPRESS'
     zoom            (float) in percent; 0 means 100%.  < 1/1000 is ignored.
-    size            (Point) in mm; for fitimange "userdef" or "userdef_fit"
+    size            (Point) in mm; for fitimange 'userdef' or 'userdef_fit'
                     (int)   1=A3R, 2=A3, 3=A4R, 4=A4, 5=A5R, 6=A5,
                             7=B4R, 8=B4, 9=B5R, 10=B5
     align           (horiz, vert) where:
-                        horiz   "CENTER" | "LEFT" | "RIGHT"
-                        vert    "CENTER" | "TOP" | "BOTTOM"
-    maxpapersize    "DEFAULT" | "A3" | "2A0"
+                        horiz   'CENTER' | 'LEFT' | 'RIGHT'
+                        vert    'CENTER' | 'TOP' | 'BOTTOM'
+    maxpapersize    'DEFAULT' | 'A3' | '2A0'
 
     Returns actual pathname of generated document, which may be different
     from `output_path' argument.
     """
-    input_path = adjust_path(uc(input_path))
+    input_path = adjust_path(input_path)
     root, ext = os.path.splitext(input_path)
-    output_path = adjust_path(uc(output_path or root), ext=".xdw")
+    output_path = adjust_path(output_path or root, ext=".xdw")
     output_path = derivative_path(output_path)
     opt = XDW_CREATE_OPTION_EX2()
     opt.nFitImage = XDW_CREATE_FITIMAGE.normalize(fitimage)
@@ -105,7 +105,10 @@ def create_from_image(input_path, output_path=None,
     opt.nHorPos = XDW_CREATE_HPOS.normalize(align[0])
     opt.nVerPos = XDW_CREATE_VPOS.normalize(align[1])
     opt.nMaxPaperSize = XDW_CREATE_MAXPAPERSIZE.normalize(maxpapersize)
-    XDW_CreateXdwFromImageFile(cp(input_path), cp(output_path), opt)
+    if XDWVER < 8:
+        XDW_CreateXdwFromImageFile(cp(input_path), cp(output_path), opt)
+    else:
+        XDW_CreateXdwFromImageFileW(input_path, output_path, opt)
     return output_path
 
 
@@ -115,12 +118,15 @@ def create_from_pdf(input_path, output_path=None):
     Returns actual pathname of generated document, which may be different
     from `output_path' argument.
     """
-    input_path = adjust_path(uc(input_path))
+    input_path = adjust_path(input_path)
     root, ext = os.path.splitext(input_path)
-    output_path = adjust_path(uc(output_path or root), ext=".xdw")
+    output_path = adjust_path(output_path or root, ext=".xdw")
     output_path = derivative_path(output_path)
     try:
-        XDW_CreateXdwFromImagePdfFile(cp(input_path), cp(output_path))
+        if XDWVER < 8:
+            XDW_CreateXdwFromImagePdfFile(cp(input_path), cp(output_path))
+        else:
+            XDW_CreateXdwFromImagePdfFileW(input_path, output_path)
     except Exception as e:
         # If PDF is not compatible with DocuWorks, try to handle it
         # with the system-defined application program.
@@ -138,12 +144,16 @@ def create_from_app(input_path, output_path=None,
     Returns actual pathname of generated document, which may be different
     from `output_path' argument.
     """
-    input_path = adjust_path(uc(input_path))
+    input_path = adjust_path(input_path)
     root, ext = os.path.splitext(input_path)
-    output_path = adjust_path(uc(output_path or root), ext=".xdw")
+    output_path = adjust_path(output_path or root, ext=".xdw")
     output_path = derivative_path(output_path)
-    handle = XDW_BeginCreationFromAppFile(
-            cp(input_path), cp(output_path), bool(attachment))
+    if XDWVER < 8:
+        handle = XDW_BeginCreationFromAppFile(
+                cp(input_path), cp(output_path), bool(attachment))
+    else:
+        handle = XDW_BeginCreationFromAppFileW(
+                input_path, output_path, bool(attachment))
     st = time.time()
     try:
         while True:
@@ -167,11 +177,14 @@ def merge(input_paths, output_path=None):
     Returns actual pathname of generated document, which may be different
     from `output_path' argument.
     """
-    input_paths = [adjust_path(uc(path)) for path in input_paths]
+    input_paths = [adjust_path(path) for path in input_paths]
     root, ext = os.path.splitext(input_paths[0])
-    output_path = adjust_path(uc(output_path or root), ext=".xdw")
+    output_path = adjust_path(output_path or root, ext=".xdw")
     output_path = derivative_path(output_path)
-    XDW_MergeXdwFiles(map(cp, input_paths), cp(output_path))
+    if XDWVER < 8:
+        XDW_MergeXdwFiles(map(cp, input_paths), cp(output_path))
+    else:
+        XDW_MergeXdwFilesW(input_paths, output_path)
     return output_path
 
 
@@ -186,13 +199,13 @@ class Document(BaseDocument, XDWFile):
     def __repr__(self):
         return "{cls}({name}{sts})".format(
                 cls=self.__class__.__name__,
-                name=cp(self.name),
+                name=self.name,
                 sts="" if self.handle else "; CLOSED")
 
     def __str__(self):
         return "{cls}({name}; {pgs} pages, {atts} attachments{sts})".format(
                 cls=self.__class__.__name__,
-                name=cp(self.name),
+                name=self.name,
                 pgs=self.pages,
                 atts=len(self.attachments),
                 sts="" if self.handle else "; CLOSED")

@@ -1,5 +1,5 @@
-#!/usr/bin/env python2.6
-# vim: fileencoding=cp932 fileformat=dos
+#!/usr/bin/env python3
+# vim: set fileencoding=utf-8 fileformat=unix :
 
 """binder.py -- Binder
 
@@ -29,11 +29,14 @@ def create_binder(path, color="RED", size="FREE", coding=CODEPAGE):
 
     Returns actual pathname.
     """
-    path = derivative_path(uc(path))
+    path = derivative_path(path)
     data = XDW_BINDER_INITIAL_DATA()
     data.nBinderColor = XDW_BINDER_COLOR.normalize(color)
     data.nBinderSize = XDW_BINDER_SIZE.normalize(size)
-    XDW_CreateBinder(cp(path), data)
+    if XDWVER < 8:
+        XDW_CreateBinder(cp(path), data)
+    else:
+        XDW_CreateBinderW(path, data)
     return path
 
 
@@ -77,13 +80,13 @@ class Binder(Subject, XDWFile):
     def __repr__(self):
         return "{cls}({name}{sts})".format(
                 cls=self.__class__.__name__,
-                name=cp(self.name),
+                name=self.name,
                 sts="" if self.handle else "; CLOSED")
 
     def __str__(self):
         return "{cls}({name}: {docs} documents{sts})".format(
                 cls=self.__class__.__name__,
-                name=cp(self.name),
+                name=self.name,
                 docs=self.documents,
                 sts="" if self.handle else "; CLOSED")
 
@@ -110,7 +113,7 @@ class Binder(Subject, XDWFile):
             self.delete(pos)
 
     def __iter__(self):
-        for pos in xrange(self.documents):
+        for pos in range(self.documents):
             yield self.document(pos)
 
     @staticmethod
@@ -152,7 +155,10 @@ class Binder(Subject, XDWFile):
     def insert(self, pos, path):
         """Insert a document by path ."""
         pos = self._pos(pos, append=True)
-        XDW_InsertDocumentToBinder(self.handle, pos + 1, cp(path))
+        if XDWVER < 8:
+            XDW_InsertDocumentToBinder(self.handle, pos + 1, cp(path))
+        else:
+            XDW_InsertDocumentToBinderW(self.handle, pos + 1, path)
         self.documents += 1
         doc = self.document(pos)
         self.attach(doc, EV_DOC_INSERTED)
@@ -165,15 +171,17 @@ class Binder(Subject, XDWFile):
         self.detach(doc, EV_DOC_REMOVED)
         self.documents -= 1
 
-    def view(self, light=False, wait=True, *options):
-        """View pages with DocuWorks Viewer (Light).
+    def view(self, light=False, wait=True, page=0, fullscreen=False, zoom=0):
+        """View binder with DocuWorks Viewer (Light).
 
         light       (bool) force to use DocuWorks Viewer Light.
                     Note that DocuWorks Viewer is used if Light version is
                     not avaiable.
         wait        (bool) wait until viewer stops and get annotation info
-        options     optional arguments for DocuWorks Viewer (Light).
-                    See DocuWorks genuine help document.
+        page        (int) page number to view
+        fullscreen  (bool) view in full screen (presentation mode)
+        zoom        (int) in 10-1600 percent; 0 means 100%
+                    (str) 'WIDTH' | 'HEIGHT' | 'PAGE'
 
         If wait is True, returns a dict, each key of which is the absolute
         page pos and the value is a list of AnnotationCache objects i.e.:
@@ -195,13 +203,13 @@ class Binder(Subject, XDWFile):
         pc = PageCollection()
         for doc in self:
             pc += PageCollection(doc)
-        return pc.view(
-                light=light, wait=wait, flat=False, group=True, *options)
+        return pc.view(light=light, wait=wait, flat=False, group=True,
+                        page=page, fullscreen=fullscreen, zoom=zoom)
 
     def content_text(self, type=None):
         """Get all content text.
 
-        type    None | "IMAGE" | "APPLICATION"
+        type    None | 'IMAGE' | 'APPLICATION'
                 None means both.
         """
         return joinf(PSEP, [doc.content_text(type=type) for doc in self])

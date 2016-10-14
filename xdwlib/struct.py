@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-# vim: fileencoding=cp932 fileformat=dos
+#!/usr/bin/env python3
+# vim: set fileencoding=utf-8 fileformat=unix :
 
 """struct.py -- Point and Rect
 
@@ -59,6 +59,10 @@ class Point(object):
     True
     >>> bool(Point(0, 0))
     False
+    >>> p.rotate(30)
+    Point(-5.00, 8.66)
+    >>> p.rotate(30, origin=Point(10, 10))
+    Point(1.34, 5.00)
     """
 
     def __init__(self, x=0, y=0):
@@ -106,7 +110,7 @@ class Point(object):
     def __ne__(self, pnt):
         return self.x != pnt.x or self.y != pnt.y
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self.x != 0 or self.y != 0
 
     def __neg__(self):
@@ -125,7 +129,7 @@ class Point(object):
 
     __rmul__ = __mul__
 
-    def __div__(self, n):
+    def __truediv__(self, n):
         if not isinstance(n, (int, float)):
             raise NotImplementedError
         return Point(self.x / n, self.y / n)
@@ -294,7 +298,7 @@ class Rect(object):
 
     __rmul__ = __mul__
 
-    def __div__(self, n):
+    def __truediv__(self, n):
         if not isinstance(n, (int, float)):
             raise NotImplementedError
         return Rect(self.left, self.top,

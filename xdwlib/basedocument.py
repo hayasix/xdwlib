@@ -1,5 +1,5 @@
-#!/usr/bin/env python2.6
-# vim: fileencoding=cp932 fileformat=dos
+#!/usr/bin/env python3
+# vim: set fileencoding=utf-8 fileformat=unix :
 
 """basedocument.py -- BaseDocument, base class for Document/DocumentInBinder
 
@@ -15,7 +15,7 @@ FOR A PARTICULAR PURPOSE.
 
 import sys
 import os
-from cStringIO import StringIO
+from io import StringIO
 
 from .xdwapi import *
 from .common import *
@@ -93,7 +93,7 @@ class BaseDocument(Subject):
             self.delete(pos)
 
     def __iter__(self):
-        for pos in xrange(self.pages):
+        for pos in range(self.pages):
             yield self.page(pos)
 
     def absolute_page(self, pos, append=False):
@@ -127,7 +127,7 @@ class BaseDocument(Subject):
         """Insert a Page/PageCollection/Document.
 
         pos     (int) position to insert; starts with 0
-        obj     (Page, PageCollection or BaseDocument or unicode)
+        obj     (Page, PageCollection, BaseDocument or str)
         """
         pos = self._pos(pos, append=True)
         if isinstance(obj, Page):
@@ -140,23 +140,29 @@ class BaseDocument(Subject):
             temp = XDWTemp()
             pc = PageCollection(obj)
             pc.export(temp.path, flat=True)
-        elif isinstance(obj, basestring):  # XDW path
-            temp = uc(obj)
-            if not temp.lower().endswith(u".xdw"):
+        elif isinstance(obj, str):  # XDW path
+            temp = obj
+            if not temp.lower().endswith(".xdw"):
                 raise TypeError("binder is not acceptable")
         else:
             raise ValueError("can't insert {0} object".format(obj.__class__))
-        XDW_InsertDocument(
-                self.handle,
-                self.absolute_page(pos, append=True) + 1,
-                cp(temp if isinstance(temp, basestring) else temp.path))
+        if XDWVER < 8:
+            XDW_InsertDocument(
+                    self.handle,
+                    self.absolute_page(pos, append=True) + 1,
+                    cp(temp if isinstance(temp, str) else temp.path))
+        else:
+            XDW_InsertDocumentW(
+                    self.handle,
+                    self.absolute_page(pos, append=True) + 1,
+                    temp if isinstance(temp, str) else temp.path)
         inslen = XDW_GetDocumentInformation(self.handle).nPages - self.pages
         self.pages += inslen
-        if not isinstance(obj, basestring):
+        if not isinstance(obj, str):
             temp.close()
         # Check inserted pages in order to attach them to this document and
         # shift observer entries appropriately.
-        for p in xrange(pos, pos + inslen):
+        for p in range(pos, pos + inslen):
             Page(self, p)
 
     def append_image(self, *args, **kw):
@@ -176,25 +182,24 @@ class BaseDocument(Subject):
             ):
         """Insert a page created from image file(s).
 
-        fitimage        "FITDEF" | "FIT" | "FITDEF_DIVIDEBMP" |
-                        "USERDEF" | "USERDEF_FIT"
-        compress        "NORMAL" | "LOSSLESS" |
-                        "HIGHQUALITY" | "HIGHCOMPRESS" |
-                        "MRC_NORMAL" | "MRC_HIGHQUALITY" | "MRC_HIGHCOMPRESS"
+        fitimage        'FITDEF' | 'FIT' | 'FITDEF_DIVIDEBMP' |
+                        'USERDEF' | 'USERDEF_FIT'
+        compress        'NORMAL' | 'LOSSLESS' |
+                        'HIGHQUALITY' | 'HIGHCOMPRESS' |
+                        'MRC_NORMAL' | 'MRC_HIGHQUALITY' | 'MRC_HIGHCOMPRESS'
         zoom            (float) in percent; 0 means 100%.  < 1/1000 is ignored.
-        size            (Point) in mm; for fitimange "userdef" or "userdef_fit"
+        size            (Point) in mm; for fitimange 'userdef' or 'userdef_fit'
                         (int)   1=A3R, 2=A3, 3=A4R, 4=A4, 5=A5R, 6=A5,
                                 7=B4R, 8=B4, 9=B5R, 10=B5
-                        (str or unicode) "A3R" | "A3" | "A4R" | "A4" | "A5R" |
-                                "A5" | "B4R" | "B4" | "B5R" | "B5"
+                        (str) 'A3R' | 'A3' | 'A4R' | 'A4' | 'A5R' |
+                                'A5' | 'B4R' | 'B4' | 'B5R' | 'B5'
         align           (horiz, vert) where:
-                            horiz   "CENTER" | "LEFT" | "RIGHT"
-                            vert    "CENTER" | "TOP" | "BOTTOM"
-        maxpapersize    "DEFAULT" | "A3" | "2A0"
+                            horiz   'CENTER' | 'LEFT' | 'RIGHT'
+                            vert    'CENTER' | 'TOP' | 'BOTTOM'
+        maxpapersize    'DEFAULT' | 'A3' | '2A0'
         """
         prev_pages = self.pages
         pos = self._pos(pos, append=True)
-        input_path = uc(input_path)
         opt = XDW_CREATE_OPTION_EX2()
         opt.nFitImage = XDW_CREATE_FITIMAGE.normalize(fitimage)
         opt.nCompress = XDW_COMPRESS.normalize(compress)
@@ -211,17 +216,24 @@ class BaseDocument(Subject):
         #opt.nZoom = 0
         opt.nZoomDetail = int(zoom * 1000)  # .3f
         # NB. Width and height are valid only for XDW_CREATE_USERDEF(_FIT).
-        if isinstance(size, (int, float, long, basestring)):
+        if isinstance(size, (int, float, str)):
             size = Point(*XDW_SIZE_MM[XDW_SIZE.normalize(size)])
-        opt.nWidth, opt.nHeight = map(int, size * 100)  # .2f;
+        opt.nWidth, opt.nHeight = list(map(int, size * 100))  # .2f;
         opt.nHorPos = XDW_CREATE_HPOS.normalize(align[0])
         opt.nVerPos = XDW_CREATE_VPOS.normalize(align[1])
         opt.nMaxPaperSize = XDW_CREATE_MAXPAPERSIZE.normalize(maxpapersize)
-        XDW_CreateXdwFromImageFileAndInsertDocument(
-                self.handle,
-                self.absolute_page(pos, append=True) + 1,
-                cp(input_path),
-                opt)
+        if XDWVER < 8:
+            XDW_CreateXdwFromImageFileAndInsertDocument(
+                    self.handle,
+                    self.absolute_page(pos, append=True) + 1,
+                    cp(input_path),
+                    opt)
+        else:
+            XDW_CreateXdwFromImageFileAndInsertDocumentW(
+                    self.handle,
+                    self.absolute_page(pos, append=True) + 1,
+                    input_path,
+                    opt)
         self.update_pages()
         # Check inserted pages in order to attach them to this document and
         # shift observer entries appropriately.
@@ -232,7 +244,7 @@ class BaseDocument(Subject):
         """Export page to another document.
 
         pos     (int) page number; starts with 0
-        path    (unicode) pathname to export;
+        path    (str) pathname to export;
                 given only basename without directory, exported file is
                 placed in the very directory of the original document.
 
@@ -240,15 +252,17 @@ class BaseDocument(Subject):
         different from `path' argument.  If path is not available,
         default name "DOCUMENTNAME_Pxx.xdw" will be used.
         """
-        path = uc(path)
         if path:
             path = adjust_path(path)
         else:
             path = adjust_path(
-                    u"{0}_P{1}.xdw".format(self.name, pos + 1),
+                    "{0}_P{1}.xdw".format(self.name, pos + 1),
                     dir=self.dirname())
         path = derivative_path(path)
-        XDW_GetPage(self.handle, self.absolute_page(pos) + 1, cp(path))
+        if XDWVER < 8:
+            XDW_GetPage(self.handle, self.absolute_page(pos) + 1, cp(path))
+        else:
+            XDW_GetPageW(self.handle, self.absolute_page(pos) + 1, path)
         return path
 
     def export_image(self, pos, path=None,
@@ -257,18 +271,18 @@ class BaseDocument(Subject):
         """Export page(s) to image file.
 
         pos         (int or tuple (start stop) in half-open style like slice)
-        path        (unicode) pathname to output
+        path        (str) pathname to output
         pages       (int)
         dpi         (int) 10..600
-        color       "COLOR" | "MONO" | "MONO_HIGHQUALITY"
-        format      "BMP" | "TIFF" | "JPEG" | "PDF"
+        color       'COLOR' | 'MONO' | 'MONO_HIGHQUALITY'
+        format      'BMP' | 'TIFF' | 'JPEG' | 'PDF'
         compress    for BMP, not available
-                    for TIFF, "NOCOMPRESS" | "PACKBITS" |
-                              "JPEG | "JPEG_TTN2" | "G4"
-                    for JPEG, "NORMAL" | "HIGHQUALITY" | "HIGHCOMPRESS"
-                    for PDF,  "NORMAL" | "HIGHQUALITY" | "HIGHCOMPRESS" |
-                              "MRC_NORMAL" | "MRC_HIGHQUALITY" |
-                              "MRC_HIGHCOMPRESS"
+                    for TIFF, 'NOCOMPRESS' | 'PACKBITS' |
+                              'JPEG | 'JPEG_TTN2' | 'G4'
+                    for JPEG, 'NORMAL' | 'HIGHQUALITY' | 'HIGHCOMPRESS'
+                    for PDF,  'NORMAL' | 'HIGHQUALITY' | 'HIGHCOMPRESS' |
+                              'MRC_NORMAL' | 'MRC_HIGHQUALITY' |
+                              'MRC_HIGHCOMPRESS'
         direct      (bool) export internal compressed image data directly.
                     If True:
                       - pos must be int; pages, dpi, color, format and
@@ -283,23 +297,21 @@ class BaseDocument(Subject):
 
         Returns the actual pathname of generated image file, which may be
         different from `path' argument.  If path is not available,
-        default name "DOCUMENTNAME_Pxx.bmp" or so will be used.
+        default name 'DOCUMENTNAME_Pxx.bmp' or so will be used.
         """
         if direct:
             return self._export_direct_image(pos, path)
-        path = uc(path)
         if isinstance(pos, (list, tuple)):
             pos, pages = pos
             pages -= pos
         pos = self._pos(pos)
         if not format:
-            _, ext = os.path.splitext(path)
-            ext = ((ext or "").lstrip(".") or "bmp").lower()
+            ext = os.path.splitext(path or "_.bmp")[1].lstrip(".").lower()
             format = {"dib": "bmp", "tif": "tiff", "jpg": "jpeg"}.get(ext, ext)
         if format.lower() not in ("bmp", "tiff", "jpeg", "pdf"):
             raise TypeError("image type must be BMP, TIFF, JPEG or PDF.")
         if not path:
-            path = u"{0}_P{1}".format(self.name, pos + 1)
+            path = "{0}_P{1}".format(self.name, pos + 1)
             path = adjust_path(path, dir=self.dirname())
             if 1 < pages:
                 path += "-{0}".format((pos + pages - 1) + 1)
@@ -352,22 +364,29 @@ class BaseDocument(Subject):
             # Compression method option is deprecated.
             dopt.nConvertMethod = XDW_CONVERT_MRC_OS
             opt.pDetailOption = cast(pointer(dopt), c_void_p)
-        XDW_ConvertPageToImageFile(
-                self.handle, self.absolute_page(pos) + 1, cp(path), opt)
+        if XDWVER < 8:
+            XDW_ConvertPageToImageFile(
+                    self.handle, self.absolute_page(pos) + 1, cp(path), opt)
+        else:
+            XDW_ConvertPageToImageFileW(
+                    self.handle, self.absolute_page(pos) + 1, path, opt)
         return path
 
     def _export_direct_image(self, pos, path=None):
         pos = self._pos(pos)
-        path = uc(path)
         if not path:
-            path = u"{0}_P{1}".format(self.name, pos + 1)
+            path = "{0}_P{1}".format(self.name, pos + 1)
             path = adjust_path(path, dir=self.dirname())
         path = derivative_path(path)
         path, _ = os.path.splitext(path)
-        fmt = XDW_GetCompressedPageImage(
-                self.handle, self.absolute_page(pos) + 1, cp(path))
+        if XDWVER < 8:
+            fmt = XDW_GetCompressedPageImage(
+                    self.handle, self.absolute_page(pos) + 1, cp(path))
+        else:
+            fmt = XDW_GetCompressedPageImageW(
+                    self.handle, self.absolute_page(pos) + 1, path)
         new_path = path + "." + XDW_IMAGE_FORMAT[fmt].lower()
-        os.rename(cp(path), cp(new_path))
+        os.rename(path, new_path)
         return new_path
 
     def bitmap(self, pos):
@@ -422,7 +441,7 @@ class BaseDocument(Subject):
     def rotate(self, pos, degree=0, auto=False, direct=False, strategy=1):
         """Rotate page around the center.
 
-        pos     (int)
+        pos     (int) page number; starts with 0
         degree  (int) rotation angle in clockwise degree
         auto    (bool) automatic rotation for OCR
 
@@ -481,15 +500,17 @@ class BaseDocument(Subject):
             in_.close()
         self._postprocess(pos, out, orig_degree)
 
-    def view(self, light=False, wait=True, *options):
-        """View pages with DocuWorks Viewer (Light).
+    def view(self, light=False, wait=True, page=0, fullscreen=False, zoom=0):
+        """View document with DocuWorks Viewer (Light).
 
         light       (bool) force to use DocuWorks Viewer Light.
                     Note that DocuWorks Viewer is used if Light version is
                     not avaiable.
         wait        (bool) wait until viewer stops and get annotation info
-        options     optional arguments for DocuWorks Viewer (Light).
-                    See DocuWorks genuine help document.
+        page        (int) page number to view
+        fullscreen  (bool) view in full screen (presentation mode)
+        zoom        (int) in 10-1600 percent; 0 means 100%
+                    (str) 'WIDTH' | 'HEIGHT' | 'PAGE'
 
         If wait is True, returns a dict, each key of which is the page pos
         and the value is a list of AnnotationCache objects i.e.:
@@ -509,12 +530,13 @@ class BaseDocument(Subject):
         NB. Viewing signed pages will raise AccessDeniedError.
         """
         pc = PageCollection(self)
-        return pc.view(light=light, wait=wait, flat=True, *options)
+        return pc.view(light=light, wait=wait, flat=True,
+                        page=page, fullscreen=fullscreen, zoom=zoom)
 
     def content_text(self, type=None):
         """Get all content text.
 
-        type    None | "IMAGE" | "APPLICATION"
+        type    None | 'IMAGE' | 'APPLICATION'
                 None means both.
         """
         return joinf(PSEP, [pg.content_text(type=type) for pg in self])
@@ -532,7 +554,7 @@ class BaseDocument(Subject):
     def find_content_text(self, pattern, type=None):
         """Find given pattern (text or regex) in all content text.
 
-        type    None | "IMAGE" | "APPLICATION"
+        type    None | 'IMAGE' | 'APPLICATION'
                 None means both.
 
         Returns a PageCollection object.
@@ -557,14 +579,14 @@ class BaseDocument(Subject):
     def find(self, pattern, func=None):
         """Find given pattern (text or regex) through document.
 
-        pattern     (str/unicode or regexp supported by re module)
+        pattern     (str or regexp supported by re module)
         func        a function which takes a page and returns text in it
                     (default) lambda pg: pg.fulltext()
 
         Returns a PageCollection object.
         """
         func = func or (lambda pg: pg.fulltext())
-        if isinstance(pattern, (str, unicode)):
+        if isinstance(pattern, str):
             f = lambda pg: pattern in func(pg)
         else:
             f = lambda pg: pattern.search(func(pg))
