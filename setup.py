@@ -4,13 +4,6 @@
 import sys
 from distutils.core import setup
 
-try:
-    from cx_Freeze import setup, Executable
-    CXFREEZE = True
-except ImportError:
-    CXFREEZE = False
-
-
 from xdwlib import __author__, __copyright__, __license__, __version__, __email__
 
 
@@ -18,11 +11,7 @@ if sys.platform != "win32":
     sys.stderr.write("xdwlib runs on win32 only.")
     sys.exit(0)
 
-# cx_Freeze
-copyDependentFiles = True
-silent = True
-
-setup_options = dict(
+setup(
     name="xdwlib",
     version=__version__,
     author=__author__,
@@ -58,14 +47,3 @@ Further information is available in Japanese at http://xdwlib.linxs.org/""",
     #data_files=["README", "LICENSE",],
     zipfile="xdwlib.zip",
     )
-if CXFREEZE:
-    setup_options.update(dict(
-        executables=[Executable("xdw2text.py", base=None)],
-        options=dict(build_exe=dict(
-            includes=[],
-            excludes=[],
-            packages=[],
-            )),
-    ))
-
-setup(**setup_options)

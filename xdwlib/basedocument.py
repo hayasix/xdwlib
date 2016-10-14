@@ -306,8 +306,7 @@ class BaseDocument(Subject):
             pages -= pos
         pos = self._pos(pos)
         if not format:
-            _, ext = os.path.splitext(path)
-            ext = ((ext or "").lstrip(".") or "bmp").lower()
+            ext = os.path.splitext(path or "_.bmp")[1].lstrip(".").lower()
             format = {"dib": "bmp", "tif": "tiff", "jpg": "jpeg"}.get(ext, ext)
         if format.lower() not in ("bmp", "tiff", "jpeg", "pdf"):
             raise TypeError("image type must be BMP, TIFF, JPEG or PDF.")
