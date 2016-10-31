@@ -2,7 +2,7 @@
 Xdwlib README
 =============
 
-2016-10-11  HAYASI Hideki <linxs@linxs.org>
+2016-10-31  HAYASI Hideki <linxs@linxs.org>
 
 
 Welcome to the xdwlib source release
@@ -36,7 +36,7 @@ System Requirements
 
     - Microsoft Windows (versions compatible with DocuWorks 7 and 8)
 
-    - Python 3.3+ (32bit)  N.B. 64bit version is not tested.
+    - Python 3.3+ (32bit)  (64bit version is not tested)
 
     - DocuWorks 7.0+ (Japanese version; English version is not tested)
 

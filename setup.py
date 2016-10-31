@@ -28,7 +28,7 @@ Further information is available in Japanese at http://xdwlib.linxs.org/""",
     license=__license__,
     platforms=["win32",],
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Environment :: Console',
         'Intended Audience :: End Users/Desktop',
         'Intended Audience :: Developers',

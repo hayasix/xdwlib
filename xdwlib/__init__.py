@@ -28,6 +28,6 @@ from .annotation import Annotation, AnnotationCache
 __author__ = "HAYASI Hideki"
 __copyright__ = "Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>"
 __license__ = "ZPL 2.1"
-__version__ = "3.8.1.1"
+__version__ = "3.8.2.0"
 __email__ = "linxs@linxs.org"
 __status__ = "Development"
