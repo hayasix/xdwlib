@@ -2,7 +2,7 @@
 Xdwlib README
 =============
 
-2016-10-31  HAYASI Hideki <linxs@linxs.org>
+2016-12-24 HAYASI Hideki <linxs@linxs.org>
 
 
 Welcome to the xdwlib source release
@@ -11,10 +11,10 @@ Welcome to the xdwlib source release
 Xdwlib is a DocuWorks library for Python.
 
 This document provides some general information about xdwlib source
-release and provides links to other documents.
+release and links to other documents.
 
-General xdwlib information is available at https://launchpad.net/xdwlib/.
-Japanese document is also available at http://xdwlib.linxs.org/.
+General xdwlib information is available at https://launchpad.net/xdwlib/
+Japanese document is also available at http://xdwlib.linxs.org/
 
 Report problems with this release to xdwlib@linxs.org.
 
@@ -114,10 +114,10 @@ as an annotation::
             ann.fore_color = "red"
 
 
-Reporting bugs
+Reporting Bugs
 ==============
 
-Bugs reports are welcome at xdwlib@linxs.org.
+Bug reports are welcome at xdwlib@linxs.org.
 
 
 Have fun!

@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 # vim: set fileencoding=utf-8 fileformat=unix :
 
-"""xdwtemp.py -- yet another tempfile module suitable for XDWAPI
+"""Yet another tempfile module suitable for XDWAPI."""
 
-Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>  All rights reserved.
-
-This software is subject to the provisions of the Zope Public License,
-Version 2.1 (ZPL). A copy of the ZPL should accompany this distribution.
-THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-FOR A PARTICULAR PURPOSE.
-"""
+# Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>  All rights reserved.
+#
+# This software is subject to the provisions of the Zope Public License,
+# Version 2.1 (ZPL). A copy of the ZPL should accompany this distribution.
+# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
+# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
+# FOR A PARTICULAR PURPOSE.
 
 import sys
 import os
