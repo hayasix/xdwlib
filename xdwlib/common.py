@@ -107,7 +107,13 @@ px2mm = lambda v, dpi: v / dpi * INCH
 
 
 def environ(name=None):
-    """DocuWorks environment information."""
+    """DocuWorks environment information.
+
+    :param str name: environment variable name; None=all
+    :rtype: str, int or dict
+    :return: variable value (str or int), or a dict of variable names and
+             variable values
+    """
     it = XDW_GI_DWDESK_FILENAME_DIGITS
     if name:
         value = XDW_GetInformation(XDW_ENVIRON.normalize(name))
@@ -123,6 +129,11 @@ def environ(name=None):
 
 
 def linkfolders():
+    """Get link folders.
+
+    :rtype: dict
+    :return: a dict of link folder names and target pathnames.
+    """
     result = dict()
     for i in range(XDW_GetLinkRootFolderNumber()):
         info = XDW_GetLinkRootFolderInformation(i + 1)
@@ -133,8 +144,13 @@ def linkfolders():
 def get_viewer(light=False, lightonly=False):
     """Get pathname of DocuWorks Viewer (Light).
 
-    light       (bool) force to use DocuWorks Viewer Light.  Note that
-                DocuWorks Viewer is used if Light version is not avaiable.
+    :param bool light: force to use DocuWorks Viewer Light;
+                       note that DocuWorks Viewer is used if Light
+                       version is not avaiable
+    :param bool lightonly: raise NotInstalledError if light=True and
+                           DocuWorks Viewer Light is not available
+    :rtype: str
+    :return: pathname of the selected viewer executable
     """
     env = environ()
     viewer = env.get("DWVIEWERPATH")
@@ -146,12 +162,23 @@ def get_viewer(light=False, lightonly=False):
 
 
 def joinf(sep, seq):
-    """sep.join(seq), omitting None, null or so."""
+    """sep.join(seq), omitting None, null or so.
+
+    :param str sep:
+    :param Sequence seq:
+    :rtype: str
+    :return: joined str
+    """
     return sep.join([s for s in filter(bool, seq)]) or None
 
 
 def inner_attribute_name(name):
-    """Get XDWAPI style attribute name e.g. font_name --> %FontName"""
+    """Get XDWAPI style attribute name e.g. font_name --> %FontName
+
+    :param str name:
+    :rtype: bytes
+    :return: XDWAPI-style attribute name e.g. '%FontName'
+    """
     if isinstance(name, bytes):
         return name
     if name.startswith("%"):
@@ -162,7 +189,12 @@ def inner_attribute_name(name):
 
 
 def outer_attribute_name(name):
-    """Get xdwlib style attribute name e.g. %FontName --> font_name"""
+    """Get xdwlib style attribute name e.g. %FontName --> font_name
+
+    :param bytes name:
+    :rtype: str
+    :return: xdwlib-style attribute name e.g. 'font_name'
+    """
     if isinstance(name, str):
         return name
     name = uc(name)
@@ -174,15 +206,14 @@ def outer_attribute_name(name):
 def adjust_path(path, dir="", ext=".xdw", coding=None):
     """Build a new pathname with filename and directory name.
 
-    path    (str) pathname
-            Full pathname is acceptable as well as bare filename (basename).
-    dir     (str) replacement directory
-    ext     (str) default extension to append if original path has no one
-    coding  (str) encoding of the result as bytes; None = str (don't encode)
-
-    Returns a full pathname.
-
-    Example:
+    :param str path: original pathname; Full pathname is acceptable
+                     as well as a bare filename (basename).
+    :param str dir: replacement directory
+    :param str ext: default extension to append if original path has no one
+    :param str coding: encoding of the result as bytes;
+                       None = str (don't encode)
+    :rtype: str
+    :return: adjusted full pathname
 
     >>> import os; os.getcwd()
     'C:\\your\\favorite\\directory'
@@ -213,7 +244,12 @@ def adjust_path(path, dir="", ext=".xdw", coding=None):
 
 
 def cp(s):
-    """Coerce str into bytes."""
+    """Coerce str into bytes.
+
+    :param s: a str or bytes
+    :rtype: bytes
+    :return: a bytes
+    """
     if not s:
         return b""
     if isinstance(s, str):
@@ -224,7 +260,12 @@ def cp(s):
 
 
 def uc(s):
-    """Coerce bytes into str."""
+    """Coerce bytes into str.
+
+    :param s: a str or bytes
+    :rtype: str
+    :return: a str
+    """
     if not s:
         return ""
     if isinstance(s, bytes):
@@ -237,8 +278,11 @@ def uc(s):
 def derivative_path(path):
     """Convert pathname to n-th derivative e.g. somedocument-2.xdw or so.
 
-    Addtional number (2, 3, ...) is determined automatically.
-    If pathname given does not exist, original pathname is returned.
+    :param str path: pathname candidate
+    :rtype: str
+    :return: a derivative pathname
+
+    Addtional number (2, 3, ...) is determined automatically if needed.
     """
     if not os.path.exists(path):
         return path
@@ -252,7 +296,19 @@ def derivative_path(path):
 
 
 def flagvalue(table, value, store=True):
-    """Sum up flag values according to XDWConst table."""
+    """Sum up flag values according to XDWConst table.
+
+    :param XDWConst table: a set of XDWAPI constants
+    :param value:
+    :param bool store: conversion mode
+    :rtype: int or str
+    :return: accumulated flag values or a sequence of valid flag names
+
+    >>> flagvalue(xdwapi.XDW_PERM, "EDIT_ANNOTATION,PRINT")
+    12
+    >>> flagvalue(xdwapi.XDW_PERM, 12, store=False)
+    'EDIT_ANNOTATION,PRINT'
+    """
     if store and isinstance(value, (int, float)):
         return int(value)
     if store:
@@ -297,7 +353,28 @@ def makevalue(t, value):
 
 
 def scale(attrname, value, store=False):
-    """Scale actual size (length) to stored value and vice versa."""
+    """Scale actual size (length) to stored value and vice versa.
+
+    :param bytes attrname: annotation attribute name
+    :param value: annotation attribute value
+    :param bool store: scaling mode
+    :rtype: float
+    :return: scaled value
+
+    >>> scale(inner_attribute_name('border_width'), 2)  # unit: pt
+    2.0
+    >>> scale(inner_attribute_name('border_width'), 2, store=True)
+    2.0
+    >>> scale(inner_attribute_name('font_size'), 120)  # unit: 1/10 pt
+    12.0
+    >>> scale(inner_attribute_name('font_size'), 10.5, store=True)
+    105.0
+    >>> scale(b'%LineSpace', 0.2, True)  # unit: 1/100line
+    20.0
+
+    The last example illustrates that the actual line space is 0.2 line
+    but the stored value is 20 because its unit is 1/100line.
+    """
     unit = XDW_ANNOTATION_ATTRIBUTE[attrname][1]
     if not unit:
         return value
@@ -318,7 +395,19 @@ def scale(attrname, value, store=False):
 
 
 def unpack(s):
-    """Unpack little-endian octets into int."""
+    """Unpack little-endian octets into int.
+
+    :param str s: packed value
+    :rtype: int
+    :return: unpacked value
+
+    >>> unpack("@")
+    64
+    >>> unpack("00")
+    12336
+    >>> unpack("abcd")
+    1633837924
+    """
     n = 0
     for c in s:
         n <<= 8

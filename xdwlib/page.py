@@ -603,16 +603,16 @@ class Page(Annotatable, Observer):
                     for PDF,  'NORMAL' | 'HIGHQUALITY' | 'HIGHCOMPRESS' |
                               'MRC_NORMAL' | 'MRC_HIGHQUALITY' |
                               'MRC_HIGHCOMPRESS'
-        direct      (bool) export internal compressed image data directly.
-                    If True:
+        direct      (bool) export internal compressed image data directly;
+                    if True:
                       - dpi, color, format and compress are ignored.
-                      - Exported image format is recognized with the
-                        extension of returned pathname, which is either
+                      - Exported image format should be determined by the
+                        extension of the pathname returned, which is either
                         'tiff', 'jpeg' or 'pdf'.
                       - Annotations and page forms are not included in
-                        the exported image.  Image orientation depends
-                        on the internal state, so check 'degree' attribute
-                        of the page if needed.
+                        the exported image.
+                      - Image orientation depends on the internal state,
+                        so check 'degree' attribute of the page if needed.
 
         Returns actual pathname of created image file.
         """

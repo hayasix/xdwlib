@@ -275,8 +275,8 @@ class BaseDocument(Subject):
         dpi         (int) 10..600
         color       'COLOR' | 'MONO' | 'MONO_HIGHQUALITY'
         format      'BMP' | 'TIFF' | 'JPEG' | 'PDF'
-        compress    for BMP, not available
-                    for TIFF, 'NOCOMPRESS' | 'PACKBITS' |
+        compress    for BMP, not available (ignored)
+                    for TIFF, 'NOCOMPRESS' (= 'NORMAL') | 'PACKBITS' |
                               'JPEG | 'JPEG_TTN2' | 'G4'
                     for JPEG, 'NORMAL' | 'HIGHQUALITY' | 'HIGHCOMPRESS'
                     for PDF,  'NORMAL' | 'HIGHQUALITY' | 'HIGHCOMPRESS' |
@@ -299,16 +299,25 @@ class BaseDocument(Subject):
         default name 'DOCUMENTNAME_Pxx.bmp' or so will be used.
         """
         if direct:
-            return self._export_direct_image(pos, path)
+            try:
+                return self._export_direct_image(pos, path)
+            except InvalidOperationError:
+                direct = False
+                # Fall through.
         if isinstance(pos, (list, tuple)):
             pos, pages = pos
             pages -= pos
         pos = self._pos(pos)
-        if not format:
-            ext = os.path.splitext(path or "_.bmp")[1].lstrip(".").lower()
-            format = {"dib": "bmp", "tif": "tiff", "jpg": "jpeg"}.get(ext, ext)
-        if format.lower() not in ("bmp", "tiff", "jpeg", "pdf"):
+        if not format and path:
+            format = os.path.splitext(path)[1].lstrip(".")  # extension
+        format = (format or "BMP").upper()
+        if format == "DIB": format = "BMP"
+        elif format == "TIF": format = "TIFF"
+        elif format == "JPG": format = "JPEG"
+        if format not in ("BMP", "TIFF", "JPEG", "PDF"):
             raise TypeError("image type must be BMP, TIFF, JPEG or PDF.")
+        if format == "TIFF" and compress == "NORMAL":
+            compress = "NOCOMPRESS"
         if not path:
             path = "{0}_P{1}".format(self.name, pos + 1)
             path = adjust_path(path, dir=self.dirname())
