@@ -3,7 +3,7 @@
 
 """__init__.py -- initiator for xdwlib, A DocuWorks library for Python.
 
-Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>  All rights reserved.
+Copyright (C) 2010 HAYASHI Hideki <hideki@hayasix.com>  All rights reserved.
 
 This software is subject to the provisions of the Zope Public License,
 Version 2.1 (ZPL). A copy of the ZPL should accompany this distribution.
@@ -26,8 +26,8 @@ from .annotation import Annotation, AnnotationCache
 
 
 __author__ = "HAYASI Hideki"
-__copyright__ = "Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>"
+__copyright__ = "Copyright (C) 2010 HAYASHI Hideki <hideki@hayasix.com>"
 __license__ = "ZPL 2.1"
-__version__ = "3.8.2.0"
-__email__ = "linxs@linxs.org"
+__version__ = "3.8.2.1"
+__email__ = "hideki@hayasix.com"
 __status__ = "Development"

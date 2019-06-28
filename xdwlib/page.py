@@ -3,7 +3,7 @@
 
 """page.py -- Page and PageCollection
 
-Copyright (C) 2010 HAYASI Hideki <linxs@linxs.org>  All rights reserved.
+Copyright (C) 2010 HAYASHI Hideki <hideki@hayasix.com>  All rights reserved.
 
 This software is subject to the provisions of the Zope Public License,
 Version 2.1 (ZPL). A copy of the ZPL should accompany this distribution.
