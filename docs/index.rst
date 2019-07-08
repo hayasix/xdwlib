@@ -30,11 +30,6 @@ xdwlib
     samples
     faq
 
-Auto-generated documents
-========================
-
-:doc:`modules`
-
 Indices and tables
 ==================
 
