@@ -1,0 +1,162 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>documentinbinder &#8212; xdwlib  ドキュメント</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="basedocument" href="basedocument.html" />
+    <link rel="prev" title="document" href="document.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="documentinbinder">
+<h1>documentinbinder<a class="headerlink" href="#documentinbinder" title="このヘッドラインへのパーマリンク">¶</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">documentinbinder</span></code> モジュールは、DocuWorks バインダーに含まれる個々の
+DocuWorks 文書 (バインダー内文書) を扱います。</p>
+<div class="section" id="id1">
+<h2>DocumentInBinder オブジェクト<a class="headerlink" href="#id1" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p>DocumentInBinder オブジェクトは、 DocuWorks バインダーに含まれる個々の
+DocuWorks 文書 (バインダー内文書) を表します。これはファイルシステムに
+実在するファイルではありません。</p>
+<p>DocumentInBinder クラスは、その基底クラスである BaseDocument クラスに
+多くを負っています。 <code class="docutils literal notranslate"><span class="pre">basedocument</span></code> モジュールを参照してください。</p>
+<div class="section" id="id2">
+<h3>コンストラクタ<a class="headerlink" href="#id2" title="このヘッドラインへのパーマリンク">¶</a></h3>
+<dl class="simple">
+<dt>クラス <code class="docutils literal notranslate"><span class="pre">DocumentInBinder(bdoc,</span> <span class="pre">pos)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">bdoc</span></code> は Binder オブジェクト、 <code class="docutils literal notranslate"><span class="pre">pos</span></code> は bdoc 内での格納位置
+(0 から始まる整数) です。</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id3">
+<h3>インスタンス属性<a class="headerlink" href="#id3" title="このヘッドラインへのパーマリンク">¶</a></h3>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">binder</span></code></dt><dd><p>バインダー内文書の格納先となっているバインダーです。</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">handle</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">self.binder.handle</span></code> と同じです。</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">name</span></code></dt><dd><p>バインダー内文書のバインダー内文書名です。</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pages</span></code></dt><dd><p>バインダー内文書のページ数です。</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pos</span></code></dt><dd><p>バインダー内文書のバインダー内での位置です。0 から始まります。</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">xdwlib</a></h1>
+
+
+
+
+
+
+
+
+<h3>ナビゲーション</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="whatsthis.html">これは何?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">モジュール概観</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xdwfile.html">xdwfile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="binder.html">binder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="document.html">document</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">documentinbinder</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">DocumentInBinder オブジェクト</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="basedocument.html">basedocument</a></li>
+<li class="toctree-l1"><a class="reference internal" href="page.html">page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="annotation.html">annotation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="annotatable.html">annotatable</a></li>
+<li class="toctree-l1"><a class="reference internal" href="struct.html">struct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xdwtemp.html">xdwtemp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="derivativepath.html">派生したパス名</a></li>
+<li class="toctree-l1"><a class="reference internal" href="halfopenregion.html">半開矩形領域</a></li>
+<li class="toctree-l1"><a class="reference internal" href="colors.html">色の指定</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fonts.html">フォントの指定</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto.html">HOW-TO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="samples.html">サンプルプログラム</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="document.html" title="前の章へ">document</a></li>
+      <li>Next: <a href="basedocument.html" title="次の章へ">basedocument</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">クイック検索</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="検索" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2010, HAYASHI Hideki.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/documentinbinder.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

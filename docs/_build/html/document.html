@@ -1,0 +1,220 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>document &#8212; xdwlib  ドキュメント</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="documentinbinder" href="documentinbinder.html" />
+    <link rel="prev" title="binder" href="binder.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="document">
+<h1>document<a class="headerlink" href="#document" title="このヘッドラインへのパーマリンク">¶</a></h1>
+<p>document モジュールでは、DocuWorks 文書 (拡張子 <code class="docutils literal notranslate"><span class="pre">.xdw</span></code>) を取り扱います。</p>
+<div class="section" id="id1">
+<h2>モジュール関数<a class="headerlink" href="#id1" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<dl>
+<dt><code class="docutils literal notranslate"><span class="pre">create(input_path=None,</span> <span class="pre">output_path=None,</span> <span class="pre">**kw)</span></code></dt><dd><p>これはラッパー関数で、 <code class="docutils literal notranslate"><span class="pre">input_path</span></code> で示すファイルから DocuWorks
+文書を生成します。実際の生成作業は以下の <code class="docutils literal notranslate"><span class="pre">create_from_image()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">create_from_pdf()</span></code>, <code class="docutils literal notranslate"><span class="pre">create_from_app()</span></code> の各関数によりますが、
+<code class="docutils literal notranslate"><span class="pre">input_path</span></code> が <code class="docutils literal notranslate"><span class="pre">None</span></code> である場合は、白紙のページを 1 ページだけ持つ
+DocuWorks 文書を生成します。 <code class="docutils literal notranslate"><span class="pre">output_path</span></code> は生成結果を書き出す先の
+パス名です。指定しない場合は、 <code class="docutils literal notranslate"><span class="pre">input_path</span></code> から派生したパス名
+となります。 <code class="docutils literal notranslate"><span class="pre">input_path</span></code> も指定されていない (または <code class="docutils literal notranslate"><span class="pre">None</span></code>
+が指定されている) 場合は、 <code class="docutils literal notranslate"><span class="pre">'blank.xdw'</span></code> となります。実際に生成された
+DocuWorks 文書のパス名を返します。</p>
+<p><code class="docutils literal notranslate"><span class="pre">**kw</span></code> には、 <code class="docutils literal notranslate"><span class="pre">create_from_image()</span></code>, <code class="docutils literal notranslate"><span class="pre">create_from_pdf()</span></code>
+または <code class="docutils literal notranslate"><span class="pre">create_from_app()</span></code> が要求するパラメータを指定します。</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">create_from_image(input_path,</span> <span class="pre">output_path=None,</span> <span class="pre">fitimage='FITDEF',</span> <span class="pre">compress='NORMAL',</span> <span class="pre">zoom=0,</span> <span class="pre">size=Point(0,</span> <span class="pre">0),</span> <span class="pre">align=('CENTER',</span> <span class="pre">'CENTER'),</span> <span class="pre">maxpapersize='DEFAULT')</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">input_path</span></code> で示すイメージデータ (画像ファイル) から DocuWorks
+文書を生成します。 <code class="docutils literal notranslate"><span class="pre">output_path</span></code> は生成結果を書き出す先のパス名です。
+指定しない場合は、 <code class="docutils literal notranslate"><span class="pre">input_path</span></code> から派生したパス名となります。
+実際に生成された DocuWorks 文書のパス名を返します。</p>
+<p><code class="docutils literal notranslate"><span class="pre">fitimage</span></code> は <code class="docutils literal notranslate"><span class="pre">'FITDEF'</span></code>, <code class="docutils literal notranslate"><span class="pre">'FIT'</span></code>, <code class="docutils literal notranslate"><span class="pre">'FITDEF_DIVIDEBMP'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'USERDEF'</span></code> または <code class="docutils literal notranslate"><span class="pre">'USERDEF_FIT'</span></code> で指定します。
+小文字で指定してもかまいません。</p>
+<p><code class="docutils literal notranslate"><span class="pre">compress</span></code> は <code class="docutils literal notranslate"><span class="pre">'NORMAL'</span></code>, <code class="docutils literal notranslate"><span class="pre">'LOSSLESS'</span></code>, <code class="docutils literal notranslate"><span class="pre">'NOCOMPRESS'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'HIGHQUALITY'</span></code>, <code class="docutils literal notranslate"><span class="pre">'HIGHCOMPRESS'</span></code>, <code class="docutils literal notranslate"><span class="pre">'JPEG'</span></code>, <code class="docutils literal notranslate"><span class="pre">'JPEG_TTN2'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'PACKBITS'</span></code>, <code class="docutils literal notranslate"><span class="pre">'G4'</span></code>, <code class="docutils literal notranslate"><span class="pre">'MRC_NORMAL'</span></code>, <code class="docutils literal notranslate"><span class="pre">'MRC_HIGHQUALITY'</span></code>
+または <code class="docutils literal notranslate"><span class="pre">'MRC_HIGHCOMPRESS'</span></code> で指定します。
+小文字で指定してもかまいません。</p>
+<p><code class="docutils literal notranslate"><span class="pre">zoom</span></code> には変換時の拡大率を % で指定します。通常は 0 以上の数値で
+指定しますが、特に 0 を指定すると 100 を指定したのと同様に実寸大指定に
+なります。小数点以下 3 桁までが有効です。</p>
+<p><code class="docutils literal notranslate"><span class="pre">size</span></code> には変換後のページサイズを指定します。Point オブジェクト
+または既定サイズで与えることができますが、Point オブジェクトで与える
+ことができるのは <code class="docutils literal notranslate"><span class="pre">fitimage</span></code> が <code class="docutils literal notranslate"><span class="pre">'USERDEF'</span></code> または <code class="docutils literal notranslate"><span class="pre">'USERDEF_FIT'</span></code>
+の場合だけです。この場合は横幅・縦幅をそれぞれミリメートル単位で
+指定します。既定サイズで与える場合は、 <code class="docutils literal notranslate"><span class="pre">'A3R'</span></code>, <code class="docutils literal notranslate"><span class="pre">'A3'</span></code>, <code class="docutils literal notranslate"><span class="pre">'A4R'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'A4'</span></code>, <code class="docutils literal notranslate"><span class="pre">'A5R'</span></code>, <code class="docutils literal notranslate"><span class="pre">'A5'</span></code>, <code class="docutils literal notranslate"><span class="pre">'B4R'</span></code>, <code class="docutils literal notranslate"><span class="pre">'B4'</span></code>, <code class="docutils literal notranslate"><span class="pre">'B5R'</span></code> または
+<code class="docutils literal notranslate"><span class="pre">'B5'</span></code> で指定します。</p>
+<p><code class="docutils literal notranslate"><span class="pre">align</span></code> には変換時にページサイズと画像サイズが異なった場合
+どの方向を揃えるかを 2 要素のシーケンスで指定します。最初の要素が
+水平方向の揃え方で、 <code class="docutils literal notranslate"><span class="pre">'LEFT'</span></code>, <code class="docutils literal notranslate"><span class="pre">'CENTER'</span></code> または <code class="docutils literal notranslate"><span class="pre">'RIGHT'</span></code>
+で指定します。次の要素が垂直方向の揃え方で、 <code class="docutils literal notranslate"><span class="pre">'TOP'</span></code>, <code class="docutils literal notranslate"><span class="pre">'CENTER'</span></code>
+または <code class="docutils literal notranslate"><span class="pre">'BOTTOM'</span></code> で指定します。
+いずれも、小文字で指定してもかまいません。</p>
+<p><code class="docutils literal notranslate"><span class="pre">maxpapersize</span></code> には変換後の最大ページサイズを指定します。
+<code class="docutils literal notranslate"><span class="pre">'DEFAULT'</span></code>, <code class="docutils literal notranslate"><span class="pre">'A3'</span></code> または <code class="docutils literal notranslate"><span class="pre">'2A0'</span></code> を指定できます。</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">create_from_pdf(input_path,</span> <span class="pre">output_path=None)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">input_path</span></code> で示す PDF ファイルから DocuWorks 文書を生成します。
+<code class="docutils literal notranslate"><span class="pre">output_path</span></code> は生成結果を書き出す先のパス名です。指定しない場合は、
+<code class="docutils literal notranslate"><span class="pre">input_path</span></code> から派生したパス名となります。実際に生成された
+DocuWorks 文書のパス名を返します。</p>
+<p>PDF から DocuWorks 文書への変換は、DocuWorks 内で行える場合は
+そちらで処理しますが、処理できない場合は <code class="docutils literal notranslate"><span class="pre">create_from_app()</span></code>
+で行いますので、Adobe Reader 等がインストールされていることが望ましい
+といえます。</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">create_from_app(input_path,</span> <span class="pre">output_path=None,</span> <span class="pre">attachment=False,</span> <span class="pre">timeout=0)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">input_path</span></code> で示すファイルを OS で関連づけられたアプリケーション
+プログラムで開き、DocuWorks Printer 経由で DocuWorks 文書を生成します。
+<code class="docutils literal notranslate"><span class="pre">output_path</span></code> は生成結果を書き出す先のパス名です。指定しない場合は、
+<code class="docutils literal notranslate"><span class="pre">input_path</span></code> から派生したパス名となります。実際に生成された
+DocuWorks 文書のパス名を返します。</p>
+<p>元のファイルをオリジナルデータとして添付したい場合は、 <code class="docutils literal notranslate"><span class="pre">attachment</span></code>
+を <code class="docutils literal notranslate"><span class="pre">True</span></code> とします。</p>
+<p>アプリケーションプログラムの起動後にプログラムのハングアップを回避
+したい場合は、 <code class="docutils literal notranslate"><span class="pre">timeout</span></code> にタイムアウトとなるまでの時間を秒単位で
+指定します。</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">merge(input_paths,</span> <span class="pre">output_path=None)</span></code></dt><dd><p>複数の DocuWorks 文書を結合して、新たな DocuWorks 文書を生成します。</p>
+<p><code class="docutils literal notranslate"><span class="pre">input_paths</span></code> はマージ元となる DocuWorks 文書のパス名を列挙した
+シーケンスです。 <code class="docutils literal notranslate"><span class="pre">output_path</span></code> はマージ結果を書き出す先のパス名です。
+指定しない場合は、 <code class="docutils literal notranslate"><span class="pre">input_paths</span></code> の先頭の要素から派生したパス名と
+なります。実際に生成された DocuWorks 文書のパス名を返します。</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id2">
+<h2>Document クラス<a class="headerlink" href="#id2" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p>Document クラスは、DocuWorks 文書を表します。これはファイルシステムに
+実在するファイルです。</p>
+<p>Document クラスは、その基底クラスである BaseDocument および XDWFile
+クラスに多くを負っています。 <code class="docutils literal notranslate"><span class="pre">basedocument</span></code> モジュールおよび
+<code class="docutils literal notranslate"><span class="pre">xdwfile</span></code> モジュールを参照してください。</p>
+<div class="section" id="id3">
+<h3>コンストラクタ<a class="headerlink" href="#id3" title="このヘッドラインへのパーマリンク">¶</a></h3>
+<dl class="simple">
+<dt>クラス <code class="docutils literal notranslate"><span class="pre">Document(path)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">path</span></code> は Windows ファイルシステム上のパス名です。</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">xdwlib</a></h1>
+
+
+
+
+
+
+
+
+<h3>ナビゲーション</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="whatsthis.html">これは何?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">モジュール概観</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xdwfile.html">xdwfile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="binder.html">binder</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">document</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">モジュール関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">Document クラス</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="documentinbinder.html">documentinbinder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basedocument.html">basedocument</a></li>
+<li class="toctree-l1"><a class="reference internal" href="page.html">page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="annotation.html">annotation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="annotatable.html">annotatable</a></li>
+<li class="toctree-l1"><a class="reference internal" href="struct.html">struct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xdwtemp.html">xdwtemp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="derivativepath.html">派生したパス名</a></li>
+<li class="toctree-l1"><a class="reference internal" href="halfopenregion.html">半開矩形領域</a></li>
+<li class="toctree-l1"><a class="reference internal" href="colors.html">色の指定</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fonts.html">フォントの指定</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto.html">HOW-TO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="samples.html">サンプルプログラム</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="binder.html" title="前の章へ">binder</a></li>
+      <li>Next: <a href="documentinbinder.html" title="次の章へ">documentinbinder</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">クイック検索</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="検索" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2010, HAYASHI Hideki.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/document.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

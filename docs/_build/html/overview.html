@@ -1,0 +1,202 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>モジュール概観 &#8212; xdwlib  ドキュメント</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="xdwfile" href="xdwfile.html" />
+    <link rel="prev" title="これは何?" href="whatsthis.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>モジュール概観<a class="headerlink" href="#id1" title="このヘッドラインへのパーマリンク">¶</a></h1>
+<p>※このモジュール・リファレンスの適用対象は、xdwlib-2.29.3 以上 です。</p>
+<p>Python DocuWorks Library は、DocuWorks 7 (7.0 以上) がインストール
+されていることを前提に動作します。</p>
+<p>DocuWorks が扱うファイルは、DocuWorks 文書と DocuWorks バインダーの 2
+種類です。</p>
+<ul class="simple">
+<li><p>バインダーは、複数の文書を格納するコンテナです。</p></li>
+<li><p>文書は、ページ、ページフォーム、オリジナルデータ、署名を格納しています。
+ファイルとして存在する DocuWorks 文書と、バインダー内に格納されている
+バインダー内文書の 2 種類がありますが、おおむね同じ操作が可能です。</p></li>
+<li><p>ページは、ページイメージ (画像)、テキスト (アプリケーションテキスト
+または OCR テキスト)、アノテーションを格納しています。</p></li>
+<li><p>アノテーションは、他のアノテーション (子アノテーション) を格納できます。
+GUI (DocuWorks Viewer) でアノテーションをグループ化した場合、
+アノテーションを束ねる親アノテーションとなる専用のアノテーションが
+生成されています。</p></li>
+</ul>
+<p>これらを扱うためのモジュールが、それぞれ次のように用意されています。</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="binder.html"><span class="doc">binder</span></a></p></li>
+<li><p><a class="reference internal" href="document.html"><span class="doc">document</span></a> および <a class="reference internal" href="documentinbinder.html"><span class="doc">documentinbinder</span></a></p></li>
+<li><p><a class="reference internal" href="page.html"><span class="doc">page</span></a></p></li>
+<li><p><a class="reference internal" href="annotation.html"><span class="doc">annotation</span></a></p></li>
+</ul>
+<p>次のモジュールは、主に基底クラスとそれに関連するモジュール関数を用意して
+いるものです。</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="xdwfile.html"><span class="doc">xdwfile</span></a></p></li>
+<li><p><a class="reference internal" href="basedocument.html"><span class="doc">basedocument</span></a></p></li>
+<li><p><a class="reference internal" href="annotatable.html"><span class="doc">annotatable</span></a></p></li>
+</ul>
+<p>次のモジュールでは、xdwlib が使用するデータを定義しています。</p>
+<ul class="simple">
+<li><p><span class="xref std std-doc">bitmap</span></p></li>
+<li><p><a class="reference internal" href="struct.html"><span class="doc">struct</span></a></p></li>
+<li><p><span class="xref std std-doc">timezone</span></p></li>
+</ul>
+<p>次のモジュールは、XDWAPI からの使用に適した一時ファイルの生成を支援します。</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="xdwtemp.html"><span class="doc">xdwtemp</span></a></p></li>
+</ul>
+<p>次のモジュールでは、xdwlib の内部で使用するユーティリティ関数などを
+定義しています。</p>
+<ul class="simple">
+<li><p><span class="xref std std-doc">common</span></p></li>
+<li><p><span class="xref std std-doc">observer</span></p></li>
+</ul>
+<p>次のモジュールでは、xdwlib の下位層で働く API を定義しています。</p>
+<span class="target" id="module-xdwlib.xdwapi"></span><p>Raw DocuWorks API.</p>
+<p>すでにある DocuWorks 文書を操作するときは、</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xdwlib</span>
+<span class="n">doc</span> <span class="o">=</span> <span class="n">xdwlib</span><span class="o">.</span><span class="n">xdwopen</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>とした上で、 <code class="docutils literal notranslate"><span class="pre">doc</span></code> が持つメソッドを利用するのが一般的です。</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">xdwlib</span> <span class="k">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+<p>とすると、次の各行を実行するのと同等の効果が得られます。</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">xdwlib.struct</span> <span class="k">import</span> <span class="n">Point</span><span class="p">,</span> <span class="n">Rect</span>
+<span class="kn">from</span> <span class="nn">xdwlib.common</span> <span class="k">import</span> <span class="n">environ</span>
+<span class="kn">from</span> <span class="nn">xdwlib.xdwtemp</span> <span class="k">import</span> <span class="n">XDWTemp</span>
+<span class="kn">from</span> <span class="nn">xdwlib.xdwfile</span> <span class="k">import</span> <span class="n">xdwopen</span><span class="p">,</span> <span class="n">optimize</span><span class="p">,</span> <span class="n">copy</span><span class="p">,</span> <span class="n">create_sfx</span><span class="p">,</span> <span class="n">extract_sfx</span>
+<span class="kn">from</span> <span class="nn">xdwlib.xdwfile</span> <span class="k">import</span> <span class="n">protection_info</span><span class="p">,</span> <span class="n">protect</span><span class="p">,</span> <span class="n">unprotect</span><span class="p">,</span> <span class="n">sign</span>
+<span class="kn">from</span> <span class="nn">xdwlib.document</span> <span class="k">import</span> <span class="n">Document</span><span class="p">,</span> <span class="n">create</span><span class="p">,</span> <span class="n">merge</span>
+<span class="kn">from</span> <span class="nn">xdwlib.binder</span> <span class="k">import</span> <span class="n">Binder</span><span class="p">,</span> <span class="n">create_binder</span>
+<span class="kn">from</span> <span class="nn">xdwlib.documentinbinder</span> <span class="k">import</span> <span class="n">DocumentInBinder</span>
+<span class="kn">from</span> <span class="nn">xdwlib.page</span> <span class="k">import</span> <span class="n">Page</span><span class="p">,</span> <span class="n">PageCollection</span>
+<span class="kn">from</span> <span class="nn">xdwlib.annotation</span> <span class="k">import</span> <span class="n">Annotation</span><span class="p">,</span> <span class="n">AnnotationCache</span>
+</pre></div>
+</div>
+<p>エラーコードを利用したい場合などは、</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">xdwlib.xdwapi</span> <span class="k">import</span> <span class="n">InvalidArgError</span>
+</pre></div>
+</div>
+<p>などとする必要があるかもしれません。</p>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">xdwlib</a></h1>
+
+
+
+
+
+
+
+
+<h3>ナビゲーション</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="whatsthis.html">これは何?</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">モジュール概観</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xdwfile.html">xdwfile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="binder.html">binder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="document.html">document</a></li>
+<li class="toctree-l1"><a class="reference internal" href="documentinbinder.html">documentinbinder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basedocument.html">basedocument</a></li>
+<li class="toctree-l1"><a class="reference internal" href="page.html">page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="annotation.html">annotation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="annotatable.html">annotatable</a></li>
+<li class="toctree-l1"><a class="reference internal" href="struct.html">struct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xdwtemp.html">xdwtemp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="derivativepath.html">派生したパス名</a></li>
+<li class="toctree-l1"><a class="reference internal" href="halfopenregion.html">半開矩形領域</a></li>
+<li class="toctree-l1"><a class="reference internal" href="colors.html">色の指定</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fonts.html">フォントの指定</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto.html">HOW-TO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="samples.html">サンプルプログラム</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="whatsthis.html" title="前の章へ">これは何?</a></li>
+      <li>Next: <a href="xdwfile.html" title="次の章へ">xdwfile</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">クイック検索</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="検索" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2010, HAYASHI Hideki.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/overview.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

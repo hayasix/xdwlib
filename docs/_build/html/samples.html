@@ -1,0 +1,424 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>サンプルプログラム &#8212; xdwlib  ドキュメント</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="FAQ" href="faq.html" />
+    <link rel="prev" title="HOW-TO" href="howto.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>サンプルプログラム<a class="headerlink" href="#id1" title="このヘッドラインへのパーマリンク">¶</a></h1>
+<p>Python DocuWorks Library を利用したプログラムの例をいくつか挙げます。</p>
+<div class="section" id="wc-word-count">
+<h2>wc (word count)<a class="headerlink" href="#wc-word-count" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p>Unix で一般的な <code class="docutils literal notranslate"><span class="pre">wc</span></code> コマンドに似た処理を行います。
+引数で指定されたファイルに含まれるテキスト (アプリケーションテキスト
+および OCR テキスト) の文字数、ページ数、文書数を出力します。
+各ページの間には区切り文字 (0x0c) が 1 文字あり、それも文字数に入っています。
+wc というわりには単語数は数えてくれませんが……。</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;wc.py&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">from</span> <span class="nn">xdwlib</span> <span class="k">import</span> <span class="n">xdwopen</span>
+
+<span class="n">chars</span> <span class="o">=</span> <span class="n">pages</span> <span class="o">=</span> <span class="n">docs</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Dispose script name.</span>
+<span class="k">while</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">:</span>
+    <span class="n">doc</span> <span class="o">=</span> <span class="n">xdwopen</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">chars</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">content_text</span><span class="p">())</span>
+    <span class="n">pages</span> <span class="o">+=</span> <span class="n">doc</span><span class="o">.</span><span class="n">pages</span>
+    <span class="n">docs</span> <span class="o">+=</span> <span class="n">doc</span><span class="o">.</span><span class="n">documents</span> <span class="ow">or</span> <span class="mi">1</span>
+    <span class="n">doc</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="nb">print</span> <span class="n">chars</span><span class="p">,</span> <span class="n">pages</span><span class="p">,</span> <span class="n">docs</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="ocr">
+<h2>OCR 処理<a class="headerlink" href="#ocr" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p>全部のページを DocuWorks イメージページへ変換して、OCR 処理を行います。</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;ocr.py&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">from</span> <span class="nn">xdwlib</span> <span class="k">import</span> <span class="n">xdwopen</span>
+
+<span class="n">doc</span> <span class="o">=</span> <span class="n">xdwopen</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">pages</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">doc</span><span class="o">.</span><span class="n">page</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">type</span> <span class="o">!=</span> <span class="s2">&quot;IMAGE&quot;</span><span class="p">:</span>
+        <span class="n">doc</span><span class="o">.</span><span class="n">rasterize</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;mono&quot;</span><span class="p">)</span>
+    <span class="n">doc</span><span class="o">.</span><span class="n">page</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">ocr</span><span class="p">()</span>
+
+<span class="n">doc</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="n">doc</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id2">
+<h2>検索してマーク<a class="headerlink" href="#id2" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p>ドキュメントを開き、指定の正規表現にしたがってテキストを検索します。
+みつかった場所に半透明の黄色い矩形を重ねるとともに、
+検索パターンを記載した付箋をページあたり 1 枚貼ります。
+DocuWorks 付属の「検索してマーク」プラグインとは違い、対象ドキュメントに
+直接マーキングをします。</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;mark.py&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">from</span> <span class="nn">xdwlib</span> <span class="k">import</span> <span class="n">xdwopen</span><span class="p">,</span> <span class="n">Point</span>
+
+<span class="n">write</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span>
+
+<span class="n">regexp</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">encoding</span><span class="p">)</span>
+<span class="n">infile</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+<span class="k">with</span> <span class="n">xdwopen</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">autosave</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">doc</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">pg</span> <span class="ow">in</span> <span class="n">doc</span><span class="p">:</span>
+        <span class="n">rects</span> <span class="o">=</span> <span class="n">pg</span><span class="o">.</span><span class="n">re_regions</span><span class="p">(</span><span class="n">regexp</span><span class="p">)</span>
+        <span class="n">tagged</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">rect</span> <span class="ow">in</span> <span class="n">rects</span><span class="p">:</span>
+            <span class="n">mark</span> <span class="o">=</span> <span class="n">pg</span><span class="o">.</span><span class="n">add_rectangle</span><span class="p">(</span>
+                    <span class="n">rect</span><span class="o">=</span><span class="n">rect</span><span class="p">,</span>
+                    <span class="n">fill_color</span><span class="o">=</span><span class="s2">&quot;yellow&quot;</span><span class="p">,</span>
+                    <span class="n">fill_style</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">fill_transparent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">tagged</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">tag</span> <span class="o">=</span> <span class="n">pg</span><span class="o">.</span><span class="n">add_stickey</span><span class="p">(</span>
+                    <span class="n">position</span><span class="o">=</span><span class="n">Point</span><span class="p">(</span><span class="n">pg</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">x</span> <span class="o">-</span> <span class="mi">10</span><span class="p">,</span>
+                                   <span class="nb">min</span><span class="p">(</span><span class="n">rect</span><span class="o">.</span><span class="n">top</span><span class="p">,</span> <span class="n">pg</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="mi">10</span><span class="p">)),</span>
+                    <span class="n">size</span><span class="o">=</span><span class="n">Point</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+                    <span class="n">fill_color</span><span class="o">=</span><span class="s2">&quot;yellow&quot;</span><span class="p">)</span>
+            <span class="n">tag</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span>
+                    <span class="n">position</span><span class="o">=</span><span class="n">Point</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                    <span class="n">text</span><span class="o">=</span><span class="n">regexp</span><span class="p">,</span>
+                    <span class="n">font_size</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span>
+                    <span class="n">margin</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                    <span class="n">back_color</span><span class="o">=</span><span class="s2">&quot;NONE&quot;</span><span class="p">)</span>
+            <span class="n">tagged</span> <span class="o">=</span> <span class="kc">True</span>
+</pre></div>
+</div>
+<p>(実行例)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">C</span><span class="p">:</span>\<span class="n">test</span><span class="o">&gt;</span> <span class="n">python</span> <span class="n">mark</span><span class="o">.</span><span class="n">py</span> <span class="s2">&quot;プラグ\w*?設定&quot;</span> <span class="s2">&quot;C:</span><span class="se">\t</span><span class="s2">est\PLUGINSPI-2.xdw&quot;</span>
+</pre></div>
+</div>
+<p>(実行結果)</p>
+<a class="reference internal image-reference" href="_images/mark_screenshot.png"><img alt="``mark.py`` の実行結果の例。検索でみつかった場所にマークし、ページに付箋を貼ってあります。" class="align-left" src="_images/mark_screenshot.png" style="width: 796.0px; height: 596.0px;" /></a>
+</div>
+<div class="section" id="id3">
+<h2>見開き書類をページごとに分割<a class="headerlink" href="#id3" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p>たとえば、A4R 判左綴じの文書を見開き (A3 判) でスキャンして作った <a class="footnote-reference brackets" href="#id5" id="id4">1</a>
+ドキュメントを、ページごとに切り分けて A4R 判のドキュメントに変換します。
+ページ数が倍のドキュメントができあがります。
+アシストV株式会社様が公開されている「A3画像分割プラグイン for DocuWorks」と
+ほぼ同じ機能です (このプログラムでは元ドキュメントの大きさに関わらず
+分割できます)。ただし、アノテーションは引き継がれません。</p>
+<dl class="footnote brackets">
+<dt class="label" id="id5"><span class="brackets"><a class="fn-backref" href="#id4">1</a></span></dt>
+<dd><p>ページイメージの内部格納形式が PDF だと、
+<code class="docutils literal notranslate"><span class="pre">pg.export_image(direct=True)</span></code> の部分がうまく動作しません。
+元の画像が BMP, TIFF, JPEG のいずれかであるものを対象にしてください。</p>
+</dd>
+</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># coding: mbcs</span>
+
+<span class="sd">&quot;&quot;&quot;horizontal_split.py&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">xdwlib</span> <span class="k">import</span> <span class="n">xdwopen</span>
+<span class="kn">from</span> <span class="nn">xdwlib.page</span> <span class="k">import</span> <span class="n">PageCollection</span>
+<span class="kn">from</span> <span class="nn">xdwlib.struct</span> <span class="k">import</span> <span class="n">Point</span>
+
+<span class="n">infile</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">infile</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;.xdw&quot;</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;file must be *.xdw&quot;</span><span class="p">)</span>
+
+<span class="n">newfile</span> <span class="o">=</span> <span class="n">infile</span><span class="p">[:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="sa">u</span><span class="s2">&quot;-左右分割.xdw&quot;</span>
+
+<span class="k">with</span> <span class="n">xdwopen</span><span class="p">(</span><span class="n">infile</span><span class="p">)</span> <span class="k">as</span> <span class="n">doc</span><span class="p">:</span>
+    <span class="n">pages</span> <span class="o">=</span> <span class="n">doc</span><span class="o">.</span><span class="n">pages</span>
+    <span class="k">for</span> <span class="n">pg</span> <span class="ow">in</span> <span class="n">doc</span><span class="p">[:</span><span class="n">pages</span><span class="p">]:</span>
+        <span class="n">degree</span> <span class="o">=</span> <span class="n">pg</span><span class="o">.</span><span class="n">degree</span>
+        <span class="c1"># A3見開き→A4×2ページのようにするため、取り込み時のページ幅は半分にします。</span>
+        <span class="c1"># スキャン時の画像の向きを考慮して引数を設定していきます。</span>
+        <span class="c1"># 対象となる DocuWorks 文書は、DocuWorks Viewer で正しく閲覧できる向きに</span>
+        <span class="c1"># あらかじめ回転を済ませておいてください。</span>
+        <span class="k">if</span> <span class="n">degree</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="n">Point</span><span class="p">(</span><span class="n">pg</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">x</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">pg</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+            <span class="n">align</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;left&quot;</span><span class="p">,</span> <span class="s2">&quot;center&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;right&quot;</span><span class="p">,</span> <span class="s2">&quot;center&quot;</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">degree</span> <span class="o">==</span> <span class="mi">90</span><span class="p">:</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="n">Point</span><span class="p">(</span><span class="n">pg</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">pg</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">x</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">align</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="s2">&quot;bottom&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="s2">&quot;top&quot;</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">degree</span> <span class="o">==</span> <span class="mi">180</span><span class="p">:</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="n">Point</span><span class="p">(</span><span class="n">pg</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">x</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">pg</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+            <span class="n">align</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;right&quot;</span><span class="p">,</span> <span class="s2">&quot;center&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;left&quot;</span><span class="p">,</span> <span class="s2">&quot;center&quot;</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">degree</span> <span class="o">==</span> <span class="mi">270</span><span class="p">:</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="n">Point</span><span class="p">(</span><span class="n">pg</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">pg</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">x</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">align</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="s2">&quot;top&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="s2">&quot;bottom&quot;</span><span class="p">))</span>
+        <span class="c1"># いったんページをファイルへ出力します。</span>
+        <span class="n">temp</span> <span class="o">=</span> <span class="n">pg</span><span class="o">.</span><span class="n">export_image</span><span class="p">(</span><span class="n">direct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># 左半分・右半分の順で取り込み、末尾に追加します。</span>
+        <span class="n">doc</span><span class="o">.</span><span class="n">append_image</span><span class="p">(</span><span class="n">temp</span><span class="p">,</span> <span class="n">fitimage</span><span class="o">=</span><span class="s2">&quot;userdef&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="o">.</span><span class="n">int</span><span class="p">(),</span> <span class="n">compress</span><span class="o">=</span><span class="s2">&quot;lossless&quot;</span><span class="p">,</span> <span class="n">align</span><span class="o">=</span><span class="n">align</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">doc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="n">degree</span><span class="o">=</span><span class="n">degree</span><span class="p">)</span>
+        <span class="n">doc</span><span class="o">.</span><span class="n">append_image</span><span class="p">(</span><span class="n">temp</span><span class="p">,</span> <span class="n">fitimage</span><span class="o">=</span><span class="s2">&quot;userdef&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="o">.</span><span class="n">int</span><span class="p">(),</span> <span class="n">compress</span><span class="o">=</span><span class="s2">&quot;lossless&quot;</span><span class="p">,</span> <span class="n">align</span><span class="o">=</span><span class="n">align</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">doc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="n">degree</span><span class="o">=</span><span class="n">degree</span><span class="p">)</span>
+        <span class="c1"># 一時ファイルを消去します。</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span>
+    <span class="c1"># 分割前のページは不要になるので削除します。</span>
+    <span class="k">del</span> <span class="n">doc</span><span class="p">[:</span><span class="n">pages</span><span class="p">]</span>
+    <span class="c1"># 分割前のファイルは残し、新たなファイルへ保存します。</span>
+    <span class="n">PageCollection</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">newfile</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>(実行例)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">C</span><span class="p">:</span>\<span class="n">test</span><span class="o">&gt;</span> <span class="n">python</span> <span class="n">horizontal_split</span><span class="o">.</span><span class="n">py</span> <span class="s2">&quot;C:</span><span class="se">\t</span><span class="s2">est\DocuShare.xdw&quot;</span>
+</pre></div>
+</div>
+<p>(実行前)</p>
+<a class="reference internal image-reference" href="_images/before.png"><img alt="_images/before.png" class="align-left" src="_images/before.png" style="width: 636.0px; height: 378.0px;" /></a>
+<p>(実行後)</p>
+<a class="reference internal image-reference" href="_images/after.png"><img alt="_images/after.png" class="align-left" src="_images/after.png" style="width: 640.0px; height: 374.0px;" /></a>
+<p>応用編として、このプログラムを py2exe で実行形式にした上で、DocuWorks の
+プラグインの設定で「外部コマンドの起動」を追加すると、クリックひとつで
+イメージドキュメントのページ分割ができるようになります。</p>
+<p>(設定例)</p>
+<a class="reference internal image-reference" href="_images/horizontal_split-settings.png"><img alt="horizontal_split.exe 用の外部コマンドの設定" class="align-left" src="_images/horizontal_split-settings.png" style="width: 766.0px; height: 612.0px;" /></a>
+<p>このページの下部に、実際に動作する DocuWorks プラグインを置いておきます。
+zip ファイルを展開すると horizontal_split.exe が取り出せるので、それを
+「外部コマンドの起動」で実行モジュールのパスとして指定してください。
+その他の設定は上図に準じます。</p>
+</div>
+<div class="section" id="id6">
+<h2>差し込み処理<a class="headerlink" href="#id6" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p>DocuWorks 文書に対してデータの差し込みを行います。</p>
+<p>差し込み用 DocuWorks 文書の例</p>
+<p>差し込むデータは、CSV ファイルを DocuWorks 文書にオリジナルデータとして
+添付して与えます。複数の CSV ファイルを添付した場合は、最初に見つけたものを
+使用します。CSV ファイルは、Windows で標準的な Windows-31J (CP932) または
+BOM 付き UTF-8 で作成してください。先頭行には、項目名を置きます。たとえば</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">郵便番号</span><span class="p">,</span><span class="n">住所</span><span class="p">,</span><span class="n">氏名</span><span class="p">,</span><span class="n">電話番号</span>
+<span class="mi">060</span><span class="o">-</span><span class="mi">0042</span><span class="p">,</span><span class="n">北海道札幌市中央区大通西</span><span class="p">,</span><span class="n">田中太郎</span><span class="p">,</span><span class="mi">011</span><span class="o">-</span><span class="n">XXX</span><span class="o">-</span><span class="n">XXXX</span>
+<span class="mi">989</span><span class="o">-</span><span class="mi">3211</span><span class="p">,</span><span class="n">宮城県仙台市青葉区赤坂</span><span class="p">,</span><span class="n">佐藤優子</span><span class="p">,</span><span class="mi">022</span><span class="o">-</span><span class="mi">2</span><span class="n">XX</span><span class="o">-</span><span class="n">XXXX</span>
+<span class="mi">100</span><span class="o">-</span><span class="mi">0001</span><span class="p">,</span><span class="n">東京都千代田区千代田</span><span class="p">,</span><span class="n">富士さくら</span><span class="p">,</span><span class="mi">03</span><span class="o">-</span><span class="mi">3</span><span class="n">XXX</span><span class="o">-</span><span class="n">XXXX</span>
+</pre></div>
+</div>
+<p>差し込まれる方の DocuWorks 文書では、テキストアノテーションで
+差し込み位置と差し込み項目を指定します。差込項目は、テキストアノテーションの
+テキスト自体に「{項目名}」を記入することで行います。
+たとえば次の図のようにします (わかりやすいように、差し込み指定の
+テキストアノテーションは背景を薄黄色にしています)。</p>
+<a class="reference internal image-reference" href="_images/mergetest.jpg"><img alt="差し込み用 DocuWorks 文書の例" class="align-left" src="_images/mergetest.jpg" style="width: 432.0px; height: 640.0px;" /></a>
+<p>このとき、</p>
+<ul class="simple">
+<li><p>テキストが完全に「{項目名}」の形式になっていないと、その部分へは
+差し込みを行いません。改行やスペースも入らないようにしてください。</p></li>
+<li><p>テキストアノテーションのテキスト以外の属性はそのまま利用されます。</p></li>
+<li><p>同じ項目名のテキストアノテーションが複数あってもかまいません。</p></li>
+<li><p>DocuWorks 文書は複数ページにわたっていてもかまいません。</p></li>
+</ul>
+<p>以上の準備を終えた DocuWorks 文書を次のプログラムで処理すると、
+DocuWorks 文書の各ページに CSV ファイルの 1 行を差し込んだ結果である
+DocuWorks 文書をデータの件数 (先頭行を除くデータ行数) 分だけ作成し、
+全体を 1 個の DocuWorks バインダーにまとめて、
+元の DocuWorks 文書と同じディレクトリ内に保存します。</p>
+<p>たとえば、元の DocuWorks 文書が 5 ページ、CSV ファイルの先頭行を除くデータが
+100 行ある場合、 5 ページの文書 を 100 個含む、全体で 500 ページの
+DocuWorks バインダーが生成されます。</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># coding:cp932</span>
+
+
+<span class="sd">&quot;&quot;&quot;merger.py&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">csv</span>
+
+<span class="kn">from</span> <span class="nn">xdwlib</span> <span class="k">import</span> <span class="n">xdwopen</span><span class="p">,</span> <span class="n">create_binder</span>
+<span class="kn">from</span> <span class="nn">xdwlib.xdwtemp</span> <span class="k">import</span> <span class="n">XDWTemp</span>
+
+
+<span class="n">DEFAULT_ENCODING</span> <span class="o">=</span> <span class="s2">&quot;cp932&quot;</span>
+
+
+<span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">XDWTemp</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.csv&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">csvfile</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">xdwopen</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">doc</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">att</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">attachments</span><span class="p">:</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">att</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+                <span class="k">if</span> <span class="n">ext</span> <span class="o">==</span> <span class="s2">&quot;.csv&quot;</span><span class="p">:</span>
+                    <span class="n">att</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">csvfile</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+                    <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span>
+        <span class="n">name</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">xdwopen</span><span class="p">(</span><span class="n">create_binder</span><span class="p">(</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.xbd&quot;</span><span class="p">),</span> <span class="n">autosave</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">bdoc</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">XDWTemp</span><span class="p">()</span> <span class="k">as</span> <span class="n">out</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">csvfile</span><span class="o">.</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">infile</span><span class="p">:</span>
+                    <span class="n">enc</span> <span class="o">=</span> <span class="n">DEFAULT_ENCODING</span>
+                    <span class="k">if</span> <span class="n">infile</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="se">\xef\xbb\xbf</span><span class="s2">&quot;</span><span class="p">:</span>  <span class="c1"># BOM in UTF-8</span>
+                        <span class="n">enc</span> <span class="o">=</span> <span class="s2">&quot;utf-8&quot;</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">infile</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span><span class="n">infile</span><span class="p">)</span>
+                    <span class="n">reader</span><span class="o">.</span><span class="n">fieldnames</span> <span class="o">=</span> <span class="p">[</span><span class="n">fld</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">enc</span><span class="p">)</span> <span class="k">for</span> <span class="n">fld</span> <span class="ow">in</span> <span class="n">reader</span><span class="o">.</span><span class="n">fieldnames</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">reader</span><span class="p">:</span>
+                        <span class="n">row</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">enc</span><span class="p">))</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">row</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+                        <span class="k">with</span> <span class="n">xdwopen</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">doc</span><span class="p">:</span>
+                            <span class="k">for</span> <span class="n">pg</span> <span class="ow">in</span> <span class="n">doc</span><span class="p">:</span>
+                                <span class="k">for</span> <span class="n">ann</span> <span class="ow">in</span> <span class="n">pg</span><span class="p">:</span>
+                                    <span class="k">if</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;TEXT&quot;</span> <span class="ow">and</span>
+                                            <span class="n">ann</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;{&quot;</span><span class="p">)</span> <span class="ow">and</span>
+                                            <span class="n">ann</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;}&quot;</span><span class="p">)):</span>
+                                        <span class="n">ann</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="n">text</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+                            <span class="n">doc</span><span class="p">[:]</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                            <span class="c1"># Keep the original file unchanged.</span>
+                        <span class="n">bdoc</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">quit</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">encoding</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">ext</span> <span class="o">==</span> <span class="s2">&quot;.xdw&quot;</span><span class="p">:</span>
+            <span class="n">merge</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>(実行結果の例)</p>
+<a class="reference internal image-reference" href="_images/merged.png"><img alt="差し込み結果の例" class="align-left" src="_images/merged.png" style="width: 734.0px; height: 800.0px;" /></a>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">xdwlib</a></h1>
+
+
+
+
+
+
+
+
+<h3>ナビゲーション</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="whatsthis.html">これは何?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">モジュール概観</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xdwfile.html">xdwfile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="binder.html">binder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="document.html">document</a></li>
+<li class="toctree-l1"><a class="reference internal" href="documentinbinder.html">documentinbinder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basedocument.html">basedocument</a></li>
+<li class="toctree-l1"><a class="reference internal" href="page.html">page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="annotation.html">annotation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="annotatable.html">annotatable</a></li>
+<li class="toctree-l1"><a class="reference internal" href="struct.html">struct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xdwtemp.html">xdwtemp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="derivativepath.html">派生したパス名</a></li>
+<li class="toctree-l1"><a class="reference internal" href="halfopenregion.html">半開矩形領域</a></li>
+<li class="toctree-l1"><a class="reference internal" href="colors.html">色の指定</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fonts.html">フォントの指定</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto.html">HOW-TO</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">サンプルプログラム</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#wc-word-count">wc (word count)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ocr">OCR 処理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">検索してマーク</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">見開き書類をページごとに分割</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">差し込み処理</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="howto.html" title="前の章へ">HOW-TO</a></li>
+      <li>Next: <a href="faq.html" title="次の章へ">FAQ</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">クイック検索</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="検索" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2010, HAYASHI Hideki.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/samples.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
