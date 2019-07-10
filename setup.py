@@ -16,7 +16,7 @@ setup(
     version=__version__,
     author=__author__,
     author_email=__email__,
-    url="https://launchpad.net/xdwlib",
+    url="https://github.com/hayasix/xdwlib",
     description="A DocuWorks library.",
     long_description="""xdwlib is a DocuWorks library for Python.
 It supports almost all functions of original XDWAPI library from Fuji Xerox.
@@ -39,6 +39,7 @@ Further information is available in Japanese at http://xdwlib.linxs.org/""",
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Topic :: Office/Business',
         'Topic :: Documentation',
         ],

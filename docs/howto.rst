@@ -231,7 +231,7 @@ Annotation クラスもまた、イテレータプロトコルをサポートし
 オブジェクトの ``add_*()`` メソッドを利用します (* には、 ``text``,
 ``stickey``, ``line/straightline``, ``rectangle``, ``arc``, ``bitmap``,
 ``stamp``, ``receivedstamp``, ``custom``, ``marker``, ``polygon``
- のいずれかが入ります)。
+のいずれかが入ります)。
 
 アノテーションの属性
 ====================

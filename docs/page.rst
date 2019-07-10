@@ -17,8 +17,8 @@ Page クラスは、その基底クラスである Annotatable クラスに多�
 
 クラス ``Page(doc, pos)``
     ``doc`` は、ページが属する DocuWorks 文書またはバインダー内文書
-(Document オブジェクトまたは DocumentInBinder オブジェクト) です。
-``pos`` は ``doc`` 内でのページ番号です (0 から始まります)。
+    (Document オブジェクトまたは DocumentInBinder オブジェクト) です。
+    ``pos`` は ``doc`` 内でのページ番号です (0 から始まります)。
 
 インスタンス属性
 ----------------
@@ -131,7 +131,7 @@ Page クラスは、その基底クラスである Annotatable クラスに多�
 
     ``compress`` は書き出される画像の圧縮形式です。 ``format`` が
     ``'BMP'`` である場合は、指定は無視されます。 ``format`` が ``'TIFF'``
-     である場合は、 ``'NOCOMPRESS'``, ``'PACKBITS'``, ``'JPEG'``,
+    である場合は、 ``'NOCOMPRESS'``, ``'PACKBITS'``, ``'JPEG'``,
     ``'JPEG_TTN2'`` または ``'G4'`` を指定します。 ``format`` が
     ``'JPEG'`` である場合は、 ``'NORMAL'``, ``'HIGHQUALITY'`` または
     ``'HIGHCOMPRESS'`` を指定します。 ``format`` が ``'PDF'`` である場合は、

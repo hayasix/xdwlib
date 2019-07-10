@@ -1,0 +1,10 @@
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+_build/
+_dist/
+docs/_build
+docs/html
+docs/_static
+docs/_templates
