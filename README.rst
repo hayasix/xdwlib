@@ -23,7 +23,7 @@ Report problems with this release to the author.
 License
 -------
 
-(C) 2010 HAYASHI Hideki
+Copyright (C) 2010 HAYASHI Hideki
 
 Xdwlib is provided under The Zope Public License (ZPL) Version 2.1,
 which is included in 'LICENSE'.  Send your feedback about the license
