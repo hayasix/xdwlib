@@ -15,17 +15,16 @@ FOR A PARTICULAR PURPOSE.
 
 import sys
 
-if sys.platform == "win32":
-    from .struct import Point, Rect
-    from .common import environ
-    from .xdwtemp import XDWTemp
-    from .xdwfile import xdwopen, view, optimize, copy, create_sfx, extract_sfx
-    from .xdwfile import protection_info, protect, unprotect, sign
-    from .document import Document, create, merge
-    from .binder import Binder, create_binder
-    from .documentinbinder import DocumentInBinder
-    from .page import Page, PageCollection
-    from .annotation import Annotation, AnnotationCache
+from .struct import Point, Rect
+from .common import environ
+from .xdwtemp import XDWTemp
+from .xdwfile import xdwopen, view, optimize, copy, create_sfx, extract_sfx
+from .xdwfile import protection_info, protect, unprotect, sign
+from .document import Document, create, merge
+from .binder import Binder, create_binder
+from .documentinbinder import DocumentInBinder
+from .page import Page, PageCollection
+from .annotation import Annotation, AnnotationCache
 
 
 __author__ = "HAYASHI Hideki"

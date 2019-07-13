@@ -7,9 +7,9 @@ from distutils.core import setup
 from xdwlib import __author__, __copyright__, __license__, __version__, __email__
 
 
-#if sys.platform != "win32":
-#    sys.stderr.write("xdwlib runs on win32 only.")
-#    sys.exit(0)
+if sys.platform != "win32":
+    sys.stderr.write("xdwlib runs on win32 only.")
+    sys.exit(0)
 
 setup(
     name="xdwlib",
