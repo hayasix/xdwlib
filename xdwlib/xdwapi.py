@@ -14,6 +14,7 @@ FOR A PARTICULAR PURPOSE.
 """
 
 
+import sys
 from ctypes import *
 
 from .bitmap import Bitmap
@@ -2095,7 +2096,9 @@ XDW_AID_INITIAL_DATA = {
 ######################################################################
 ### API ##############################################################
 
-DLL = windll.LoadLibrary("xdwapi.dll")
+
+if sys.platform == "win32":
+    DLL = windll.LoadLibrary("xdwapi.dll")
 
 ### decorators and utility functions
 
