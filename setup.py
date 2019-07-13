@@ -7,9 +7,9 @@ from distutils.core import setup
 from xdwlib import __author__, __copyright__, __license__, __version__, __email__
 
 
-if sys.platform != "win32":
-    sys.stderr.write("xdwlib runs on win32 only.")
-    sys.exit(0)
+#if sys.platform != "win32":
+#    sys.stderr.write("xdwlib runs on win32 only.")
+#    sys.exit(0)
 
 setup(
     name="xdwlib",
@@ -24,7 +24,7 @@ You can handle documents or binders in object-oriented style.  Pages and
 annotations are also handled as objects.  Plus, every object is iterable.
 
 You can read brief description with Python's lovely help() function.
-Further information is available in Japanese at http://xdwlib.linxs.org/""",
+Further information is available in Japanese at https://github.com/hayasix/xdwlib/docs/""",
     license=__license__,
     platforms=["win32",],
     classifiers=[

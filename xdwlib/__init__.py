@@ -13,22 +13,24 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE.
 """
 
+import sys
 
-from .struct import Point, Rect
-from .common import environ
-from .xdwtemp import XDWTemp
-from .xdwfile import xdwopen, view, optimize, copy, create_sfx, extract_sfx
-from .xdwfile import protection_info, protect, unprotect, sign
-from .document import Document, create, merge
-from .binder import Binder, create_binder
-from .documentinbinder import DocumentInBinder
-from .page import Page, PageCollection
-from .annotation import Annotation, AnnotationCache
+if sys.platform == "win32":
+    from .struct import Point, Rect
+    from .common import environ
+    from .xdwtemp import XDWTemp
+    from .xdwfile import xdwopen, view, optimize, copy, create_sfx, extract_sfx
+    from .xdwfile import protection_info, protect, unprotect, sign
+    from .document import Document, create, merge
+    from .binder import Binder, create_binder
+    from .documentinbinder import DocumentInBinder
+    from .page import Page, PageCollection
+    from .annotation import Annotation, AnnotationCache
 
 
 __author__ = "HAYASHI Hideki"
 __copyright__ = "Copyright (C) 2010 HAYASHI Hideki <hideki@hayasix.com>"
 __license__ = "ZPL 2.1"
-__version__ = "3.8.2.5"
+__version__ = "3.8.2.6"
 __email__ = "hideki@hayasix.com"
 __status__ = "Development"
