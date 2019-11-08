@@ -122,8 +122,14 @@ class Annotatable(Subject):
             if k.startswith("n"):
                 v = int(v)
             elif k.startswith("sz"):
+                v = cp(v)
+            elif k.startswith("wsz"):
+                k = "sz" + k[3:]
                 v = str(v)
             elif k.startswith("lpsz"):
+                v = byref(cp(v))
+            elif k.startswith("lpwsz"):
+                k = "lpsz" + k[5:]
                 v = byref(v)
             elif k.startswith("p"):
                 v = pointer(v[0])
@@ -251,7 +257,10 @@ class Annotatable(Subject):
         path        (str or unicode) pathname of a image file
         kw          (dict) initial attributes
         """
-        ann = self.add(XDW_AID_BITMAP, position, szImagePath=path)
+        if 8 <= XDWVER:
+            ann = self.add(XDW_AID_BITMAP, position, wszImagePath=path)
+        else:
+            ann = self.add(XDW_AID_BITMAP, position, szImagePath=path)
         for k, v in kw.items():
             setattr(ann, k, v)
         return ann

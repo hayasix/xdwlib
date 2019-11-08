@@ -1435,6 +1435,7 @@ class ResizedStructure(SizedStructure):
         SizedStructure.__init__(self)
         self.common.nSize = sizeof(self)
 
+
 class XDW_RECT(Structure):
     _fields_ = [
         ("left", c_long),
@@ -1682,6 +1683,13 @@ class XDW_AA_BITMAP_INITIAL_DATA(ResizedStructure):
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("szImagePath", c_char * 256),
+        ]
+
+
+class XDW_AA_BITMAP_INITIAL_DATAW(ResizedStructure):
+    _fields_ = [
+        ("common", XDW_AA_INITIAL_DATA),
+        ("szImagePath", c_wchar * 256),
         ]
 
 
@@ -2253,6 +2261,8 @@ def XDW_GetInformation(index): pass
 
 
 XDWVER = int(XDW_GetInformation(XDW_GI_VERSION).decode("ascii").split(".")[0])
+if 8 <= XDWVER:
+    XDW_AID_INITIAL_DATA[XDW_AID_BITMAP] = XDW_AA_BITMAP_INITIAL_DATAW
 
 
 def XDWVERSION(ver):
