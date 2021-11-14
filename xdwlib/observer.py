@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# vim: set fileencoding=utf-8 fileformat=unix :
+# vim: set fileencoding=utf-8 fileformat=unix expandtab :
 
 """observer.py -- implementation for observer pattern
 

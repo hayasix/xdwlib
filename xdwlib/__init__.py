@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# vim: set fileencoding=utf-8 fileformat=unix :
+# vim: set fileencoding=utf-8 fileformat=unix expandtab :
 
 """__init__.py -- initiator for xdwlib, A DocuWorks library for Python.
 
@@ -30,6 +30,6 @@ from .annotation import Annotation, AnnotationCache
 __author__ = "HAYASHI Hideki"
 __copyright__ = "Copyright (C) 2010 HAYASHI Hideki <hideki@hayasix.com>"
 __license__ = "ZPL 2.1"
-__version__ = "3.8.2.9"
+__version__ = "3.8.4.0"
 __email__ = "hideki@hayasix.com"
-__status__ = "Development"
+__status__ = "Beta"

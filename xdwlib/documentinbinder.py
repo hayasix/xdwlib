@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# vim: set fileencoding=utf-8 fileformat=unix :
+# vim: set fileencoding=utf-8 fileformat=unix expandtab :
 
 """documentinbinder.py -- DocumentInBinder
 
@@ -89,7 +89,7 @@ class DocumentInBinder(BaseDocument, Observer):
                 self.pos += 1
                 self._set_page_offset()
         else:
-            raise ValueError("illegal event type: {0}".format(event.type))
+            raise ValueError(f"illegal event type: {event.type}")
 
     def _set_page_offset(self):
         """Private method to renew the page offset for DocumentInBinder."""

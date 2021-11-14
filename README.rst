@@ -2,7 +2,7 @@
 Xdwlib README
 =============
 
-2019-07-10 HAYASHI Hideki <hideki@hayasix.com>
+2021-11-14 HAYASHI Hideki <hideki@hayasix.com>
 
 
 Welcome to the xdwlib source release
@@ -38,7 +38,7 @@ System Requirements
 
     - Microsoft Windows (versions compatible with DocuWorks 7 and 8)
 
-    - Python 3.3+ (32bit)  (64bit version is not tested)
+    - Python 3.7+
 
     - DocuWorks 7.0+ (Japanese version; English version is not tested)
 
@@ -89,10 +89,6 @@ own ``xdw2text.exe``, try::
     pip3 install cx_Freeze
     python3 setup.py build
 
-If you find any difficulties during installation of cx_Freeze on Python
-3.5+, check::
-
-    http://stackoverflow.com/questions/32963057/is-there-a-py2exe-version-thats-compatible-with-python-3-5
 
 Typical Use
 ===========

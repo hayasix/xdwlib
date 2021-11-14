@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# vim: set fileencoding=utf-8 fileformat=unix :
+# vim: set fileencoding=utf-8 fileformat=unix expandtab :
 
 """basedocument.py -- BaseDocument, base class for Document/DocumentInBinder
 
@@ -145,7 +145,7 @@ class BaseDocument(Subject):
             if not temp.lower().endswith(".xdw"):
                 raise TypeError("binder is not acceptable")
         else:
-            raise ValueError("can't insert {0} object".format(obj.__class__))
+            raise ValueError(f"can't insert {obj.__class__} object")
         if XDWVER < 8:
             XDW_InsertDocument(
                     self.handle,
@@ -255,8 +255,7 @@ class BaseDocument(Subject):
         if path:
             path = adjust_path(path)
         else:
-            path = adjust_path(
-                    "{0}_P{1}.xdw".format(self.name, pos + 1),
+            path = adjust_path(f"{self.name}_P{pos + 1}.xdw",
                     dir=self.dirname())
         path = derivative_path(path)
         if XDWVER < 8:
@@ -311,10 +310,10 @@ class BaseDocument(Subject):
         if format.lower() not in ("bmp", "tiff", "jpeg", "pdf"):
             raise TypeError("image type must be BMP, TIFF, JPEG or PDF.")
         if not path:
-            path = "{0}_P{1}".format(self.name, pos + 1)
+            path = f"{self.name}_P{pos + 1}"
             path = adjust_path(path, dir=self.dirname())
             if 1 < pages:
-                path += "-{0}".format((pos + pages - 1) + 1)
+                path += f"-{pos + pages}"
             path += "." + format
         path = derivative_path(path)
         if not (10 <= dpi <= 600):
@@ -375,7 +374,7 @@ class BaseDocument(Subject):
     def _export_direct_image(self, pos, path=None):
         pos = self._pos(pos)
         if not path:
-            path = "{0}_P{1}".format(self.name, pos + 1)
+            path = f"{self.name}_P{pos + 1}"
             path = adjust_path(path, dir=self.dirname())
         path = derivative_path(path)
         path, _ = os.path.splitext(path)

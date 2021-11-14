@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# vim: set fileencoding=utf-8 fileformat=unix :
+# vim: set fileencoding=utf-8 fileformat=unix expandtab :
 
 """annotation.py -- Annotation
 
@@ -60,11 +60,11 @@ class AnnotationCache(object):
             _set(self, "_a", arg.attributes())
 
     def __repr__(self):
-        return ("{cls}('{typ}', {attr})").format(
+        return "{cls}('{typ}', {attr})".format(
                 cls=self.__class__.__name__,
                 typ=self._t,
-                attr=", ".join("{k}={v}".format(k=k, v=repr(self._a[k]))
-                                            for k in sorted(self._a)))
+                attr=", ".join(f"{k}={repr(self._a[k])}" for k
+                               in sorted(self._a)))
 
     def __getattribute__(self, name):
         _get = object.__getattribute__
@@ -92,8 +92,7 @@ class AnnotationCache(object):
         elif self._t == "LINK":
             return self.caption
         elif self._t == "STAMP":
-            return "{top} <DATE> {bottom}".format(
-                    top=self.top_field, bottom=self.bottom_field)
+            return f"{self.top_field} <DATE> {self.bottom_field}"
         else:
             return None
 
@@ -155,7 +154,7 @@ class Annotation(Annotatable, Observer):
                 poslist="][".join(map(str, parents)))
 
     def __str__(self):
-        return "{0}:{1})".format(repr(self)[:-1], self.type)
+        return f"{repr(self)[:-1]}:{self.type})"
 
     @staticmethod
     def _unicode_enabled(ann_type):
@@ -173,7 +172,7 @@ class Annotation(Annotatable, Observer):
         return tuple([
                 XDW_GetAnnotationAttributeW(
                         self.handle,
-                        cp("%{0}Margin".format(d))
+                        cp(f"%{d}Margin")
                 )[1] / 100.0 for d in ("Top", "Right", "Bottom", "Left")
                 ])
 
@@ -193,7 +192,7 @@ class Annotation(Annotatable, Observer):
             v = c_int(int(value[i] * 100))
             XDW_SetAnnotationAttributeW(
                     self.page.doc.handle, self.handle,
-                    cp("%{0}Margin".format(d)), XDW_ATYPE_INT, byref(v), 0, 0)
+                    cp(f"%{d}Margin"), XDW_ATYPE_INT, byref(v), 0, 0)
 
     @property
     def position(self):
@@ -224,7 +223,7 @@ class Annotation(Annotatable, Observer):
         if self.type not in (
                 "STICKEY", "RECTANGLE", "ARC", "TEXT", "LINK", "STAMP"):
             raise TypeError(
-                    "can't resize {0} annotation".format(self.type))
+                    f"can't resize {self.type} annotation")
         XDW_SetAnnotationSize(
                 self.page.doc.handle, self.handle,
                 int(value.x * 100), int(value.y * 100))
@@ -267,7 +266,7 @@ class Annotation(Annotatable, Observer):
             anntype = XDW_ANNOTATION_TYPE.inner(self.type)
             if limited and anntype not in limited:
                 raise AttributeError(
-                        "illegal attribute {0}.{1}".format(self.type, name))
+                        f"illegal attribute {self.type}.{name}")
             if t == 0 or isinstance(unit, XDWConst):
                 if not isinstance(unit, XDWConst):
                     if not isinstance(value, (int, float)):
@@ -437,7 +436,7 @@ class Annotation(Annotatable, Observer):
             if event.para[0] < self.pos:
                 self.pos += 1
         else:
-            raise ValueError("Illegal event type: {0}".format(event.type))
+            raise ValueError(f"Illegal event type: {event.type}")
 
     def attributes(self):
         """Returns dict of annotation attribute names and values."""

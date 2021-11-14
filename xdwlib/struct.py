@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# vim: set fileencoding=utf-8 fileformat=unix :
+# vim: set fileencoding=utf-8 fileformat=unix expandtab :
 
 """struct.py -- Point and Rect
 
@@ -13,6 +13,7 @@ WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 FOR A PARTICULAR PURPOSE.
 """
 
+from collections import namedtuple
 import math
 
 
@@ -22,7 +23,10 @@ PI = math.pi
 EPSILON = 0.01  # mm
 
 
-class Point(object):
+_Point = namedtuple("Point", "x y")
+
+
+class Point(_Point):
 
     """Point represented by 2D coordinate.
 
@@ -34,7 +38,7 @@ class Point(object):
     >>> p - Point(5, 10)
     Point(-5.00, 0.00)
     >>> -p
-    Point(-0.00, -10.00)
+    Point(0.00, -10.00)
     >>> p * 2
     Point(0.00, 20.00)
     >>> p / 2
@@ -46,7 +50,7 @@ class Point(object):
     >>> p.shift(20)
     Point(20.00, 10.00)
     >>> list(p)
-    [0.0, 10.0]
+    [0, 10]
     >>> p == Point(0, 10)
     True
     >>> p != Point(0, 10)
@@ -65,53 +69,34 @@ class Point(object):
     Point(1.34, 5.00)
     """
 
-    def __init__(self, x=0, y=0):
-        self.x = float(x)
-        self.y = float(y)
-
     def __str__(self):
-        return "({0:.2f}, {1:.2f})".format(self.x, self.y)
+        return f"({self.x:.2f}, {self.y:.2f})"
 
     def __repr__(self):
-        return "{cls}({pts})".format(
-                cls=self.__class__.__name__,
-                pts=", ".join("{0:.2f}".format(f) for f in self))
-
-    def __iter__(self):
-        for f in (self.x, self.y):
-            yield f
+        return "Point" + self.__str__()
 
     def int(self):
-        """Special method to adapt to XDW_POINT."""
-        result = Point()
-        result.x = int(self.x)
-        result.y = int(self.y)
-        return result
+        return Point(map(int, self))
+
+    fix = int
 
     def floor(self):
-        return Point(math.floor(self.x), math.floor(self.y))
+        return Point(map(math.floor, self))
 
     def ceil(self):
-        return Point(math.ceil(self.x), math.ceil(self.y))
-
-    def fix(self):
-        return Point(int(self.x), int(self.y))
+        return Point(map(math.ceil, self))
 
     @staticmethod
     def _round(f, places=0):
+        # Round a number in accordance with the traditional way,
+        # while Python's round() rounds to the nearest even number.
         return math.floor(f * math.pow(10, places) + .5) / math.pow(10, places)
 
     def round(self, places=0):
         return Point(self._round(self.x, places), self._round(self.y, places))
 
-    def __eq__(self, pnt):
-        return self.x == pnt.x and self.y == pnt.y
-
-    def __ne__(self, pnt):
-        return self.x != pnt.x or self.y != pnt.y
-
     def __bool__(self):
-        return self.x != 0 or self.y != 0
+        return self != (0, 0)
 
     def __neg__(self):
         return Point(-self.x, -self.y)
@@ -134,16 +119,13 @@ class Point(object):
             raise NotImplementedError
         return Point(self.x / n, self.y / n)
 
-    def shift(self, pnt, _y=0):
-        if isinstance(pnt, Point):
-            x, y = pnt.x, pnt.y
-        elif isinstance(pnt, (tuple, list)):
-            x, y = pnt[:2]
+    def shift(self, pnt, _y = 0):
+        if isinstance(pnt, (tuple, list)):
+            return Point(self.x + pnt[0], self.y + pnt[1])
         elif isinstance(pnt, (int, float)) and isinstance(_y, (int, float)):
-            x, y = pnt, _y
+            return Point(self.x + pnt, self.y + _y)
         else:
             raise NotImplementedError
-        return Point(self.x + x, self.y + y)
 
     def rotate(self, degree, origin=None):
         p = Point(*self)
@@ -157,7 +139,10 @@ class Point(object):
         return p
 
 
-class Rect(object):
+_Rect = namedtuple("_Rect", "left top right bottom")
+
+
+class Rect(_Rect):
 
     """Half-open rectangular region.
 
@@ -171,11 +156,6 @@ class Rect(object):
     Point(0.00, 10.00)
     >>> r.size()
     Point(20.00, 20.00)
-    >>> r = Rect(Point(0, 10), Point(20, 30))
-    >>> r.size()
-    Point(20.00, 20.00)
-    >>> r == Rect(position=(0, 10), size=(20, 20))
-    True
     >>> r.shift(Point(15, 25))
     Rect(15.00, 35.00, 35.00, 55.00)
     >>> r * 2
@@ -183,7 +163,7 @@ class Rect(object):
     >>> r / 2
     Rect(0.00, 10.00, 10.00, 20.00)
     >>> list(r)
-    [0.0, 10.0, 20.0, 30.0]
+    [0, 10, 20, 30]
     >>> r == Rect(0, 10, 20, 30)
     True
     >>> r != Rect(0, 10, 20, 30)
@@ -196,62 +176,11 @@ class Rect(object):
     (Point(0.00, 10.00), Point(20.00, 20.00))
     """
 
-    def __init__(self, *args, **kw):
-        left = top = right = bottom = width = height = None
-        half_open = True
-        if args:
-            if len(args) == 2:
-                ((left, top), (right, bottom)) = args
-            elif len(args) == 4:
-                left, top, right, bottom = args
-            else:
-                raise TypeError("argument must be 4 numerics or 2 Points")
-        else:
-            for k, v in kw.items():
-                k = k.upper()
-                if k in ("LEFT", "L"):
-                    left = v
-                elif k in ("TOP", "T"):
-                    top = v
-                elif k in ("RIGHT", "R"):
-                    right = v
-                elif k in ("BOTTOM", "B"):
-                    bottom = v
-                elif k in ("LEFTTOP", "LT", "POSITION"):
-                    left, top = v
-                elif k in ("RIGHTBOTTOM", "RB"):
-                    right, bottom = v
-                elif k == "SIZE":
-                    width, height = v
-                    right, bottom = left + width, top + height
-                elif k == "HALF_OPEN":
-                    half_open = v
-                else:
-                    raise TypeError("unexpected keyword '{0}'".format(k))
-        if right < left:
-            left, right = right, left
-        if bottom < top:
-            top, bottom = bottom, top
-        self.left = float(left)
-        self.top = float(top)
-        self.right = float(right)
-        self.bottom = float(bottom)
-        if not half_open:  # Enforce half open.
-            self.right += EPSILON
-            self.bottom += EPSILON
-
     def __str__(self):
-        return "({0:.2f}, {1:.2f})-({2:.2f}, {3:.2f})".format(
-                self.left, self.top, self.right, self.bottom)
+        return f"({', '.join(f'{x:.2f}' for x in self)})"
 
     def __repr__(self):
-        return "{cls}({pts})".format(
-                cls=self.__class__.__name__,
-                pts=", ".join("{0:.2f}".format(f) for f in self))
-
-    def __iter__(self):
-        for f in (self.left, self.top, self.right, self.bottom):
-            yield f
+        return "Rect" + self.__str__()
 
     def half_open(self):
         """Get half-open version i.e. right-bottom is excluded."""
@@ -265,12 +194,9 @@ class Rect(object):
 
     def int(self):
         """Special method to adapt to XDW_RECT."""
-        result = Rect()
-        result.left = int(self.left)
-        result.top = int(self.top)
-        result.right = int(self.right)
-        result.bottom = int(self.bottom)
-        return result
+        return Rect(map(int, self))
+
+    fix = int
 
     def position(self):
         return Point(self.left, self.top)
@@ -280,14 +206,6 @@ class Rect(object):
 
     def position_and_size(self):
         return (self.position(), self.size())
-
-    def __eq__(self, rect):
-        return (self.left == rect.left and self.top == rect.top and
-                self.right == rect.right and self.bottom == rect.bottom)
-
-    def __ne__(self, rect):
-        return (self.left != rect.left or self.top != rect.top or
-                self.right != rect.right or self.bottom != rect.bottom)
 
     def __mul__(self, n):
         if not isinstance(n, (int, float)):
@@ -306,9 +224,7 @@ class Rect(object):
                 self.top + (self.bottom - self.top) / n)
 
     def shift(self, pnt, _y=0):
-        if isinstance(pnt, Point):
-            x, y = pnt.x, pnt.y
-        elif isinstace(pnt, (tuple, list)):
+        if isinstance(pnt, (tuple, list)):
             x, y = pnt
         elif isinstance(pnt, (int, float)) and isinstance(_y, (int, float)):
             x, y = pnt, _y

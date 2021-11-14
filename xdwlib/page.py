@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# vim: set fileencoding=utf-8 fileformat=unix :
+# vim: set fileencoding=utf-8 fileformat=unix expandtab :
 
 """page.py -- Page and PageCollection
 
@@ -123,22 +123,22 @@ class PageCollection(list):
                 flat=flat, group=group)
         args = [get_viewer(light=light), temp.path]
         if page:
-            args.append("/n{0}".format(page + 1))
+            args.append(f"/n{page + 1}")
         if fullscreen:
             args.append("/f")
         if isinstance(zoom, (int, float)) and zoom:
             if zoom and not (10 <= zoom <= 1600):
-                raise ValueError("10..1600(%) is valid, {0} given".format(zoom))
-            args.append("/m{0}".format(int(zoom)))
+                raise ValueError(f"10..1600(%) is valid, {zoom} given")
+            args.append(f"/m{int(zoom)}")
         elif isinstance(zoom, str):
             if zoom.upper() not in ("WIDTH", "HEIGHT", "PAGE"):
                 raise ValueError((
-                        "int, 'WIDTH', 'HEIGHT' or 'PAGE' is valid"
-                        "for window size, {0} given").format(repr(zoom)))
-            args.append("/m{0}".format(zoom[0].lower()))
+                        f"int, 'WIDTH', 'HEIGHT' or 'PAGE' is valid"
+                        f"for window size, {repr(zoom)} given"))
+            args.append(f"/m{zoom[0].lower()}")
         elif zoom:
-            raise ValueError("10..1600(%) or W/H/P is valid for zoom, "
-                            "{0} given".format(zoom))
+            raise ValueError(f"10..1600(%) or W/H/P is valid for zoom, "
+                             f"{zoom} given")
         proc = subprocess.Popen(args)
         if not wait:
             return (proc, temp.path)
@@ -207,8 +207,8 @@ class PageCollection(list):
                         os.remove(tmp)
                 else:
                     for pos, pg in enumerate(self):
-                        tmp = joinpath(temp.dir, "{0}_P{1}.xdw".format(
-                                                 pg.doc.name, pg.pos + 1))
+                        tmp = joinpath(temp.dir,
+                                f"{pg.doc.name}_P{pg.pos + 1}.xdw")
                         tmp = pg.export(tmp)
                         doc.append(tmp)
                         os.remove(tmp)
@@ -393,7 +393,7 @@ class Page(Annotatable, Observer):
             if event.para[0] < self.pos:
                 self.pos += 1
         else:
-            raise ValueError("illegal event type: {0}".format(event.type))
+            raise ValueError(f"illegal event type: {event.type}")
 
     def _add(self, ann_type, position, init_dat):
         """Concrete method over _add() for add()."""

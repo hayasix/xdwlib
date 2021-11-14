@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# vim: set fileencoding=utf-8 fileformat=unix :
+# vim: set fileencoding=utf-8 fileformat=unix expandtab :
 
 """xdwfile.py -- DocuWorks-compatible files
 
@@ -71,21 +71,21 @@ def view(path, light=False, wait=True, page=0, fullscreen=False, zoom=0):
         raise BadFormatError("extension must be .xdw or .xbd")
     args = [get_viewer(light=light), path]
     if page:
-        args.append("/n{0}".format(page + 1))
+        args.append(f"/n{page + 1}")
     if fullscreen:
         args.append("/f")
     if isinstance(zoom, (int, float)) and zoom:
         if zoom and not (10 <= zoom <= 1600):
-            raise ValueError("10..1600(%) is valid, {0} given".format(zoom))
-        args.append("/m{0}".format(int(zoom)))
+            raise ValueError(f"10..1600(%) is valid, {zoom} given")
+        args.append(f"/m{int(zoom)}")
     elif isinstance(zoom, str):
         if zoom.upper() not in ("WIDTH", "HEIGHT", "PAGE"):
-            raise ValueError(("int, 'WIDTH', 'HEIGHT' or 'PAGE' is valid"
-                              "for window size, {0} given").format(repr(zoom)))
-        args.append("/m{0}".format(zoom[0].lower()))
+            raise ValueError((f"int, 'WIDTH', 'HEIGHT' or 'PAGE' is valid"
+                              f"for window size, {repr(zoom)} given"))
+        args.append(f"/m{zoom[0].lower()}")
     elif zoom:
-        raise ValueError("10..1600(%) or WIDTH/HEIGHT/PAGE is valid for zoom, "
-                        "{0} given".format(zoom))
+        raise ValueError(f"10..1600(%) or WIDTH/HEIGHT/PAGE is valid "
+                         f"for zoom, {zoom} given")
     proc = subprocess.Popen(args)
     if not wait:
         return (proc, path)
@@ -430,7 +430,7 @@ class Attachment(Observer):
             if event.para[0] < self.pos:
                 self.pos += 1
         else:
-            raise ValueError("Illegal event type: {0}".format(event.type))
+            raise ValueError(f"Illegal event type: {event.type}")
 
     def save(self, path=None):
         """Save attached file.

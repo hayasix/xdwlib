@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# vim: set fileencoding=utf-8 fileformat=unix :
+# vim: set fileencoding=utf-8 fileformat=unix expandtab :
 
 import sys
 from distutils.core import setup
@@ -36,13 +36,13 @@ Further information is available in Japanese at https://github.com/hayasix/xdwli
         'Operating System :: Microsoft :: Windows',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Topic :: Office/Business',
         'Topic :: Documentation',
         ],
+    python_requires=">=3.7",
     packages=["xdwlib",],
     #install_requires=["pillow>=3.3.3",],
     #data_files=["README", "LICENSE",],

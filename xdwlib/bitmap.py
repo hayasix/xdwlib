@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# vim: set fileencoding=utf-8 fileformat=unix :
+# vim: set fileencoding=utf-8 fileformat=unix expandtab :
 
 """bitmap.py -- DIB (Device Independent Bitmap), aka BMP
 
@@ -121,7 +121,8 @@ class Bitmap(object):
         return self.file_header() + self.info_header() + self.data.raw
 
     def save(self, stream):
-        out = stream if hasattr(stream, "write") else open(stream, "wb")
-        out.write(self.octet_stream())
-        if not hasattr(stream, "write"):
-            out.close()
+        if hasattr(stream, "write"):
+            stream.write(self.octet_stream())
+        else:
+            with open(stream, "wb") as out:
+                out.write(self.octet_stream())

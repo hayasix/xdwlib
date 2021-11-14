@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# vim: set fileencoding=utf-8 fileformat=unix :
+# vim: set fileencoding=utf-8 fileformat=unix expandtab :
 
 """xdwtemp.py -- yet another tempfile module suitable for XDWAPI
 
@@ -64,8 +64,8 @@ class XDWTemp(object):
     def __init__(self, suffix=".xdw", prefix="", autoclose=True):
         """Initiator.
 
-        suffix      (str or unicode) suffix of temporary file name
-        prefix      (str or unicode) prefix of temporary file name
+        suffix      (str) suffix of temporary file name
+        prefix      (str) prefix of temporary file name
         autoclose   (bool) call close() automatically before destruction
         """
         fd, path = mkstemp(suffix=suffix, prefix=prefix, dir=mkdtemp())

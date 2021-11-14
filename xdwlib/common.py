@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# vim: set fileencoding=utf-8 fileformat=unix :
+# vim: set fileencoding=utf-8 fileformat=unix expandtab :
 
 """common.py -- common utility functions
 
@@ -56,7 +56,7 @@ PSEP = "\f"  # page separator
 ASEP = "\v"  # annotation separator
 
 CP = 932
-CODEPAGE = "cp{0}".format(CP)
+CODEPAGE = f"cp{CP}"
 
 DEFAULT_TZ = JST
 
@@ -127,7 +127,8 @@ def linkfolders():
     result = dict()
     for i in range(XDW_GetLinkRootFolderNumber()):
         info = XDW_GetLinkRootFolderInformation(i + 1)
-        result[info.szLinkRootFolderName.decode(CODEPAGE)] = info.szPath.decode(CODEPAGE)
+        result[info.szLinkRootFolderName.decode(CODEPAGE)] = \
+               info.szPath.decode(CODEPAGE)
     return result
 
 
@@ -221,7 +222,7 @@ def cp(s):
         return s.encode(CODEPAGE)
     if isinstance(s, bytes):
         return s
-    raise TypeError("str or bytes expected, {0} given".format(s.__class__))
+    raise TypeError(f"str or bytes expected, {s.__class__} given")
 
 
 def uc(s):
@@ -232,7 +233,7 @@ def uc(s):
         return s.decode(CODEPAGE)
     if isinstance(s, str):
         return s
-    raise TypeError("str or bytes expected, {0} given".format(s.__class__))
+    raise TypeError(f"str or bytes expected, {s.__class__} given")
 
 
 def derivative_path(path):
@@ -245,10 +246,10 @@ def derivative_path(path):
         return path
     root, ext = os.path.splitext(path)
     n = 2
-    derivative = "{0}-{1}{2}".format(root, n, ext)
+    derivative = f"{root}-{n}{ext}"
     while os.path.exists(derivative):
         n += 1
-        derivative = "{0}-{1}{2}".format(root, n, ext)
+        derivative = f"{root}-{n}{ext}"
     return derivative
 
 

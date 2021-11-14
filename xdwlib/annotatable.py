@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# vim: set fileencoding=utf-8 fileformat=unix :
+# vim: set fileencoding=utf-8 fileformat=unix expandtab :
 
 """annotatable.py -- Annotatable, base class for Page and Annotation
 
@@ -27,15 +27,15 @@ __all__ = ("Annotatable",)
 
 
 MIN_ANN_SIZE = 3
-ANN_TOO_SMALL = "Annotation size must be >= {0}mm square".format(MIN_ANN_SIZE)
+ANN_TOO_SMALL = f"Annotation size must be >= {MIN_ANN_SIZE}mm square"
 MIN_FUSEN_SIZE = 5
-FUSEN_TOO_SMALL = "Stickey size must be >= {0}mm square".format(MIN_FUSEN_SIZE)
+FUSEN_TOO_SMALL = f"Stickey size must be >= {MIN_FUSEN_SIZE}mm square"
 
 _WIDTH = 75
 _HEIGHT = 25
 _POSITION = Point(_HEIGHT, _HEIGHT)
 _SIZE = Point(_WIDTH, _HEIGHT)
-_RECT = Rect(_POSITION, _POSITION + _SIZE)
+_RECT = Rect(_HEIGHT, _HEIGHT, _HEIGHT + _WIDTH, _HEIGHT + _HEIGHT)
 _POINTS = (
         _POSITION,
         _POSITION + Point(_WIDTH, 0),
@@ -112,7 +112,7 @@ class Annotatable(Subject):
         try:
             cls = XDW_AID_INITIAL_DATA[ann_type]
         except KeyError:
-            raise ValueError("illegal annotation type {0}".format(ann_type))
+            raise ValueError(f"illegal annotation type {ann_type}")
         if cls is None:
             return None
         init_dat = cls()
@@ -124,7 +124,7 @@ class Annotatable(Subject):
             elif k.startswith("sz"):
                 v = cp(v)
             elif k.startswith("wsz"):
-                k = "sz" + k[3:]
+                k = k[1:]
                 v = str(v)
             elif k.startswith("lpsz"):
                 v = byref(cp(v))
@@ -134,7 +134,7 @@ class Annotatable(Subject):
             elif k.startswith("p"):
                 v = pointer(v[0])
             else:
-                raise TypeError("unknown type '{0}'".format(k))
+                raise TypeError(f"unknown type '{k}'")
             setattr(init_dat, k, v)
         return init_dat
 
@@ -254,7 +254,7 @@ class Annotatable(Subject):
         """Paste an image annotation.
 
         position    (Point, unit=mm)
-        path        (str or unicode) pathname of a image file
+        path        (str) pathname of a image file
         kw          (dict) initial attributes
         """
         if 8 <= XDWVER:
@@ -402,7 +402,7 @@ class Annotatable(Subject):
             copy = self.add(t, position=ann.position, szImagePath=temp.path)
         else:  # XDW_AID_PAGEFORM, XDW_AID_OLE, XDW_AID_RECEIVEDSTAMP, XDW_AID_CUSTOM
             warnings.warn(
-                    "copying {0} annotation is not supported".format(ann.type),
+                    f"copying {ann.type} annotation is not supported",
                     DeprecationWarning, stacklevel=2)
             return None
         kw = ann.attributes()
