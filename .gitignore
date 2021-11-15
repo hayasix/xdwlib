@@ -4,7 +4,9 @@
 __pycache__/
 _build/
 _dist/
-docs/_build
-docs/html
-docs/_static
-docs/_templates
+doc/_build
+doc/html
+doc/_static
+doc/_templates
+build/
+*.egg-info/

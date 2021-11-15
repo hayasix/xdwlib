@@ -1,5 +1,5 @@
-include README
-include LICENSE
-include *setup.py
-include xdw2text.*
-include xdwlib/*.py
+include xdwlib/*
+include docs/*
+include scripts/*
+include *setup.py setup.cfg
+include README.rst LICENSE

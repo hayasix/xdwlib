@@ -2,7 +2,7 @@
 Xdwlib README
 =============
 
-2021-11-14 HAYASHI Hideki <hideki@hayasix.com>
+2021-11-15 HAYASHI Hideki <hideki@hayasix.com>
 
 
 Welcome to the xdwlib source release
@@ -19,6 +19,7 @@ Detailed description is available in docs/ only in Japanese at the moment,
 while every __doc__ property is written in English.
 
 Report problems with this release to the author.
+
 
 License
 -------

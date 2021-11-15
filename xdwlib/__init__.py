@@ -15,6 +15,7 @@ FOR A PARTICULAR PURPOSE.
 
 import sys
 
+from .__setup__ import *
 from .struct import Point, Rect
 from .common import environ
 from .xdwtemp import XDWTemp
@@ -25,11 +26,3 @@ from .binder import Binder, create_binder
 from .documentinbinder import DocumentInBinder
 from .page import Page, PageCollection
 from .annotation import Annotation, AnnotationCache
-
-
-__author__ = "HAYASHI Hideki"
-__copyright__ = "Copyright (C) 2010 HAYASHI Hideki <hideki@hayasix.com>"
-__license__ = "ZPL 2.1"
-__version__ = "3.8.4.0"
-__email__ = "hideki@hayasix.com"
-__status__ = "Beta"
