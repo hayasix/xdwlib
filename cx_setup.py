@@ -53,9 +53,9 @@ Further information is available in Japanese at https://github.com/hayasix/xdwli
     platforms=["win32",],
     packages=["xdwlib",],
     #install_requires=["pillow>=3.3.3",],
-    #data_files=["README", "LICENSE",],
+    #data_files=["README.rst", "LICENSE.rst",],
     zipfile="xdwlib.zip",
-    executables=[Executable("xdw2text.py", base=None)],
+    executables=[Executable("scripts/xdw2text.py", base=None)],
     options=dict(build_exe=dict(
         includes=[],
         excludes=[],

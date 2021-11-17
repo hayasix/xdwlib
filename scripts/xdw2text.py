@@ -62,8 +62,8 @@ def parse():
     parser.add_option("--comment",
             action="store_const", dest="spec", const="Comments",
             help="document comments")
-    parser.add_option("--encoding", dest="encoding", default="mbcs",
-            help="output encoding: mbcs, utf-8, etc. (default=mbcs)")
+    parser.add_option("--encoding", dest="encoding", default="utf-8n",
+            help="output encoding: utf-8, utf-8n, cp932, etc. (default=utf-8n)")
     parser.add_option("-d", action="store_true", dest="ask",
             help="ask if input is DocuWorks file or not; returns error code")
     parser.add_option("-v", action="store_true", dest="showversion",
@@ -108,7 +108,7 @@ if __name__ == "__main__":
     for name in options.spec.split(","):
         try:
             text = getattr(doc, name)
-            if isinstance(text, collections.Callable):
+            if callable(text):
                 text = text()
             out.append("%s=%s" % (name, text))
         except KeyError:

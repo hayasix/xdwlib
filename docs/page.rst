@@ -83,7 +83,7 @@ Page クラスは、その基底クラスである Annotatable クラスに多�
 
 ``bitmap()``
     ページを画像化して Bitmap オブジェクトで返します。アノテーションを
-    表示する設定になっていれば、アノテーションも画像に含めます。 
+    表示する設定になっていれば、アノテーションも画像に含めます。
     (注) Bitmap オブジェクトは、属性として ``width``, ``height``,
     ``planes``, ``depth``, ``compression``, ``data_size``, ``color_used``,
     ``color_important``, ``resolution``, ``header`` および ``data``
@@ -351,7 +351,7 @@ PageCollection クラスは、 ``list`` を拡張したものです。 ``list``
     文書またはバインダー内文書が同一の連続するページは、
     バインダー内文書にまとめられます。 ``group`` が ``False``
     である場合は、各ページはすべて別々のバインダー内文書となります。
-    実際に生成された DocuWorks 文書またはバインダーのパス名を返します。 
+    実際に生成された DocuWorks 文書またはバインダーのパス名を返します。
     拡張子は DocuWorks 文書の場合は ``.xdw`` となり、DocuWorks
     バインダーの場合は ``.xbd`` となります。
 
@@ -369,6 +369,8 @@ PageCollection クラスは、 ``list`` を拡張したものです。 ``list``
 ``view(light=False, wait=True, flat=False, group=True)``
     ``self`` の内容を複製した閲覧用一時ファイルを DocuWorks Viewer または
     DocuWorks Viewer Light のいずれかで閲覧します。
+    パスワード、DocuWorks 電子印鑑または電子証明書によるセキュリティーの設定が
+    されている文書では、エラーとなります。
     ``light`` が ``True`` である場合は、DocuWorks Viewer Light
     を優先して利用します。
     ``wait`` が ``True`` である場合は、DocuWorks Viewer (Light)

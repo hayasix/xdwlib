@@ -2,7 +2,7 @@
 Xdwlib README
 =============
 
-2021-11-15 HAYASHI Hideki <hideki@hayasix.com>
+2021-11-17 HAYASHI Hideki <hideki@hayasix.com>
 
 
 Welcome to the xdwlib source release
@@ -27,7 +27,7 @@ License
 Copyright (C) 2010 HAYASHI Hideki
 
 Xdwlib is provided under The Zope Public License (ZPL) Version 2.1,
-which is included in 'LICENSE'.  Send your feedback about the license
+which is included in 'LICENSE.rst'.  Send your feedback about the license
 to the author.
 
 
@@ -88,7 +88,7 @@ with cx_Freeze package, a popular successor of py2exe.  To build your
 own ``xdw2text.exe``, try::
 
     pip3 install cx_Freeze
-    python3 setup.py build
+    python3 cx_setup.py build
 
 
 Typical Use
