@@ -68,9 +68,9 @@ DocuWorks Desk は XDWAPI 以上の機能を持っているので、特殊な作
 動作条件は?
 ===========
 
-DocuWorks™ 7.0 以上の 32 bit 日本語版および Python 3.3 以上 [2]_ がインストールされている環境で動作します (Windows 限定) 。
+DocuWorks™ 7.0 以上の 32/64 bit 日本語版および Python 3.7 以上 [2]_ がインストールされている環境で動作します (Windows 限定) 。
 
-.. [2] Python 2 で利用するには、xdwlib-2.29.6 以前が必要です。 
+.. [2] Python 2 で利用するには、xdwlib-2.29.6 以前が必要です。
     xdwlib-2.29.6 は Launchpad https://launchpad.net/xdwlib に
     保存されています。
 

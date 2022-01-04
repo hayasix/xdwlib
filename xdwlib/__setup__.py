@@ -16,7 +16,7 @@ FOR A PARTICULAR PURPOSE.
 __author__ = "HAYASHI Hideki"
 __copyright__ = "Copyright (C) 2010 HAYASHI Hideki <hideki@hayasix.com>"
 __license__ = "ZPL 2.1"
-__version__ = "3.8.5.3"
+__version__ = "3.8.6.0"
 __email__ = "hideki@hayasix.com"
 __status__ = "Beta"
 

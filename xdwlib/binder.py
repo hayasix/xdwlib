@@ -123,12 +123,24 @@ class Binder(Subject, XDWFile):
                 (XDW_BINDER_COLOR).values()))
 
     def document(self, pos):
-        """Get a DocumentInBinder."""
+        """Get a DocumentInBinder.
+
+        pos     (int) document number; starts with 0
+
+        Returns a DocumentInBinder object.
+        """
         pos = self._pos(pos)
-        return DocumentInBinder(self, pos)
+        if pos not in self.observers:
+            self.observers[pos] = DocumentInBinder(self, pos)
+        return self.observers[pos]
 
     def page(self, pos):
-        """Get a Page for absolute page number."""
+        """Get a Page for absolute page number.
+
+        pos     (int) absolute page number; starts with 0
+
+        Returns a Page object.
+        """
         pos = self._pagepos(pos)
         return self.document_and_page(pos)[1]
 
@@ -138,7 +150,12 @@ class Binder(Subject, XDWFile):
                 for pos in range(self.documents)]
 
     def document_and_page(self, pos):
-        """Get (DocumentInBinder, Page) for absolute page number."""
+        """Get (DocumentInBinder, Page) for absolute page number.
+
+        pos     (int) absolute page number; starts with 0
+
+        returns a tuple.
+        """
         pos = self._pagepos(pos)
         acc = 0
         for docpos, pages in enumerate(self.document_pages()):
@@ -149,11 +166,18 @@ class Binder(Subject, XDWFile):
                 return (doc, page)
 
     def append(self, path):
-        """Append a document by path at the end of binder."""
+        """Append a document by path at the end of binder.
+
+        path    (str) path to the file to be added
+        """
         self.insert(self.documents, path)
 
     def insert(self, pos, path):
-        """Insert a document by path ."""
+        """Insert a document by path.
+
+        pos     (int) position to insert; starts with 0
+        path    (str) path to the file to be inserted
+        """
         pos = self._pos(pos, append=True)
         if XDWVER < 8:
             XDW_InsertDocumentToBinder(self.handle, pos + 1, cp(path))
@@ -164,7 +188,10 @@ class Binder(Subject, XDWFile):
         self.attach(doc, EV_DOC_INSERTED)
 
     def delete(self, pos):
-        """Delete a document."""
+        """Delete a document.
+
+        pos     (int) position to delete; starts with 0
+        """
         pos = self._pos(pos)
         doc = self.document(pos)
         XDW_DeleteDocumentInBinder(self.handle, doc.pos + 1)
@@ -224,6 +251,8 @@ class Binder(Subject, XDWFile):
 
     def find_fulltext(self, pattern):
         """Find given pattern (text or regex) throughout binder.
+
+        pattern     (str or regexp supported by re module)
 
         Returns a PageCollection object, each of which contains the given
         pattern in its content text or annotations.

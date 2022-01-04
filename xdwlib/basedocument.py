@@ -553,8 +553,9 @@ class BaseDocument(Subject):
     def find_content_text(self, pattern, type=None):
         """Find given pattern (text or regex) in all content text.
 
-        type    None | 'IMAGE' | 'APPLICATION'
-                None means both.
+        pattern     (str or regexp supported by re module)
+        type        None | 'IMAGE' | 'APPLICATION'
+                    None means both.
 
         Returns a PageCollection object.
         """
@@ -564,6 +565,8 @@ class BaseDocument(Subject):
     def find_annotation_text(self, pattern):
         """Find given pattern (text or regex) in all annotation text.
 
+        pattern     (str or regexp supported by re module)
+
         Returns a PageCollection object.
         """
         func = lambda pg: pg.annotation_text()
@@ -571,6 +574,8 @@ class BaseDocument(Subject):
 
     def find_fulltext(self, pattern):
         """Find given pattern in all content and annotation text.
+
+        pattern     (str or regexp supported by re module)
 
         Returns a PageCollection object."""
         return self.find(pattern)
