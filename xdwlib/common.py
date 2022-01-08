@@ -19,6 +19,7 @@ import base64
 import time
 import datetime
 from functools import reduce
+from ctypes import cdll
 
 from .xdwapi import *
 from .observer import *
@@ -55,7 +56,7 @@ if PIL_ENABLED:
 PSEP = "\f"  # page separator
 ASEP = "\v"  # annotation separator
 
-CP = 932
+CP = cdll.kernel32.GetACP()
 CODEPAGE = f"cp{CP}"
 
 DEFAULT_TZ = JST
