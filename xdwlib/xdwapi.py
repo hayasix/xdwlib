@@ -2373,7 +2373,7 @@ def XDW_CreateXdwFromImageFile(input_path, output_path, cre_option):
 @XDWVERSION(8)
 @RAISE
 def XDW_CreateXdwFromImageFileW(input_path, output_path, cre_option):
-    return DLL.XDW_CreateXdwFromImageFile(input_path, output_path, byref(cre_option))
+    return DLL.XDW_CreateXdwFromImageFileW(input_path, output_path, byref(cre_option))
 
 @QUERY(XDW_ORGDATA_INFO, NULL)
 def XDW_GetOriginalDataInformation(doc_handle, org_dat): pass
@@ -2519,7 +2519,7 @@ def XDW_CreateBinder(output_path, binder_init_dat):
 @XDWVERSION(8)
 @RAISE
 def XDW_CreateBinderW(output_path, binder_init_dat):
-    return DLL.XDW_CreateBinder(output_path, ptr(binder_init_dat), NULL)
+    return DLL.XDW_CreateBinderW(output_path, ptr(binder_init_dat), NULL)
 
 @APPEND(NULL)
 def XDW_InsertDocumentToBinder(doc_handle, pos, input_path): pass
@@ -2563,7 +2563,7 @@ def XDW_ProtectDocument(input_path, output_path, protect_type, module_option, pr
 @XDWVERSION(8)
 @RAISE
 def XDW_ProtectDocumentW(input_path, output_path, protect_type, module_option, protect_option):
-    return DLL.XDW_ProtectDocument(input_path, output_path, protect_type, byref(module_option), byref(protect_option))
+    return DLL.XDW_ProtectDocumentW(input_path, output_path, protect_type, byref(module_option), byref(protect_option))
 
 @RAISE
 def XDW_CreateXdwFromImageFileAndInsertDocument(doc_handle, page, input_path, create_option):
@@ -2572,7 +2572,7 @@ def XDW_CreateXdwFromImageFileAndInsertDocument(doc_handle, page, input_path, cr
 @XDWVERSION(8)
 @RAISE
 def XDW_CreateXdwFromImageFileAndInsertDocumentW(doc_handle, page, input_path, create_option):
-    return DLL.XDW_CreateXdwFromImageFileAndInsertDocument(doc_handle, page, input_path, byref(create_option), NULL)
+    return DLL.XDW_CreateXdwFromImageFileAndInsertDocumentW(doc_handle, page, input_path, byref(create_option), NULL)
 
 @APPEND(NULL)
 def XDW_GetDocumentAttributeNumber(doc_handle): pass
@@ -2660,7 +2660,7 @@ def XDW_SignDocument(input_path, output_path, option, module_option):
 def XDW_SignDocumentW(input_path, output_path, option, module_option):
     module_status = XDW_SIGNATURE_MODULE_STATUS()
     try:
-        TRY(DLL.XDW_SignDocument, input_path, output_path, ptr(option), ptr(module_option), NULL, ptr(module_status))
+        TRY(DLL.XDW_SignDocumentW, input_path, output_path, ptr(option), ptr(module_option), NULL, ptr(module_status))
     except SignatureModuleError as e:
         if module_status.nSignatureType == XDW_SIGNATURE_STAMP:
             msg = XDW_SIGNATURE_STAMP_ERROR[module_status.nErrorStatus]
@@ -2724,7 +2724,7 @@ def XDW_GetOcrImage(doc_handle, page, output_path, img_option):
 @XDWVERSION(8)
 @RAISE
 def XDW_GetOcrImageW(doc_handle, page, output_path, img_option):
-    return DLL.XDW_GetOcrImage(doc_handle, page, output_path, byref(img_option), NULL)
+    return DLL.XDW_GetOcrImageW(doc_handle, page, output_path, byref(img_option), NULL)
 
 def XDW_SetOcrData(doc_handle, page, ocr_textinfo):
     TRY(DLL.XDW_SetOcrData, doc_handle, page, byref(ocr_textinfo) if ocr_textinfo else NULL, NULL)
@@ -2784,7 +2784,7 @@ def XDW_ReleaseProtectionOfDocument(input_path, output_path, release_protection_
 @XDWVERSION(8)
 @RAISE
 def XDW_ReleaseProtectionOfDocumentW(input_path, output_path, release_protection_option):
-    return DLL.XDW_ReleaseProtectionOfDocument(input_path, output_path, byref(release_protection_option))
+    return DLL.XDW_ReleaseProtectionOfDocumentW(input_path, output_path, byref(release_protection_option))
 
 @QUERY(XDW_PROTECTION_INFO, NULL)
 def XDW_GetProtectionInformation(input_path): pass

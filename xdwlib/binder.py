@@ -179,10 +179,7 @@ class Binder(Subject, XDWFile):
         path    (str) path to the file to be inserted
         """
         pos = self._pos(pos, append=True)
-        if XDWVER < 8:
-            XDW_InsertDocumentToBinder(self.handle, pos + 1, cp(path))
-        else:
-            XDW_InsertDocumentToBinderW(self.handle, pos + 1, path)
+        XDW_InsertDocumentToBinder(self.handle, pos + 1, cp(path))
         self.documents += 1
         doc = self.document(pos)
         self.attach(doc, EV_DOC_INSERTED)
