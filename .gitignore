@@ -10,3 +10,4 @@ doc/_static
 doc/_templates
 build/
 *.egg-info/
+updates.txt

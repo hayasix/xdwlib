@@ -18,6 +18,11 @@ import re
 import subprocess
 import itertools
 from os.path import abspath, split as splitpath, join as joinpath
+import codecs
+from urllib.request import Request, urlopen
+from urllib.parse import urlencode, urlparse, urlunparse
+import time
+import json
 
 from .xdwapi import *
 from .common import *
@@ -31,6 +36,31 @@ __all__ = ("Page", "PageCollection")
 
 U0000 = chr(0)
 XDWRES = 100.0  # XDWAPI resolution is 1/100 mm.
+CHARSET2ENC = {
+        ANSI_CHARSET: "ascii",
+        DEFAULT_CHARSET: CODEPAGE,
+        SHIFTJIS_CHARSET: "cp932",
+        HANGEUL_CHARSET: "cp949",
+        CHINESEBIG5_CHARSET: "big5",
+        GREEK_CHARSET: "cp869",
+        TURKISH_CHARSET: "cp1026",
+        BALTIC_CHARSET: "cp775",
+        RUSSIAN_CHARSET: "cp855",
+        EASTEUROPE_CHARSET: "cp852",
+        OEM_CHARSET: "utf-8",  # unknown
+        }
+OCR_LANGUAGES = {
+        437: "ENGLISH",
+        863: "FRENCH",
+        936: "SIMPLIFIED_CHINESE",
+        950: "TRADITIONAL_CHINESE",
+        874: "THAI",
+        932: "JAPANENSE",
+        949: "KOREAN",
+        1258: "VIETNAMESE",
+        }
+ENV_AZURE_URL = "XDWLIB_OCR_AZURE_ENDPOINT"
+ENV_AZURE_KEY = "XDWLIB_OCR_AZURE_SUBSCRIPTION_KEY"
 
 
 class PageCollection(list):
@@ -82,7 +112,7 @@ class PageCollection(list):
         return self
 
     def view(self, light=False, wait=True, flat=False, group=True,
-            page=0, fullscreen=False, zoom=0):
+             page=0, fullscreen=False, zoom=0):
         """View pages with DocuWorks Viewer (Light).
 
         light       (bool) force to use DocuWorks Viewer Light.
@@ -460,7 +490,7 @@ class Page(Annotatable, Observer):
         self.reset_attr()
 
     def reduce_noise(self, level="NORMAL"):
-        """Process page by noise reduction engine.
+        """Process page with internal noise reduction engine.
 
         level   'NORMAL' | 'WEAK' | 'STRONG'
         """
@@ -483,51 +513,159 @@ class Page(Annotatable, Observer):
             use_ascii=True,
             insert_space=False,
             verbose=False,
+            failover=True,
             ):
-        """Process page by OCR engine.
+        f"""Process page with OCR engine.
 
-        engine          'DEFAULT' | 'WINREADER PRO'
+        engine          'DEFAULT' | 'WINREADER PRO'  -- DW9.1+
+                        'DEFAULT' | 'WINREADER PRO' | 'MULTI'  -- DW<=9.0
         strategy        'STANDARD' | 'SPEED' | 'ACCURACY'
-        proprocessing   'SPEED' | 'ACCURACY'
+        preprocessing   'SPEED' | 'ACCURACY'  -- DW<9
+                        'MONO_SPEED' | 'MONO_ACCURACY' | 'COLOR'  -- DW9+
         noise_reduction 'NONE' | 'NORMAL' | 'WEAK' | 'STRONG'
         deskew          (bool)
         form            'AUTO' | 'TABLE' | 'WRITING'
         column          'AUTO' | 'HORIZONTAL_SINGLE' | 'HORIZONTAL_MULTI'
                                | 'VERTICAL_SINGLE'   | 'VERTICAL_MULTI'
-        rects           (list of Rect)
-        language        'AUTO' | 'JAPANESE' | 'ENGLISH'
+        rects           (list of Rect) Rects to OCR
+        language        'AUTO' | 'JAPANESE' | 'ENGLISH'  -- DW<9
+                        (str) comma-separated list of followings:  -- DW9+
+                              'AUTO' | 'JAPANESE' | 'ENGLISH'
+                                     | 'SIMPLIFIED_CHINESE'
+                                     | 'TRADITIONAL_CHINESE'
+                                     | 'THAI' | 'KOREAN' | 'VIETNAMESE'
+                                     | 'INDONESIAN' | 'MALAY' | 'TAGALOG'
         main_language   'BALANCED' | 'JAPANESE' | 'ENGLISH'
-        use_ascii       (bool)
-        insert_space    (bool)
-        verbose         (bool)
+        use_ascii       (bool) use ASCII chars
+        insert_space    (bool) insert spaces for blanks
+        verbose         (bool) show progress banner
+        failover        (bool) do ocr_azure() if ocr() failed
+
+        CAUTION: To do ocr_azure(), enable internet connection and set
+        environment variables {ENV_AZURE_URL} and
+        {ENV_AZURE_KEY}.
         """
         if self.type != "IMAGE":
             raise TypeError("OCR is available for image pages")
-        opt = XDW_OCR_OPTION_V7()
-        engine = XDW_OCR_ENGINE.normalize(engine)
-        opt.nEngineLevel = XDW_OCR_STRATEGY.normalize(strategy)
-        opt.nPriority = XDW_OCR_PREPROCESSING.normalize(preprocessing)
+        if not OCRENABLED:
+            if all(self.azure_env()):
+                return self.ocr_azure()
+            raise AccessDeniedError("OCR is out of service")
+        en = XDW_OCR_ENGINE.normalize(engine)
+        if en == XDW_OCR_ENGINE_WRP:
+                opt = XDW_OCR_OPTION_WRP()
+                opt.nLanguage = XDW_OCR_LANGUAGE.normalize(language)
+                opt.nPriority = XDW_OCR_PREPROCESSING.normalize(preprocessing)
+        else:
+            if XDWVER < 9:
+                opt = XDW_OCR_OPTION_V7()
+                opt.nLanguage = XDW_OCR_LANGUAGE.normalize(language)
+                opt.nPriority = XDW_OCR_PREPROCESSING.normalize(preprocessing)
+                opt.nLanguageMixedRate = XDW_OCR_MAIN_LANGUAGE.normalize(
+                                main_language)
+            else:
+                if en != XDW_OCR_ENGINE_DEFAULT:  # FRE or FRE_MULTI
+                    raise ValueError(f"illegal OCR engine '{engine}'")
+                opt = XDW_OCR_OPTION_V9()
+                if language.upper() == "AUTO":
+                    language = ",".join([OCR_LANGUAGES.get(CP, ""), "ENGLISH"])
+                opt.nLanguage = flagvalue(XDW_OCR_MULTIPLELANGUAGES, language)
+                opt.nPriority = XDW_OCR_PREPROCESS_PRIORITY.normalize(
+                                preprocessing)
+            opt.nEngineLevel = XDW_OCR_STRATEGY.normalize(strategy)
+            opt.nHalfSizeChar = bool(use_ascii)
+            opt.nDisplayProcess = bool(verbose)
+            if rects:
+                opt.nAreaNum = len(rects)
+                rs = (XDW_RECT * len(rects))()
+                ps = (POINTER(XDW_RECT) * len(rects))()
+                for i, rect in enumerate(rects):
+                    rs[i].left, rs[i].top, rs[i].right, rs[i].bottom = \
+                            [int(x * 100) for x in rect]
+                    ps[i] = pointer(rs[i])
+                opt.pAreaRects = ps
+            else:
+                opt.pAreaRects = NULL
         opt.nNoiseReduction = XDW_OCR_NOISEREDUCTION.normalize(noise_reduction)
         opt.nAutoDeskew = bool(deskew)
         opt.nForm = XDW_OCR_FORM.normalize(form)
         opt.nColumn = XDW_OCR_COLUMN.normalize(column)
-        opt.nLanguage = XDW_OCR_LANGUAGE.normalize(language)
-        opt.nLanguageMixedRate = XDW_OCR_MAIN_LANGUAGE.normalize(main_language)
-        opt.nHalfSizeChar = bool(use_ascii)
         opt.nInsertSpaceCharacter = bool(insert_space)
-        opt.nDisplayProcess = bool(verbose)
-        if rects:
-            opt.nAreaNum = len(rects)
-            rs = (XDW_RECT * len(rects))()
-            ps = (POINTER(XDW_RECT) * len(rects))()
-            for i, rect in enumerate(rects):
-                rs[i].left, rs[i].top, rs[i].right, rs[i].bottom = \
-                        [int(x * 100) for x in rect]
-                ps[i] = pointer(rs[i])
-            opt.pAreaRects = ps
+        XDW_ApplyOcr(self.doc.handle, self.absolute_page() + 1, en, opt)
+
+    @staticmethod
+    def azure_env():
+        return (os.environ.get(f"{ENV_AZURE_URL}"),
+                os.environ.get(f"{ENV_AZURE_KEY}"))
+
+    def ocr_azure(self,
+            language="ja", charset="DEFAULT", errors="replace",
+            timeout=60,
+            endpoint="", subscription_key="",
+            version="3.2", model_version="2021-04-12",
+            ):
+        f"""Process page with Azure OCR.
+
+        language        (str) 'ja', 'en', etc.
+        charset         'DEFAULT' | 'ANSI' | 'SYMBOL' | 'MAC' | 'SHIFTJIS'
+                                  | 'HANGEUL' | 'CHINESEBIG5' | 'GREEK'
+                                  | 'TURKISH' | 'BALTIC' | 'RUSSIAN'
+                                  | 'EASTEUROPE' | 'OEM'
+        errors          'replace' | strict' | 'ignore' | 'xmlcharrefreplace'
+                                  | 'backslashreplace' | 'namereplace'
+                                  | 'surrogateescape'
+                                  | 'surrogatepass' (valid only for utf-8)
+        timeout         (int) seconds to wait for OCR result
+        endpoint        (str) Azure OCR endpoint e.g.:
+                              'https://yourproject.cognitiveservices.azure.com/'
+        subscription_key  (str) Azure OCR subscription key
+        version         (str) OCR engine version; only '3.2' is valid
+        model_version   (str) OCR data model version; only '2021-04-12' is valid
+
+        CAUTION: Default endpoint and subscription_key can be set in
+        environment variables {ENV_AZURE_URL}
+        and {ENV_AZURE_KEY}.
+        """
+        url, key = self.azure_env()
+        url = endpoint or url
+        key = subscription_key or key
+        if not (url and key):
+            raise ValueError(f"{ENV_AZURE_URL} or {ENV_AZURE_KEY} is missing")
+        with XDWTemp(suffix=".jpg") as temp:
+            self.export_image(path=temp.path, format="JPEG",
+                              dpi=self.resolution.x)
+            with open(temp.path, "rb") as in_:
+                data = in_.read()
+        assert str(version) == "3.2"
+        url = url.rstrip("/") + f"/vision/v{version}/read/analyze"
+        headers = {"Ocp-Apim-Subscription-Key": key,
+                   "Content-Type": "application/octet-stream"}
+        params = {"language": language, "model-version": "2021-04-12"}
+        def build_req(url, headers=None, params=None, method="GET"):
+            url = list(urlparse(url))
+            if params: url[4] = urlencode(params)
+            return Request(urlunparse(url), headers=headers, method=method)
+        req = build_req(url, headers=headers, params=params, method="POST")
+        res = urlopen(req, data=data)
+        if not str(res.status).startswith("2"):
+            raise ApplicatonFailedError(
+                    f"falure in Azure OCR, status={result.status}")
+        req = build_req(res.headers["Operation-Location"], headers=headers)
+        tick = 3
+        for elapsed in range(0, timeout, tick):
+            res = urlopen(req)
+            result = json.loads(res.read().decode("utf-8"))
+            if result.get("status") == "failed":
+                raise ApplicatonFailedError("failure in Azure OCR")
+            if "analyzeResult" in result:
+                break
+            time.sleep(tick)
         else:
-            opt.pAreaRects = NULL
-        XDW_ApplyOcr(self.doc.handle, self.absolute_page() + 1, engine, opt)
+            raise ApplicatonFailedError("time out in Azure OCR")
+        lines = result["analyzeResult"]["readResults"][0]["lines"]
+        rtlist = [(Rect(*[line["boundingBox"][i] for i in (0, 1, 4, 5)]),
+                   line["text"]) for line in lines]
+        self.set_ocr_text(rtlist, charset=charset, errors=errors, unit="px")
 
     def clear_ocr_text(self):
         """Clear OCR text."""
@@ -535,17 +673,23 @@ class Page(Annotatable, Observer):
             raise TypeError("OCR text is available for image pages")
         XDW_SetOcrData(self.doc.handle, self.absolute_page() + 1, NULL)
 
-    def set_ocr_text(self, rtlist, charset="SHIFTJIS", half_open=True):
+    def set_ocr_text(self, rtlist, charset="DEFAULT", half_open=True,
+                           errors="strict", unit="mm"):
         """Set OCR text.
 
         rtlist      sequence of (rect, text), where:
                         rect    Rect
-                        text    basestring
-        charset     'DEFAULT' | 'OEM' | 'ANSI' | 'SYMBOL' | 'MAC' |
-                    'SHIFTJIS' | 'HANGEUL' | 'CHINESEBIG5' |
-                    'GREEK' | 'TURKISH' | 'BALTIC' | 'RUSSIAN' |
-                    'EASTEUROPE'
+                        text    str
+        charset     'DEFAULT' | 'ANSI' | 'SYMBOL' | 'MAC' | 'SHIFTJIS'
+                              | 'HANGEUL' | 'CHINESEBIG5' | 'GREEK' | 'TURKISH'
+                              | 'BALTIC' | 'RUSSIAN' | 'EASTEUROPE' | 'OEM'
         half_open   (bool) rect's are half open i.e. right-bottom is outside
+        errors      'strict' | 'ignore' | 'replace' | 'xmlcharrefreplace'
+                             | 'backslashreplace' | 'namereplace'
+                             | 'surrogateescape'
+                             | 'surrogatepass' (valid only for utf-8)
+
+        unit        'mm' | 'px' (for Rect)
 
         CAUTION: After calling this method, text_regions()/re_regions() will
         raise AccessDeniedError, restricted by genuine XDWAPI.
@@ -555,24 +699,29 @@ class Page(Annotatable, Observer):
         rects = (XDW_RECT * len(rtlist))()
         crlf = "\x0d\x0a"
         text = []
+        if unit == "mm":
+            cx = lambda x: int(mm2px(x, self.resolution.x))
+            cy = lambda y: int(mm2px(y, self.resolution.y))
+        else:  # if unit == "px"
+            cx = cy = int
         for i, (r, t) in enumerate(rtlist):
-            text.append(cp(t.strip()) + crlf)  # TODO: cp() != charset
+            text.append(t)
             if not isinstance(r, Rect):
                 r = Rect(*r)
             if half_open:
                 r = r.closed()
-            rects[i].left = int(mm2px(r.left, self.resolution.x))
-            rects[i].top = int(mm2px(r.top, self.resolution.y))
-            rects[i].right = int(mm2px(r.right, self.resolution.x))
-            rects[i].bottom = int(mm2px(r.bottom, self.resolution.y))
-        text = "".join(text)
+            rects[i].left = cx(r.left)
+            rects[i].top = cy(r.top)
+            rects[i].right = cx(r.right)
+            rects[i].bottom = cy(r.bottom)
         info = XDW_OCR_TEXTINFO()
         info.nWidth = int(self.image_size.x)
         info.nHeight = int(self.image_size.y)
         info.charset = XDW_FONT_CHARSET.normalize(charset)
-        info.lpszText = text
+        encoding = CHARSET2ENC.get(info.charset, CODEPAGE)
+        info.lpszText = crlf.join(text).encode(encoding, errors=errors) + b"\x00"
         info.nLineRect = len(rtlist)
-        info.pLineRect = pointer(rects[0])
+        info.pLineRect = rects
         XDW_SetOcrData(self.doc.handle, self.absolute_page() + 1, info)
 
     def export(self, path=None):
@@ -657,8 +806,9 @@ class Page(Annotatable, Observer):
         ignore_width    (bool)
         ignore_hirakata (bool)
 
-        Returns a list of Rect or None (when rect is unavailable).
-        Note that Rect is half-open i.e. right-bottom is outside.
+        Returns a list of Rect, or None if rect is unavailable.
+        * No rects are given if OCR-ed on DW9+.
+        * Rect is half-open i.e. right-bottom is outside.
         """
         result = []
         opt = XDW_FIND_TEXT_OPTION()
@@ -699,6 +849,9 @@ class Page(Annotatable, Observer):
                         r = Rect(r.left / XDWRES, r.top / XDWRES,
                                 r.right / XDWRES, r.bottom / XDWRES)
                         r = r.half_open()
+                        w, h = r.size()
+                        if 9 <= XDWVER and self.size.x <= w or self.size.y <= h:
+                            r = None
                     else:
                         r = None  # Actually rect is not available.
                     result.append(r)
