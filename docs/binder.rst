@@ -100,13 +100,36 @@ Binder クラスは、その基底クラスである XDWFile クラスに多く�
     バインダー内の通しページ番号が ``pos`` であるページ (Page オブジェクト)
     を返します。
 
-``view(light=False, wait=True)``
-    バインダーの内容を DocuWorks Viewer または DocuWorks Viewer Light
-    のいずれかで閲覧します。 ``light`` が真である場合は、DocuWorks Viewer
-    Light を優先して利用します。 ``wait`` が真である場合は、DocuWorks
-    Viewer (Light) が終了するのを待ちます。 ``wait`` が偽である場合は、
-    DocuWorks Viewer (Light) を起動したらすぐに制御が戻り、
-    ``(proc, temp)`` という 2 要素からなるタプルを返します。この場合、
-    ``proc`` は ``subprocess`` モジュールが提供する Popen オブジェクト
-    であり、 ``temp`` は DocuWorks Viewer (Light) で閲覧中の一時ファイルの
-    パス名です。
+``view(light=False, wait=True, page=0, fullscreen=False, zoom=0)``
+    バインダーの内容を複製した閲覧用一時ファイルを DocuWorks Viewer または
+    DocuWorks Viewer Light のいずれかで閲覧します。
+    パスワード、DocuWorks 電子印鑑または電子証明書によるセキュリティーの
+    設定がされている文書では、エラーとなります。
+    ``light`` が真である場合は、DocuWorks Viewer Light を優先して利用します。
+    ``wait`` が真である場合は、DocuWorks Viewer (Light) が終了するのを待ち、
+    閲覧中に追加されたものも含めて、ページ番号 (0 から開始します) をキー、
+    各ページのアノテーションの情報 (``AnnotationCache`` オブジェクト)
+    を列挙したリストを値とする辞書を返します。アノテーションが存在しない
+    ページは含まれません。閲覧用一時ファイルは自動的に消去されます。
+    ``wait`` が偽である場合は、DocuWorks Viewer (Light) を起動したら
+    すぐに制御が戻り、 ``(proc, temp)`` という 2 要素からなるタプルを
+    返します。この場合、 ``proc`` は ``subprocess`` モジュールが提供する
+    ``Popen`` オブジェクトであり、 ``temp`` は DocuWorks Viewer (Light)
+    で閲覧中の一時ファイルのパス名です。
+    ``temp`` およびその親ディレクトリは、このメソッドを呼び出した側が
+    必要がなくなった時点で消去してください。
+
+    ::
+
+        proc, temp = doc.view(wailt=False)
+        # ... wait for proc.poll() != None ...
+        os.remove(temp)
+        os.rmdir(os.path.dirname(temp))  # shutil.rmtree() を利用してもよい
+
+    ``page`` が指定されている場合は、最初からそのページ (0 から開始します)
+    を表示します。
+    ``fullscreen`` が真である場合は、フルスクリーン (プレゼンテーション
+    モード) で表示します。
+    ``zoom`` には表示倍率を % で表示します。ただし、0 は 100% を意味します。
+    また ``'WIDTH'``, ``'HEIGHT'``, ``'PAGE'`` を指定すると、それぞれ
+    幅 / 高さ / ページ全体で表示します。

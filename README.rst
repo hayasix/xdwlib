@@ -2,7 +2,7 @@
 Xdwlib README
 =============
 
-2022-01-04 HAYASHI Hideki <hideki@hayasix.com>
+2022-01-18 HAYASHI Hideki <hideki@hayasix.com>
 
 
 Welcome to the xdwlib source release
@@ -37,11 +37,11 @@ Installation
 System Requirements
 -------------------
 
-    - Microsoft Windows (versions compatible with DocuWorks 7 and 8)
+    - Microsoft Windows (versions compatible with DocuWorks 7+)
 
     - Python 3.7+
 
-    - DocuWorks 7.0+ (Japanese version; English version is not tested)
+    - DocuWorks 7+ (Japanese version; English version may also work)
 
 Install from archive
 --------------------

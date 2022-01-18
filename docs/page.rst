@@ -41,6 +41,7 @@ Page クラスは、その基底クラスである Annotatable クラスに多�
 ``doc``
     ページが属する DocuWorks 文書またはバインダー内文書 (Document
     オブジェクトまたは DocumentInBinder オブジェクト) です。
+
     (注) ページがバインダー内文書に含まれている場合であっても、
     そのバインダーをページから直接指し示す手段はありません。
     バインダー内文書 (DocumentInBinder オブジェクト) を取得した上で、
@@ -84,6 +85,7 @@ Page クラスは、その基底クラスである Annotatable クラスに多�
 ``bitmap()``
     ページを画像化して Bitmap オブジェクトで返します。アノテーションを
     表示する設定になっていれば、アノテーションも画像に含めます。
+
     (注) Bitmap オブジェクトは、属性として ``width``, ``height``,
     ``planes``, ``depth``, ``compression``, ``data_size``, ``color_used``,
     ``color_important``, ``resolution``, ``header`` および ``data``
@@ -101,6 +103,7 @@ Page クラスは、その基底クラスである Annotatable クラスに多�
 
 ``content_text(type=None)``
     ページに含まれるアプリケーションテキストまたは OCR テキストを返します。
+
     (注) アノテーションに含まれるテキストを取得するには、Annotatable
     クラスのインスタンスメソッド ``annotation_text()`` または
     ``fulltext()`` を利用してください。
@@ -138,7 +141,7 @@ Page クラスは、その基底クラスである Annotatable クラスに多�
     ``'NORMAL'``, ``'HIGHQUALITY'``, ``'HIGHCOMPRESS'``, ``'MRC_NORMAL'``,
     ``'MRC_HIGHQUALITY'`` または ``'MRC_HIGHCOMPRESS'`` を指定します。
 
-    ``direct`` が ``True`` である場合は、ページの画像 (アノテーションや
+    ``direct`` が真である場合は、ページの画像 (アノテーションや
     ページフォームは含みません) を内部の圧縮イメージのまま書き出します。
     このため、処理が高速です。生成される画像の形式は内部状態に依存して
     TIFF, JPEG または PDF となり、生成される画像ファイルの拡張子はそれぞれ
@@ -151,15 +154,20 @@ Page クラスは、その基底クラスである Annotatable クラスに多�
     ページのユーザー定義属性 ``name`` の値を取得します。 ``str``
     を返します。 ユーザー定義属性 ``name`` がない場合は、 ``default``
     の値を返します。
+
     (注) ページのユーザー定義属性は、DocuWorks Desk/Viewer の GUI で
     アクセスすることはできません。
 
-``ocr(engine='DEFAULT', strategy='SPEED', preprocessing='SPEED', noise_reduction='NONE', deskew=True, form='AUTO', column='AUTO', rects=None, language='AUTO', main_language='BALANCED', use_ascii=True, insert_space=False, verbose=False)``
-    ページを OCR 処理します。結果として得られるテキストは、別途
-    ``self.content_text()`` で取り出す必要があります。
+``ocr(engine='DEFAULT', strategy='SPEED', preprocessing='SPEED', noise_reduction='NONE', deskew=True, form='AUTO', column='AUTO', rects=None, language='AUTO', main_language='BALANCED', use_ascii=True, insert_space=False, verbose=False, failover=True)``
+    ページからテキストを抽出 (OCR) します。結果として得られるテキストは、
+    別途 ``self.content_text()`` で取り出す必要があります。
 
-    ``engine`` は ``'DEFAULT'`` または ``'WINREADER PRO'`` です
-    (小文字でもかまいません)。
+    ``engine`` は ``'DEFAULT'``, ``'EXTENDED'``, ``'MULTI'``,
+    ``'WINREADER PRO'`` です (小文字でもかまいません)。ただし、DocuWorks 9
+    以上では DocuWorks OCR License for Development Tool Kit をあらかじめ
+    登録しておく必要があります。有効な登録がなく必要な環境変数が定義されて
+    る場合は ``ocr_azure()`` の実行を試みます。その他の場合は
+    AccessDeniedError となります。
 
     ``strategy`` は ``'STANDARD'``, ``'SPEED'`` または ``'ACCURACY'``
     です (小文字でもかまいません)。
@@ -170,8 +178,8 @@ Page クラスは、その基底クラスである Annotatable クラスに多�
     ``noise_reduction`` は ``'NONE'``, ``'NORMAL'``, ``'WEAK'`` または
     ``'STRONG'`` です (小文字でもかまいません)。
 
-    ``deskew`` が ``True`` の場合は、OCR 処理の前に傾き補正を自動的に
-    行います。ただし、補正結果がページに反映されることはありません。
+    ``deskew`` が真の場合は、OCR 処理の前に傾き補正を自動的に行います。
+    ただし、補正結果がページに反映されることはありません。
 
     ``form`` は ``'AUTO'``, ``'TABLE'`` または ``'WRITING'`` です
     (小文字でもかまいません)。
@@ -189,15 +197,29 @@ Page クラスは、その基底クラスである Annotatable クラスに多�
     ``main_language`` は ``'BALANCED'``, ``'JAPANESE'`` または
     ``'ENGLISH'`` です (小文字でもかまいません)。
 
-    ``use_ascii`` が ``True`` である場合は、ASCII コードで該当する文字が
-    ある場合は ASCII コード (いわゆる半角英数) を採用します。
+    ``use_ascii`` が真である場合は、ASCII コードで該当する文字がある場合は
+    ASCII コード (いわゆる半角英数) を採用します。
 
-    ``insert_space`` が ``True`` である場合は、空白部分に空白文字を
-    挿入します。
+    ``insert_space`` が真である場合は、空白部分に空白文字を挿入します。
 
-    ``verbose`` が ``True`` である場合は、認識作業中の様子を画面に
-    表示します。ただし、 ``verbose`` を ``False`` にしても、
-    「認識中…」と表示されるダイアログは表示されます。
+    ``verbose`` が真である場合は、認識作業中の様子を画面に表示します。
+    ただし、 ``verbose`` を ``False`` にしても、「認識中…」と表示される
+    ダイアログは表示されます。
+
+    ``failover`` が真である場合は、DocuWorks 9 以上で内蔵 OCR が利用できない
+    ときは ``ocr_azure()`` を実行します。ただし、環境変数
+    ``XDWLIB_OCR_AZURE_ENDPOINT`` および ``XDWLIB_OCR_AZURE_SUBSCRIPTION_KEY``
+    を定義しておく必要があります。
+
+``ocr_azure(self, language="ja", charset="DEFAULT", errors="replace", timeout=60, endpoint="", subscription_key="", version="3.2", model_version="2021-04-12")``
+    ページから Microsoft Azure Cognitive Services の Computer Vision (OCR)
+    を利用してテキストを抽出します。結果として得られるテキストは、別途
+    ``self.content_text()`` で取り出す必要があります。
+
+    ``endpoint`` および ``subscription_key`` は Computer Vision の設定で
+    あらかじめ作成しておく必要があります。引数で与えられない場合は、環境変数
+    ``XDWLIB_OCR_AZURE_ENDPOINT`` および ``XDWLIB_OCR_AZURE_SUBSCRIPTION_KEY``
+    から読み取ります。いずれも存在しない場合はエラーとなります。
 
 ``rasterize()``
     ページがアプリケーションページである場合は、イメージページに
@@ -206,6 +228,7 @@ Page クラスは、その基底クラスである Annotatable クラスに多�
 ``reduce_noise(level='NORMAL')``
     ページイメージのノイズを除去します。 ``level`` は ``'NORMAL'``,
     ``'WEAK'`` または ``'STRONG'`` です (小文字でもかまいません)。
+
     (注) モノクロイメージのページについてのみ利用可能です。
     アプリケーションページやカラー/グレイスケールのイメージページで
     利用するとエラーとなります。
@@ -213,24 +236,25 @@ Page クラスは、その基底クラスである Annotatable クラスに多�
 ``re_regions(pattern)``
     指定のパターンに適合する文字列がページ上で占める半開矩形領域を求めます。
     ``pattern`` は ``re`` モジュールで利用できる正規表現文字列または
-    正規表現オブジェクトです。
-    Rect (ただし、適合する文字列が存在していても
+    正規表現オブジェクトです。 Rect (ただし、適合する文字列が存在していても
     対応するページ上の表示領域が得られない場合は None) のリストを返します。
+
     (注) ``set_ocr_text()`` で OCR テキストが設定されていた場合は、
     このメソッドで AccessDeniedError を発生することがあります。
     これは XDWAPI の制限です。
 
 ``rotate(degree=0, auto=False)``
     ページを回転します。 ``degree`` は時計回りの回転角で、単位は度です。
-    ``auto`` が ``True`` である場合は、OCR 処理用に自動正立処理を行います。
+    ``auto`` が真である場合は、OCR 処理用に自動正立処理を行います。
     ``degree`` に指定できる値は、PIL (Python Imaging Library) が利用できる
     場合は任意の整数です。PIL が利用できない場合は、90 の倍数のみ指定
     できます。
+
     (注) ``degree`` が 90 の倍数でない場合、ページを画像にして処理を
     進めます。この結果、アノテーションは画像の一部となり、アプリケーション
     テキストや OCR テキストも失われます。
 
-``set_ocr_text(rtlist, charset='SHIFTJIS', half_open=True)``
+``set_ocr_text(rtlist, charset='SHIFTJIS', half_open=True, errors='strict', unit='mm')``
     ページの OCR テキストを置き換えます。
 
     ``rtlist`` は 2 要素のシーケンス ``(rect, text)`` のシーケンスです。
@@ -251,63 +275,73 @@ Page クラスは、その基底クラスである Annotatable クラスに多�
     ``'RUSSIAN'`` または ``'EASTEUROPE'`` で指定します
     (小文字でもかまいません)。
 
-    ``half_open`` に ``False`` を指定した場合は、 ``rect`` を
-    閉鎖矩形領域として扱います。
-    (注) このメソッドで OCR テキストを設定した場合、 ``text_regions()``
-    や ``re_regions()`` で文字列の位置を取得しようとすると
-    AccessDeniedError が発生します。これは XDWAPI の制限です。
+    ``half_open`` に偽を指定した場合は、 ``rect`` を閉鎖矩形領域とみなします。
+
+    ``errors`` は各文字列を格納する際のエンコーディングで生じたエラーの取扱を
+    指定します。 Python の codecs.encode() での指定と同じです。
+
+    ``unit`` は ``rect`` (各文字列の位置) の単位を ``'mm'`` (ミリメートル)
+    または ``'px'`` (ピクセル) で指定します。 ``'px'`` はページの元となった
+    画像でのピクセル位置を表します。
+
+    (注) このメソッドで OCR テキストを設定した場合、 ``text_regions()`` や
+    ``re_regions()`` で文字列の位置を取得しようとすると AccessDeniedError
+    が発生します。これは XDWAPI の制限です。
 
 ``set_userattr(name, value)``
     ページのユーザー定義属性 ``name`` を値 ``value`` で設定します。
     ``value`` は ``str`` で与えます。
+
     (注) ページのユーザー定義属性は、DocuWorks Desk/Viewer の GUI で
     アクセスすることはできません。
 
 ``text_regions(text, ignore_case=False, ignore_width=False, ignore_hirakata=False)``
     指定のテキストに適合する文字列がページ上で占める半開矩形領域を求めます。
     ``text`` は対象文字列です。
-    ``ignore_case`` が ``True`` である場合は、大文字と小文字を区別しません。
-    ``ignore_width`` が ``True`` である場合は、いわゆる全角文字と
-    いわゆる半角文字を区別しません。 ``ignore_hirakata`` が ``True``
-    である場合は、平仮名と片仮名を区別しません。
+    ``ignore_case`` が真である場合は、大文字と小文字を区別しません。
+    ``ignore_width`` が真である場合は、いわゆる全角文字といわゆる半角文字を
+    区別しません。 ``ignore_hirakata`` が真である場合は、平仮名と片仮名を
+    区別しません。
+
     Rect (ただし、適合する文字列が存在していても対応するページ上の
     表示領域が得られない場合は ``None``) のリストを返します。
     単位はミリメートルです。
+
     (注) ``set_ocr_text()`` で OCR テキストが設定されていた場合は、
     このメソッドで AccessDeniedError を発生することがあります。
     これは XDWAPI の制限です。
 
-``view(light=False, wait=True)``
+``view(light=False, wait=True, fullscreen=False, zoom=0)``
     ページの内容を複製した閲覧用一時ファイルを DocuWorks Viewer または
     DocuWorks Viewer Light のいずれかで閲覧します。
-    ``light`` が ``True`` である場合は、DocuWorks Viewer Light
-    を優先して利用します。
-    ``wait`` が ``True`` である場合は、DocuWorks Viewer (Light) が
-    終了するのを待ちます。終了後、更新された一時ファイルを読み込み、
-    ページの全アノテーションについての (1) 表示領域 (半開矩形領域)、
-    (2) アノテーションタイプ名、(3) アノテーションが含む文字列、
-    の 3 要素を持つタプル ``(Rect, str, str)`` のリストを返します。
-    アノテーションが存在しない場合は、空リストを返します。
-    アノテーションが含む文字列は、アノテーションタイプが ``'TEXT'``,
-    ``'LINK'`` または ``'STAMP'`` である場合に与えられ、その他の場合は
-    ``None`` になります。
-    ``wait`` が ``False`` である場合は、DocuWorks Viewer (Light)
-    を起動したらすぐに制御が戻り、 ``(proc, path)`` という
-    2 要素からなるタプルを返します。この場合、 ``proc`` は
-    ``subprocess`` モジュールが提供する Popen オブジェクトであり、
-    ``path`` は閲覧中用一時ファイルのパス名です。
-    (注) ``wait`` を ``False`` とした場合は、閲覧用一時ファイルは、
-    このメソッドを呼び出した側が必要がなくなった時点で、
-    その親ディレクトリと共に消去してください。 ``wait`` を ``True``
-    とした場合は、閲覧用一時ファイルは自動的に消去されます。
+    パスワード、DocuWorks 電子印鑑または電子証明書によるセキュリティーの
+    設定がされている文書では、エラーとなります。
+    ``light`` が真である場合は、DocuWorks Viewer Light を優先して利用します。
+    ``wait`` が真である場合は、DocuWorks Viewer (Light) が終了するのを待ち、
+    閲覧中に追加されたものも含めて、ページ番号 (0 から開始します) をキー、
+    各ページのアノテーションの情報 (``AnnotationCache`` オブジェクト)
+    を列挙したリストを値とする辞書を返します。アノテーションが存在しない
+    ページは含まれません。閲覧用一時ファイルは自動的に消去されます。
+    ``wait`` が偽である場合は、DocuWorks Viewer (Light) を起動したら
+    すぐに制御が戻り、 ``(proc, temp)`` という 2 要素からなるタプルを
+    返します。この場合、 ``proc`` は ``subprocess`` モジュールが提供する
+    ``Popen`` オブジェクトであり、 ``temp`` は DocuWorks Viewer (Light)
+    で閲覧中の一時ファイルのパス名です。
+    ``temp`` およびその親ディレクトリは、このメソッドを呼び出した側が
+    必要がなくなった時点で消去してください。
 
     ::
 
-        pg = Page(...)
         proc, temp = pg.view(wailt=False)
         # ... wait for proc.poll() != None ...
         os.remove(temp)
         os.rmdir(os.path.dirname(temp))  # shutil.rmtree() を利用してもよい
+
+    ``fullscreen`` が真である場合は、フルスクリーン (プレゼンテーション
+    モード) で表示します。
+    ``zoom`` には表示倍率を % で表示します。ただし、0 は 100% を意味します。
+    また ``'WIDTH'``, ``'HEIGHT'``, ``'PAGE'`` を指定すると、それぞれ
+    幅 / 高さ / ページ全体で表示します。
 
 PageCollection オブジェクト
 ===========================
@@ -344,10 +378,10 @@ PageCollection クラスは、 ``list`` を拡張したものです。 ``list``
     ``path`` は生成先のパス名です。指定しなかった場合は、
     最初のページが属する文書またはバインダーのパス名から
     派生したパス名となります。
-    ``flat`` が ``True`` である場合は、DocuWorks 文書が生成されます。
+    ``flat`` が真である場合は、DocuWorks 文書が生成されます。
     ``flat`` が ``False`` である場合は、DocuWorks バインダーが生成されます。
     ``group`` の指定は、 ``flat`` が ``False`` の場合のみ有効です。
-    ``group`` が ``True`` である場合は、各ページが属する DocuWorks
+    ``group`` が真である場合は、各ページが属する DocuWorks
     文書またはバインダー内文書が同一の連続するページは、
     バインダー内文書にまとめられます。 ``group`` が ``False``
     である場合は、各ページはすべて別々のバインダー内文書となります。
@@ -366,45 +400,40 @@ PageCollection クラスは、 ``list`` を拡張したものです。 ``list``
     ``[PageCollection([A[0], A[1]]), PageCollection([B[2]]), PageCollection([C[2], C[5], C[7]]), PageCollection([A[3]]), PageCollection([B[4], B[6]])]``
     となります。
 
-``view(light=False, wait=True, flat=False, group=True)``
-    ``self`` の内容を複製した閲覧用一時ファイルを DocuWorks Viewer または
+``view(light=False, wait=True, page=0, fullscreen=False, zoom=0, flat=False, group=True)``
+    ページの内容を複製した閲覧用一時ファイルを DocuWorks Viewer または
     DocuWorks Viewer Light のいずれかで閲覧します。
-    パスワード、DocuWorks 電子印鑑または電子証明書によるセキュリティーの設定が
-    されている文書では、エラーとなります。
-    ``light`` が ``True`` である場合は、DocuWorks Viewer Light
-    を優先して利用します。
-    ``wait`` が ``True`` である場合は、DocuWorks Viewer (Light)
-    が終了するのを待ちます。終了後、更新された一時ファイルを読み込み、
-    キーをページ番号 (0 から始まります)、値をそのページの全アノテーションに
-    ついての (1) 表示領域 (半開矩形領域)、(2) アノテーションタイプ名、
-    (3) アノテーションが含む文字列、の 3 要素を持つタプル (Rect, str, str)
-    のリストとする辞書 (
-    ``{0: [(Rect(...), 'TEXT', 'Sample Text'), (Rect(...), 'RECTANGLE', None), ...], 1: [...], ...}``
-    のような形式) を返します。アノテーションが存在しないページについては、
-    辞書にエントリを作りません。アノテーションが含む文字列は、
-    アノテーションタイプが ``'TEXT'``, ``'LINK'`` または ``'STAMP'``
-    である場合に与えられ、その他の場合は ``None`` になります。
-    ``wait`` が ``False`` である場合は、DocuWorks Viewer (Light)
-    を起動したらすぐに制御が戻り、 ``(proc, path)`` という
-    2 要素からなるタプルを返します。この場合、 ``proc`` は ``subprocess``
-    モジュールが提供する Popen オブジェクトであり、 ``path`` は
-    閲覧用一時ファイルのパス名です。
-    ``flat`` が ``True`` である場合は、DocuWorks 文書として閲覧します。
-    ``flat`` が ``False`` である場合は、DocuWorks バインダーとして
-    閲覧します。
-    ``group`` の指定は、 ``flat`` が ``False`` である場合に有効です。
-    ``group`` が ``True`` である場合は、連続して同一の文書に属するページは
-    バインダー内文書としてまとめて閲覧します。 ``group`` が ``False``
-    である場合は、各ページがそれぞれ 1 ページのバインダー内文書となります。
-    (注) ``wait`` を ``False`` とした場合は、閲覧用一時ファイルは、
-    このメソッドを呼び出した側が必要がなくなった時点で、
-    その親ディレクトリと共に消去してください。 ``wait`` を ``True``
-    とした場合は、閲覧用一時ファイルは自動的に消去されます。
+    パスワード、DocuWorks 電子印鑑または電子証明書によるセキュリティーの
+    設定がされている文書では、エラーとなります。
+    ``light`` が真である場合は、DocuWorks Viewer Light を優先して利用します。
+    ``wait`` が真である場合は、DocuWorks Viewer (Light) が終了するのを待ち、
+    閲覧中に追加されたものも含めて、ページ番号 (0 から開始します) をキー、
+    各ページのアノテーションの情報 (``AnnotationCache`` オブジェクト)
+    を列挙したリストを値とする辞書を返します。アノテーションが存在しない
+    ページは含まれません。閲覧用一時ファイルは自動的に消去されます。
+    ``wait`` が偽である場合は、DocuWorks Viewer (Light) を起動したら
+    すぐに制御が戻り、 ``(proc, temp)`` という 2 要素からなるタプルを
+    返します。この場合、 ``proc`` は ``subprocess`` モジュールが提供する
+    ``Popen`` オブジェクトであり、 ``temp`` は DocuWorks Viewer (Light)
+    で閲覧中の一時ファイルのパス名です。
+    ``temp`` およびその親ディレクトリは、このメソッドを呼び出した側が
+    必要がなくなった時点で消去してください。
 
     ::
 
-        pc = PageCollection(...)
-        proc, temp = pc.view(wailt=False)
+        proc, temp = pg.view(wailt=False)
         # ... wait for proc.poll() != None ...
         os.remove(temp)
         os.rmdir(os.path.dirname(temp))  # shutil.rmtree() を利用してもよい
+
+    ``page`` が指定されている場合は、最初からそのページ (0 から開始します)
+    を表示します。
+    ``fullscreen`` が真である場合は、フルスクリーン (プレゼンテーション
+    モード) で表示します。
+    ``zoom`` には表示倍率を % で表示します。ただし、0 は 100% を意味します。
+    また ``'WIDTH'``, ``'HEIGHT'``, ``'PAGE'`` を指定すると、それぞれ
+    幅 / 高さ / ページ全体で表示します。
+    ``flat`` が真である場合は、すべてのページをひとつの DocuWorks 文書に
+    まとめて表示します。 ``flat`` が偽である場合は、各ページをバインダー内
+    文書としたバインダーとして表示します。このとき ``group`` が真であれば、
+    連続するページで元の文書が同じものはひとつの文書にまとめます。
