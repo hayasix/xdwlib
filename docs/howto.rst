@@ -152,11 +152,6 @@ Document クラスは、イテレータプロトコルをサポートしてい�
     for pg in doc:
         pg.ocr()
 
-(注) DocuWorks 9 以上で ocr() するには DocuWorks OCR License for Development
-Tool Kit をあらかじめ登録しておく必要があります。ただし、環境変数を適切に
-設定すれば、 Microsoft Azure Cognitive Services の Computer Vision (OCR)
-も利用できます。
-
 ページコレクション
 ==================
 
@@ -355,21 +350,16 @@ Document/DocumentInBinder/Binder/Page オブジェクトには
     doc_or_pg.view(light=False, wait=True)
 
 ``light``
-    真ならば DocuWorks Viewer Light を使用してページを表示します
+    ``True`` ならば DocuWorks Viewer Light を使用してページを表示します
     (DocuWorks Viewer Light が使用できなければ、DocuWorks Viewer を
     使用します)。 ``False`` ならば DocuWorks Viewer を使用してページを
     表示します (DocuWorks Viewer が使用できなければ、DocuWorks Viewer
     Light を使用します)。
 
 ``wait``
-    真ならば DocuWorks Viewer (Light) が終了されるまで処理を停止
+    ``True`` ならば DocuWorks Viewer (Light) が終了されるまで処理を停止
     します。 ``False`` ならば DocuWorks Viewer (Light) を起動後すぐに
     処理を続行します。
-
-``wait=False`` で呼び出すと、戻り値として各ページのアノテーションの情報
-を返します。これを利用すると、ページを表示してアノテーションで追記して
-もらい、追記した内容を取得する、という対話処理が可能になります。
-
 
 rasterize()
 -----------
@@ -419,13 +409,16 @@ Page オブジェクトには、 ``re_regions()`` メソッドが用意されて
     検索するテキスト。
 
 ``ignore_case``
-    真ならば大文字・小文字を区別しません。偽ならば区別します。
+    ``True`` ならば大文字・小文字を区別しません。
+    ``False`` ならば区別します。
 
 ``ignore_width``
-    真ならば全角・半角を区別しません。偽ならば区別します。
+    ``True`` ならば全角・半角を区別しません。
+    ``False`` ならば区別します。
 
 ``ignore_hirakata``
-    真ならばひらがなとカタカナを区別しません。偽ならば区別します。
+    ``True`` ならばひらがなとカタカナを区別しません。
+    ``False`` ならば区別します。
 
 実際の利用例については、サンプルプログラムの「検索してマーク」をご覧ください。
 
@@ -462,8 +455,8 @@ Page オブジェクトおよび Annotation オブジェクトには、
     左上が、それぞれ原点となります。単位は mm です。
 
 ``half_open``
-    真ならば ``rect`` が半開矩形領域であるものと解釈します。
+    ``True`` ならば ``rect`` が半開矩形領域であるものと解釈します。
 
 ``recursive``
-    真ならばアノテーションに貼り付けられたアノテーション
+    ``True`` ならばアノテーションに貼り付けられたアノテーション
     (子アノテーション) も検索対象とします。

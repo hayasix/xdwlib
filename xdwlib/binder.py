@@ -228,7 +228,7 @@ class Binder(Subject, XDWFile):
         for doc in self:
             pc += PageCollection(doc)
         return pc.view(light=light, wait=wait, flat=False, group=True,
-                       page=page, fullscreen=fullscreen, zoom=zoom)
+                        page=page, fullscreen=fullscreen, zoom=zoom)
 
     def content_text(self, type=None):
         """Get all content text.

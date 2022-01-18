@@ -119,10 +119,8 @@ def create_sfx(input_path, output_path=None):
     output_path = derivative_path(output_path)
     if XDWVER < 8:
         XDW_CreateSfxDocument(cp(input_path), cp(output_path))
-    elif XDWVER < 9:
-        XDW_CreateSfxDocumentW(input_path, output_path)
     else:
-        raise NotImplementedError
+        XDW_CreateSfxDocumentW(input_path, output_path)
     return output_path
 
 
@@ -208,7 +206,6 @@ def protect(input_path,
     """Generate protected document/binder.
 
     protect_type    'PASSWORD' | 'PASSWORD128' | 'PKI'
-                               | 'PASSWORD256' | | 'PKI256'  -- DW 8+
     auth            'NONE' | 'NODIALOGUE' | 'CONDITIONAL'
 
     **options for PASSWORD and PASSWORD128:
@@ -235,13 +232,13 @@ def protect(input_path,
     protect_option.nAuthMode = XDW_AUTH.normalize(auth)
     protect_type = XDW_PROTECT.normalize(protect_type)
     o = lambda s: options.get(s)
-    if protect_type in (XDW_PROTECT_PSWD, XDW_PROTECT_PSWD128, XDW_PROTECT_256):
+    if protect_type in (XDW_PROTECT_PSWD, XDW_PROTECT_PSWD128):
         opt = XDW_SECURITY_OPTION_PSWD()
         opt.nPermission = flagvalue(XDW_PERM, o("permission"), store=True)
         opt.szOpenPswd = o("password") or ""
         opt.szFullAccessPswd = o("fullaccess") or ""
         opt.lpszComment = o("comment") or ""
-    elif protect_type in (XDW_PROTECT_PKI, XDW_PROTECT_PKI256):
+    elif protect_type == XDW_PROTECT_PKI:
         opt = XDW_SECURITY_OPTION_PKI()
         opt.nPermission = flagvalue(XDW_PERM, o("permission"), store=True)
         certificates = o("certificates")
@@ -251,7 +248,7 @@ def protect(input_path,
         opt.nCertsNum = len(certificates) + len(fullaccesscerts)
         opt.nFullAccessCertsNum = len(fullaccesscerts)
         certs = fullaccesscerts + certificates
-        ders = (XDW_DER_CERTIFICATE * opt.nCertsNum)()
+        ders = XDW_DER_CERTIFICATE() * opt.nCertsNum
         for i in range(opt.nCertsNum):
             ders[i].pCert = pointer(certs[i])
             ders[i].nCertSize = len(certs[i])

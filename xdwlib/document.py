@@ -123,7 +123,10 @@ def create_from_pdf(input_path, output_path=None):
     output_path = adjust_path(output_path or root, ext=".xdw")
     output_path = derivative_path(output_path)
     try:
-        XDW_CreateXdwFromImagePdfFile(cp(input_path), cp(output_path))
+        if XDWVER < 8:
+            XDW_CreateXdwFromImagePdfFile(cp(input_path), cp(output_path))
+        else:
+            XDW_CreateXdwFromImagePdfFileW(input_path, output_path)
     except Exception as e:
         # If PDF is not compatible with DocuWorks, try to handle it
         # with the system-defined application program.

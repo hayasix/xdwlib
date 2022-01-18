@@ -19,7 +19,7 @@ import base64
 import time
 import datetime
 from functools import reduce
-from winreg import QueryValueEx, OpenKey, HKEY_LOCAL_MACHINE
+from ctypes import cdll
 
 from .xdwapi import *
 from .observer import *
@@ -56,6 +56,7 @@ if PIL_ENABLED:
 PSEP = "\f"  # page separator
 ASEP = "\v"  # annotation separator
 
+CP = cdll.kernel32.GetACP()
 CODEPAGE = f"cp{CP}"
 
 DEFAULT_TZ = JST
@@ -107,40 +108,19 @@ mm2px = lambda v, dpi: v / INCH * dpi
 px2mm = lambda v, dpi: v / dpi * INCH
 
 
-def environ(name=None, x64=False):
+def environ(name=None):
     """DocuWorks environment information."""
-    incompats = {XDW_GI_INSTALLPATH: "InstallPath",
-                 XDW_GI_BINPATH: "InstallBinPath"}
-    vendor = "FujiXerox" if XDW_VERSION < "9.1" else "FUJIFILM"
-    def getvalue(name):
-        n = XDW_ENVIRON.normalize(name)
-        if not n:
-            raise InfoNotFoundError(f"illegal name '{name}'")
-        if n == XDW_GI_DWDESK_FILENAME_DIGITS:
-            return ord(XDW_GetInformation(n))
-        if n == XDW_GI_OCRENABLER_STATE:
-            try:
-                return not XDW_GetInformation(n)
-            except InvalidArgError:
-                return False
-        if x64 and n in incompats:
-            return uc(QueryValueEx(
-                    OpenKey(HKEY_LOCAL_MACHINE, f"SOFTWARE\\{vendor}\\MPM3"),
-                    incompats[n])[0])
-        try:
-            return uc(XDW_GetInformation(n))
-        except InfoNotFoundError as e:
-            return None
+    it = XDW_GI_DWDESK_FILENAME_DIGITS
     if name:
-        return getvalue(name)
+        value = XDW_GetInformation(XDW_ENVIRON.normalize(name))
+        return ord(value) if name == XDW_ENVIRON[it] else uc(value)
     values = dict()
-    for v in XDW_ENVIRON.values():
-        if ((v == "TASKSPACEPATH" and XDWVER < 8) or
-            (v == "OCRENABLER_STATE" and XDWVER < 9)):
+    for k, v in XDW_ENVIRON.items():
+        try:
+            value = XDW_GetInformation(k)
+            values[v] = ord(value) if k == it else uc(value)
+        except InfoNotFoundError as e:
             continue
-        c = getvalue(v)
-        if c is not None:
-            values[v] = c
     return values
 
 

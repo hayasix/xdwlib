@@ -19,32 +19,6 @@ from ctypes import *
 from .bitmap import Bitmap
 
 
-### SETUP ############################################################
-
-DLL = windll.LoadLibrary("xdwapi.dll")
-CP = cdll.kernel32.GetACP()
-
-# Get XDW VERSION.
-size = DLL.XDW_GetInformation(1, None, 0, None)
-buf = create_string_buffer(size)
-size = DLL.XDW_GetInformation(1, byref(buf), size, None)
-XDW_VERSION = buf.value.decode("ascii")
-XDWVER = int(XDW_VERSION.split(".")[0])
-
-# Stop running immediately if the fatal version is running.
-if XDW_VERSION == "8.0.3":
-    raise SystemExit("""\
-THIS VERSION OF DOCUWORKS HAS A FATAL ERROR THAT MAY CAUSE MASSIVE DATA LOSS.
-CONSULT YOUR SYSTEM ADMINISTRATOR AS SOON AS POSSIBLE.
-PROGRAM STOPS RUNNING TO AVOID ANY ACCIDENT.""")
-
-# Check if embedded OCR engine is available.
-if XDWVER < 9:
-    OCRENABLED = True
-else:  # if 9 <= XDWVER:
-    OCRENABLED = (DLL.XDW_GetInformation(15, None, 0, None) == 0)
-
-
 ######################################################################
 ### ERROR DEFINITIONS ################################################
 
@@ -115,8 +89,7 @@ class XDWError(Exception):
         self.code = self.__class__.e
         major = XDW_ERROR_MESSAGES.get(self.code, "XDW_E_UNDEFINED")
         if message:
-            self.message = "{0} ({1:08X}) {2}".format(major, _uint32(self.code),
-                                                      message)
+            self.message = "{0} ({1:08X}) {2}".format(major, _uint32(self.code), message)
         else:
             self.message = "{0} ({1:08X})".format(major, _uint32(self.code))
 
@@ -189,7 +162,6 @@ def XDWErrorFactory(errorcode, message=""):
 NULL = None
 
 
-
 class XDWConst(dict):
 
     def __init__(self, constants, default=None):
@@ -222,8 +194,6 @@ XDW_GI_DWINPUTPATH                  = 10
 XDW_GI_DWDESKPATH                   = 11
 XDW_GI_DWVIEWERPATH                 = 12
 XDW_GI_DWVLTPATH                    = 13
-XDW_GI_TASKSPACEPATH                = 14
-XDW_GI_OCRENABLER_STATE             = 15
 XDW_GI_DWDESK_FILENAME_DELIMITER    = 1001
 XDW_GI_DWDESK_FILENAME_DIGITS       = 1002
 
@@ -241,8 +211,6 @@ XDW_ENVIRON = XDWConst({
         XDW_GI_DWDESKPATH               : "DWDESKPATH",
         XDW_GI_DWVIEWERPATH             : "DWVIEWERPATH",
         XDW_GI_DWVLTPATH                : "DWVLTPATH",
-        XDW_GI_TASKSPACEPATH            : "TASKSPACEPATH",
-        XDW_GI_OCRENABLER_STATE         : "OCRENABLER_STATE",
         XDW_GI_DWDESK_FILENAME_DELIMITER: "DWDESK_FILENAME_DELIMITER",
         XDW_GI_DWDESK_FILENAME_DIGITS   : "DWDESK_FILENAME_DIGITS",
         })
@@ -487,8 +455,6 @@ XDW_PROTECT_PSWD128                 = 3
 XDW_PROTECT_PKI                     = 4
 XDW_PROTECT_STAMP                   = 5
 XDW_PROTECT_CONTEXT_SERVICE         = 6
-XDW_PROTECT_PSWD256                 = 7
-XDW_PROTECT_PKI256                  = 8
 
 XDW_PROTECT = XDWConst({
         XDW_PROTECT_NONE            : "NONE",
@@ -497,15 +463,12 @@ XDW_PROTECT = XDWConst({
         XDW_PROTECT_PKI             : "PKI",
         XDW_PROTECT_STAMP           : "STAMP",
         XDW_PROTECT_CONTEXT_SERVICE : "CONTEXT_SERVICE",
-        XDW_PROTECT_PSWD256         : "PASSWORD256",
-        XDW_PROTECT_PKI256          : "PKI256",
         }, default=XDW_PROTECT_NONE)
 
 # signature
 
 XDW_SIGNATURE_STAMP                                     = 100
 XDW_SIGNATURE_PKI                                       = 102
-XDW_SIGNATURE_PKI_SHA256                                = 105
 
 XDW_SIGNATURE = XDWConst({
         XDW_SIGNATURE_STAMP                             : "STAMP",
@@ -798,30 +761,30 @@ XDW_OCR_NOISEREDUCTION = XDWConst({
         XDW_REDUCENOISE_STRONG                  : "STRONG",
         }, default=XDW_REDUCENOISE_NONE)
 
-XDW_PRIORITY_NONE                               = 0
-XDW_PRIORITY_SPEED                              = 1
-XDW_PRIORITY_RECOGNITION                        = 2
-XDW_PRIORITY_ACCURACY = XDW_PRIORITY_RECOGNITION
+# Followings are just the same as official xdw_api.h (7.1-7.2) but wrong.
+#XDW_PRIORITY_NONE                               = 0
+#XDW_PRIORITY_SPEED                              = 1
+#XDW_PRIORITY_RECOGNITION                        = 2
+# Corrected definitions.
+XDW_PRIORITY_SPEED                              = 0
+XDW_PRIORITY_RECOGNITION                        = 1
 
-XDW_PRIORITY = XDWConst({
-        XDW_PRIORITY_NONE                       : "NONE",
+XDW_OCR_PREPROCESSING = XDWConst({
+        #XDW_PRIORITY_NONE                       : "NONE",
         XDW_PRIORITY_SPEED                      : "SPEED",
-        XDW_PRIORITY_ACCURACY                   : "ACCURACY",
-        }, default=XDW_PRIORITY_NONE)
+        XDW_PRIORITY_RECOGNITION                : "ACCURACY",
+        #}, default=XDW_PRIORITY_NONE)
+        }, default=XDW_PRIORITY_SPEED)
 
 XDW_OCR_ENGINE_V4                               = 1  # for compatibility
 XDW_OCR_ENGINE_DEFAULT                          = 1
 XDW_OCR_ENGINE_WRP                              = 2
 XDW_OCR_ENGINE_FRE                              = 3
-XDW_OCR_ENGINE_FRE_MULTI                        = 4
 
 XDW_OCR_ENGINE = XDWConst({
         XDW_OCR_ENGINE_DEFAULT                  : "DEFAULT",
         XDW_OCR_ENGINE_WRP                      : "WINREADER PRO",
-        XDW_OCR_ENGINE_FRE                      : "EXTENDED",
-        XDW_OCR_ENGINE_FRE_MULTI                : "MULTI",
         }, default=XDW_OCR_ENGINE_DEFAULT)
-
 
 XDW_OCR_LANGUAGE_AUTO                           = -1
 XDW_OCR_LANGUAGE_JAPANESE                       = 0
@@ -833,32 +796,11 @@ XDW_OCR_LANGUAGE = XDWConst({
         XDW_OCR_LANGUAGE_ENGLISH                : "ENGLISH",
         }, default=XDW_OCR_LANGUAGE_AUTO)
 
-#XDW_OCR_MULTIPLELANGUAGES_AUTO                  = 0x01
 XDW_OCR_MULTIPLELANGUAGES_ENGLISH               = 0x02
 XDW_OCR_MULTIPLELANGUAGES_FRENCH                = 0x04
 XDW_OCR_MULTIPLELANGUAGES_SIMPLIFIED_CHINESE    = 0x08
 XDW_OCR_MULTIPLELANGUAGES_TRADITIONAL_CHINESE   = 0x10
 XDW_OCR_MULTIPLELANGUAGES_THAI                  = 0x20
-XDW_OCR_MULTIPLELANGUAGES_JAPANESE              = 0x40
-XDW_OCR_MULTIPLELANGUAGES_KOREAN                = 0x80
-XDW_OCR_MULTIPLELANGUAGES_VIETNAMESE            = 0x100
-XDW_OCR_MULTIPLELANGUAGES_INDONESIAN            = 0x200
-XDW_OCR_MULTIPLELANGUAGES_MALAY                 = 0x400
-XDW_OCR_MULTIPLELANGUAGES_TAGALOG               = 0x800
-
-XDW_OCR_MULTIPLELANGUAGES = XDWConst({
-        XDW_OCR_MULTIPLELANGUAGES_ENGLISH       : "ENGLISH",
-        XDW_OCR_MULTIPLELANGUAGES_FRENCH        : "FRENCH",
-        XDW_OCR_MULTIPLELANGUAGES_SIMPLIFIED_CHINESE: "SIMPLIFIED_CHINESE",
-        XDW_OCR_MULTIPLELANGUAGES_TRADITIONAL_CHINESE : "TRADITIONAL_CHINESE",
-        XDW_OCR_MULTIPLELANGUAGES_THAI          : "THAI",
-        XDW_OCR_MULTIPLELANGUAGES_JAPANESE      : "JAPANESE",
-        XDW_OCR_MULTIPLELANGUAGES_KOREAN        : "KOREAN",
-        XDW_OCR_MULTIPLELANGUAGES_VIETNAMESE    : "VIETNAMESE",
-        XDW_OCR_MULTIPLELANGUAGES_INDONESIAN    : "INDONESIAN",
-        XDW_OCR_MULTIPLELANGUAGES_MALAY         : "MALAY",
-        XDW_OCR_MULTIPLELANGUAGES_TAGALOG       : "TAGALOG",
-        }, default=XDW_OCR_MULTIPLELANGUAGES_ENGLISH)
 
 XDW_OCR_FORM_AUTO                               = 0
 XDW_OCR_FORM_TABLE                              = 1
@@ -892,12 +834,11 @@ XDW_OCR_ENGINE_LEVEL_SPEED                      = 1
 XDW_OCR_ENGINE_LEVEL_STANDARD                   = 2
 XDW_OCR_ENGINE_LEVEL_ACCURACY                   = 3
 
-XDW_OCR_ENGINE_LEVEL = XDWConst({
+XDW_OCR_STRATEGY = XDWConst({
         XDW_OCR_ENGINE_LEVEL_SPEED              : "SPEED",
         XDW_OCR_ENGINE_LEVEL_STANDARD           : "STANDARD",
         XDW_OCR_ENGINE_LEVEL_ACCURACY           : "ACCURACY",
         }, default=XDW_OCR_ENGINE_LEVEL_STANDARD)
-XDW_OCR_STRATEGY = XDW_OCR_ENGINE_LEVEL
 
 XDW_OCR_MIXEDRATE_JAPANESE                      = 1
 XDW_OCR_MIXEDRATE_BALANCED                      = 2
@@ -908,25 +849,6 @@ XDW_OCR_MAIN_LANGUAGE = XDWConst({
         XDW_OCR_MIXEDRATE_BALANCED              : "BALANCED",
         XDW_OCR_MIXEDRATE_ENGLISH               : "ENGLISH",
         }, default=XDW_OCR_MIXEDRATE_BALANCED)
-
-XDW_OCR_PREPROCESSING_SPEED                     = 0
-XDW_OCR_PREPROCESSING_RECOGNITION               = 1
-XDW_OCR_PREPROCESSING_ACCURACY = XDW_OCR_PREPROCESSING_RECOGNITION
-
-XDW_OCR_PREPROCESSING = XDWConst({
-        XDW_OCR_PREPROCESSING_SPEED    : "SPEED",
-        XDW_OCR_PREPROCESSING_ACCURACY : "ACCURACY",
-        }, default=XDW_OCR_PREPROCESSING_ACCURACY)
-
-XDW_OCR_PREPROCESS_PRIORITY_MONO_SPEED          = 0
-XDW_OCR_PREPROCESS_PRIORITY_MONO_ACCURACY       = 1
-XDW_OCR_PREPROCESS_PRIORITY_COLOR               = 2
-
-XDW_OCR_PREPROCESS_PRIORITY = XDWConst({
-        XDW_OCR_PREPROCESS_PRIORITY_MONO_SPEED  : "MONO_SPEED",
-        XDW_OCR_PREPROCESS_PRIORITY_MONO_ACCURACY: "MONO_ACCURACY",
-        XDW_OCR_PREPROCESS_PRIORITY_COLOR       : "COLOR",
-        }, default=XDW_OCR_PREPROCESS_PRIORITY_MONO_ACCURACY)
 
 # page type
 
@@ -1888,44 +1810,6 @@ class XDW_OCR_OPTION_V5_EX(SizedStructure):
         ]
 
 
-class XDW_OCR_OPTION_V7(SizedStructure):
-    _fields_ = [
-        ("nSize", c_int),
-        ("nNoiseReduction", c_int),
-        ("nLanguage", c_int),
-        ("nInsertSpaceCharacter", c_int),
-        ("nJapaneseKnowledgeProcessing", c_int),
-        ("nForm", c_int),
-        ("nColumn", c_int),
-        ("nDisplayProcess", c_int),
-        ("nAutoDeskew", c_int),
-        ("nAreaNum", c_uint),
-        ("pAreaRects", POINTER(POINTER(XDW_RECT))),
-        ("nPriority", c_int),
-        ("nEngineLevel", c_int),
-        ("nLanguageMixedRate", c_int),
-        ("nHalfSizeChar", c_int),
-        ]
-
-
-class XDW_OCR_OPTION_V9(SizedStructure):
-    _fields_ = [
-        ("nSize", c_int),
-        ("nNoiseReduction", c_int),
-        ("nLanguage", c_int),
-        ("nInsertSpaceCharacter", c_int),
-        ("nForm", c_int),
-        ("nColumn", c_int),
-        ("nDisplayProcess", c_int),
-        ("nAutoDeskew", c_int),
-        ("nAreaNum", c_uint),
-        ("pAreaRects", POINTER(POINTER(XDW_RECT))),
-        ("nPriority", c_int),
-        ("nEngineLevel", c_int),
-        ("nHalfSizeChar", c_int)
-        ]
-
-
 class XDW_OCR_OPTION_WRP(SizedStructure):
     _fields_ = [
         ("nSize", c_int),
@@ -1950,6 +1834,26 @@ class XDW_OCR_OPTION_FRE(SizedStructure):
         ("nAreaNum", c_uint),
         ("pAreaRects", POINTER(POINTER(XDW_RECT))),
         ("nPriority", c_int),
+        ]
+
+
+class XDW_OCR_OPTION_V7(SizedStructure):
+    _fields_ = [
+        ("nSize", c_int),
+        ("nNoiseReduction", c_int),
+        ("nLanguage", c_int),
+        ("nInsertSpaceCharacter", c_int),
+        ("nJapaneseKnowledgeProcessing", c_int),
+        ("nForm", c_int),
+        ("nColumn", c_int),
+        ("nDisplayProcess", c_int),
+        ("nAutoDeskew", c_int),
+        ("nAreaNum", c_uint),
+        ("pAreaRects", POINTER(POINTER(XDW_RECT))),
+        ("nPriority", c_int),
+        ("nEngineLevel", c_int),
+        ("nLanguageMixedRate", c_int),
+        ("nHalfSizeChar", c_int),
         ]
 
 
@@ -2188,8 +2092,7 @@ XDW_AID_INITIAL_DATA = {
         XDW_AID_LINK            : None,
         XDW_AID_PAGEFORM        : None,
         XDW_AID_OLE             : None,
-        XDW_AID_BITMAP          : (XDW_AA_BITMAP_INITIAL_DATA if XDWVER < 8
-                                   else XDW_AA_BITMAP_INITIAL_DATAW),
+        XDW_AID_BITMAP          : XDW_AA_BITMAP_INITIAL_DATA,
         XDW_AID_RECEIVEDSTAMP   : XDW_AA_RECEIVEDSTAMP_INITIAL_DATA,
         XDW_AID_CUSTOM          : XDW_AA_CUSTOM_INITIAL_DATA,
         XDW_AID_TITLE           : None,
@@ -2198,8 +2101,10 @@ XDW_AID_INITIAL_DATA = {
 
 
 ######################################################################
-
 ### API ##############################################################
+
+
+DLL = windll.LoadLibrary("xdwapi.dll")
 
 ### decorators and utility functions
 
@@ -2305,7 +2210,7 @@ def ATTR(byorder=False, widename=False, multitype=False, widevalue=False):
         @wraps(api)
         def func(*args, **kw):
             args = list(args)
-            codepage = kw.get("codepage", CP)
+            codepage = kw.get("codepage", 932)
             def create_buffer(wide):
                 return create_unicode_buffer if wide else create_string_buffer
             # Pass 1 - get the size of value.
@@ -2325,12 +2230,10 @@ def ATTR(byorder=False, widename=False, multitype=False, widevalue=False):
             args.append(NULL)
             size = TRY(getattr(DLL, api.__name__), *args)
             # Pass 2 - read the actual value.
-            if attrtype.value in (XDW_ATYPE_INT, XDW_ATYPE_DATE,
-                                  XDW_ATYPE_BOOL, XDW_ATYPE_OCTS):
+            if attrtype.value in (XDW_ATYPE_INT, XDW_ATYPE_DATE, XDW_ATYPE_BOOL, XDW_ATYPE_OCTS):
                 attrvalue = c_int()
             elif attrtype.value == XDW_ATYPE_STRING:
-                attrvalue = create_buffer(
-                        multitype and widename or widevalue)(size)
+                attrvalue = create_buffer(multitype and widename or widevalue)(size)
             else:  # if attrtype.value == XDW_ATYPE_OTHER:
                 attrvalue = (XDW_POINT * int(size / sizeof(XDW_POINT)))()
             if widevalue:
@@ -2351,6 +2254,17 @@ def ATTR(byorder=False, widename=False, multitype=False, widevalue=False):
     return deco
 
 
+### DocuWorks API's provided by xdwapi.dll
+
+@STRING
+def XDW_GetInformation(index): pass
+
+
+XDWVER = int(XDW_GetInformation(XDW_GI_VERSION).decode("ascii").split(".")[0])
+if 8 <= XDWVER:
+    XDW_AID_INITIAL_DATA[XDW_AID_BITMAP] = XDW_AA_BITMAP_INITIAL_DATAW
+
+
 def XDWVERSION(ver):
     """Decorator to indicate if the following function is valid or not."""
     def deco(api):
@@ -2367,14 +2281,17 @@ def XDWVERSION(ver):
     return deco
 
 
-### DocuWorks API's provided by xdwapi.dll
-
-@STRING
-def XDW_GetInformation(index): pass
-
 @XDWVERSION(8)
 @UNICODE
 def XDW_GetInformationW(index): pass
+
+
+# Stop running immediately if the fatal version is running.
+if XDW_GetInformation(XDW_GI_VERSION) == "8.0.3":
+    raise SystemExit("""\
+THIS VERSION OF DOCUWORKS HAS A FATAL ERROR THAT MAY CAUSE MASSIVE DATA LOSS.
+CONSULT YOUR SYSTEM ADMINISTRATOR AS SOON AS POSSIBLE.
+PROGRAM STOPS RUNNING TO AVOID ANY ACCIDENT.""")
 
 @APPEND(NULL)
 def XDW_AddSystemFolder(index): pass
@@ -2401,18 +2318,6 @@ def XDW_OpenDocumentHandle(path, open_mode):
 def XDW_OpenDocumentHandleW(path, open_mode):
     doc_handle = XDW_DOCUMENT_HANDLE()
     TRY(DLL.XDW_OpenDocumentHandleW, path, byref(doc_handle), byref(open_mode))
-    return doc_handle
-
-@XDWVERSION(9)
-def XDW_OpenDocumentHandleEx(path, open_mode):
-    doc_handle = XDW_DOCUMENT_HANDLE()
-    TRY(DLL.XDW_OpenDocumentHandleEx, path, byref(doc_handle), byref(open_mode))
-    return doc_handle
-
-@XDWVERSION(9)
-def XDW_OpenDocumentHandleExW(path, open_mode):
-    doc_handle = XDW_DOCUMENT_HANDLE()
-    TRY(DLL.XDW_OpenDocumentHandleExW, path, byref(doc_handle), byref(open_mode))
     return doc_handle
 
 @APPEND(NULL)
@@ -2532,22 +2437,12 @@ def XDW_SetAnnotationSize(doc_handle, ann_handle, width, height): pass
 @APPEND(NULL)
 def XDW_SetAnnotationPosition(doc_handle, ann_handle, hpos, vpos): pass
 
-if XDWVER < 9:
+@APPEND(NULL)
+def XDW_CreateSfxDocument(input_path, output_path): pass
 
-    @APPEND(NULL)
-    def XDW_CreateSfxDocument(input_path, output_path): pass
-
-    @XDWVERSION(8)
-    @APPEND(NULL)
-    def XDW_CreateSfxDocumentW(input_path, output_path): pass
-
-else:
-
-    def XDW_CreateSfxDocument(*args, **kw):
-        raise NotImplementedError
-
-    XDW_CreateSfxDocumentW = XDW_CreateSfxDocument
-
+@XDWVERSION(8)
+@APPEND(NULL)
+def XDW_CreateSfxDocumentW(input_path, output_path): pass
 
 @APPEND(NULL)
 def XDW_ExtractFromSfxDocument(input_path, output_path): pass
@@ -2918,27 +2813,27 @@ def XDW_GetPageTextToMemoryW(doc_handle, page): pass
 def XDW_GetFullTextW(doc_handle, output_path): pass
 
 @ATTR(widevalue=True)
-def XDW_GetAnnotationAttributeW(ann_handle, attr_name, codepage=CP): pass
+def XDW_GetAnnotationAttributeW(ann_handle, attr_name, codepage=932): pass
 
 @APPEND(0, NULL)
-def XDW_SetAnnotationAttributeW(doc_handle, ann_handle, attr_name, attr_type, attr_val, text_type, codepage=CP): pass
+def XDW_SetAnnotationAttributeW(doc_handle, ann_handle, attr_name, attr_type, attr_val, text_type, codepage=932): pass
 
 @ATTR(widename=True, multitype=True, widevalue=True)
-def XDW_GetDocumentAttributeByNameW(doc_handle, attr_name, codepage=CP): pass
+def XDW_GetDocumentAttributeByNameW(doc_handle, attr_name, codepage=932): pass
 
 @ATTR(byorder=True, widename=True, multitype=True, widevalue=True)
-def XDW_GetDocumentAttributeByOrderW(doc_handle, order, codepage=CP): pass
+def XDW_GetDocumentAttributeByOrderW(doc_handle, order, codepage=932): pass
 
 @ATTR(widename=True, multitype=True, widevalue=True)
-def XDW_GetDocumentAttributeByNameInBinderW(doc_handle, pos, attr_name, codepage=CP): pass
+def XDW_GetDocumentAttributeByNameInBinderW(doc_handle, pos, attr_name, codepage=932): pass
 
 @ATTR(byorder=True, multitype=True, widevalue=True)
-def XDW_GetDocumentAttributeByOrderInBinderW(doc_handle, pos, order, codepage=CP): pass
+def XDW_GetDocumentAttributeByOrderInBinderW(doc_handle, pos, order, codepage=932): pass
 
 @APPEND(NULL)
-def XDW_SetDocumentAttributeW(doc_handle, attr_name, attr_type, attr_val, text_type, codepage=CP): pass
+def XDW_SetDocumentAttributeW(doc_handle, attr_name, attr_type, attr_val, text_type, codepage=932): pass
 
-def XDW_GetDocumentNameInBinderW(doc_handle, pos, codepage=CP):
+def XDW_GetDocumentNameInBinderW(doc_handle, pos, codepage=932):
     text_type = c_int()
     size = TRY(DLL.XDW_GetDocumentNameInBinderW, doc_handle, pos, NULL, 0, byref(text_type), codepage, NULL)
     doc_name = create_unicode_buffer(size)
@@ -2946,9 +2841,9 @@ def XDW_GetDocumentNameInBinderW(doc_handle, pos, codepage=CP):
     return (doc_name.value, text_type.value)
 
 @APPEND(NULL)
-def XDW_SetDocumentNameInBinderW(doc_handle, pos, doc_name, text_type, codepage=CP): pass
+def XDW_SetDocumentNameInBinderW(doc_handle, pos, doc_name, text_type, codepage=932): pass
 
-def XDW_GetOriginalDataInformationW(doc_handle, org_data, codepage=CP):
+def XDW_GetOriginalDataInformationW(doc_handle, org_data, codepage=932):
     text_type = c_int()
     orgdata_infow = XDW_ORGDATA_INFOW()
     TRY(DLL.XDW_GetOriginalDataInformationW, doc_handle, org_data, byref(orgdata_infow), byref(text_type), codepage, NULL)
