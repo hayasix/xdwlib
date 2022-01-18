@@ -515,7 +515,7 @@ class Page(Annotatable, Observer):
             verbose=False,
             failover=True,
             ):
-        f"""Process page with OCR engine.
+        """Process page with OCR engine.
 
         engine          'DEFAULT' | 'WINREADER PRO'  -- DW9.1+
                         'DEFAULT' | 'WINREADER PRO' | 'MULTI'  -- DW<=9.0
@@ -604,7 +604,7 @@ class Page(Annotatable, Observer):
             endpoint="", subscription_key="",
             version="3.2", model_version="2021-04-12",
             ):
-        f"""Process page with Azure OCR.
+        """Process page with Azure OCR.
 
         language        (str) 'ja', 'en', etc.
         charset         'DEFAULT' | 'ANSI' | 'SYMBOL' | 'MAC' | 'SHIFTJIS'
