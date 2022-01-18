@@ -515,7 +515,7 @@ class Page(Annotatable, Observer):
             verbose=False,
             failover=True,
             ):
-        f"""Process page with OCR engine.
+        """Process page with OCR engine.
 
         engine          'DEFAULT' | 'WINREADER PRO'  -- DW9.1+
                         'DEFAULT' | 'WINREADER PRO' | 'MULTI'  -- DW<=9.0
@@ -542,8 +542,8 @@ class Page(Annotatable, Observer):
         failover        (bool) do ocr_azure() if ocr() failed
 
         CAUTION: To do ocr_azure(), enable internet connection and set
-        environment variables {ENV_AZURE_URL} and
-        {ENV_AZURE_KEY}.
+        environment variables XDWLIB_OCR_AZURE_ENDPOINT and
+        XDWLIB_OCR_AZURE_SUBSCRIPTION_KEY.
         """
         if self.type != "IMAGE":
             raise TypeError("OCR is available for image pages")
@@ -604,7 +604,7 @@ class Page(Annotatable, Observer):
             endpoint="", subscription_key="",
             version="3.2", model_version="2021-04-12",
             ):
-        f"""Process page with Azure OCR.
+        """Process page with Azure OCR.
 
         language        (str) 'ja', 'en', etc.
         charset         'DEFAULT' | 'ANSI' | 'SYMBOL' | 'MAC' | 'SHIFTJIS'
@@ -623,8 +623,8 @@ class Page(Annotatable, Observer):
         model_version   (str) OCR data model version; only '2021-04-12' is valid
 
         CAUTION: Default endpoint and subscription_key can be set in
-        environment variables {ENV_AZURE_URL}
-        and {ENV_AZURE_KEY}.
+        environment variables XDWLIB_OCR_AZURE_ENDPOINT and
+        XDWLIB_OCR_AZURE_SUBSCRIPTION_KEY.
         """
         url, key = self.azure_env()
         url = endpoint or url
