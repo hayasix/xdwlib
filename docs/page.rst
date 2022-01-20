@@ -162,18 +162,21 @@ Page クラスは、その基底クラスである Annotatable クラスに多�
     ページからテキストを抽出 (OCR) します。結果として得られるテキストは、
     別途 ``self.content_text()`` で取り出す必要があります。
 
-    ``engine`` は ``'DEFAULT'``, ``'EXTENDED'``, ``'MULTI'``,
-    ``'WINREADER PRO'`` です (小文字でもかまいません)。ただし、DocuWorks 9
-    以上では DocuWorks OCR License for Development Tool Kit をあらかじめ
-    登録しておく必要があります。有効な登録がなく必要な環境変数が定義されて
-    る場合は ``ocr_azure()`` の実行を試みます。その他の場合は
+    ``engine`` は ``'DEFAULT'``, ``'MULTI'``, ``'WINREADER PRO'`` です
+    (小文字でもかまいません)。ただし、DocuWorks 9 以上では ``'MULTI'`` は
+    指定できません。
+    DocuWorks 9 以上では DocuWorks OCR License for Development Tool Kit を
+    あらかじめ登録しておく必要があります。有効な登録がなく必要な環境変数が
+    定義されている場合は ``ocr_azure()`` の実行を試みます。その他の場合は
     AccessDeniedError となります。
 
     ``strategy`` は ``'STANDARD'``, ``'SPEED'`` または ``'ACCURACY'``
     です (小文字でもかまいません)。
 
     ``preprocessing`` は ``'SPEED'`` または ``'ACCURACY'`` です
-    (小文字でもかまいません)。
+    (小文字でもかまいません)。DocuWorks 9 以上では ``'MONO_SPEED'``,
+    ``'MONO_ACCURACY'``, ``'COLOR'`` のいずれかを指定します (小文字でも
+    かまいません)。
 
     ``noise_reduction`` は ``'NONE'``, ``'NORMAL'``, ``'WEAK'`` または
     ``'STRONG'`` です (小文字でもかまいません)。
@@ -192,7 +195,10 @@ Page クラスは、その基底クラスである Annotatable クラスに多�
     のシーケンスです。
 
     ``language`` は ``'AUTO'``, ``'JAPANESE'`` または ``'ENGLISH'``
-    です (小文字でもかまいません)。
+    です (小文字でもかまいません)。 DocuWorks 9 以上では、
+    ``'SIMPLIFIED_CHINESE'``, ``'TRADITIONAL_CHINESE'``, ``'THAI'``,
+    ``'KOREAN'``, ``'VIETNAMESE'``, ``'INDONESIAN'``, ``'MALAY'``,
+    ``'TAGALOG'`` も指定できます。
 
     ``main_language`` は ``'BALANCED'``, ``'JAPANESE'`` または
     ``'ENGLISH'`` です (小文字でもかまいません)。
@@ -215,6 +221,11 @@ Page クラスは、その基底クラスである Annotatable クラスに多�
     ページから Microsoft Azure Cognitive Services の Computer Vision (OCR)
     を利用してテキストを抽出します。結果として得られるテキストは、別途
     ``self.content_text()`` で取り出す必要があります。
+
+    ``charset`` には ``'DEFAULT'``, ``'ANSI'``, ``'SYMBOL'``, ``'MAC'``,
+    ``'SHIFTJIS'``, ``'HANGEUL'``, ``'CHINESEBIG5'``, ``'GREEK'``,
+    ``'TURKISH'``, ``'BALTIC'``, ``'RUSSIAN'``, ``'EASTEUROPE'``, ``'OEM'``
+    のいずれかを指定します。
 
     ``endpoint`` および ``subscription_key`` は Computer Vision の設定で
     あらかじめ作成しておく必要があります。引数で与えられない場合は、環境変数

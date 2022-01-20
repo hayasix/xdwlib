@@ -35,8 +35,7 @@ __all__ = (
 def create(input_path=None, output_path=None, **kw):
     """The XDW generator.
 
-    Returns actual pathname of generated document, which may be different
-    from `output_path' argument.
+    Returns the created pathname which may differ from output_path.
     """
     input_path = adjust_path(input_path)
     root, ext = os.path.splitext(input_path)
@@ -83,8 +82,7 @@ def create_from_image(input_path, output_path=None,
                         vert    'CENTER' | 'TOP' | 'BOTTOM'
     maxpapersize    'DEFAULT' | 'A3' | '2A0'
 
-    Returns actual pathname of generated document, which may be different
-    from `output_path' argument.
+    Returns the created pathname which may differ from output_path.
     """
     input_path = adjust_path(input_path)
     root, ext = os.path.splitext(input_path)
@@ -115,8 +113,7 @@ def create_from_image(input_path, output_path=None,
 def create_from_pdf(input_path, output_path=None):
     """XDW generator from image PDF file.
 
-    Returns actual pathname of generated document, which may be different
-    from `output_path' argument.
+    Returns the created pathname which may differ from output_path.
     """
     input_path = adjust_path(input_path)
     root, ext = os.path.splitext(input_path)
@@ -138,8 +135,7 @@ def create_from_app(input_path, output_path=None,
     attachment  (bool) attach original data file (given by input_path) or not
     timeout     (int) max seconds to wait until application printing is done
 
-    Returns actual pathname of generated document, which may be different
-    from `output_path' argument.
+    Returns the created pathname which may differ from output_path.
     """
     input_path = adjust_path(input_path)
     root, ext = os.path.splitext(input_path)
@@ -171,8 +167,7 @@ def create_from_app(input_path, output_path=None,
 def merge(input_paths, output_path=None):
     """Merge XDW's into a new XDW.
 
-    Returns actual pathname of generated document, which may be different
-    from `output_path' argument.
+    Returns the created pathname which may differ from output_path.
     """
     input_paths = [adjust_path(path) for path in input_paths]
     root, ext = os.path.splitext(input_paths[0])

@@ -318,6 +318,7 @@ XDW_TEXT_TYPE = XDWConst({
 
 XDW_DT_DOCUMENT                     = 0
 XDW_DT_BINDER                       = 1
+XDW_DT_CONTAINER                    = 2
 
 # open/create
 

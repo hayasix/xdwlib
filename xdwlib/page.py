@@ -202,20 +202,20 @@ class PageCollection(list):
     def export(self, path=None, flat=False, group=True):
         """Create a binder or document as a container for page collection.
 
-        path    (str) pathname for output
+        path    (str) export to {path};
+                      with no dir, export to {document/binder dir}/{path}
+                (None) save to {document/binder dir}/{.xdw or .xbd}
         flat    (bool) create document instead of binder
         group   (bool) group continuous pages by original document,
                 i.e. create document-in-binder.
 
-        Returns actual pathname of generated file, which may be different
-        from `path' argument.  Extension will be `.xdw' if flat=True,
-        otherwise `.xbd'.
+        Returns the exported pathname which may differ from path.
         """
         from .document import create as create_document
         from .binder import create_binder
         from .xdwfile import xdwopen
-        path = derivative_path(adjust_path(path or
-                (self[0].doc.name + (".xdw" if flat else ".xbd"))))
+        path = newpath(path or self[0].doc.name + (".xdw" if flat else ".xbd"),
+                       dir=self[0].doc.dirname())
         if flat:
             path = create_document(output_path=path)
         else:
@@ -727,13 +727,12 @@ class Page(Annotatable, Observer):
     def export(self, path=None):
         """Export page to another document.
 
-        path    (str) pathname to export;
-                given only basename without directory, exported file is
-                placed in the very directory of the original document.
+        path    (str) export to {path};
+                      with no dir, export to {document/binder dir}/{path}
+                (None) export to
+                      {document/binder dir}/{document name}_P{num}.xdw
 
-        Returns the actual pathname of generated XDW file, which may be
-        different from `path' argument.  If path is not available,
-        default name "DOCUMENTNAME_Pxx.xdw" will be used.
+        Returns the exported pathname which may differ from path.
         """
         return self.doc.export(self.pos, path=path)
 
@@ -742,7 +741,10 @@ class Page(Annotatable, Observer):
             direct=False):
         """Export page to image file.
 
-        path        (str) pathname to output
+        path        (str) export to {path};
+                          with no dir, export to {document/binder dir}/{path}
+                    (None) export to
+                          {document/binder dir}/{document name}_P{num}.bmp
         dpi         (int) 10..600
         color       'COLOR' | 'MONO' | 'MONO_HIGHQUALITY'
         format      'BMP' | 'TIFF' | 'JPEG' | 'PDF'
@@ -764,7 +766,7 @@ class Page(Annotatable, Observer):
                         on the internal state, so check 'degree' attribute
                         of the page if needed.
 
-        Returns actual pathname of created image file.
+        Returns the exported pathname which may differ from path.
         """
         return self.doc.export_image(self.pos,
                 path=path, pages=1, dpi=dpi, color=color, format=format,

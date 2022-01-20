@@ -76,15 +76,15 @@ class Point(_Point):
         return "Point" + self.__str__()
 
     def int(self):
-        return Point(map(int, self))
+        return Point(*map(int, self))
 
     fix = int
 
     def floor(self):
-        return Point(map(math.floor, self))
+        return Point(*map(math.floor, self))
 
     def ceil(self):
-        return Point(map(math.ceil, self))
+        return Point(*map(math.ceil, self))
 
     @staticmethod
     def _round(f, places=0):

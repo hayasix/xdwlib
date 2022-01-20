@@ -246,11 +246,20 @@ class Annotation(Annotatable, Observer):
         elif data_type == XDW_ATYPE_STRING:
             self_is_unicode = (text_type == XDW_TEXT_UNICODE)
             return value
-        else:  # data_type == XDW_ATYPE_OTHER:  # Quick hack for points.
+        elif data_type == XDW_ATYPE_DATE:  # unsupported in SDK
+            return f"<<DATE:{value}>>"
+        elif data_type == XDW_ATYPE_BOOL:  # unsupported in SDK
+            return f"<<BOOL:{value}>>"
+        elif data_type == XDW_ATYPE_OCTS:  # unsupported in SDK
+            return f"<<OCTS:{value}>>"
+        elif data_type == XDW_ATYPE_OTHER:  # Quick hack for points.
+            print(data_type, value)
             points = [Point(
                     scale(attrname, p.x),
                     scale(attrname, p.y)) for p in value]
             return absolute_points(points)
+        else:
+            return f"<<TYPE{data_type}:{value}>>"
 
     def __setattr__(self, name, value):
         attrname = inner_attribute_name(name)

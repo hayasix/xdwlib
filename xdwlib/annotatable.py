@@ -254,7 +254,7 @@ class Annotatable(Subject):
         """Paste an image annotation.
 
         position    (Point, unit=mm)
-        path        (str) pathname of a image file
+        path        (str) path to image file
         kw          (dict) initial attributes
         """
         if 8 <= XDWVER:
@@ -421,7 +421,7 @@ class Annotatable(Subject):
     def _fix_bmp_resolution(path, dpi):
         """Fix resolutions stored in BMP file.
 
-        path    (str) pathname of Windows Bitmap file
+        path    (str) path to Windows Bitmap file
         dpi     (int) resolution in DPI
         """
         ppm = int(round(dpi * mm2in(1000)))

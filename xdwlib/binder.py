@@ -27,7 +27,7 @@ __all__ = ("Binder", "create_binder")
 def create_binder(path, color="RED", size="FREE", coding=CODEPAGE):
     """The XBD generator.
 
-    Returns actual pathname.
+    Returns the created pathname which may differ from path.
     """
     path = derivative_path(path)
     data = XDW_BINDER_INITIAL_DATA()
@@ -76,6 +76,8 @@ class Binder(Subject, XDWFile):
     def __init__(self, path):
         Subject.__init__(self)
         XDWFile.__init__(self, path)
+        # Store document names in binder in unicode.
+        self.unicode = False
 
     def __repr__(self):
         return "{cls}({name}{sts})".format(
@@ -168,7 +170,7 @@ class Binder(Subject, XDWFile):
     def append(self, path):
         """Append a document by path at the end of binder.
 
-        path    (str) path to the file to be added
+        path    (str) path to file to add
         """
         self.insert(self.documents, path)
 
@@ -176,7 +178,7 @@ class Binder(Subject, XDWFile):
         """Insert a document by path.
 
         pos     (int) position to insert; starts with 0
-        path    (str) path to the file to be inserted
+        path    (str) path to file to insert
         """
         pos = self._pos(pos, append=True)
         XDW_InsertDocumentToBinder(self.handle, pos + 1, cp(path))
@@ -194,6 +196,24 @@ class Binder(Subject, XDWFile):
         XDW_DeleteDocumentInBinder(self.handle, doc.pos + 1)
         self.detach(doc, EV_DOC_REMOVED)
         self.documents -= 1
+
+    def export(self, pos, path=None):
+        """Export a document in binder.
+
+        pos     (int) position to export; starts with 0
+        path    (str) export to {path};
+                      with no dir, export to {binder dir}/{path}
+                (None) export to {binder dir}/{document name}
+
+        Returns the exported pathname which may differ from path.
+        """
+        pos = self._pos(pos)
+        path = newpath(path or self.document(pos).name + ".xdw", dir=self.dir)
+        if XDWVER < 8:
+            XDW_GetDocumentFromBinder(self.handle, pos + 1, cp(path))
+        else:
+            XDW_GetDocumentFromBinderW(self.handle, pos + 1, path)
+        return path
 
     def view(self, light=False, wait=True, page=0, fullscreen=False, zoom=0):
         """View binder with DocuWorks Viewer (Light).

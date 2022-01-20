@@ -46,11 +46,18 @@ class DocumentInBinder(BaseDocument, Observer):
         return XDW_GetDocumentNameInBinderW(
                 self.binder.handle, self.pos + 1, codepage=CP)[0]
 
+    def name_compat(self, encoding, errors="ignore"):
+        return XDW_GetDocumentNameInBinder(
+                self.binder.handle, self.pos + 1).decode(encoding, errors=errors)
+
     @name.setter
     def name(self, value):
+        if self.binder.unicode:
+            coding = XDW_TEXT_UNICODE
+        else:
+            coding = XDW_TEXT_UNICODE_IFNECESSARY
         XDW_SetDocumentNameInBinderW(
-                self.binder.handle, self.pos + 1, value,
-                XDW_TEXT_UNICODE_IFNECESSARY, CP)
+                self.binder.handle, self.pos + 1, value, coding, CP)
 
     def update_pages(self):
         """Concrete method over update_pages()."""
@@ -103,3 +110,14 @@ class DocumentInBinder(BaseDocument, Observer):
     def dirname(self):
         """Concrete method over dirname()."""
         return self.binder.dir
+
+    def save(self, path=None):
+        """Save attached file.
+
+        path    (str) save to {path};
+                      with no dir, save to {binder dir}/{path}
+                (None) save to {binder dir}/{attachment filename}
+
+        Returns the saved pathname which may differ from path.
+        """
+        return self.binder.export(self.pos, path=path)

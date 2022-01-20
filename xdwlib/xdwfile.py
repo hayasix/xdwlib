@@ -22,7 +22,7 @@ from .xdwapi import *
 from .common import *
 from .struct import Point
 from .timezone import *
-from .observer import Subject, Observer
+from .observer import *
 
 
 __all__ = (
@@ -56,7 +56,7 @@ def atexithandler():
 def view(path, light=False, wait=True, page=0, fullscreen=False, zoom=0):
     """View document.
 
-    path        (str)
+    path        (str) open {path}
     light       (bool) force to use DocuWorks Viewer Light.
                 Note that DocuWorks Viewer is used if Light version is
                 not avaiable.
@@ -155,7 +155,7 @@ def extract_sfx(input_path, output_path=None):
 def optimize(input_path, output_path=None):
     """Optimize document/binder file.
 
-    Returns pathname of optimized document/binder file.
+    Returns the created pathname which may differ from output_path.
     """
     input_path = adjust_path(input_path)
     root, ext = os.path.splitext(input_path)
@@ -171,7 +171,7 @@ def optimize(input_path, output_path=None):
 def copy(input_path, output_path=None):
     """Copy DocuWorks document/binder to another one.
 
-    Returns pathname of copied file.
+    Returns the created pathname which may differ from output_path.
     """
     input_path = adjust_path(input_path)
     root, ext = os.path.splitext(input_path)
@@ -225,7 +225,7 @@ def protect(input_path,
     certificates    list of certificates in DER (RFC3280) formatted str
     fullaccesscerts list of certificates in DER (RFC3280) formatted str
 
-    Returns pathname of protected file.
+    Returns the created pathname which may differ from output_path.
     """
     input_path = adjust_path(input_path)
     root, ext = os.path.splitext(input_path)
@@ -281,7 +281,7 @@ def unprotect(input_path, output_path=None, auth="NONE"):
 
     auth            'NODIALOGUE' | 'CONDITIONAL'
 
-    Returns pathname of unprotected file.
+    Returns the created pathname which may differ from output_path.
 
     NB. Only PKI-based or DocuWorks-builtin-stamp-based protected files are
         processed.  Password-based protected files are beyond xdwlib.
@@ -317,7 +317,7 @@ def sign(input_path,
     type            'STAMP' | 'PKI'
     certificate     certificate in DER (RFC3280) formatted str; valid for PKI
 
-    Returns pathname of signed file.
+    Returns the created pathname which may differ from output_path.
     """
     input_path = adjust_path(input_path)
     root, ext = os.path.splitext(input_path)
@@ -391,7 +391,7 @@ class AttachmentList(Subject):
         path    pathname of a file to insert
         """
         pos = self._pos(pos, append=True)
-        XDW_InsertOriginalData(self.doc.handle, pos + 1, path)
+        XDW_InsertOriginalData(self.doc.handle, pos + 1, cp(path))
         self.size += 1
         att = self.attachment(pos)
         self.attach(att, EV_ATT_INSERTED)
@@ -422,6 +422,11 @@ class Attachment(Observer):
         self.datetime = fromunixtime(info.nDate)
         self.name = info.szName
 
+    def name_compat(self, encoding, errors="ignore"):
+        info = XDW_GetOriginalDataInformation(
+                self.doc.handle, self.pos + 1)
+        return info.szName.decode(encoding, errors=errors)
+
     def update(self, event):
         """Update self as an observer."""
         if not isinstance(event, Notification):
@@ -438,10 +443,17 @@ class Attachment(Observer):
     def save(self, path=None):
         """Save attached file.
 
-        Returns pathname actually saved.
+        path    (str) save to {path};
+                      with no dir, save to {document/binder dir}/{path}
+                (None) save to {document/binder dir}/{stored filename}
+
+        Returns the saved pathname which may differ from path.
         """
-        path = derivative_path(path or self.name)
-        XDW_GetOriginalData(self.doc.handle, self.pos + 1, path)
+        path = newpath(path or self.name, dir=self.doc.dirname())
+        if XDWVER < 8:
+            XDW_GetOriginalData(self.doc.handle, self.pos + 1, cp(path))
+        else:
+            XDW_GetOriginalDataW(self.doc.handle, self.pos + 1, path)
         return path
 
 
@@ -801,16 +813,16 @@ class XDWFile(object):
         if oldhandle:
             self.save()
             self.close()
-        newpath = meth(selfpath, *args, **kw)
+        new_selfpath = meth(selfpath, *args, **kw)
         if kw.get("output_path"):
             if oldhandle:
                 self.open(readonly=self.readonly,
                         authenticate=self.authenticate,
                         autosave=self._autosave)
-            return newpath
+            return new_selfpath
         # Swap the old for the new, and remove the old.
         os.remove(selfpath)
-        os.rename(newpath, selfpath)
+        os.rename(new_selfpath, selfpath)
         if oldhandle:
             self.open(readonly=self.readonly,
                     authenticate=self.authenticate,
@@ -829,8 +841,8 @@ class XDWFile(object):
 
         See xdwfile.sign() for arguments.
 
-        Returns actual pathname of signed file if output_path is specified;
-        otherwise, nothing is returned.
+        Returns the created pathname which may differ from output_path,
+        if called with output_path specified.
 
         NB. self.save() is performed internally.
         """
@@ -846,8 +858,8 @@ class XDWFile(object):
 
         See xdwfile.protect() for arguments.
 
-        Returns pathname of protected file if output_path is specified;
-        otherwise, nothing is returned.
+        Returns the created pathname which may differ from output_path,
+        if called with output_path specified.
 
         NB. Only password- or PKI-based protection is available.
         NB. self.save() is performed internally.
@@ -860,8 +872,8 @@ class XDWFile(object):
 
         See xdwfile.unprotect() for arguments.
 
-        Returns pathname of unprotected file if output_path is specified;
-        otherwise, nothing is returned.
+        Returns the created pathname which may differ from output_path,
+        if called with output_path specified.
 
         NB. Only PKI- or STAMP-protected file is acceptable.
         NB. self.save() is performed internally.
@@ -873,8 +885,8 @@ class XDWFile(object):
 
         See xdwfile.optimize() for arguments.
 
-        Returns pathname of optimized file if output_path is specified;
-        otherwise, nothing is returned.
+        Returns the created pathname which may differ from output_path,
+        if called with output_path specified.
 
         NB. self.save() is performed internally.
         """

@@ -32,11 +32,12 @@ __all__ = (
         "EV_DOC_REMOVED", "EV_DOC_INSERTED",
         "EV_PAGE_REMOVED", "EV_PAGE_INSERTED",
         "EV_ANN_REMOVED", "EV_ANN_INSERTED",
+        "EV_ATT_REMOVED", "EV_ATT_INSERTED",
         "PSEP", "ASEP", "BLANKPAGE",
         "mm2in", "in2mm", "mm2px", "px2mm",
         "environ", "get_viewer",
         "inner_attribute_name", "outer_attribute_name",
-        "adjust_path", "cp", "uc", "derivative_path",
+        "adjust_path", "cp", "uc", "derivative_path", "newpath",
         "joinf", "flagvalue", "typevalue", "makevalue", "scale", "unpack",
         )
 
@@ -272,6 +273,18 @@ def derivative_path(path):
         n += 1
         derivative = f"{root}-{n}{ext}"
     return derivative
+
+
+def newpath(path, dir="", ext=".xdw", coding=None):
+    """Build a new pathname available for output."""
+    def eval(path): return path() if callable(path) else path
+    if not path:
+        path = adjust_path(eval(path), dir=dir, ext=ext, coding=coding)
+    elif not os.path.dirname(path):
+        path = adjust_path(eval(path), dir=dir)
+    else:
+        path = adjust_path(eval(path))
+    return derivative_path(path)
 
 
 def flagvalue(table, value, store=True):

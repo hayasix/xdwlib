@@ -244,20 +244,14 @@ class BaseDocument(Subject):
         """Export page to another document.
 
         pos     (int) page number; starts with 0
-        path    (str) pathname to export;
-                given only basename without directory, exported file is
-                placed in the very directory of the original document.
+        path    (str) export to {path};
+                      with no dir, export to {document/binder dir}/{path}
+                (None) export to
+                      {document/binder dir}/{document name}_P{num}.xdw
 
-        Returns the actual pathname of generated XDW file, which may be
-        different from `path' argument.  If path is not available,
-        default name "DOCUMENTNAME_Pxx.xdw" will be used.
+        Returns the exported pathname which may differ from path.
         """
-        if path:
-            path = adjust_path(path)
-        else:
-            path = adjust_path(f"{self.name}_P{pos + 1}.xdw",
-                    dir=self.dirname())
-        path = derivative_path(path)
+        path = newpath(path or f"{self.name}_P{pos + 1}.xdw", dir=self.dirname())
         if XDWVER < 8:
             XDW_GetPage(self.handle, self.absolute_page(pos) + 1, cp(path))
         else:
@@ -270,7 +264,10 @@ class BaseDocument(Subject):
         """Export page(s) to image file.
 
         pos         (int or tuple (start stop) in half-open style like slice)
-        path        (str) pathname to output
+        path        (str) export to {path};
+                          with no dir, export to {document/binder dir}/{path}
+                    (None) export to
+                          {document/binder dir}/{document name}_P{num}.bmp
         pages       (int)
         dpi         (int) 10..600
         color       'COLOR' | 'MONO' | 'MONO_HIGHQUALITY'
@@ -294,9 +291,7 @@ class BaseDocument(Subject):
                         on the internal state, so check 'degree' attribute
                         of the page if needed.
 
-        Returns the actual pathname of generated image file, which may be
-        different from `path' argument.  If path is not available,
-        default name 'DOCUMENTNAME_Pxx.bmp' or so will be used.
+        Returns the exported pathname which may differ from path.
         """
         if direct:
             return self._export_direct_image(pos, path)
@@ -309,13 +304,10 @@ class BaseDocument(Subject):
             format = {"dib": "bmp", "tif": "tiff", "jpg": "jpeg"}.get(ext, ext)
         if format.lower() not in ("bmp", "tiff", "jpeg", "pdf"):
             raise TypeError("image type must be BMP, TIFF, JPEG or PDF.")
-        if not path:
-            path = f"{self.name}_P{pos + 1}"
-            path = adjust_path(path, dir=self.dirname())
-            if 1 < pages:
-                path += f"-{pos + pages}"
-            path += "." + format
-        path = derivative_path(path)
+        path = newpath(path or (
+                       f"{self.name}_P{pos + 1}.{format}" if pages == 1 else
+                       f"{self.name}_P{pos + 1}-{pos + pages}.{format}"),
+                       dir=self.dirname())
         if not (10 <= dpi <= 600):
             raise ValueError("specify resolution between 10 and 600")
         opt = XDW_IMAGE_OPTION_EX()
@@ -373,10 +365,7 @@ class BaseDocument(Subject):
 
     def _export_direct_image(self, pos, path=None):
         pos = self._pos(pos)
-        if not path:
-            path = f"{self.name}_P{pos + 1}"
-            path = adjust_path(path, dir=self.dirname())
-        path = derivative_path(path)
+        path = newpath(path or f"{self.name}_P{pos + 1}", dir=self.dirname())
         path, _ = os.path.splitext(path)
         if XDWVER < 8:
             fmt = XDW_GetCompressedPageImage(
