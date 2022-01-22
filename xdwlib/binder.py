@@ -76,8 +76,8 @@ class Binder(Subject, XDWFile):
     def __init__(self, path):
         Subject.__init__(self)
         XDWFile.__init__(self, path)
-        # Store document names in binder in unicode.
-        self.unicode = False
+        # By default, DW 8+ store document names in binder in Unicode.
+        self.unicode = (8 <= XDWVER)
 
     def __repr__(self):
         return "{cls}({name}{sts})".format(

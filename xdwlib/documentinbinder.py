@@ -36,6 +36,7 @@ class DocumentInBinder(BaseDocument, Observer):
                 self.binder.handle, pos + 1)
         self.pages = docinfo.nPages
         self.original_data = docinfo.nOriginalData  # TODO
+        self.name  # Set self.text_type
 
     @property
     def handle(self):
@@ -43,8 +44,10 @@ class DocumentInBinder(BaseDocument, Observer):
 
     @property
     def name(self):
-        return XDW_GetDocumentNameInBinderW(
-                self.binder.handle, self.pos + 1, codepage=CP)[0]
+        name_, type_ = XDW_GetDocumentNameInBinderW(
+                        self.binder.handle, self.pos + 1, codepage=CP)
+        self.text_type = XDW_TEXT_TYPE[type_]
+        return name_
 
     def name_compat(self, encoding, errors="ignore"):
         return XDW_GetDocumentNameInBinder(
@@ -54,8 +57,10 @@ class DocumentInBinder(BaseDocument, Observer):
     def name(self, value):
         if self.binder.unicode:
             coding = XDW_TEXT_UNICODE
-        else:
+        elif XDWVER < 8:
             coding = XDW_TEXT_UNICODE_IFNECESSARY
+        else:  # DW 8+ seems to prefer Unicode even if IFNECESSARY is specified.
+            coding = XDW_TEXT_MULTIBYTE
         XDW_SetDocumentNameInBinderW(
                 self.binder.handle, self.pos + 1, value, coding, CP)
 
