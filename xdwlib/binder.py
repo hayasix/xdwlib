@@ -21,10 +21,10 @@ from .documentinbinder import DocumentInBinder
 from .page import Page, PageCollection
 
 
-__all__ = ("Binder", "create_binder")
+__all__ = ("Binder", "create", "create_binder")
 
 
-def create_binder(path, color="RED", size="FREE", coding=CODEPAGE):
+def create(path, color="RED", size="FREE", coding=CODEPAGE):
     """The XBD generator.
 
     Returns the created pathname which may differ from path.
@@ -38,6 +38,9 @@ def create_binder(path, color="RED", size="FREE", coding=CODEPAGE):
     else:
         XDW_CreateBinderW(path, data)
     return path
+
+
+create_binder = create  # for compatibility
 
 
 class Binder(Subject, XDWFile):

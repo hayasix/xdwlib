@@ -235,8 +235,13 @@ class Annotation(Annotatable, Observer):
         self_handle = Annotatable.__getattribute__(self, "handle")
         self_type = Annotatable.__getattribute__(self, "type")
         self_is_unicode = Annotatable.__getattribute__(self, "is_unicode")
+        attrtype = XDW_ANNOTATION_ATTRIBUTE[attrname][0]
+        if attrtype == XDW_ATYPE_STRING:
+            codepage = charset2codepage(self.font_char_set)
+        else:
+            codepage = CP
         data_type, value, text_type = XDW_GetAnnotationAttributeW(
-                self_handle, attrname, codepage=CP)
+                self_handle, attrname, codepage=codepage)
         if data_type == XDW_ATYPE_INT:
             if self_type == "STICKEY" and attrname.endswith(b"Color"):
                 return XDW_COLOR_FUSEN[value]
@@ -244,7 +249,7 @@ class Annotation(Annotatable, Observer):
                 return value - 1  # So, -1 for profile view.
             return scale(attrname, value, store=False)
         elif data_type == XDW_ATYPE_STRING:
-            self_is_unicode = (text_type == XDW_TEXT_UNICODE)
+            self.is_unicode = (text_type == XDW_TEXT_UNICODE)
             return value
         elif data_type == XDW_ATYPE_DATE:  # unsupported in SDK
             return f"<<DATE:{value}>>"

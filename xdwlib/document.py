@@ -29,6 +29,7 @@ __all__ = (
         "create_from_image",
         "create_from_pdf",
         "merge",
+        "Container",
         )
 
 
@@ -214,3 +215,8 @@ class Document(BaseDocument, XDWFile):
     def dirname(self):
         """Concrete method over dirname()."""
         return self.dir
+
+
+class Container(Document):
+
+    """DocuWorks container (XCT)."""

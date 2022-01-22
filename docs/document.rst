@@ -2,7 +2,8 @@
 document
 ========
 
-document モジュールでは、DocuWorks 文書 (拡張子 ``.xdw``) を取り扱います。
+document モジュールでは、DocuWorks 文書 (拡張子 ``.xdw``) および DocuWorks
+入れ物 (拡張子 ``.xct``) を取り扱います。
 
 モジュール関数
 ==============
@@ -106,4 +107,22 @@ Document クラスは、その基底クラスである BaseDocument および XD
 --------------
 
 クラス ``Document(path)``
-    ``path`` は Windows ファイルシステム上のパス名です。 
+    ``path`` は Windows ファイルシステム上のパス名です。
+
+Container クラス
+================
+
+Container クラスは、DocuWorks 入れ物 (封筒またはクリアフォルダー) を表します。
+これはファイルシステムに実在するファイルです。
+
+Container クラスは、 Document クラスから派生したクラスです。
+Container オブジェクトは、ただ 1 ページの Page と AttachmentList を有しています。
+
+現時点では、 Container クラス固有の機能はありません。また、入れ物のファイルを
+xdwlib を利用して新たに作成することはできません。
+
+コンストラクタ
+--------------
+
+クラス ``Container(path)``
+    ``path`` は Windows ファイルシステム上のパス名です。

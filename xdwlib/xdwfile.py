@@ -67,8 +67,11 @@ def view(path, light=False, wait=True, page=0, fullscreen=False, zoom=0):
                 (str) 'WIDTH' | 'HEIGHT' | 'PAGE'
     """
     import subprocess
-    if os.path.splitext(path)[1].upper() not in (".XDW", ".XBD"):
-        raise BadFormatError("extension must be .xdw or .xbd")
+    ext = os.path.splitext(path)[1].lower()
+    if ext not in (".xdw", ".xbd", ".xct"):
+        raise BadFormatError("extension must be .xdw, .xbd or .xct")
+    if XDWVER < 8 and ext == ".xct":
+        raise NewFormatError(f".xct is not supported by DocuWorks {XDWVER}")
     args = [get_viewer(light=light), path]
     if page:
         args.append(f"/n{page + 1}")
@@ -97,12 +100,15 @@ def xdwopen(path, readonly=False, authenticate=True, autosave=False):
 
     Returns Document or Binder object.
     """
-    from .document import Document
+    from .document import Document, Container
     from .binder import Binder
-    XDW_TYPES = {".XDW": Document, ".XBD": Binder}
-    ext = os.path.splitext(path)[1].upper()
+    if XDWVER < 8:
+        XDW_TYPES = {".xdw": Document, ".xbd": Binder}
+    else:
+        XDW_TYPES = {".xdw": Document, ".xbd": Binder, ".xct": Container}
+    ext = os.path.splitext(path)[1].lower()
     if ext not in XDW_TYPES:
-        raise BadFormatError("extension must be .xdw or .xbd")
+        raise BadFormatError("extension must be .xdw, .xbd, or .xct")
     doc = XDW_TYPES[ext](path)
     doc.open(readonly=readonly, authenticate=authenticate, autosave=autosave)
     return doc
@@ -184,13 +190,17 @@ def copy(input_path, output_path=None):
 def protection_info(path):
     """Get protection information on a document/binder.
 
-    Returns (protect_type, permission) where:
+    Returns None if path points a container, or (protect_type, permission)
+    where:
     protect_type    'PASSWORD' | 'PASSWORD128' | 'PKI' | 'STAMP' |
                     'CONTEXT_SERVICE'
     permission      allowed operation(s); comma separated list of
                     'EDIT_DOCUMENT', 'EDIT_ANNOTATION', 'PRINT' and 'COPY'
     """
     path = adjust_path(path)
+    ext = os.path.splitext(path)[1].lower()
+    if ext == ".xct":
+        return None
     if XDWVER < 8:
         info = XDW_GetProtectionInformation(cp(path))
     else:
@@ -459,7 +469,7 @@ class Attachment(Observer):
 
 class XDWFile(object):
 
-    """Docuworks file, XDW or XBD."""
+    """Docuworks file XDW, XBD and XCT."""
 
     @staticmethod
     def all_attributes():  # for debugging
@@ -481,18 +491,32 @@ class XDWFile(object):
         Sets the following properties:
             dir         (str) directory part of path
             name        (str) filename without extension
-            type        (str) 'DOCUMENT' | 'BINDER'
+            type        (str) 'DOCUMENT' | 'BINDER' | 'CONTAINER'
             protection  result of protection_info(path)
 
         NB. value of `type' may be changed after actual open().
         """
-        self.signatures = None  # hack
+        self.properties = None
+        self.signatures = None
         self.dir, self.name = os.path.split(path)
         self.name, ext = os.path.splitext(self.name)
-        self.type = {".xdw": "DOCUMENT", ".xbd": "BINDER"}.get(
-                ext.lower(), "DOCUMENT")
-        self.protection = protection_info(path)
         self.handle = None
+        self.pages = 0
+        self.version = None
+        self.attachments = None
+        types = {"Document": XDW_DT_DOCUMENT, "Binder": XDW_DT_BINDER,
+                 "Container": XDW_DT_CONTAINER}
+        classname = self.__class__.__name__
+        self.type = XDW_DOCUMENT_TYPE[types[classname]]
+        self.editable = True
+        self.annotatable = True
+        self.printable = True
+        self.copyable = True
+        self._show_annotations = True
+        self.status = None
+        self.readonly = False
+        self.authenticate = False
+        self.protection = protection_info(path)
 
     def open(self, readonly=False, authenticate=True, autosave=False):
         """Opener."""
@@ -509,7 +533,7 @@ class XDWFile(object):
         if XDWVER < 8:
             self.handle = XDW_OpenDocumentHandle(cp(self.pathname()), open_mode)
         else:
-            self.handle = XDW_OpenDocumentHandleW(self.pathname(), open_mode)
+            self.handle = XDW_OpenDocumentHandleExW(self.pathname(), open_mode)
         self.register()
         # Set document properties.
         docinfo = XDW_GetDocumentInformation(self.handle)
@@ -545,7 +569,8 @@ class XDWFile(object):
 
     def filename(self):
         """Get filename with extension."""
-        return self.name + {"DOCUMENT": ".xdw", "BINDER": ".xbd"}[self.type]
+        exts = {"DOCUMENT": ".xdw", "BINDER": ".xbd", "CONTAINER": ".xct"}
+        return self.name + exts[self.type]
 
     def pathname(self):
         """Get full pathname with extension."""
@@ -562,6 +587,8 @@ class XDWFile(object):
 
     def close(self):
         """Close document."""
+        if not self.handle:
+            return
         if self._autosave:
             self.save()
         XDW_CloseDocumentHandle(self.handle)
@@ -601,8 +628,7 @@ class XDWFile(object):
         attribute_name = inner_attribute_name(name)
         if attribute_name in XDW_DOCUMENT_ATTRIBUTE_W:
             t, value = typevalue(value)
-            XDW_SetDocumentAttributeW(
-                    self.handle, attribute_name, t, value,
+            XDW_SetDocumentAttributeW(self.handle, attribute_name, t, value,
                     XDW_TEXT_UNICODE_IFNECESSARY, codepage=CP)
             return
         object.__setattr__(self, name, value)
@@ -705,8 +731,8 @@ class XDWFile(object):
         t, value = typevalue(value)
         if t != XDW_ATYPE_STRING:
             value = byref(value)
-        XDW_SetDocumentAttributeW(
-                self.handle, name, t, value, XDW_TEXT_UNICODE_IFNECESSARY, codepage=CP)
+        XDW_SetDocumentAttributeW(self.handle, name, t, value,
+                XDW_TEXT_UNICODE_IFNECESSARY, codepage=CP)
         self._set_property_count()
 
     def del_property(self, name):
@@ -714,8 +740,7 @@ class XDWFile(object):
 
         name        (str) name of property, or user attribute
         """
-        XDW_SetDocumentAttributeW(
-                self.handle, name, XDW_ATYPE_INT, NULL,
+        XDW_SetDocumentAttributeW(self.handle, name, XDW_ATYPE_INT, NULL,
                 XDW_TEXT_UNICODE_IFNECESSARY, codepage=CP)
         self._set_property_count()
 

@@ -698,6 +698,7 @@ XDW_SECURITY_PKI_ERROR = XDWConst({
 XDW_DOCUMENT_TYPE = XDWConst({
         XDW_DT_DOCUMENT             : "DOCUMENT",
         XDW_DT_BINDER               : "BINDER",
+        XDW_DT_CONTAINER            : "CONTAINER",
         }, default=XDW_DT_DOCUMENT)
 
 XDW_PROP_TITLE                      = b"%Title"

@@ -39,6 +39,7 @@ __all__ = (
         "inner_attribute_name", "outer_attribute_name",
         "adjust_path", "cp", "uc", "derivative_path", "newpath",
         "joinf", "flagvalue", "typevalue", "makevalue", "scale", "unpack",
+        "charset2codepage",
         )
 
 
@@ -360,3 +361,24 @@ def unpack(s):
         n <<= 8
         n += ord(c)
     return n
+
+
+CHARSET_CODEPAGE = {
+    ANSI_CHARSET:           1252,
+    DEFAULT_CHARSET:        CP,
+    SYMBOL_CHARSET:         899,
+    MAC_CHARSET:            10000,
+    SHIFTJIS_CHARSET:       932,
+    HANGEUL_CHARSET:        949,
+    CHINESEBIG5_CHARSET:    950,
+    GREEK_CHARSET:          869,
+    TURKISH_CHARSET:        1026,
+    BALTIC_CHARSET:         775,
+    RUSSIAN_CHARSET:        855,
+    EASTEUROPE_CHARSET:     852,
+    OEM_CHARSET:            65001,
+    }
+
+
+def charset2codepage(charset):
+    return CHARSET_CODEPAGE.get(XDW_FONT_CHARSET.normalize(charset), CP)
