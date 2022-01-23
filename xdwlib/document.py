@@ -219,4 +219,49 @@ class Document(BaseDocument, XDWFile):
 
 class Container(Document):
 
-    """DocuWorks container (XCT)."""
+    """DocuWorks container (XCT).
+
+    Container is a Document with only 1 page, and with attachments.
+    """
+
+    def append(self, obj):
+        raise InvalidOperationError
+
+    def insert(self, obj):
+        raise InvalidOperationError
+
+    def append_image(self, *args, **kw):
+        raise InvalidOperationError
+
+    def insert_image(self, *args, **kw):
+        raise InvalidOperationError
+
+    def export(self, pos, path=None):
+        raise InvalidOperationError
+
+    def delete(self, pos):
+        raise InvalidOperationError
+
+    def rasterize(self, pos, direct=False):
+        raise InvalidOperationError
+
+    def rotate(self, pos, degree=0, auto=False, direct=False):
+        """Rotate page around the center.
+
+        pos     0; required for compatibility
+        degree  0 | 90 | 180 | 270; rotation angle in clockwise degree
+        auto    ignored, only for compatibility
+        direct  ignored, only for compatibility
+        """
+        if pos != 0:
+            raise InvalidOperationError("only 0 is allowed")
+        if (not auto) or direct:
+            raise InvalidOperationError(
+                    "only 0, 90, 180 or 270 degree is allowed")
+        if (degree % 360) not in (0, 90, 180, 270):
+            raise InvalidOperationError(
+                    "only 0, 90, 180 or 270 degree is allowed")
+        super().rotate(pos, degree=degree)
+
+    def view(self, light=False, wait=True, page=0, fullscreen=False, zoom=0):
+        raise InvalidOperationError

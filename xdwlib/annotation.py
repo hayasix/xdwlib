@@ -156,17 +156,6 @@ class Annotation(Annotatable, Observer):
     def __str__(self):
         return f"{repr(self)[:-1]}:{self.type})"
 
-    @staticmethod
-    def _unicode_enabled(ann_type):
-        return attrname in (
-                XDW_ATN_Text,
-                XDW_ATN_Caption, XDW_ATN_Url, XDW_ATN_XdwPath,
-                XDW_ATN_XdwNameInXbd, XDW_ATN_Tooltip_String,
-                XDW_ATN_LinkAtn_Title, XDW_ATN_OtherFilePath,
-                XDW_ATN_MailAddress,
-                XDW_ATN_TopField, XDW_ATN_BottomField,
-                )
-
     @property
     def margin(self):
         return tuple([
@@ -299,7 +288,15 @@ class Annotation(Annotatable, Observer):
                 if not isinstance(value, str):
                     raise ValueError(
                             "text data required, numeric given")
-                if self.is_unicode and unicode_enabled:
+                if (self.is_unicode and
+                    XDW_ANNOTATION_TYPE.normalize(self.type) in (
+                        XDW_ATN_Text,
+                        XDW_ATN_Caption, XDW_ATN_Url, XDW_ATN_XdwPath,
+                        XDW_ATN_XdwNameInXbd, XDW_ATN_Tooltip_String,
+                        XDW_ATN_LinkAtn_Title, XDW_ATN_OtherFilePath,
+                        XDW_ATN_MailAddress,
+                        XDW_ATN_TopField, XDW_ATN_BottomField,
+                        )):
                     texttype = XDW_TEXT_UNICODE
                 else:
                     texttype = XDW_TEXT_UNICODE_IFNECESSARY
@@ -502,13 +499,11 @@ class Annotation(Annotatable, Observer):
         Stamp annotation --> [TopField] <DATE> [BottomField]
         """
         if self.type == "TEXT":
-            return getattr(self, XDW_ATN_Text)
+            return self.text
         elif self.type == "LINK":
-            return getattr(self, XDW_ATN_Caption)
+            return self.caption
         elif self.type == "STAMP":
-            return "{0} <DATE> {1}".format(
-                    getattr(self, XDW_ATN_TopField),
-                    getattr(self, XDW_ATN_BottomField))
+            return "{0} <DATE> {1}".format(self.top_field, self.bottom_field)
         return None
 
     def lock(self):

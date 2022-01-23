@@ -483,8 +483,6 @@ class Page(Annotatable, Observer):
         cannot be handled as effective annotations any more.  Application/OCR
         text will be lost.
         """
-        if self.type != "IMAGE":
-            raise TypeError("rotation is available for image pages")
         doc, pos = self.doc, self.pos
         doc.rotate(pos, degree=degree, auto=auto, direct=direct)
         self.reset_attr()

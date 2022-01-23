@@ -475,7 +475,7 @@ class BaseDocument(Subject):
                 im.load()
         else:
             im = Image.open(in_)
-        box = tuple((canvas_size - v) / 2 for v in im.size)
+        box = tuple(round((canvas_size - v) / 2) for v in im.size)
         box += tuple((canvas_size - v) for v in box)
         while True:  # Quick hack for PIL lazy reading from file.
             try:
