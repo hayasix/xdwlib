@@ -320,6 +320,13 @@ XDW_DT_DOCUMENT                     = 0
 XDW_DT_BINDER                       = 1
 XDW_DT_CONTAINER                    = 2
 
+XDW_DOCUMENT_TYPE = XDWConst({
+        XDW_DT_DOCUMENT             : "DOCUMENT",
+        XDW_DT_BINDER               : "BINDER",
+        XDW_DT_CONTAINER            : "CONTAINER",
+        }, default=XDW_DT_DOCUMENT)
+
+
 # open/create
 
 XDW_OPEN_READONLY                   = 0
@@ -694,12 +701,6 @@ XDW_SECURITY_PKI_ERROR = XDWConst({
         XDW_SECURITY_PKI_ERROR_CA_CERT_IS_REVOKED       : "CA_CERT_IS_REVOKED",
         XDW_SECURITY_PKI_ERROR_TOO_MANY_CERT            : "TOO_MANY_CERT",
         }, default=XDW_SECURITY_PKI_ERROR_UNKNOWN)
-
-XDW_DOCUMENT_TYPE = XDWConst({
-        XDW_DT_DOCUMENT             : "DOCUMENT",
-        XDW_DT_BINDER               : "BINDER",
-        XDW_DT_CONTAINER            : "CONTAINER",
-        }, default=XDW_DT_DOCUMENT)
 
 XDW_PROP_TITLE                      = b"%Title"
 XDW_PROP_SUBJECT                    = b"%Subject"

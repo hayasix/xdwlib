@@ -39,7 +39,8 @@ __all__ = (
         "inner_attribute_name", "outer_attribute_name",
         "adjust_path", "cp", "uc", "derivative_path", "newpath",
         "joinf", "flagvalue", "typevalue", "makevalue", "scale", "unpack",
-        "charset2codepage",
+        "charset_to_codepage", "codepage_to_charset",
+        "set_ansi_charset", "set_oem_charset",
         )
 
 
@@ -364,8 +365,8 @@ def unpack(s):
 
 
 CHARSET_CODEPAGE = {
-    ANSI_CHARSET:           1252,
     DEFAULT_CHARSET:        CP,
+    ANSI_CHARSET:           1252,
     SYMBOL_CHARSET:         899,
     MAC_CHARSET:            10000,
     SHIFTJIS_CHARSET:       932,
@@ -378,7 +379,22 @@ CHARSET_CODEPAGE = {
     EASTEUROPE_CHARSET:     852,
     OEM_CHARSET:            65001,
     }
+CODEPAGE_CHARSET = {cp: cs for (cs, cp) in CHARSET_CODEPAGE.items()}
 
 
-def charset2codepage(charset):
+def charset_to_codepage(charset):
     return CHARSET_CODEPAGE.get(XDW_FONT_CHARSET.normalize(charset), CP)
+
+
+def codepage_to_charset(codepage):
+    return CODEPAGE_CHARSET.get(codepage, OEM_CHARSET)
+
+
+def set_ansi_charset(codepage):
+    CHARSET_CODEPAGE[ANSI_CHARSET] = codepage
+
+
+def set_oem_charset(codepage):
+    CHARSET_CODEPAGE[OEM_CHARSET] = codepage
+
+

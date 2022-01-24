@@ -716,7 +716,7 @@ class Page(Annotatable, Observer):
         info.nWidth = int(self.image_size.x)
         info.nHeight = int(self.image_size.y)
         info.charset = XDW_FONT_CHARSET.normalize(charset)
-        encoding = CHARSET2ENC.get(info.charset, CODEPAGE)
+        encoding = charset_to_codepage(info.charset)
         info.lpszText = crlf.join(text).encode(encoding, errors=errors) + b"\x00"
         info.nLineRect = len(rtlist)
         info.pLineRect = rects

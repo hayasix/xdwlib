@@ -226,7 +226,7 @@ class Annotation(Annotatable, Observer):
         self_is_unicode = Annotatable.__getattribute__(self, "is_unicode")
         attrtype = XDW_ANNOTATION_ATTRIBUTE[attrname][0]
         if attrtype == XDW_ATYPE_STRING:
-            codepage = charset2codepage(self.font_char_set)
+            codepage = charset_to_codepage(self.font_char_set)
         else:
             codepage = CP
         data_type, value, text_type = XDW_GetAnnotationAttributeW(
