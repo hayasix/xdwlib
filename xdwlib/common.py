@@ -396,5 +396,3 @@ def set_ansi_charset(codepage):
 
 def set_oem_charset(codepage):
     CHARSET_CODEPAGE[OEM_CHARSET] = codepage
-
-

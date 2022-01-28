@@ -597,14 +597,14 @@ class Page(Annotatable, Observer):
                 os.environ.get(f"{ENV_AZURE_KEY}"))
 
     def ocr_azure(self,
-            language="ja", charset="DEFAULT", errors="replace",
-            timeout=60,
+            language=None, charset="DEFAULT", errors="replace", timeout=60,
             endpoint="", subscription_key="",
-            version="3.2", model_version="2021-04-12",
+            version="3.2", model_version="latest",
             ):
         """Process page with Azure OCR.
 
-        language        (str) 'ja', 'en', etc.
+        language        (None) expect no specific language
+                        (str) 'ja', 'en', etc.
         charset         'DEFAULT' | 'ANSI' | 'SYMBOL' | 'MAC' | 'SHIFTJIS'
                                   | 'HANGEUL' | 'CHINESEBIG5' | 'GREEK'
                                   | 'TURKISH' | 'BALTIC' | 'RUSSIAN'
@@ -617,11 +617,12 @@ class Page(Annotatable, Observer):
         endpoint        (str) Azure OCR endpoint e.g.:
                               'https://yourproject.cognitiveservices.azure.com/'
         subscription_key  (str) Azure OCR subscription key
-        version         (str) OCR engine version; only '3.2' is valid
-        model_version   (str) OCR data model version; only '2021-04-12' is valid
+        version         (str) OCR engine version e.g. '3.2'
+        model_version   (str) see Azure Read API document e.g.:
+                              'latest', '2021-09-30-preview', or '2021-04-12'
 
-        CAUTION: Default endpoint and subscription_key can be set in
-        environment variables XDWLIB_OCR_AZURE_ENDPOINT and
+        Notes: Default endpoint and subscription_key can be set in environment
+        variables XDWLIB_OCR_AZURE_ENDPOINT and
         XDWLIB_OCR_AZURE_SUBSCRIPTION_KEY.
         """
         url, key = self.azure_env()
@@ -638,7 +639,9 @@ class Page(Annotatable, Observer):
         url = url.rstrip("/") + f"/vision/v{version}/read/analyze"
         headers = {"Ocp-Apim-Subscription-Key": key,
                    "Content-Type": "application/octet-stream"}
-        params = {"language": language, "model-version": "2021-04-12"}
+        params = {"language": language or "",
+                  "model-version": model_version,
+                  "readingOrder": "natural"}
         def build_req(url, headers=None, params=None, method="GET"):
             url = list(urlparse(url))
             if params: url[4] = urlencode(params)
@@ -716,7 +719,7 @@ class Page(Annotatable, Observer):
         info.nWidth = int(self.image_size.x)
         info.nHeight = int(self.image_size.y)
         info.charset = XDW_FONT_CHARSET.normalize(charset)
-        encoding = charset_to_codepage(info.charset)
+        encoding = f"cp{charset_to_codepage(info.charset)}"
         info.lpszText = crlf.join(text).encode(encoding, errors=errors) + b"\x00"
         info.nLineRect = len(rtlist)
         info.pLineRect = rects

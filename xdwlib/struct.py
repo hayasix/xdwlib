@@ -194,7 +194,7 @@ class Rect(_Rect):
 
     def int(self):
         """Special method to adapt to XDW_RECT."""
-        return Rect(map(int, self))
+        return Rect(*map(int, self))
 
     fix = int
 
