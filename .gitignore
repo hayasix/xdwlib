@@ -2,12 +2,13 @@
 *.pyo
 *.pyd
 __pycache__/
+build/
 _build/
+dist/
 _dist/
 doc/_build
 doc/html
 doc/_static
 doc/_templates
-build/
 *.egg-info/
 updates.txt

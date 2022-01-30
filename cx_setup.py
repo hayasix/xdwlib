@@ -26,13 +26,10 @@ setup(
     author_email=__email__,
     url="https://github.com/hayasix/xdwlib",
     description="A DocuWorks library.",
-    long_description="""xdwlib is a DocuWorks library for Python.
-It supports almost all functions of original XDWAPI library from Fuji Xerox.
-You can handle documents or binders in object-oriented style.  Pages and
-annotations are also handled as objects.  Plus, every object is iterable.
-
-You can read brief description with Python's lovely help() function.
-Further information is available in Japanese at https://github.com/hayasix/xdwlib/docs/""",
+    long_description="""\
+xdwlib offers a Pythonic way to handle DocuWorks files.
+DocuWorks is required to be installed on the same PC.
+Documents are availble in Japanese under docs/ in the source code release.""",
     license=__license__,
     classifiers=[
         'Development Status :: 4 - Beta',

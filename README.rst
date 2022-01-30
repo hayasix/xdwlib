@@ -2,7 +2,7 @@
 Xdwlib README
 =============
 
-2022-01-24 HAYASHI Hideki <hideki@hayasix.com>
+2022-01-30 HAYASHI Hideki <hideki@hayasix.com>
 
 
 Welcome to the xdwlib source release
@@ -10,13 +10,8 @@ Welcome to the xdwlib source release
 
 Xdwlib is a DocuWorks library for Python.
 
-This document provides some general information about xdwlib source
-release and provides links to other documents.
-
-General xdwlib information is available at
-https://github.com/hayasix/xdwlib/ .
-Detailed description is available in docs/ only in Japanese at the moment,
-while every __doc__ property is written in English.
+This document provides some general information about xdwlib source release.
+Detailed description is available in docs/ only in Japanese at the moment.
 
 Report problems with this release to the author.
 
