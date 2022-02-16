@@ -17,6 +17,7 @@ import os
 import re
 import subprocess
 import itertools
+from functools import cmp_to_key
 from os.path import abspath, split as splitpath, join as joinpath
 import codecs
 from urllib.request import Request, urlopen
@@ -666,6 +667,17 @@ class Page(Annotatable, Observer):
         lines = result["analyzeResult"]["readResults"][0]["lines"]
         rtlist = [(Rect(*[line["boundingBox"][i] for i in (0, 1, 4, 5)]),
                    line["text"]) for line in lines]
+        # Text segments in vertically written documents should be reordered.
+        if sum(-1 if r.size().x < r.size().y else 1 for r, t in rtlist) < 0:
+            def cmp(rt0, rt1):
+                lt0, lt1 = rt0[0].position(), rt1[0].position()
+                rb0, rb1 = lt0 + rt0[0].size(), lt1 + rt1[0].size()
+                if rb0.y < lt1.y: result = -1
+                elif rb1.y < lt0.y: result = 1
+                elif lt0.x < lt1.x: result = 1
+                else: result = -1
+                return result
+            rtlist.sort(key=cmp_to_key(cmp))
         self.set_ocr_text(rtlist, charset=charset, errors=errors, unit="px")
 
     def clear_ocr_text(self):
