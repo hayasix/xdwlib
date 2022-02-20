@@ -8,9 +8,12 @@ binder
 モジュール関数
 ==============
 
-``create_binder(path, color='RED', size='FREE')``
+``create(path, color='RED', size='FREE')``
     与えられたパス名 ``path`` を持つ新しい DocuWorks バインダーを
     ファイルシステム上に生成します。
+
+``create_binder(path, color='RED', size='FREE')``
+     ``create()`` の別名です。
 
 Binder オブジェクト
 ===================

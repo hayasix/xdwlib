@@ -22,7 +22,7 @@ from .xdwtemp import XDWTemp
 from .xdwfile import xdwopen, view, optimize, copy, create_sfx, extract_sfx
 from .xdwfile import protection_info, protect, unprotect, sign
 from .document import Document, create, merge, Container
-from .binder import Binder, create, create_binder
+from .binder import Binder, create_binder
 from .documentinbinder import DocumentInBinder
 from .page import Page, PageCollection
 from .annotation import Annotation, AnnotationCache
