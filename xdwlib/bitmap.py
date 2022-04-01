@@ -24,6 +24,7 @@ class BitmapFileHeader(Structure):
 
     """BITMAPFILEHEADER for Windows Bitmap data body."""
 
+    _pack_ = 1
     _fields_ = [
             ("bfType", c_char * 2),  # WORD
             ("bfSize", c_uint32),  # DWORD
@@ -37,6 +38,7 @@ class BitmapInfoHeader(Structure):
 
     """BITMAPINFOHEADER for Windows Bitmap data body."""
 
+    _pack_ = 1
     _fields_ = [
             ("biSize", c_uint32),  # DWORD
             ("biWidth", c_int32),  # LONG

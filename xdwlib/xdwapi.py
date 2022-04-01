@@ -320,13 +320,6 @@ XDW_DT_DOCUMENT                     = 0
 XDW_DT_BINDER                       = 1
 XDW_DT_CONTAINER                    = 2
 
-XDW_DOCUMENT_TYPE = XDWConst({
-        XDW_DT_DOCUMENT             : "DOCUMENT",
-        XDW_DT_BINDER               : "BINDER",
-        XDW_DT_CONTAINER            : "CONTAINER",
-        }, default=XDW_DT_DOCUMENT)
-
-
 # open/create
 
 XDW_OPEN_READONLY                   = 0
@@ -701,6 +694,12 @@ XDW_SECURITY_PKI_ERROR = XDWConst({
         XDW_SECURITY_PKI_ERROR_CA_CERT_IS_REVOKED       : "CA_CERT_IS_REVOKED",
         XDW_SECURITY_PKI_ERROR_TOO_MANY_CERT            : "TOO_MANY_CERT",
         }, default=XDW_SECURITY_PKI_ERROR_UNKNOWN)
+
+XDW_DOCUMENT_TYPE = XDWConst({
+        XDW_DT_DOCUMENT             : "DOCUMENT",
+        XDW_DT_BINDER               : "BINDER",
+        XDW_DT_CONTAINER            : "CONTAINER",
+        }, default=XDW_DT_DOCUMENT)
 
 XDW_PROP_TITLE                      = b"%Title"
 XDW_PROP_SUBJECT                    = b"%Subject"
@@ -1518,6 +1517,7 @@ class ResizedStructure(SizedStructure):
 
 
 class XDW_RECT(Structure):
+    _pack_ = 1
     _fields_ = [
         ("left", c_long),
         ("top", c_long),
@@ -1527,6 +1527,7 @@ class XDW_RECT(Structure):
 
 
 class XDW_GPTI_OCRTEXT_UNIT(Structure):
+    _pack_ = 1
     _fields_ = [
         ("lpszText", c_char_p),
         ("rect", XDW_RECT),
@@ -1534,6 +1535,7 @@ class XDW_GPTI_OCRTEXT_UNIT(Structure):
 
 
 class XDW_GPTI_OCRTEXT(Structure):
+    _pack_ = 1
     _fields_ = [
         ("nUnitNum", c_int),
         ("pUnits", POINTER(XDW_GPTI_OCRTEXT_UNIT)),
@@ -1541,6 +1543,7 @@ class XDW_GPTI_OCRTEXT(Structure):
 
 
 class XDW_GPTI_INFO(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nInfoType", c_int),
@@ -1553,6 +1556,7 @@ class XDW_GPTI_INFO(SizedStructure):
 
 
 class XDW_DOCUMENT_INFO(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nPages", c_int),
@@ -1568,6 +1572,7 @@ class XDW_DOCUMENT_INFO(SizedStructure):
 
 
 class XDW_PAGE_INFO(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nWidth", c_int),
@@ -1581,6 +1586,7 @@ class XDW_PAGE_INFO(SizedStructure):
 
 
 class XDW_PAGE_INFO_EX(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nWidth", c_int),
@@ -1601,6 +1607,7 @@ class XDW_PAGE_INFO_EX(SizedStructure):
 
 
 class XDW_IMAGE_OPTION(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nDpi", c_int),
@@ -1609,6 +1616,7 @@ class XDW_IMAGE_OPTION(SizedStructure):
 
 
 class XDW_OPEN_MODE(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nOption", c_int),
@@ -1616,6 +1624,7 @@ class XDW_OPEN_MODE(SizedStructure):
 
 
 class XDW_OPEN_MODE_EX(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nOption", c_int),
@@ -1624,6 +1633,7 @@ class XDW_OPEN_MODE_EX(SizedStructure):
 
 
 class XDW_CREATE_OPTION(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nFitImage", c_int),
@@ -1637,6 +1647,7 @@ class XDW_CREATE_OPTION(SizedStructure):
 
 
 class XDW_CREATE_OPTION_EX(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nFitImage", c_int),
@@ -1651,6 +1662,7 @@ class XDW_CREATE_OPTION_EX(SizedStructure):
 
 
 class XDW_CREATE_OPTION_EX2(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nFitImage", c_int),
@@ -1669,6 +1681,7 @@ XDW_SIZEOF_ORGDATANAME = 256
 
 
 class XDW_ORGDATA_INFO(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nDataSize", c_int),
@@ -1678,6 +1691,7 @@ class XDW_ORGDATA_INFO(SizedStructure):
 
 
 class XDW_ORGDATA_INFOW(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nDataSize", c_int),
@@ -1690,6 +1704,7 @@ XDW_SIZEOF_LINKROOTFOLDER = 256
 
 
 class XDW_LINKROOTFOLDER_INFO(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("szPath", c_char * XDW_SIZEOF_LINKROOTFOLDER),
@@ -1698,6 +1713,7 @@ class XDW_LINKROOTFOLDER_INFO(SizedStructure):
 
 
 class XDW_CREATE_STATUS(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("phase", c_int),
@@ -1707,6 +1723,7 @@ class XDW_CREATE_STATUS(SizedStructure):
 
 
 class XDW_ANNOTATION_INFO(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("handle", XDW_ANNOTATION_HANDLE),
@@ -1720,6 +1737,7 @@ class XDW_ANNOTATION_INFO(SizedStructure):
 
 
 class XDW_AA_INITIAL_DATA(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nAnnotationType", c_int),
@@ -1729,6 +1747,7 @@ class XDW_AA_INITIAL_DATA(SizedStructure):
 
 
 class XDW_AA_FUSEN_INITIAL_DATA(ResizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("nWidth", c_int),
@@ -1737,6 +1756,7 @@ class XDW_AA_FUSEN_INITIAL_DATA(ResizedStructure):
 
 
 class XDW_AA_STRAIGHTLINE_INITIAL_DATA(ResizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("nHorVec", c_int),
@@ -1745,6 +1765,7 @@ class XDW_AA_STRAIGHTLINE_INITIAL_DATA(ResizedStructure):
 
 
 class XDW_AA_RECT_INITIAL_DATA(ResizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("nWidth", c_int),
@@ -1753,6 +1774,7 @@ class XDW_AA_RECT_INITIAL_DATA(ResizedStructure):
 
 
 class XDW_AA_ARC_INITIAL_DATA(ResizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("nWidth", c_int),
@@ -1761,6 +1783,7 @@ class XDW_AA_ARC_INITIAL_DATA(ResizedStructure):
 
 
 class XDW_AA_BITMAP_INITIAL_DATA(ResizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("szImagePath", c_char * 256),
@@ -1768,6 +1791,7 @@ class XDW_AA_BITMAP_INITIAL_DATA(ResizedStructure):
 
 
 class XDW_AA_BITMAP_INITIAL_DATAW(ResizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("szImagePath", c_wchar * 256),
@@ -1775,6 +1799,7 @@ class XDW_AA_BITMAP_INITIAL_DATAW(ResizedStructure):
 
 
 class XDW_AA_STAMP_INITIAL_DATA(ResizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("nWidth", c_int),
@@ -1782,6 +1807,7 @@ class XDW_AA_STAMP_INITIAL_DATA(ResizedStructure):
 
 
 class XDW_AA_RECEIVEDSTAMP_INITIAL_DATA(ResizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("nWidth", c_int),
@@ -1792,6 +1818,7 @@ XDW_SIZEOF_GUID = 36
 
 
 class XDW_AA_CUSTOM_INITIAL_DATA(ResizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("nWidth", c_int),
@@ -1803,6 +1830,7 @@ class XDW_AA_CUSTOM_INITIAL_DATA(ResizedStructure):
 
 
 class XDW_IMAGE_OPTION_EX(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nDpi", c_int),
@@ -1813,6 +1841,7 @@ class XDW_IMAGE_OPTION_EX(SizedStructure):
 
 
 class XDW_IMAGE_OPTION_TIFF(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nCompress", c_int),
@@ -1821,6 +1850,7 @@ class XDW_IMAGE_OPTION_TIFF(SizedStructure):
 
 
 class XDW_IMAGE_OPTION_JPEG(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nCompress", c_int),
@@ -1828,6 +1858,7 @@ class XDW_IMAGE_OPTION_JPEG(SizedStructure):
 
 
 class XDW_IMAGE_OPTION_PDF(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nCompress", c_int),
@@ -1837,6 +1868,7 @@ class XDW_IMAGE_OPTION_PDF(SizedStructure):
 
 
 class XDW_BINDER_INITIAL_DATA(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nBinderColor", c_int),
@@ -1845,6 +1877,7 @@ class XDW_BINDER_INITIAL_DATA(SizedStructure):
 
 
 class XDW_OCR_OPTION_V4(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nNoiseReduction", c_int),
@@ -1859,6 +1892,7 @@ class XDW_OCR_OPTION_V4(SizedStructure):
 
 
 class XDW_OCR_OPTION_V5(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nNoiseReduction", c_int),
@@ -1875,6 +1909,7 @@ class XDW_OCR_OPTION_V5(SizedStructure):
 
 
 class XDW_OCR_OPTION_V5_EX(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nNoiseReduction", c_int),
@@ -1892,6 +1927,7 @@ class XDW_OCR_OPTION_V5_EX(SizedStructure):
 
 
 class XDW_OCR_OPTION_V7(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nNoiseReduction", c_int),
@@ -1912,6 +1948,7 @@ class XDW_OCR_OPTION_V7(SizedStructure):
 
 
 class XDW_OCR_OPTION_V9(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nNoiseReduction", c_int),
@@ -1930,6 +1967,7 @@ class XDW_OCR_OPTION_V9(SizedStructure):
 
 
 class XDW_OCR_OPTION_WRP(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nNoiseReduction", c_int),
@@ -1943,6 +1981,7 @@ class XDW_OCR_OPTION_WRP(SizedStructure):
 
 
 class XDW_OCR_OPTION_FRE(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nNoiseReduction", c_int),
@@ -1957,6 +1996,7 @@ class XDW_OCR_OPTION_FRE(SizedStructure):
 
 
 class XDW_OCR_OPTION_FRE_V7(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nNoiseReduction", c_int),
@@ -1972,6 +2012,7 @@ class XDW_OCR_OPTION_FRE_V7(SizedStructure):
 
 
 class XDW_PAGE_COLOR_INFO(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nColor", c_int),
@@ -1983,6 +2024,7 @@ XDW_SIZEOF_PSWD = 256
 
 
 class XDW_SECURITY_OPTION_PSWD(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nPermission", c_int),
@@ -1993,6 +2035,7 @@ class XDW_SECURITY_OPTION_PSWD(SizedStructure):
 
 
 class XDW_DER_CERTIFICATE(Structure):
+    _pack_ = 1
     _fields_ = [
         ("pCert", c_void_p),
         ("nCertSize", c_int),
@@ -2000,6 +2043,7 @@ class XDW_DER_CERTIFICATE(Structure):
 
 
 class XDW_SECURITY_OPTION_PKI(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nPermission", c_int),
@@ -2012,6 +2056,7 @@ class XDW_SECURITY_OPTION_PKI(SizedStructure):
 
 
 class XDW_PROTECT_OPTION(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nAuthMode", c_int),
@@ -2019,6 +2064,7 @@ class XDW_PROTECT_OPTION(SizedStructure):
 
 
 class XDW_RELEASE_PROTECTION_OPTION(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nAuthMode", c_int),
@@ -2026,6 +2072,7 @@ class XDW_RELEASE_PROTECTION_OPTION(SizedStructure):
 
 
 class XDW_PROTECTION_INFO(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nProtectType", c_int),
@@ -2034,6 +2081,7 @@ class XDW_PROTECTION_INFO(SizedStructure):
 
 
 class XDW_SIGNATURE_OPTION_V5(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nPage", c_int),
@@ -2044,6 +2092,7 @@ class XDW_SIGNATURE_OPTION_V5(SizedStructure):
 
 
 class XDW_SIGNATURE_INFO_V5(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nSignatureType", c_int),
@@ -2057,6 +2106,7 @@ class XDW_SIGNATURE_INFO_V5(SizedStructure):
 
 
 class XDW_SIGNATURE_MODULE_STATUS(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nSignatureType", c_int),
@@ -2065,6 +2115,7 @@ class XDW_SIGNATURE_MODULE_STATUS(SizedStructure):
 
 
 class XDW_SIGNATURE_MODULE_OPTION_PKI(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("pSignerCert", c_void_p),
@@ -2078,6 +2129,7 @@ XDW_SIZEOF_STAMPREMARKS = 1024
 
 
 class XDW_SIGNATURE_STAMP_INFO_V5(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("lpszStampName", c_char * XDW_SIZEOF_STAMPNAME),
@@ -2102,6 +2154,7 @@ XDW_SIZEOF_PKISIGNEDTIME    = 32
 
 
 class XDW_SIGNATURE_PKI_INFO_V5(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("lpszModule", c_char * XDW_SIZEOF_PKIMODULENAME),
@@ -2123,6 +2176,7 @@ class XDW_SIGNATURE_PKI_INFO_V5(SizedStructure):
 
 
 class XDW_OCR_TEXTINFO(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nWidth", c_int),
@@ -2135,6 +2189,7 @@ class XDW_OCR_TEXTINFO(SizedStructure):
 
 
 class XDW_OCRIMAGE_OPTION(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nDpi", c_int),
@@ -2144,6 +2199,7 @@ class XDW_OCRIMAGE_OPTION(SizedStructure):
 
 
 class XDW_FIND_TEXT_OPTION(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("nIgnoreMode", c_int),
@@ -2157,6 +2213,7 @@ XDW_FOUND_RECT_STATUS_PAGE = 1
 
 
 class XDW_POINT(Structure):
+    _pack_ = 1
     _fields_ = [
         ("x", c_long),
         ("y", c_long),
@@ -2164,6 +2221,7 @@ class XDW_POINT(Structure):
 
 
 class XDW_AA_MARKER_INITIAL_DATA(ResizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("nCounts", c_int),
@@ -2172,6 +2230,7 @@ class XDW_AA_MARKER_INITIAL_DATA(ResizedStructure):
 
 
 class XDW_AA_POLYGON_INITIAL_DATA(ResizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("common", XDW_AA_INITIAL_DATA),
         ("nCounts", c_int),
@@ -2717,6 +2776,7 @@ def XDW_RemovePageForm(doc_handle, other_page_form): pass
 def XDW_GetLinkRootFolderInformation(order): pass
 
 class XDW_LINKROOTFOLDER_INFOW(SizedStructure):
+    _pack_ = 1
     _fields_ = [
         ("nSize", c_int),
         ("szPath", c_wchar * XDW_SIZEOF_LINKROOTFOLDER),
