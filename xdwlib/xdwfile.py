@@ -802,7 +802,8 @@ class XDWFile(object):
         else:  # siginfo.nSignatureType == XDW_SIGNATURE_PKI
 
             def parsedt(s):
-                return datetime.datetime.strptime(s, "%Y/%m/%d %H:%M:%S")
+                return datetime.datetime.strptime(s.decode("ascii"),
+                                                  "%Y/%m/%d %H:%M:%S")
 
             ver = XDW_SIGNATURE_PKI_TYPE[modinfo.nCertVerificationType]
             sts = XDW_SIGNATURE_PKI_CERT[modinfo.nCertVerificationStatus]
@@ -814,11 +815,10 @@ class XDWFile(object):
                     Point(siginfo.nHorPos, siginfo.nVerPos) / 100.0,
                     Point(siginfo.nWidth, siginfo.nHeight) / 100.0,
                     fromunixtime(siginfo.nSignedTime),
-                    stamp_name=modinfo.lpszStampName,
                     module=modinfo.lpszModule,
-                    subject_dn=modinfo.lpszSubjectDN,
+                    subjectdn=modinfo.lpszSubjectDN,
                     subject=modinfo.lpszSubject,
-                    issuer_dn=modinfo.lpszIssuerDN,
+                    issuerdn=modinfo.lpszIssuerDN,
                     issuer=modinfo.lpszIssuer,
                     not_before=parsedt(modinfo.lpszNotBefore),
                     not_after=parsedt(modinfo.lpszNotAfter),
