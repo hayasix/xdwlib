@@ -2865,7 +2865,7 @@ def XDW_GetSignatureInformation(doc_handle, pos):
         except SignatureModuleError as e:
             raise SignatureModuleError("signature type {0}, error status {1}".format( module_status.nSignatureType, module_status.nErrorStatus))
         signer_cert = c_char * module_info.nSignerCertSize
-        module_info.pSignerCert = cast(byref(signer_cert), c_void_p)
+        module_info.pSignerCert = cast(byref(signer_cert(0)), c_void_p)
         try:  # Actually get certificate and other attributes.
             TRY(DLL.XDW_GetSignatureInformation, doc_handle, pos, ptr(signature_info), ptr(module_info), NULL, ptr(module_status))
         except SignatureModuleError as e:
