@@ -532,6 +532,8 @@ class XDWFile(object):
             open_mode.nAuthMode = XDW_AUTH_NONE
         if XDWVER < 8:
             self.handle = XDW_OpenDocumentHandle(cp(self.pathname()), open_mode)
+        elif XDWVER < 9:
+            self.handle = XDW_OpenDocumentHandleW(self.pathname(), open_mode)
         else:
             self.handle = XDW_OpenDocumentHandleExW(self.pathname(), open_mode)
         self.register()
