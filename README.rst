@@ -2,7 +2,7 @@
 Xdwlib README
 =============
 
-2022-01-30 HAYASHI Hideki <hideki@hayasix.com>
+2022-11-08 HAYASHI Hideki <hideki@hayasix.com>
 
 
 Welcome to the xdwlib source release
@@ -84,6 +84,15 @@ own ``xdw2text.exe``, try::
 
     pip3 install cx_Freeze
     python3 cx_setup.py build
+
+
+Documentation
+=============
+
+Detailed documents are available in Japanese at
+`Read the Docs <https://xdwlib.readthedocs.io/ja/latest>`_.
+
+Python's help() also gives brief descriptions.
 
 
 Typical Use
