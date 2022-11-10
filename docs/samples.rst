@@ -188,7 +188,6 @@ DocuWorks 付属の「検索してマーク」プラグインとは違い、対�
 (実行例)
 
 ::
-
     C:\test> python horizontal_split.py "C:\test\DocuShare.xdw"
 
 (実行前)
@@ -196,12 +195,14 @@ DocuWorks 付属の「検索してマーク」プラグインとは違い、対�
 .. image:: before.png
     :align: left
     :scale: 200%
+    :alt: 元の A3 文書
 
 (実行後)
 
 .. image:: after.png
     :align: left
     :scale: 200%
+    :alt: A3 を左右に分割して A4 に変換した文書
 
 応用編として、このプログラムを py2exe で実行形式にした上で、DocuWorks の
 プラグインの設定で「外部コマンドの起動」を追加すると、クリックひとつで
@@ -216,10 +217,10 @@ DocuWorks 付属の「検索してマーク」プラグインとは違い、対�
 
 実際に動作する DocuWorks プラグインを置いておきます。ただし、かなり古いバージョンで作成したものです。
 
-:download:`horizontal_split.zip <../horizontal_split.zip>`.
+:download:`horizontal_split.zip <../horizontal_split.zip>`
 
-zip ファイルを展開すると horizontal_split.exe が取り出せるので、それを
-「外部コマンドの起動」で実行モジュールのパスとして指定してください。
+zip ファイルを展開すると ``horizontal_split.exe`` が取り出せるので、
+それを「外部コマンドの起動」で実行モジュールのパスとして指定してください。
 その他の設定は上図に準じます。
 
 差し込み処理
