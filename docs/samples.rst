@@ -191,7 +191,7 @@ DocuWorks 付属の「検索してマーク」プラグインとは違い、対�
 
     C:\test> python horizontal_split.py "C:\test\DocuShare.xdw"
 
-(実行前)
+| (実行前)
 
 .. image:: before.png
     :align: left
@@ -199,7 +199,7 @@ DocuWorks 付属の「検索してマーク」プラグインとは違い、対�
     :alt: 元の A3 文書
 
 
-(実行後)
+| (実行後)
 
 .. image:: after.png
     :align: left
@@ -207,18 +207,18 @@ DocuWorks 付属の「検索してマーク」プラグインとは違い、対�
     :alt: A3 を左右に分割して A4 に変換した文書
 
 
-応用編として、このプログラムを py2exe で実行形式にした上で、DocuWorks の
+| 応用編として、このプログラムを py2exe で実行形式にした上で、DocuWorks の
 プラグインの設定で「外部コマンドの起動」を追加すると、クリックひとつで
 イメージドキュメントのページ分割ができるようになります。
 
-(設定例)
+| (設定例)
 
 .. image:: horizontal_split-settings.png
     :align: left
     :scale: 200%
     :alt: horizontal_split.exe 用の外部コマンドの設定
 
-実際に動作する DocuWorks プラグインを置いておきます。ただし、かなり古いバージョンで作成したものです。
+| 実際に動作する DocuWorks プラグインを置いておきます。ただし、かなり古いバージョンで作成したものです。
 
 :download:`horizontal_split.zip <../horizontal_split.zip>`
 
