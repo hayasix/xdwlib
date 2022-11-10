@@ -253,8 +253,8 @@ Annotation クラスもまた、イテレータプロトコルをサポートし
     from xdwlib.struct import Point
     : (中略)
     pg = doc.page(0)
-    ann = pg.add_text(u"変更前の文字列") # 既定の位置にテキストアノテーションを貼り付けます。
-    ann.text = u"変更後の文字列"
+    ann = pg.add_text("変更前の文字列") # 既定の位置にテキストアノテーションを貼り付けます。
+    ann.text = "変更後の文字列"
     ann.font_size = 10.5 # ポイント
     ann.font_style = "bold,italic"
     ann.fore_color = "red"

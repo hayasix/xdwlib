@@ -114,7 +114,7 @@ DocuWorks 付属の「検索してマーク」プラグインとは違い、対�
 .. image:: mark_screenshot.png
     :align: left
     :scale: 200%
-    :alt: ``mark.py`` の実行結果の例。検索でみつかった場所にマークし、ページに付箋を貼ってあります。 
+    :alt: ``mark.py`` の実行結果の例。検索でみつかった場所にマークし、ページに付箋を貼ってあります。
 
 見開き書類をページごとに分割
 ============================
@@ -148,7 +148,7 @@ DocuWorks 付属の「検索してマーク」プラグインとは違い、対�
     if os.path.splitext(infile)[1].lower() != ".xdw":
         raise ValueError("file must be *.xdw")
 
-    newfile = infile[:-4] + u"-左右分割.xdw"
+    newfile = infile[:-4] + "-左右分割.xdw"
 
     with xdwopen(infile) as doc:
         pages = doc.pages
@@ -212,9 +212,12 @@ DocuWorks 付属の「検索してマーク」プラグインとは違い、対�
 .. image:: horizontal_split-settings.png
     :align: left
     :scale: 200%
-    :alt: horizontal_split.exe 用の外部コマンドの設定 
+    :alt: horizontal_split.exe 用の外部コマンドの設定
 
-このページの下部に、実際に動作する DocuWorks プラグインを置いておきます。
+実際に動作する DocuWorks プラグインを置いておきます。ただし、かなり古いバージョンで作成したものです。
+
+:download:`horizontal_split.zip <../horizontal_split.zip>`.
+
 zip ファイルを展開すると horizontal_split.exe が取り出せるので、それを
 「外部コマンドの起動」で実行モジュールのパスとして指定してください。
 その他の設定は上図に準じます。

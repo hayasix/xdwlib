@@ -92,7 +92,7 @@ Documentation
 Detailed documents are available in Japanese at
 `Read the Docs <https://xdwlib.readthedocs.io/ja/latest>`_.
 
-Python's help() also gives brief descriptions.
+Python's help() also gives brief descriptions in English.
 
 
 Typical Use
