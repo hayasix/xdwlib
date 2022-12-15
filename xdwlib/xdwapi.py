@@ -2391,8 +2391,8 @@ def ATTR(byorder=False, widename=False, multitype=False, widevalue=False):
                                   XDW_ATYPE_BOOL, XDW_ATYPE_OCTS):
                 attrvalue = c_int()
             elif attrtype.value == XDW_ATYPE_STRING:
-                attrvalue = create_buffer(
-                        multitype and widename or widevalue)(size)
+                wide = bool(widename if multitype else widevalue)
+                attrvalue = create_buffer(wide)(size)
             else:  # if attrtype.value == XDW_ATYPE_OTHER:
                 attrvalue = (XDW_POINT * int(size / sizeof(XDW_POINT)))()
             if widevalue:

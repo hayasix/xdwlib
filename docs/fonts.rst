@@ -30,7 +30,7 @@
     でき、その場合は指定していない方はシステム既定値となります。初期値は
     ``'FIXED_PITCH,ROMAN'`` です。
 
-font_char_set
+``font_char_set``
     フォントの文字セットです。 ``'DEFAULT'``, ``'ANSI'``, ``'SYMBOL'``,
     ``'MAC'``, ``'SHIFTJIS'``, ``'HANGEUL'``, ``'CHINESEBIG5'``,
     ``'GREEK'``, ``'TURKISH'``, ``'BALTIC'``, ``'RUSSIAN'``,

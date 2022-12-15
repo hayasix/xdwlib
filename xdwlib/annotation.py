@@ -247,7 +247,7 @@ class Annotation(Annotatable, Observer):
         elif data_type == XDW_ATYPE_OCTS:  # unsupported in SDK
             return f"<<OCTS:{value}>>"
         elif data_type == XDW_ATYPE_OTHER:  # Quick hack for points.
-            print(data_type, value)
+            #print(data_type, value)
             points = [Point(
                     scale(attrname, p.x),
                     scale(attrname, p.y)) for p in value]
@@ -287,7 +287,7 @@ class Annotation(Annotatable, Observer):
             elif t == 1:
                 if not isinstance(value, str):
                     raise ValueError(
-                            "text data required, numeric given")
+                            f'text data required, non-text {value} given')
                 if (self.is_unicode and
                     XDW_ANNOTATION_TYPE.normalize(self.type) in (
                         XDW_ATN_Text,
@@ -299,7 +299,7 @@ class Annotation(Annotatable, Observer):
                         )):
                     texttype = XDW_TEXT_UNICODE
                 else:
-                    texttype = XDW_TEXT_UNICODE_IFNECESSARY
+                    texttype = XDW_TEXT_MULTIBYTE
                 XDW_SetAnnotationAttributeW(
                         self.page.doc.handle,
                         self.handle,
