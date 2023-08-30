@@ -2,7 +2,7 @@
 Xdwlib README
 =============
 
-2022-11-08 HAYASHI Hideki <hideki@hayasix.com>
+2023-08-30 HAYASHI Hideki <hideki@hayasix.com>
 
 
 Welcome to the xdwlib source release
@@ -84,6 +84,15 @@ own ``xdw2text.exe``, try::
 
     pip3 install cx_Freeze
     python3 cx_setup.py build
+
+google-cloud-vision
+'''''''''''''''''''
+
+Native OCR is not available in DocuWorks >=9.1, so xdwlib offers OCR
+by Microsoft Azure AI Vision or Google Cloud Vision (credentials required
+for the services).  To use Google Cloud Vision, install this module::
+
+    pip3 install google-cloud-vision
 
 
 Documentation

@@ -25,6 +25,14 @@ from urllib.parse import urlencode, urlparse, urlunparse
 import time
 import json
 
+try:
+    from google.cloud import vision
+    from google.cloud.vision_v1.types import TextAnnotation
+    BREAKTYPES = TextAnnotation.DetectedBreak.BreakType
+    GCVISION = vision
+except ImportError:
+    GCVISION = None
+
 from .xdwapi import *
 from .common import *
 from .xdwtemp import XDWTemp
@@ -62,6 +70,7 @@ OCR_LANGUAGES = {
         }
 ENV_AZURE_URL = "XDWLIB_OCR_AZURE_ENDPOINT"
 ENV_AZURE_KEY = "XDWLIB_OCR_AZURE_SUBSCRIPTION_KEY"
+ENV_GCLOUD_CRED = "GOOGLE_APPLICATION_CREDENTIALS"
 
 
 class PageCollection(list):
@@ -549,6 +558,8 @@ class Page(Annotatable, Observer):
         if not OCRENABLED:
             if all(self.azure_env()):
                 return self.ocr_azure()
+            if self.gcloud_env():
+                return self.ocr_gcloud()
             raise AccessDeniedError("OCR is out of service")
         en = XDW_OCR_ENGINE.normalize(engine)
         if en == XDW_OCR_ENGINE_WRP:
@@ -594,8 +605,7 @@ class Page(Annotatable, Observer):
 
     @staticmethod
     def azure_env():
-        return (os.environ.get(f"{ENV_AZURE_URL}"),
-                os.environ.get(f"{ENV_AZURE_KEY}"))
+        return (os.environ.get(ENV_AZURE_URL), os.environ.get(ENV_AZURE_KEY))
 
     def ocr_azure(self,
             language=None, charset="DEFAULT", errors="replace", timeout=60,
@@ -679,6 +689,53 @@ class Page(Annotatable, Observer):
                 return result
             rtlist.sort(key=cmp_to_key(cmp))
         self.set_ocr_text(rtlist, charset=charset, errors=errors, unit="px")
+
+    @staticmethod
+    def gcloud_env():
+        return os.environ.get(ENV_GCLOUD_CRED)
+
+    def ocr_gcloud(self,
+            language=None, charset="DEFAULT", errors="replace",
+            credentials=None):
+        if not GCVISION:
+            raise NotImplementedError("google-cloud-vision is not installed")
+        oldcred = self.gcloud_env()
+        try:
+            if credentials:
+                os.environ[ENV_GCLOUD_CRED] = os.path.expanduser(credentials)
+            elif not oldcred:
+                raise ValueError(f"${ENV_GCLOUD_CRED} is not set")
+            client = GCVISION.ImageAnnotatorClient()
+            with XDWTemp(suffix=".jpg") as temp:
+                self.export_image(path=temp.path, format="JPEG",
+                                  dpi=self.resolution.x)
+                with open(temp.path, "rb") as in_:
+                    data = in_.read()
+            image = GCVISION.Image(content=data)
+            response = client.document_text_detection(image=image)
+            rtlist = list()
+            for page in response.full_text_annotation.pages:  # 1 page only.
+                for block in page.blocks:
+                    for para in block.paragraphs:
+                        symbols = []
+                        # Inserting spaces between words doesn't work in CJK.
+                        for word in para.words:
+                            for symbol in word.symbols:
+                                symbols.append(symbol.text)
+                                brk = symbol.property.detected_break.type_
+                                if brk != BREAKTYPES.UNKNOWN:
+                                    symbols.append(" ")
+                        text = "".join(symbols).strip()
+                        vertices = [(getattr(v, "x", 0), getattr(v, "y", 0))
+                                    for v in para.bounding_box.vertices]
+                        lt = vertices[0]
+                        rb = vertices[2]
+                        rtlist.append((Rect(*lt, *rb), text))
+            self.set_ocr_text(rtlist, charset=charset, errors=errors, unit="px")
+        finally:
+            if oldcred:
+                os.environ[ENV_GCLOUD_CRED] = oldcred
+
 
     def clear_ocr_text(self):
         """Clear OCR text."""
