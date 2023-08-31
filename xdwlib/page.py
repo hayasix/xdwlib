@@ -68,6 +68,7 @@ OCR_LANGUAGES = {
         949: "KOREAN",
         1258: "VIETNAMESE",
         }
+NOLINEBREAKLANGUAGES = "ja jpn zh chi zho th tha lo lao km khm kxm".split()
 ENV_AZURE_URL = "XDWLIB_OCR_AZURE_ENDPOINT"
 ENV_AZURE_KEY = "XDWLIB_OCR_AZURE_SUBSCRIPTION_KEY"
 ENV_GCLOUD_CRED = "GOOGLE_APPLICATION_CREDENTIALS"
@@ -701,6 +702,8 @@ class Page(Annotatable, Observer):
             raise NotImplementedError("google-cloud-vision is not installed")
         oldcred = self.gcloud_env()
         try:
+            language = language and language.casefold()
+            linebreak = "" if language in NOLINEBREAKLANGUAGES else " "
             if credentials:
                 os.environ[ENV_GCLOUD_CRED] = os.path.expanduser(credentials)
             elif not oldcred:
@@ -723,14 +726,16 @@ class Page(Annotatable, Observer):
                             for symbol in word.symbols:
                                 symbols.append(symbol.text)
                                 brk = symbol.property.detected_break.type_
-                                if brk != BREAKTYPES.UNKNOWN:
+                                if brk == BREAKTYPES.EOL_SURE_SPACE:
+                                    symbols.append(linebreak)
+                                elif brk in (BREAKTYPES.SPACE,
+                                             BREAKTYPES.SURE_SPACE,):
                                     symbols.append(" ")
-                        text = "".join(symbols).strip()
-                        vertices = [(getattr(v, "x", 0), getattr(v, "y", 0))
-                                    for v in para.bounding_box.vertices]
-                        lt = vertices[0]
-                        rb = vertices[2]
-                        rtlist.append((Rect(*lt, *rb), text))
+                        x, y = zip(*[(getattr(v, "x", 0), getattr(v, "y", 0))
+                                     for v in para.bounding_box.vertices])
+                        r = Rect(min(x), min(y), max(x), max(y))
+                        t = "".join(symbols).strip()
+                        rtlist.append((r, t))
             self.set_ocr_text(rtlist, charset=charset, errors=errors, unit="px")
         finally:
             if oldcred:

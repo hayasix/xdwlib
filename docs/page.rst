@@ -167,8 +167,8 @@ Page クラスは、その基底クラスである Annotatable クラスに多�
     指定できません。
     DocuWorks 9 以上では DocuWorks OCR License for Development Tool Kit を
     あらかじめ登録しておく必要があります。有効な登録がなく必要な環境変数が
-    定義されている場合は ``ocr_azure()`` の実行を試みます。その他の場合は
-    AccessDeniedError となります。
+    定義されている場合は ``ocr_azure()`` または ``ocr_gcloud()`` の実行を
+    試みます。その他の場合は AccessDeniedError となります。
 
     ``strategy`` は ``'STANDARD'``, ``'SPEED'`` または ``'ACCURACY'``
     です (小文字でもかまいません)。
@@ -231,6 +231,24 @@ Page クラスは、その基底クラスである Annotatable クラスに多�
     あらかじめ作成しておく必要があります。引数で与えられない場合は、環境変数
     ``XDWLIB_OCR_AZURE_ENDPOINT`` および ``XDWLIB_OCR_AZURE_SUBSCRIPTION_KEY``
     から読み取ります。いずれも存在しない場合はエラーとなります。
+
+``ocr_gcloud(self, language=None, charset="DEFAULT", errors="replace", credentials=None)``
+    ページから Google Cloud Vision の OCR を利用してテキストを抽出します。
+    結果として得られるテキストは、別途 ``self.content_text()``
+    で取り出す必要があります。
+
+    ``language`` には言語コード (ISO 639-1 または 639-2/T) を指定します。
+    通常は段落中の行末はひとつの空白文字に置き換えますが、日本語など
+    分かち書きをしない言語の場合は空白文字を置かず次の行と連結します。
+
+    ``charset`` には ``'DEFAULT'``, ``'ANSI'``, ``'SYMBOL'``, ``'MAC'``,
+    ``'SHIFTJIS'``, ``'HANGEUL'``, ``'CHINESEBIG5'``, ``'GREEK'``,
+    ``'TURKISH'``, ``'BALTIC'``, ``'RUSSIAN'``, ``'EASTEUROPE'``, ``'OEM'``
+    のいずれかを指定します。
+
+    ``credentials`` には Google Cloud サービスアカウントであらかじめ作成した
+    認証情報 (JSON ファイル) のフルパス名を指定します。指定しない場合は
+    環境変数 ``GOOGLE_APPLICATION_CREDENTIALS`` の値を用います。
 
 ``rasterize()``
     ページがアプリケーションページである場合は、イメージページに
