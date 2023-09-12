@@ -18,6 +18,7 @@ import re
 import subprocess
 import itertools
 from functools import cmp_to_key
+from itertools import islice
 from os.path import abspath, split as splitpath, join as joinpath
 import codecs
 from urllib.request import Request, urlopen
@@ -605,6 +606,19 @@ class Page(Annotatable, Observer):
         XDW_ApplyOcr(self.doc.handle, self.absolute_page() + 1, en, opt)
 
     @staticmethod
+    def sort_rtlist(rtlist):
+        vert = sum(-1 if r - l < b - t else 1 for (l, t, r, b), _ in rtlist) < 0
+        v = 1 if vert else -1
+        def cmp(a, b):
+            (a_left, a_top, _, a_bottom), _ = a
+            (b_left, b_top, _, b_bottom), _ = b
+            if a_top < b_top and a_bottom < b_bottom: return -1
+            elif b_top < a_top and b_bottom < a_bottom: return 1
+            elif a_left < b_left: return v
+            else: return 0
+        rtlist.sort(key=cmp_to_key(cmp))
+
+    @staticmethod
     def azure_env():
         return (os.environ.get(ENV_AZURE_URL), os.environ.get(ENV_AZURE_KEY))
 
@@ -676,19 +690,12 @@ class Page(Annotatable, Observer):
         else:
             raise ApplicatonFailedError("time out in Azure OCR")
         lines = result["analyzeResult"]["readResults"][0]["lines"]
-        rtlist = [(Rect(*[line["boundingBox"][i] for i in (0, 1, 4, 5)]),
-                   line["text"]) for line in lines]
-        # Text segments in vertically written documents should be reordered.
-        if sum(-1 if r.size().x < r.size().y else 1 for r, t in rtlist) < 0:
-            def cmp(rt0, rt1):
-                lt0, lt1 = rt0[0].position(), rt1[0].position()
-                rb0, rb1 = lt0 + rt0[0].size(), lt1 + rt1[0].size()
-                if rb0.y < lt1.y: result = -1
-                elif rb1.y < lt0.y: result = 1
-                elif lt0.x < lt1.x: result = 1
-                else: result = -1
-                return result
-            rtlist.sort(key=cmp_to_key(cmp))
+        rtlist = []
+        for line in lines:
+            x = list(islice(line["boundingBox"], 0, None, 2))
+            y = list(islice(line["boundingBox"], 1, None, 2))
+            rtlist.append(((min(x), min(y), max(x), max(y)), line["text"]))
+        self.sort_rtlist(rtlist)
         self.set_ocr_text(rtlist, charset=charset, errors=errors, unit="px")
 
     @staticmethod
@@ -736,6 +743,7 @@ class Page(Annotatable, Observer):
                         r = Rect(min(x), min(y), max(x), max(y))
                         t = "".join(symbols).strip()
                         rtlist.append((r, t))
+            self.sort_rtlist(rtlist)
             self.set_ocr_text(rtlist, charset=charset, errors=errors, unit="px")
         finally:
             if oldcred:
