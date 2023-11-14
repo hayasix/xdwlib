@@ -344,6 +344,8 @@ def scale(attrname, value, store=False):
             return flagvalue(unit, value, store=store)
         if store:
             return unit.normalize(value)
+        if isinstance(value, int):
+            return value
         return unit[value]
     mo = re.match(r"(1/)?([\d.]+)", unit)
     if not mo:
