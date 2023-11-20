@@ -344,9 +344,12 @@ def scale(attrname, value, store=False):
             return flagvalue(unit, value, store=store)
         if store:
             return unit.normalize(value)
-        if isinstance(value, int):
-            return value
-        return unit[value]
+        try:
+            return unit[value]
+        except KeyError:
+            if str(attrname).endswith("Color") and isinstance(value, int):
+                return value
+            raise
     mo = re.match(r"(1/)?([\d.]+)", unit)
     if not mo:
         return float(value)

@@ -229,11 +229,19 @@ class Annotation(Annotatable, Observer):
             codepage = charset_to_codepage(self.font_char_set)
         else:
             codepage = CP
-        data_type, value, text_type = XDW_GetAnnotationAttributeW(
-                self_handle, attrname, codepage=codepage)
+        try:
+            data_type, value, text_type = XDW_GetAnnotationAttributeW(
+                    self_handle, attrname, codepage=codepage)
+        except InfoNotFoundError:
+            return None
         if data_type == XDW_ATYPE_INT:
             if self_type == "STICKEY" and attrname.endswith(b"Color"):
-                return XDW_COLOR_FUSEN[value]
+                try:
+                    return XDW_COLOR_FUSEN[value]
+                except KeyError:
+                    if isinstance(value, int):
+                        return value
+                    raise
             elif self_type == "LINK" and attrname.endswith(b"XdwPage"):
                 return value - 1  # So, -1 for profile view.
             return scale(attrname, value, store=False)
