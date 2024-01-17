@@ -347,7 +347,8 @@ def scale(attrname, value, store=False):
         try:
             return unit[value]
         except KeyError:
-            if str(attrname).endswith("Color") and isinstance(value, int):
+            if isinstance(attrname, bytes): attrname = attrname.decode()
+            if attrname.endswith("Color") and isinstance(value, int):
                 return value
             raise
     mo = re.match(r"(1/)?([\d.]+)", unit)
