@@ -245,7 +245,9 @@ def protect(input_path,
     protect_option.nAuthMode = XDW_AUTH.normalize(auth)
     protect_type = XDW_PROTECT.normalize(protect_type)
     o = lambda s: options.get(s)
-    if protect_type in (XDW_PROTECT_PSWD, XDW_PROTECT_PSWD128, XDW_PROTECT_256):
+    if protect_type in (XDW_PROTECT_PSWD,
+                        XDW_PROTECT_PSWD128,
+                        XDW_PROTECT_PSWD256):
         opt = XDW_SECURITY_OPTION_PSWD()
         opt.nPermission = flagvalue(XDW_PERM, o("permission"), store=True)
         opt.szOpenPswd = o("password") or ""

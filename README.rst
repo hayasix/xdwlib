@@ -129,7 +129,7 @@ as an annotation::
 Reporting bugs
 ==============
 
-The author appreciate bugs reports from you by email.
+The author appreciates bug reports from you by email.
 
 
 Have fun!
