@@ -250,9 +250,10 @@ def protect(input_path,
                         XDW_PROTECT_PSWD256):
         opt = XDW_SECURITY_OPTION_PSWD()
         opt.nPermission = flagvalue(XDW_PERM, o("permission"), store=True)
-        opt.szOpenPswd = o("password") or ""
-        opt.szFullAccessPswd = o("fullaccess") or ""
-        opt.lpszComment = o("comment") or ""
+        opt.szOpenPswd = (o("password") or "").encode()
+        opt.szFullAccessPswd = (o("fullaccess") or "").encode()
+        encoding = "utf-8" if protect_type == XDW_PROTECT_PSWD256 else "ascii"
+        opt.lpszComment = (o("comment") or "").encode(encoding)
     elif protect_type in (XDW_PROTECT_PKI, XDW_PROTECT_PKI256):
         opt = XDW_SECURITY_OPTION_PKI()
         opt.nPermission = flagvalue(XDW_PERM, o("permission"), store=True)
