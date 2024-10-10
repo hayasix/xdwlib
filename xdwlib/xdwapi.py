@@ -982,18 +982,20 @@ XDW_ANNOTATION_TYPE = XDWConst({
 
 XDW_ATYPE_INT                       = 0
 XDW_ATYPE_STRING                    = 1
-XDW_ATYPE_DATE                      = 2
-XDW_ATYPE_BOOL                      = 3
-XDW_ATYPE_OCTS                      = 4
+#XDW_ATYPE_DATE                      = 2  # no use in reality
+#XDW_ATYPE_BOOL                      = 3  # no use in reality
+#XDW_ATYPE_OCTS                      = 4  # no use in reality
 XDW_ATYPE_OTHER                     = 999
+XDW_ATYPE_POINTS                    = 2
 
 XDW_ATTRIBUTE_TYPE = XDWConst({
         XDW_ATYPE_INT               : "INT",
         XDW_ATYPE_STRING            : "STRING",
-        XDW_ATYPE_DATE              : "DATE",
-        XDW_ATYPE_BOOL              : "BOOL",
-        XDW_ATYPE_OCTS              : "OCTS",
+        #XDW_ATYPE_DATE              : "DATE",
+        #XDW_ATYPE_BOOL              : "BOOL",
+        #XDW_ATYPE_OCTS              : "OCTS",
         XDW_ATYPE_OTHER             : "OTHER",
+        XDW_ATYPE_POINTS            : "POINTS",
         })
 
 XDW_LINE_NONE                       = 0
@@ -1200,6 +1202,7 @@ XDW_ATN_GUID                        = b"%CustomAnnGuid"
 XDW_ATN_CustomData                  = b"%CustomAnnCustomData"
 XDW_ATN_CustomAnnGuid               = XDW_ATN_GUID                      # alias
 XDW_ATN_CustomAnnCustomData         = XDW_ATN_CustomData                # alias
+XDW_ATN_Close                       = b"%Close"
 
 XDW_COLOR_NONE                      = 0x010101
 XDW_COLOR_BLACK                     = 0x000000
@@ -1361,9 +1364,11 @@ XDW_ANNOTATION_ATTRIBUTE = {
         XDW_ATN_Alignment           : (0, XDW_ALIGN_HPOS, ()),
         XDW_ATN_ArrowheadStyle      : (0, XDW_ARROWHEAD_STYLE, (
                                         XDW_AID_STRAIGHTLINE,
+                                        XDW_AID_POLYGON,
                                         )),
         XDW_ATN_ArrowheadType       : (0, XDW_ARROWHEAD_TYPE, (
                                         XDW_AID_STRAIGHTLINE,
+                                        XDW_AID_POLYGON,
                                         )),
         XDW_ATN_AutoResize          : (0, None, (
                                         XDW_AID_LINK,
@@ -1400,6 +1405,7 @@ XDW_ANNOTATION_ATTRIBUTE = {
                                         )),
         XDW_ATN_BottomField         : (1, None, (XDW_AID_STAMP,)),
         XDW_ATN_Caption             : (1, None, (XDW_AID_LINK,)),
+        XDW_ATN_Close               : (0, None, (XDW_AID_POLYGON,)),
         XDW_ATN_CustomData          : (0, None, ()),
         XDW_ATN_DateField_FirstChar : (1, None, (XDW_AID_STAMP,)),
         # DateFormat in ("yy.mm.dd", "yy.m.d", "dd.mmm.yy", "dd.mmm.yyyy")
@@ -2387,14 +2393,20 @@ def ATTR(byorder=False, widename=False, multitype=False, widevalue=False):
             args.append(NULL)
             size = TRY(getattr(DLL, api.__name__), *args)
             # Pass 2 - read the actual value.
-            if attrtype.value in (XDW_ATYPE_INT, XDW_ATYPE_DATE,
-                                  XDW_ATYPE_BOOL, XDW_ATYPE_OCTS):
+            if attrtype.value in (XDW_ATYPE_INT,
+                                  #XDW_ATYPE_DATE,
+                                  #XDW_ATYPE_BOOL,
+                                  #XDW_ATYPE_OCTS,
+                                  ):
                 attrvalue = c_int()
             elif attrtype.value == XDW_ATYPE_STRING:
                 wide = bool(widename if multitype else widevalue)
                 attrvalue = create_buffer(wide)(size)
-            else:  # if attrtype.value == XDW_ATYPE_OTHER:
+            elif attrtype.value == XDW_ATYPE_POINTS:
                 attrvalue = (XDW_POINT * int(size / sizeof(XDW_POINT)))()
+            else:
+                #raise ValueError(f"invalid attribute type {atttype.value}")
+                attrvalue = c_int()
             if widevalue:
                 args[-5:-3] = [byref(attrvalue), size]
             else:
@@ -2404,7 +2416,10 @@ def ATTR(byorder=False, widename=False, multitype=False, widevalue=False):
             result = []
             if byorder:
                 result.append(attrname.value)
-            result.extend([attrtype.value, attrvalue.value])
+            if attrtype.value in (XDW_ATYPE_INT, XDW_ATYPE_STRING):
+                result.extend([attrtype.value, attrvalue.value])
+            else:  # XDW_ATYPE_POINTS
+                result.extend([attrtype.value, attrvalue])
             if widevalue:
                 result.append(texttype.value)
             return tuple(result)

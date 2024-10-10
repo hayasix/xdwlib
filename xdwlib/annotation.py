@@ -248,14 +248,13 @@ class Annotation(Annotatable, Observer):
         elif data_type == XDW_ATYPE_STRING:
             self.is_unicode = (text_type == XDW_TEXT_UNICODE)
             return value
-        elif data_type == XDW_ATYPE_DATE:  # unsupported in SDK
-            return f"<<DATE:{value}>>"
-        elif data_type == XDW_ATYPE_BOOL:  # unsupported in SDK
-            return f"<<BOOL:{value}>>"
-        elif data_type == XDW_ATYPE_OCTS:  # unsupported in SDK
-            return f"<<OCTS:{value}>>"
-        elif data_type == XDW_ATYPE_OTHER:  # Quick hack for points.
-            #print(data_type, value)
+        #elif data_type == XDW_ATYPE_DATE:  # unsupported in SDK
+        #    return f"<<DATE:{value}>>"
+        #elif data_type == XDW_ATYPE_BOOL:  # unsupported in SDK
+        #    return f"<<BOOL:{value}>>"
+        #elif data_type == XDW_ATYPE_OCTS:  # unsupported in SDK
+        #    return f"<<OCTS:{value}>>"
+        elif data_type == XDW_ATYPE_POINTS:  # Quick hack for points.
             points = [Point(
                     scale(attrname, p.x),
                     scale(attrname, p.y)) for p in value]

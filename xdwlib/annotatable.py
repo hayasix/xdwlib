@@ -414,7 +414,10 @@ class Annotatable(Subject):
                             not ann.word_wrap or ann.text_orientation != 0) or
                         t == XDW_AID_LINK and ann.auto_resize):
                     continue
-            setattr(copy, k, v)
+            try:
+                setattr(copy, k, v)
+            except TypeError:  # Quick hack for unresizable annotations.
+                pass
         return copy
 
     @staticmethod
