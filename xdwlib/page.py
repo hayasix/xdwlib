@@ -750,7 +750,6 @@ class Page(Annotatable, Observer):
             if oldcred:
                 os.environ[ENV_GCLOUD_CRED] = oldcred
 
-
     def clear_ocr_text(self):
         """Clear OCR text."""
         if self.type != "IMAGE":
@@ -799,8 +798,12 @@ class Page(Annotatable, Observer):
             rects[i].right = cx(r.right)
             rects[i].bottom = cy(r.bottom)
         info = XDW_OCR_TEXTINFO()
-        info.nWidth = int(self.image_size.x)
-        info.nHeight = int(self.image_size.y)
+        if self.degree in (0, 180):
+            info.nWidth = int(self.image_size.x)
+            info.nHeight = int(self.image_size.y)
+        else:
+            info.nWidth = int(self.image_size.y)
+            info.nHeight = int(self.image_size.x)
         info.charset = XDW_FONT_CHARSET.normalize(charset)
         encoding = f"cp{charset_to_codepage(info.charset)}"
         info.lpszText = crlf.join(text).encode(encoding, errors=errors) + b"\x00"
