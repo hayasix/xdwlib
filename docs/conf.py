@@ -28,6 +28,7 @@ author = 'HAYASHI Hideki'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ["sphinx.ext.autodoc",
+"python_docs_theme",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
