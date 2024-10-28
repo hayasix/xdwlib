@@ -50,7 +50,7 @@ OCR 処理
     doc = xdwopen(sys.argv[1])
     for i in range(doc.pages):
         if doc.page(i).type != "IMAGE":
-            doc.rasterize(i, color="mono")
+            doc.rasterize(i)
         doc.page(i).ocr()
 
     doc.save()

@@ -2,7 +2,7 @@
 Xdwlib README
 =============
 
-2023-08-30 HAYASHI Hideki <hideki@hayasix.com>
+2024-10-28 HAYASHI Hideki <hideki@hayasix.com>
 
 
 Welcome to the xdwlib source release
