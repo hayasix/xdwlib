@@ -106,7 +106,6 @@ xdwlib に関するご意見・ご要望は作者 (`林秀樹 <mailto:hideki@hay
 へお寄せください。
 
 .. toctree::
-    :hidden:
     :maxdepth: 2
 
     overview
