@@ -105,6 +105,9 @@ easy_install を利用するには setuptools をインストールしてくだ�
 xdwlib に関するご意見・ご要望は作者 (`林秀樹 <mailto:hideki@hayasix.com>`_)
 へお寄せください。
 
+各ページへのリンク
+==================
+
 .. toctree::
     :maxdepth: 2
 
