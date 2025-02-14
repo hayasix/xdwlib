@@ -348,7 +348,7 @@ def scale(attrname, value, store=False):
             return unit[value]
         except KeyError:
             if isinstance(attrname, bytes): attrname = attrname.decode()
-            if attrname.endswith("Color") and isinstance(value, int):
+            if attrname.endswith(b"Color") and isinstance(value, int):
                 return value
             raise
     mo = re.match(r"(1/)?([\d.]+)", unit)
@@ -366,7 +366,7 @@ def unpack(s):
     n = 0
     for c in s:
         n <<= 8
-        n += ord(c)
+        n += ord(c) if isinstance(c, str) else c
     return n
 
 

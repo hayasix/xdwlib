@@ -1125,7 +1125,7 @@ class PageForm(object):
         special = isinstance(XDW_ANNOTATION_ATTRIBUTE[attrname][1], XDWConst)
         if special or isinstance(value, (int, float)):
             value = int(scale(attrname, value, store=True))
-            if attrname.endswith("Page"):
+            if attrname.endswith(b"Page"):
                 value += 1  # 1-based
             value = byref(c_int(value))
             attribute_type = XDW_ATYPE_INT  # TODO: Scaling may be required.
@@ -1159,7 +1159,7 @@ class PageForm(object):
         if attribute_type == 1:  # string
             return uc(value)
         value = unpack(value)
-        if attrname.endswith("Page"):
+        if attrname.endswith(b"Page"):
             value -= 1  # 0-based
         return scale(attrname, value, store=False)
 
