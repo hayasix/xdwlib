@@ -2889,8 +2889,7 @@ def XDW_GetSignatureInformation(doc_handle, pos):
         module_info.signer_cert = signer_cert
         return (signature_info, module_info)
 
-@RAISE
-def XDW_UpdateSignatureStatus(doc_handle, pos, module_option, module_status):
+def XDW_UpdateSignatureStatus(doc_handle, pos):
     """The 3rd argument, module_option, should currently be specified as NULL."""
     module_status = XDW_SIGNATURE_MODULE_STATUS()
     try:
